@@ -10,7 +10,7 @@ Backbone-relational provides one-to-one, one-to-many and many-to-one relations f
 	paul = new Person({
 		id: 'person-1',
 		name: 'Paul',
-		user: { login: 'dude', email: 'me@gmail.com' }
+		user: { id: 'user-1', login: 'dude', email: 'me@gmail.com' }
 	});
 	
 	ourHouse = new House({
@@ -22,6 +22,25 @@ Backbone-relational provides one-to-one, one-to-many and many-to-one relations f
 	paul.get('user').get('login'); // 'dude'
 	
 	paul.get('livesIn'); // a ref to 'ourHouse', which is automatically defined because of the bi-directional HasMany relation on House to Person
+	
+	paul.get('user').toJSON();
+	/*
+		{
+			email: 'me@gmail.com',
+			id: 'user-1',
+			login: 'dude',
+			person: {
+				id: 'person-1',
+				name: 'Paul',
+				livesIn: {
+					id: "house-1",	
+					location: "in the middle of the street",
+					occupants: ["person-1"]
+				},
+				user: 'user-1'
+			}
+		}
+	*/
 	
 	ourHouse.get('occupants').remove( paul.id ); // we just made paul homeless..
 	
