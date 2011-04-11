@@ -70,7 +70,6 @@ $(document).ready(function() {
 			}]
 	});
 	
-/*	
 	person1 = new Person({
 		id: 'person-1',
 		name: 'boy',
@@ -201,5 +200,5 @@ $(document).ready(function() {
 			equal( theirHouse.get('occupants').length, 1, "theirHouse has 1 occupant" );
 			equal( ourHouse.get('occupants').length, 1, "ourHouse has 1 occupant" );
 			equal( person1.get('livesIn') && person1.get('livesIn').id, theirHouse.id, "Person 1 lives in theirHouse" );
-		});*/
+		});
 });
