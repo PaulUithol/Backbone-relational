@@ -1,5 +1,5 @@
 ## Backbone-relational
-Backbone-relational provides one-to-one, one-to-many and many-to-one relations. To use relations, extend Backbone.RelationModel (instead of the regular Backbone.Model), and define a property 'relations', which specifies the relations. Available relation types are 'Backbone.HasOne' and 'Backbone.HasMany'.
+Backbone-relational provides one-to-one, one-to-many and many-to-one relations for [Backbone](https://github.com/documentcloud/backbone). To use relations, extend Backbone.RelationModel (instead of the regular Backbone.Model), and define a property 'relations', which specifies the relations. Available relation types are 'Backbone.HasOne' and 'Backbone.HasMany'.
 
 * Bi-directional relations automatically notify related models of changes
 * Decide how relations are serialized using the 'includeInJSON' option (just id, or the full set of attributes, in which case the relations of this object are in turn serialized as well)
