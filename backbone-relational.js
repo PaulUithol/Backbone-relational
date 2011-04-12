@@ -84,7 +84,7 @@
 		 * Find a type on the global object by name. Splits name on dots.
 		 * @param {string} name
 		 */
-		getTypeByName: function( name ) {
+		getObjectByName: function( name ) {
 			var type = _.reduce( name.split('.'), function( memo, val ) {
 				return memo[ val ];
 			}, window);
@@ -157,7 +157,7 @@
 		
 		// 'window' should be the global object where 'relatedModel' can be found on if given as a string.
 		this.relatedModel = this.options.relatedModel &&
-			( _.isString( this.options.relatedModel ) ? Backbone.store.getTypeByName( this.options.relatedModel ) : this.options.relatedModel );
+			( _.isString( this.options.relatedModel ) ? Backbone.store.getObjectByName( this.options.relatedModel ) : this.options.relatedModel );
 		
 		if ( !this.checkPreconditions( this.instance, this.key, this.relatedModel, this.reverseRelation ) ) {
 			return false;
