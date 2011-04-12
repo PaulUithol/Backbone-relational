@@ -1,9 +1,9 @@
 ## Backbone-relational
-Backbone-relational provides one-to-one, one-to-many and many-to-one relations for [Backbone](https://github.com/documentcloud/backbone). To use relations, extend Backbone.RelationModel (instead of the regular Backbone.Model), and define a property 'relations', which specifies the relations. Available relation types are 'Backbone.HasOne' and 'Backbone.HasMany'.
+Backbone-relational provides one-to-one, one-to-many and many-to-one relations between models for [Backbone](https://github.com/documentcloud/backbone). To use relations, extend `Backbone.RelationalModel` (instead of the regular `Backbone.Model`) and define a property `relations`, containing an array of option objects. Each relation must define (as a minimum) the `type`, 'key' and 'relatedModel'. Available relation types are `Backbone.HasOne` and `Backbone.HasMany`.
 
 * Bi-directional relations automatically notify related models of changes
-* Decide how relations are serialized using the 'includeInJSON' option (just id, or the full set of attributes, in which case the relations of this object are in turn serialized as well)
-* Convert nested objects in a model's attributes into Models when using the 'createModels' option upon initialization
+* Decide how relations are serialized using the `includeInJSON` option (just id, or the full set of attributes, in which case the relations of this object are in turn serialized as well)
+* Convert nested objects in a model's attributes into Models when using the `createModels` option upon initialization
 
 ### Example:
 
@@ -51,9 +51,9 @@ This required the following relations and models:
 
 
 	House = Backbone.RelationalModel.extend({
-		// The 'relations' property, on the House's prototype. Initialized separately for each instance of House.
+		// The `relations` property, on the House's prototype. Initialized separately for each instance of House.
 		// Each relation must define (as a minimum) the 'type', 'key' and 'relatedModel'. Options are
-		// 'includeInJSON', 'createModels' and 'reverseRelation', which takes the same options as the relation itself.
+		// `includeInJSON`, `createModels` and `reverseRelation`, which takes the same options as the relation itself.
 		relations: [
 			{
 				type: Backbone.HasMany, // Use the type, or the string 'HasOne' or 'HasMany'.
