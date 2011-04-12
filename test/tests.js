@@ -120,7 +120,9 @@ $(document).ready(function() {
 	
 	//console.debug( 'ourHouse=%o, person1=%o, person2=%o, cat1=%o, cat2=%o', ourHouse, person1, person2, cat1, cat2 );
 
+	
 	module("Backbone.Store");
+	
 	
 		test("Initialized", function() {
 			equal( Backbone.store._collections.length, 4, "Store contains 4 collections" );
@@ -183,9 +185,11 @@ $(document).ready(function() {
 			ok( !house, houseId + " is not found in the store anymore" );
 		});
 		
-	module("IncludeInJSON");
 		
-		test("Person to JSON", function() {
+	module("Backbone.RelationalModel");
+	
+	
+		test("IncludeInJSON: Person to JSON", function() {
 			var json = person1.toJSON();
 			console.debug( json );
 			
@@ -193,13 +197,31 @@ $(document).ready(function() {
 			equal(  json.likesALot.likesALot, 'person-1', "Person is serialized only once" );
 		});
 		
+		test("Return values: set and destroy return the Model", function() {
+			var personId = 'person-10';
+			var person = new Person({
+				id: personId,
+				name: 'Remi',
+				resource_uri: personId
+			});
+			
+			var result = person.set( { 'name': 'Hector Malot' } );
+			
+			ok( result === person, "Set returns the model" );
+			
+			result = person.destroy();
+			
+			ok( result === person, "Destroy returns the model" );
+		});
+		
 	module("Backbone.HasOne");
 		
-	
+		
 	module("Backbone.HasMany");
 		
-			
+		
 	module("Reverse relationships");
+	
 	
 		test("Add", function() {
 			equal( ourHouse.get('occupants').length, 1, "ourHouse has 1 occupant" );
