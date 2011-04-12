@@ -1,5 +1,5 @@
 (function( window ) {
-	var Backbone = this.Backbone || {};
+	var Backbone = window.Backbone;
 	
 	/**
 	 * Backbone.Store keeps track of all created (and destruction of) Backbone.RelationalModel.
@@ -20,12 +20,11 @@
 		initialize: function(){},
 		
 		/**
-		 * @param {object} relation:
-		 * 	- type
+		 * @param {object} relation; required properties:
+		 * 	- model
+		 *	- type
 		 *	- key
 		 *	- relatedModel
-		 *	- relatedKey
-		 *	- relationType
 		 */
 		addAutoRelation: function( relation ) {
 			var exists = _.any( this._autoRelations, function( rel ) {
@@ -101,35 +100,28 @@
 		
 		register: function( model ) {
 			var coll = this.getCollection( model );
-			
-			if ( coll ) {
-				coll.add( model );
-			}
+			coll && coll.add( model );
 		},
 		
 		unregister: function( model ) {
 			var coll = this.getCollection( model );
-			
-			if ( coll ) {
-				coll.remove( model );
-			}
+			coll && coll.remove( model );
 		}
 	});
 	Backbone.store = new Backbone.Store();
 	
 	/**
-	 * @param instance
-	 * @param key
-	 * @param relatedModel
-	 * @param options:
-	 *	- includeInJSON
-	 *	- createModels
-	 * 	- reverseRelation Specifying a 'reverseRelation' is optional. If provided, Relation will
-	 *    reciprocate the relation to the 'relatedModel'.
-	 *		- type {string|object} HasOne or HasMany
-	 *		- key
-	 *		- includeInJSON
-	 *
+	 * @param {object} options.
+	 *  Required properties:
+	 *    - {Backbone.RelationalModel} instance
+	 *    - {string} key
+	 *    - {Backbone.RelationalModel.constructor} relatedModel
+	 *  Optional properties:
+	 *    - {bool} includeInJSON: create objects from the contents of keys if the object is not found in Backbone.store.
+	 *    - {bool} createModels: serialize the attributes for related model(s)' in toJSON on create/update, or just their ids.
+	 *    - {object} reverseRelation: Specify a bi-directional relation. If provided, Relation will reciprocate
+	 *        the relation to the 'relatedModel'. Required and optional properties match 'options', except for:
+	 *        - {string|Backbone.Relation} type: 'HasOne' or 'HasMany'
 	 */
 	Backbone.Relation = function( instance, options ) {
 		this.instance = instance;
@@ -145,9 +137,10 @@
 		
 		this.key = this.options.key;
 		this.keyContents = this.instance.get( this.key );
-		// Someone have a better suggestion than eval for turning a string into a ref to a constructor..?
+		
+		// 'window' should be the global object where 'relatedModel' can be found on if givens as string.
 		this.relatedModel = this.options.relatedModel &&
-			( _.isString( this.options.relatedModel ) ? eval( this.options.relatedModel ) : this.options.relatedModel );
+			( _.isString( this.options.relatedModel ) ? window[ this.options.relatedModel ] : this.options.relatedModel );
 		
 		if ( !this.checkPreconditions( this.instance, this.key, this.relatedModel, this.reverseRelation ) ) {
 			return false;
@@ -204,8 +197,8 @@
 	// Set up all inheritable **Backbone.Store** properties and methods.
 	_.extend(Backbone.Relation.prototype, Backbone.Events, {
 		options: {
-			createModels: true, // create objects from the contents of keys if the object is not found in Backbone.store
-			includeInJSON: true, // serialize the related model(s) in toJSON on create/update, or not
+			createModels: true,
+			includeInJSON: true,
 			isAutoRelation: false
 		},
 		
@@ -507,7 +500,7 @@
 						model = new this.relatedModel( item );
 					}
 					
-					if ( model && !this.related.get( id ) ) {
+					if ( model && !this.related.getByCid( model ) && !this.related.get( model ) ) {
 						this.related.add( model );
 					}
 				}, this);
@@ -554,14 +547,14 @@
 		
 		addRelated: function( model ) {
 			//console.debug( 'addRelated=%o', model );
-			if ( !this.related.get( model.id ) ) {
+			if ( !this.related.getByCid( model ) && !this.related.get( model.id ) ) {
 				this.related.add( model, { silent: true } );
 			}
 		},
 		
 		removeRelated: function( model ) {
 			//console.debug( 'removeRelated=%o', model );
-			if ( this.related.get( model.id ) ) {
+			if ( this.related.getByCid( model ) || this.related.get( model.id ) ) {
 				this.related.remove( model, { silent: true } );
 			}
 		}
