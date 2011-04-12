@@ -70,25 +70,29 @@ $(document).ready(function() {
 			}]
 	});
 	
+	
 	person1 = new Person({
 		id: 'person-1',
 		name: 'boy',
 		likesALot: 'person-2',
 		cats: [],
-		user: { login: 'dude', email: 'me@gmail.com' }
+		resource_uri: 'person-1',
+		user: { id: 'user-1', login: 'dude', email: 'me@gmail.com', resource_uri: 'user-1' }
 	});
 	
 	person2 = new Person({
 		id: 'person-2',
 		name: 'girl',
 		likesALot: 'person-1',
-		cats: [ 'cat-1', 'cat-2' ]
+		cats: [ 'cat-1', 'cat-2' ],
+		resource_uri: 'person-2'
 	});
 	
 	cat1 = new Cat({
 		id: 'cat-1',
 		name: 'E',
 		owner: 'person-2',
+		resource_uri: 'cat-1',
 		likes: [ 'person-1', 'person-2' ]
 	});
 	
@@ -96,19 +100,22 @@ $(document).ready(function() {
 		id: 'cat-2',
 		name: 'L',
 		owner: 'person-2',
+		resource_uri: 'cat-2',
 		likes: [ 'person-2' ]
 	});
 	
 	ourHouse = new House({
 		id: 'house-1',
 		location: 'in the middle of the street',
-		occupants: ['person-2']
+		occupants: ['person-2'],
+		resource_uri: 'house-1'
 	});
 	
 	theirHouse = new House({
 		id: 'house-2',
 		location: 'outside of town',
-		occupants: []
+		occupants: [],
+		resource_uri: 'house-2'
 	});
 	
 	//console.debug( 'ourHouse=%o, person1=%o, person2=%o, cat1=%o, cat2=%o', ourHouse, person1, person2, cat1, cat2 );
@@ -119,13 +126,19 @@ $(document).ready(function() {
 			equal( Backbone.store._collections.length, 4, "Store contains 4 collections" );
 		});
 		
+		test("getTypeByName", function() {
+			equal( Backbone.store.getTypeByName( 'Backbone' ), Backbone );
+			equal( Backbone.store.getTypeByName( 'Backbone.RelationalModel' ), Backbone.RelationalModel );
+		});
+		
 		test("Add and removes from store", function() {
 			var coll = Backbone.store.getCollection( person1 );
 			var length = coll.length;
 			
 			var person = new Person({
 				id: 'person-10',
-				name: 'Remi'
+				name: 'Remi',
+				resource_uri: 'person-10'
 			});
 			
 			ok( coll.length === length + 1, "Collection size increased by 1" );
@@ -142,9 +155,11 @@ $(document).ready(function() {
 			var anotherHouse = new House({
 				id: houseId,
 				location: 'no country for old men',
+				resource_uri: houseId,
 				occupants: [{
 					id: personId,
-					name: 'Remi'
+					name: 'Remi',
+					resource_uri: personId
 				}]
 			});
 			
@@ -153,7 +168,7 @@ $(document).ready(function() {
 			
 			var person = Backbone.store.find( Person, personId );
 			
-			ok( person, "person-10 is found in the store" );
+			ok( person, "Person with id=" + personId + " is found in the store" );
 			
 			person.destroy();
 			person = Backbone.store.find( Person, personId );

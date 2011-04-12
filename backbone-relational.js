@@ -1,3 +1,9 @@
+/**
+ * Backbone-relational.js 0.1
+ * (c) 2011 Paul Uithol
+ *
+ * For all details and documentation: https://github.com/PaulUithol/Backbone-relational
+ */
 (function( window ) {
 	var Backbone = window.Backbone;
 	
@@ -74,6 +80,17 @@
 			return coll;
 		},
 		
+		/**
+		 * Find a type on the global object by name. Splits name on dots.
+		 * @param {string} name
+		 */
+		getTypeByName: function( name ) {
+			var type = _.reduce( name.split('.'), function( memo, val ) {
+				return memo[ val ];
+			}, window);
+			return type !== window ? type: null;
+		},
+		
 		_createCollection: function( type ) {
 			var coll;
 			
@@ -138,9 +155,9 @@
 		this.key = this.options.key;
 		this.keyContents = this.instance.get( this.key );
 		
-		// 'window' should be the global object where 'relatedModel' can be found on if givens as string.
+		// 'window' should be the global object where 'relatedModel' can be found on if given as a string.
 		this.relatedModel = this.options.relatedModel &&
-			( _.isString( this.options.relatedModel ) ? window[ this.options.relatedModel ] : this.options.relatedModel );
+			( _.isString( this.options.relatedModel ) ? Backbone.store.getTypeByName( this.options.relatedModel ) : this.options.relatedModel );
 		
 		if ( !this.checkPreconditions( this.instance, this.key, this.relatedModel, this.reverseRelation ) ) {
 			return false;
@@ -592,7 +609,7 @@
 		},
 		
 		set: function( attributes, options ) {
-			Backbone.Model.prototype.set.apply( this, arguments );
+			var result = Backbone.Model.prototype.set.apply( this, arguments );
 			
 			// 'set' is called in Backbone.Model.prototype.constructor, before 'initialize' is called
 			// and before 'previousAttributes' is created; '_changed' is also reset right after 'set'.
@@ -602,11 +619,13 @@
 			if ( !this._previousAttributes && !this._synchronize && this.relations ) {
 				this.initializeRelations();
 			}
+			
+			return result;
 		},
 		
 		destroy: function( options ) {
 			Backbone.store.unregister( this );
-			Backbone.Model.prototype.destroy.call( this, options );
+			return Backbone.Model.prototype.destroy.call( this, options );
 		},
 		
 		/**
@@ -617,11 +636,13 @@
 			// the model is new, and being updated from the server (which should be the only time the 'id' attribute is changed).
 			var doUpdate = !this.isNew() && _.isUndefined( this.changedAttributes()[this.idAttribute] );
 			
-			Backbone.Model.prototype.change.call(this, options);
+			var result = Backbone.Model.prototype.change.call(this, options);
 			
 			if ( doUpdate && this.autoSave ) {
 				this.save();
 			}
+			
+			return result;
 		},
 		
 		/**
