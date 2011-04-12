@@ -1,9 +1,9 @@
 ## Backbone-relational
-Backbone-relational provides one-to-one, one-to-many and many-to-one relations between models for [Backbone](https://github.com/documentcloud/backbone). To use relations, extend `Backbone.RelationalModel` (instead of the regular `Backbone.Model`) and define a property `relations`, containing an array of option objects. Each relation must define (as a minimum) the `type`, 'key' and 'relatedModel'. Available relation types are `Backbone.HasOne` and `Backbone.HasMany`.
+Backbone-relational provides one-to-one, one-to-many and many-to-one relations between models for [Backbone](https://github.com/documentcloud/backbone). To use relations, extend `Backbone.RelationalModel` (instead of the regular `Backbone.Model`) and define a property `relations`, containing an array of option objects. Each relation must define (as a minimum) the `type`, `key` and `relatedModel`. Available relation types are `Backbone.HasOne` and `Backbone.HasMany`.
 
-* Bi-directional relations automatically notify related models of changes
-* Decide how relations are serialized using the `includeInJSON` option (just id, or the full set of attributes, in which case the relations of this object are in turn serialized as well)
-* Convert nested objects in a model's attributes into Models when using the `createModels` option upon initialization
+* Bi-directional relations automatically notify related models of changes.
+* Decide how relations are serialized using the `includeInJSON` option (just id, or the full set of attributes, in which case the relations of this object are in turn serialized as well).
+* Convert nested objects in a model's attributes into Models when using the `createModels` option upon initialization.
 
 ### Example:
 
@@ -89,4 +89,4 @@ This required the following relations and models:
 
 ### How it works
 
-Each Backbone.RelationalModel registers itself with Backbone.Store upon creation (and removes itself from the Store when destroyed). When creating or updating an attribute that is a key in a relation, removed related objects are notified of their removal, and new related objects are looked up in the Store.
+Each `Backbone.RelationalModel` registers itself with `Backbone.Store` upon creation (and removes itself from the `Store` when destroyed). When creating or updating an attribute that is a key in a relation, removed related objects are notified of their removal, and new related objects are looked up in the `Store`.
