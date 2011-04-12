@@ -368,44 +368,47 @@
 				return;
 			}
 			
+			// 'options.related' is set by 'addRelated'/'removeRelated'. If it is set, the change
+			// is the result of a call from a relation. If it's not, the change is the result of 
+			// a 'set' call on this.instance.
 			options = options || {};
+			var changed = _.isUndefined( options.related );
 			var oldRelated = _.isUndefined( options.related ) ? this.related : options.related;
 			
-			// Only set this.keyContents if it's value is set from outside (not from another Relation);
-			// 'options.related' is set by 'addRelated'/'removeRelated'.
-			if ( _.isUndefined( options.related ) ) {	
+			if ( changed ) {	
 				this.keyContents = this.instance.get( this.key );
+				
+				// Set new 'related'
+				if ( attr instanceof this.relatedModel ) {
+					this.related = attr;
+				}
+				else if ( attr ) {
+					var related = this.findRelated();
+					this.setRelated( related );
+				}
+				else {
+					this.setRelated( null );
+				}
 			}
 			
-			// Notify old 'related' object of the terminated relation
-			if ( oldRelated ) {
+			if ( oldRelated && this.related !== oldRelated ) {
+				// Notify old 'related' object of the terminated relation
 				_.each( this.getReverseRelations( oldRelated ), function( relation ) {
 						relation.removeRelated( this.instance );
 					}, this );
 			}
 			
-			// Set new 'related'
-			if ( attr instanceof this.relatedModel ) {
-				this.related = attr;
-			}
-			else if ( attr ) {
-				var related = this.findRelated();
-				this.setRelated( related );
-			}
-			else {
-				this.setRelated( null );
-			}
+			// Notify new 'related' object of the new relation. Note we do re-apply even if this.related === oldRelated;
+			// that can be necessary if this.instance was created after this.related. In that case, this.instance
+			// will already know this.related, but the reverse might not exist yet.
+			_.each( this.getReverseRelations(), function( relation ) {
+					relation.addRelated( this.instance );
+				}, this);
 			
 			// 'options.related' is set by 'addRelated'/'removeRelated'; if present, a change
 			// event hasn't been fired yet. Do it now, but don't handle it again.
-			if ( _.isUndefined( options.related ) ) {	
+			if ( !changed ) {
 				this._synchronize = true;
-				
-				// Notify new 'related' object of the new relation
-				_.each( this.getReverseRelations(), function( relation ) {
-						relation.addRelated( this.instance );
-					}, this);
-				
 				this.instance.trigger( 'change:' + this.key, this.instance, this.related );
 				this._synchronize = false;
 			}
@@ -442,7 +445,7 @@
 				return;
 			}
 			
-			if ( model.id === this.related.id ) {
+			if ( model === this.related ) {
 				var oldRelated = this.related || null;
 				this.setRelated( null );
 				this.onChange( this.instance, model, { related: oldRelated } );

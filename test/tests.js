@@ -238,4 +238,13 @@ $(document).ready(function() {
 			equal( ourHouse.get('occupants').length, 1, "ourHouse has 1 occupant" );
 			equal( person1.get('livesIn') && person1.get('livesIn').id, theirHouse.id, "Person 1 lives in theirHouse" );
 		});
+		
+		test("Set the same value a couple of time", function() {
+			person1.set( { 'likesALot': 'person-2' } );
+			person1.set( { 'likesALot': 'person-2' } );
+			person1.set( { 'likesALot': 'person-2' } );
+			
+			ok( person1.get('likesALot') === person2 );
+			ok( person2.get('likedALotBy' ) === person1 );
+		});
 });
