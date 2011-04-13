@@ -585,6 +585,7 @@
 		
 		relations: null, // Relation descriptions on the prototype
 		_relations: null, // Relation instances
+		_isInitialized: false,
 		
 		// Used for locking and loop detection in serialization
 		_synchronize: false,
@@ -619,8 +620,9 @@
 			// Ideal place to set up relations :)
 			// (btw: can't use '_relations' to check if relations are initialized because a reverse relation
 			// may have been created on this model separately.)
-			if ( !this._previousAttributes && !this._synchronize && this.relations ) {
+			if ( !this._isInitialized && !this._synchronize && this.relations ) {
 				this.initializeRelations();
+				this._isInitialized = true;
 			}
 			
 			return result;
