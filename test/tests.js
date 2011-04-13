@@ -128,9 +128,9 @@ $(document).ready(function() {
 			equal( Backbone.store._collections.length, 4, "Store contains 4 collections" );
 		});
 		
-		test("getTypeByName", function() {
-			equal( Backbone.store.getTypeByName( 'Backbone' ), Backbone );
-			equal( Backbone.store.getTypeByName( 'Backbone.RelationalModel' ), Backbone.RelationalModel );
+		test("getObjectByName", function() {
+			equal( Backbone.store.getObjectByName( 'Backbone' ), Backbone );
+			equal( Backbone.store.getObjectByName( 'Backbone.RelationalModel' ), Backbone.RelationalModel );
 		});
 		
 		test("Add and removes from store", function() {
@@ -222,7 +222,7 @@ $(document).ready(function() {
 		
 	module("Reverse relationships");
 	
-	
+		
 		test("Add", function() {
 			equal( ourHouse.get('occupants').length, 1, "ourHouse has 1 occupant" );
 			equal( person1.get('livesIn'), null, "Person 1 doesn't live anywhere" );
@@ -237,6 +237,37 @@ $(document).ready(function() {
 			equal( theirHouse.get('occupants').length, 1, "theirHouse has 1 occupant" );
 			equal( ourHouse.get('occupants').length, 1, "ourHouse has 1 occupant" );
 			equal( person1.get('livesIn') && person1.get('livesIn').id, theirHouse.id, "Person 1 lives in theirHouse" );
+		});
+		
+		test("New objects (no 'id' yet)", function() {
+			var person = new Person({
+				name: 'Remi'
+			});
+			
+			person.set( { user: { login: '1', email: '1' } } );
+			var user1 = person.get('user');
+			
+			ok( user1 instanceof User, "User created on Person" );
+			equal( user1.get('login'), '1', "person.user is the correct User" );
+			
+			var user2 = new User({
+				login: '2',
+				email: '2'
+			});
+			
+			ok( user2.get('person') === null, "'user' doesn't belong to a 'person' yet" );
+			
+			person.set( { user: user2 } );
+			
+			ok( user1.get('person') === null );
+			ok( person.get('user') === user2 );
+			ok( user2.get('person') === person );
+			
+			person2.set( { user: user2 } );
+			
+			ok( person.get('user') === null );
+			ok( person2.get('user') === user2 );
+			ok( user2.get('person') === person2 );
 		});
 		
 		test("Set the same value a couple of time", function() {
