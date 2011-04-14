@@ -35,13 +35,15 @@
 	 */
 	Backbone.Store =  function( options ) {
 		options = options || {};
+		this._collections = [];
+		this._autoRelations = [];
 		this.initialize( options );
 	};
 	
 	// Set up all inheritable **Backbone.Store** properties and methods.
 	_.extend(Backbone.Store.prototype, Backbone.Events, {
-		_collections: [],
-		_autoRelations: [],
+		_collections: null,
+		_autoRelations: null,
 		
 		// Initialize is an empty function by default. Override it with your own
 		// initialization logic.
@@ -722,16 +724,16 @@
 			if ( this.isLocked() ) {
 				return this.id;
 			}
-			
+			this.lock();
 			var json = Backbone.Model.prototype.toJSON.call( this );
 			
 			_.each( this._relations, function( rel ) {
 					var value = json[ rel.key ];
 					
 					if ( rel.options.includeInJSON && value && _.isFunction( value.toJSON ) ) {
-						this.lock();
+						
 						json[ rel.key ] = value.toJSON();
-						this.unlock();
+						
 					}
 					else if ( value instanceof Backbone.Collection ) {
 						json[ rel.key ] = value.pluck( value.model.prototype.idAttribute );
@@ -741,6 +743,7 @@
 					}
 				}, this );
 			
+			this.unlock();
 			return json;
 		}
 	});
