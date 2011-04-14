@@ -4,7 +4,7 @@ Backbone-relational provides one-to-one, one-to-many and many-to-one relations b
 * Bi-directional relations automatically notify related models of changes.
 * Decide how relations are serialized using the `includeInJSON` option (just id, or the full set of attributes, in which case the relations of this object are in turn serialized as well).
 * Convert nested objects in a model's attributes into Models when using the `createModels` option upon initialization.
-* Bind events on the RelationalModel to listen for addition/removal on it's HasMany relations ('add:<key>' and 'remove:<key>').
+* Bind events on the RelationalModel to listen for addition/removal on it's HasMany relations ('add:&lt;key>' and 'remove:&lt;key>').
 
 ### Example:
 
@@ -20,49 +20,63 @@ Backbone-relational provides one-to-one, one-to-many and many-to-one relations b
 		occupants: ['person-1']
 	});
 	
-	paul.get('user').get('login'); // 'dude'
+	paul.get('user').get('login'); <span style="color: #008000">// 'dude'</span>
 	
-	paul.get('livesIn'); // a ref to 'ourHouse', which is automatically defined because of the bi-directional HasMany relation on House to Person
+	<span style="color: #008000">// a ref to 'ourHouse', which is automatically defined because of the bi-directional</span>
+	<span style="color: #008000">// HasMany relation on House to Person</span>
+	paul.get('livesIn');
 	
 	paul.get('user').toJSON();
-	/*
-		{
-			email: 'me@gmail.com',
-			id: 'user-1',
-			login: 'dude',
-			person: {
-				id: 'person-1',
-				name: 'Paul',
-				livesIn: {
-					id: "house-1",	
-					location: "in the middle of the street",
-					occupants: ["person-1"]
-				},
-				user: 'user-1'
+		<div style="color: #008000">
+		/* result:
+			{
+				email: 'me@gmail.com',
+				id: 'user-1',
+				login: 'dude',
+				person: {
+					id: 'person-1',
+					name: 'Paul',
+					livesIn: {
+						id: "house-1",	
+						location: "in the middle of the street",
+						occupants: ["person-1"] // not serialized because 'includeInJSON' is false
+					},
+					user: 'user-1' // not serialized again, as that would create a loop
+				}
 			}
-		}
-	*/
+		*/
+		</div>
 	
-	// New events to listen to additions/removals on the 'occupants' collection
+	<span style="color: #008000">// New events to listen to additions/removals on the 'occupants' collection</span>
 	ourHouse.bind( 'add:occupants', function( model, coll ) {
-			// create a View?
+			<span style="color: #008000">// create a View?</span>
+			console.debug( 'add %o', model );
 		});
 	ourHouse.bind( 'remove:occupants', function( model, coll ) {
-			// destroy a View?
+			<span style="color: #008000">// destroy a View?</span>
+			console.debug( 'remove %o', model );
 		});
 	
-	ourHouse.get('occupants').remove( paul.id ); // we just made paul homeless..
+	paul.bind( 'change:livesIn', function( model, coll ) {
+			console.debug( 'change to %o', model );
+		});
 	
-	paul.get('livesIn'); // see? 'null'.
+	<span style="color: #008000">// Make paul homeless; triggers 'remove:occupants' on ourHouse, and 'change:livesIn' on paul</span>
+	ourHouse.get('occupants').remove( paul.id ); 
+	
+	paul.get('livesIn'); <span style="color: #008000">// yup; nothing.</span>
+	
+	<span style="color: #008000">// Move back in; triggers 'add:occupants' on ourHouse, and 'change:livesIn on paul</span>
+	paul.set( { 'livesIn': 'house-1' } );
 
 	
 This required the following relations and models:
 
 
 	House = Backbone.RelationalModel.extend({
-		// The `relations` property, on the House's prototype. Initialized separately for each instance of House.
+		// The 'relations' property, on the House's prototype. Initialized separately for each instance of House.
 		// Each relation must define (as a minimum) the 'type', 'key' and 'relatedModel'. Options are
-		// `includeInJSON`, `createModels` and `reverseRelation`, which takes the same options as the relation itself.
+		// 'includeInJSON', 'createModels' and 'reverseRelation', which takes the same options as the relation itself.
 		relations: [
 			{
 				type: Backbone.HasMany, // Use the type, or the string 'HasOne' or 'HasMany'.
