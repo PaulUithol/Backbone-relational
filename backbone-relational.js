@@ -1,5 +1,5 @@
-/**
- * Backbone-relational.js 0.1
+/**	
+ * Backbone-relational.js 0.2
  * (c) 2011 Paul Uithol
  *
  * For all details and documentation: https://github.com/PaulUithol/Backbone-relational
@@ -8,22 +8,24 @@
 	var Backbone = window.Backbone;
 	
 	Backbone.Lock = {
-		_synchronize: false,
+		_synchronize: 0,
 		
 		lock: function() {
-			if ( this._synchronize ) {
-				throw new Error('Object is locked');
-			}
-			
-			this._synchronize = true;
+			this._synchronize++;
 		},
 		
 		unlock: function() {
-			this._synchronize = false;
+			if ( this._synchronize === 0 ) {
+				console && console.error( 'Object=%o is already unlocked', this );
+				throw new Error('Object is already unlocked');
+			}
+			else {
+				this._synchronize--;
+			}
 		},
 		
 		isLocked: function() {
-			return this._synchronize;
+			return this._synchronize > 0;
 		}
 	};
 	
@@ -78,7 +80,6 @@
 			var coll = this.getCollection( relation.model );
 			
 			coll.each( function( model ) {
-				//console.debug( 'retroFitting autoRelation rel=%o to model=%o', relation, model );
 				new relation.type( model, relation );
 			}, this);
 		},
@@ -148,6 +149,8 @@
 	Backbone.store = new Backbone.Store();
 	
 	/**
+	 * The main Relation class, from which 'HasOne' and 'HasMany' inherit.
+	 * @param {Backbone.RelationalModel} instance
 	 * @param {object} options.
 	 *  Required properties:
 	 *    - {Backbone.RelationalModel} instance
@@ -165,11 +168,9 @@
 		
 		// Make sure 'options' is sane, and fill with defaults from subclasses and this object's prototype
 		options = ( typeof options === 'object' && options ) || {};
-		
 		this.reverseRelation = _.defaults( options.reverseRelation || {}, this.options.reverseRelation );
-		this.reverseRelation.type = this.reverseRelation && this.reverseRelation.type &&
+		this.reverseRelation.type = this.reverseRelation.type &&
 			( _.isString( this.reverseRelation.type ) ? Backbone[ this.reverseRelation.type ] : this.reverseRelation.type );
-		
 		this.options = _.defaults( options, this.options, Backbone.Relation.prototype.options );
 		
 		this.key = this.options.key;
@@ -183,10 +184,8 @@
 			return false;
 		}
 		
-		// Set up the reverse relationship on 'relatedModel' if a 'reverseRelation' is specified
-		// (and 'relatedModel' and 'reverseRelation.type' are valid)
-		if ( !this.options.isAutoRelation && this.reverseRelation && this.reverseRelation.key
-				&& this.reverseRelation.type instanceof Backbone.Relation.constructor ) {
+		// Set up the reverse relationship on 'relatedModel' if a 'reverseRelation' is specified (and 'reverseRelation.key' is valid)
+		if ( !this.options.isAutoRelation && this.reverseRelation && this.reverseRelation.key ) {
 			var relation = {
 				isAutoRelation: true,
 				model: this.relatedModel,
@@ -217,14 +216,14 @@
 		
 		// When 'relatedModel' are created or destroyed, check if it affects this relation.
 		Backbone.store.getCollection( this.relatedModel )
-			.bind( 'add', function( model, coll ) {
+			.bind( 'add', function( model, coll, options ) {
 					// Wait until the relations on the new model are set up properly
 					dit.instance.queue( function() {
-						dit.tryAddRelated( model );
+						dit.tryAddRelated( model, options );
 					});
 				})
-			.bind( 'remove', function( model, coll ) {
-					dit.removeRelated( model );
+			.bind( 'remove', function( model, coll, options ) {
+					dit.removeRelated( model, options );
 				});
 		
 		this.initialize( this.options );
@@ -232,7 +231,7 @@
 	// Fix inheritance :\
 	Backbone.Relation.extend = Backbone.Model.extend;
 	
-	// Set up all inheritable **Backbone.Store** properties and methods.
+	// Set up all inheritable **Backbone.Relation** properties and methods.
 	_.extend( Backbone.Relation.prototype, Backbone.Events, Backbone.Lock, {
 		options: {
 			createModels: true,
@@ -251,9 +250,12 @@
 		
 		related: null,
 		
-		// Initialize is an empty function by default. Override it with your own
-		// initialization logic.
+		// Overridden functions per relation type.
 		initialize: function() {},
+		findRelated: function() {},
+		tryAddRelated: function( model, options ) {},
+		addRelated: function( model, options ) {},
+		removeRelated: function( model, options ) {},
 		
 		/**
 		 * Check several pre-conditions.
@@ -264,19 +266,16 @@
 				console && console.warn( 'No instance, key or relatedModel (%o, %o, %o)', instance, key, relatedModel );
 				return false;
 			}
-			
 			// Check if 'instance' is a Backbone.RelationalModel
 			if ( !( instance instanceof Backbone.RelationalModel ) ) {
 				console && console.warn( 'instance is not a Backbone.RelationalModel (%o)', instance );
 				return false;
 			}
-			
 			// Check if the type in 'relatedModel' inherits from Backbone.Model
 			if ( !( relatedModel instanceof Backbone.RelationalModel.constructor ) ) {
 				console && console.warn( 'relatedModel does not inherit from Backbone.RelationalModel (%o)', relatedModel );
 				return false;
 			}
-			
 			// Check if we're not attempting to create a relationship twice (from two sides)
 			if ( instance._relations && instance._relations.length ) {
 				var exists = _.any( instance._relations, function( rel ) {
@@ -289,7 +288,6 @@
 					return false;
 				}
 			}
-			
 			return true;
 		},
 		
@@ -297,9 +295,9 @@
 			this.related = related;
 			var value = {};
 			value[ this.key ] = related;
-			this.instance._synchronize = true;
+			this.instance.lock();
 			this.instance.set( value, _.defaults( options || {}, { silent: true } ) );
-			this.instance._synchronize = false;
+			this.instance.unlock();
 		},
 		
 		/**
@@ -333,12 +331,6 @@
 			return reverseRelations;
 		},
 		
-		findRelated: function() {},
-		
-		tryAddRelated: function( model ) {},
-		addRelated: function( model ) {},
-		removeRelated: function( model ) {},
-		
 		// Cleanup. Get reverse relation, call removeRelated
 		destroy: function() {
 			_.each( this.getReverseRelations(), function( relation ) {
@@ -354,20 +346,18 @@
 		
 		initialize: function( options ) {
 			_.bindAll( this, 'onChange' );
-			
-			// If the key is changed, notify reverse relations and initialize the new relation
 			this.instance.bind( 'change:' + this.key, this.onChange );
+			this.instance.bind( 'silentChange:' + this.key, this.onChange );
 			
 			var model = this.findRelated();
 			this.setRelated( model );
 			
-			// Notify new 'related' object of the new relation.
-			// Deferred to allow other Relations on 'this.instance' to set up before
-			// notifiying related models, which can expect them to be present.
+			// Notify new 'related' object of the new relation. Queued to allow other Relations on
+			// 'this.instance' to set up before notifiying related models, which can expect them to be present.
 			var dit = this;
 			this.instance.queue( function() {
 				_.each( dit.getReverseRelations(), function( relation ) {
-						relation.addRelated( dit.instance );
+						relation.addRelated( dit.instance, {} );
 					} );
 				});
 		},
@@ -389,6 +379,9 @@
 			return model;
 		},
 		
+		/**
+		 * If the key is changed, notify old & new reverse relations and initialize the new relation
+		 */
 		onChange: function( model, attr, options ) {
 			if ( this.isLocked() ) {
 				return;
@@ -420,20 +413,20 @@
 			if ( oldRelated && this.related !== oldRelated ) {
 				// Notify old 'related' object of the terminated relation
 				_.each( this.getReverseRelations( oldRelated ), function( relation ) {
-						relation.removeRelated( this.instance );
+						relation.removeRelated( this.instance, options );
 					}, this );
 			}
 			
 			// Notify new 'related' object of the new relation. Note we do re-apply even if this.related === oldRelated;
-			// that can be necessary if this.instance was created after this.related. In that case, this.instance
-			// will already know this.related, but the reverse might not exist yet.
+			// that can be necessary for bi-directional relations if 'this.instance' was created after 'this.related'.
+			// In that case, 'this.instance' will already know 'this.related', but the reverse might not exist yet.
 			_.each( this.getReverseRelations(), function( relation ) {
-					relation.addRelated( this.instance );
+					relation.addRelated( this.instance, options );
 				}, this);
 			
-			// 'options.related' is set by 'addRelated'/'removeRelated'; if present, a change
-			// event hasn't been fired yet. Do it now. Prevent a loop (calling ourselves) by synchronizing on _synchronize.
-			if ( !changed && !options.silent ) {
+			// 'options.related' is set by 'addRelated'/'removeRelated'; if present, a change event
+			// hasn't been fired yet. Do it now. Prevent a loop (calling ourselves) by locking 'this.instance'.
+			if ( !changed && !options.silentChange ) {
 				this.lock();
 				this.instance.trigger( 'change:' + this.key, this.instance, this.related, options );
 				this.instance._isInitialized && this.instance.change( options );
@@ -445,7 +438,7 @@
 		 * If a new 'this.relatedModel' appears in Backbone.store, try to match it to the original
 		 * contents of the key on 'this.instance'.
 		 */
-		tryAddRelated: function( model ) {
+		tryAddRelated: function( model, options ) {
 			if ( this.related ) {
 				return;
 			}
@@ -459,7 +452,7 @@
 			}
 		},
 		
-		addRelated: function( model ) {
+		addRelated: function( model, options ) {
 			if ( model !== this.related ) {
 				var oldRelated = this.related || null;
 				this.setRelated( model );
@@ -467,7 +460,7 @@
 			}
 		},
 		
-		removeRelated: function( model ) {
+		removeRelated: function( model, options ) {
 			if ( !this.related ) {
 				return;
 			}
@@ -487,36 +480,9 @@
 		
 		initialize: function( options ) {
 			var dit = this;
-			_.bindAll( this, 'handleAddition', 'handleRemoval' );
-			
-			// If the key is changed, notify reverse relations and initialize the new relation
-			this.instance.bind( 'change:' + this.key, function( model, attr ) {
-				dit.keyContents = attr;
-				
-				// Notify old 'related' object of the terminated relation
-				_.each( dit.getReverseRelations(), function( relation ) {
-						relation.removeRelated( dit.instance );
-					});
-				
-				dit.related.unbind( 'add', this.handleAddition );
-				dit.related.unbind('remove', this.handleRemoval );
-				
-				// Set new 'related'
-				if ( attr instanceof Backbone.Collection ) {
-					dit.related = attr;
-					dit.related.bind( 'add', dit.handleAddition );
-					dit.related.bind('remove', dit.handleRemoval );
-				}
-				else {
-					dit.setRelated( dit.getNewCollection() );
-					dit.findRelated();
-				}
-				
-				// Notify new 'related' object of the new relation
-				_.each( dit.getReverseRelations(), function( relation ) {
-						relation.addRelated( dit.instance );
-					});
-			});
+			_.bindAll( this, 'onChange', 'handleAddition', 'handleRemoval' );
+			this.instance.bind( 'change:' + this.key, this.onChange );
+			this.instance.bind( 'silentChange:' + this.key, this.onChange );
 			
 			this.setRelated( this.getNewCollection() );
 			this.findRelated();
@@ -553,6 +519,37 @@
 			}
 		},
 		
+		/**
+		 * If the key is changed, notify old & new reverse relations and initialize the new relation
+		 */
+		onChange: function( model, attr, options ) {
+			this.keyContents = attr;
+			
+			// Notify old 'related' object of the terminated relation
+			_.each( this.getReverseRelations(), function( relation ) {
+					relation.removeRelated( this.instance, options );
+				}, this );
+			
+			this.related.unbind( 'add', this.handleAdthision );
+			this.related.unbind('remove', this.handleRemoval );
+			
+			// Set new 'related'
+			if ( attr instanceof Backbone.Collection ) {
+				this.related = attr;
+				this.related.bind( 'add', this.handleAdthision );
+				this.related.bind('remove', this.handleRemoval );
+			}
+			else {
+				this.setRelated( this.getNewCollection() );
+				this.findRelated();
+			}
+			
+			// Notify new 'related' object of the new relation
+			_.each( this.getReverseRelations(), function( relation ) {
+					relation.addRelated( this.instance, options );
+				}, this );
+		},
+		
 		tryAddRelated: function( model ) {
 			if ( !this.related.getByCid( model ) && !this.related.get( model ) ) {
 				// Check if this new model was specified in 'this.keyContents'
@@ -571,18 +568,17 @@
 		 * When a model is added to a 'HasMany', trigger 'add' on 'this.instance' and notify reverse relations.
 		 * (should be 'HasOne', must set 'this.instance' as their related).
 		 */
-		handleAddition: function( model, options ) {
+		handleAddition: function( model, coll, options ) {
 			options = options || {};
-			//console.debug( 'handleAddition to key=%s, model=%o', this.key, model );
 			var dit = this;
 			this.instance.queue( function() {
 				_.each( dit.getReverseRelations( model ), function( relation ) {
-						relation.addRelated( dit.instance );
+						relation.addRelated( dit.instance, options );
 					}, dit );
 				
 				// Only trigger 'add' once the newly added model is initialized (so, has it's relations set up)
 				model.queue( function() {
-					!options.silent && dit.instance.trigger( 'add:' + dit.key, model, dit.related );
+					!options.silentChange && dit.instance.trigger( 'add:' + dit.key, model, dit.related, options );
 				});
 			});
 		},
@@ -591,25 +587,24 @@
 		 * When a model is removed from a 'HasMany', trigger 'remove' on 'this.instance' and notify reverse relations.
 		 * (should be 'HasOne', which should be nullified)
 		 */
-		handleRemoval: function( model, options ) {
+		handleRemoval: function( model, coll, options ) {
 			options = options || {};
-			//console.debug( 'handleRemoval to key=%s, model=%o', this.key, model );
-			!options.silent && this.instance.trigger( 'remove:' + this.key, model, this.related );
+			!options.silentChange && this.instance.trigger( 'remove:' + this.key, model, this.related, options );
 			
 			_.each( this.getReverseRelations( model ), function( relation ) {
-					relation.removeRelated( this.instance );
+					relation.removeRelated( this.instance, options );
 				}, this );
 		},
 		
-		addRelated: function( model ) {
+		addRelated: function( model, options ) {
 			if ( !this.related.getByCid( model ) && !this.related.get( model.id ) ) {
-				this.related.add( model );
+				this.related.add( model, options );
 			}
 		},
 		
-		removeRelated: function( model ) {
+		removeRelated: function( model, options ) {
 			if ( this.related.getByCid( model ) || this.related.get( model.id ) ) {
-				this.related.remove( model );
+				this.related.remove( model, options );
 			}
 		}
 	});
@@ -634,7 +629,6 @@
 		 */
 		initializeRelations: function() {
 			this.lock(); // Lock; setting up relations often also involve calls to 'set'
-			this._queue = [];
 			Backbone.store.register( this );
 			
 			_.each( this.relations, function( rel ) {
@@ -645,10 +639,11 @@
 			}, this );
 			
 			// Process queue
-			while ( this._queue.length ) {
+			while ( this._queue && this._queue.length ) {
 				this._queue.shift()();
 			}
 			
+			this._isInitialized = true;
 			this.unlock();
 		},
 		
@@ -656,6 +651,7 @@
 		 * Either add to the queue (if 'this.instance' isn't initialized yet, or execute right away.
 		 */
 		queue: function( func ) {
+			this._queue = this._queue || [];
 			if ( !this._isInitialized ) {
 				this._queue.push( func );
 			}
@@ -671,14 +667,26 @@
 		set: function( attributes, options ) {
 			var result = Backbone.Model.prototype.set.apply( this, arguments );
 			
-			// 'set' is called in Backbone.Model.prototype.constructor, before 'initialize' is called
-			// and before 'previousAttributes' is created; '_changed' is also reset right after 'set'.
-			// Ideal place to set up relations :)
-			// (btw: can't use '_relations' to check if relations are initialized because a reverse relation
-			// may have been created on this model separately.)
+			// Do notify this model's relations, even (especially :) ) if options.silent is set.
+			// Relation.setRelated locks this model to prevent loops; this whole thing is a bit of a hack.. 
+			if( this._changed && options.silent && !this.isLocked() && this._relations ) {
+				// Remove options.silent, to make sure add/remove events propagate properly in HasMany
+				// relations from 'addRelated'->'handleAddition'
+				options.silentChange = options.silent;
+				delete options.silent;
+				
+				var changed = this.changedAttributes();
+				_.each( changed, function( val, key ) {
+					this.trigger('silentChange:' + key, this, val, options );
+				}, this );
+			}
+			
+			// 'set' is called in Backbone.Model.prototype.constructor, before 'initialize'; '_changed'
+			// is reset right after 'set'. Ideal place to set up relations :)
+			// (btw: '_relations' can't be used to check if relations are initialized since a reverse relation
+			// may have been created on this model already)
 			if ( !this._isInitialized && !this.isLocked() && this.relations ) {
 				this.initializeRelations();
-				this._isInitialized = true;
 			}
 			
 			return result;
