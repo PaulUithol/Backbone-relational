@@ -20,14 +20,13 @@ Backbone-relational provides one-to-one, one-to-many and many-to-one relations b
 		occupants: ['person-1']
 	});
 	
-	paul.get('user').get('login'); <span style="color: #008000">// 'dude'</span>
+	paul.get('user').get('login'); // 'dude'
 	
-	<span style="color: #008000">// a ref to 'ourHouse', which is automatically defined because of the bi-directional</span>
-	<span style="color: #008000">// HasMany relation on House to Person</span>
+	// a ref to 'ourHouse', which is automatically defined because of the bi-directional
+	// HasMany relation on House to Person</span>
 	paul.get('livesIn');
 	
 	paul.get('user').toJSON();
-		<div style="color: #008000">
 		/* result:
 			{
 				email: 'me@gmail.com',
@@ -45,15 +44,14 @@ Backbone-relational provides one-to-one, one-to-many and many-to-one relations b
 				}
 			}
 		*/
-		</div>
 	
-	<span style="color: #008000">// New events to listen to additions/removals on the 'occupants' collection</span>
+	// New events to listen to additions/removals on the 'occupants' collection
 	ourHouse.bind( 'add:occupants', function( model, coll ) {
-			<span style="color: #008000">// create a View?</span>
+			// create a View?
 			console.debug( 'add %o', model );
 		});
 	ourHouse.bind( 'remove:occupants', function( model, coll ) {
-			<span style="color: #008000">// destroy a View?</span>
+			// destroy a View?
 			console.debug( 'remove %o', model );
 		});
 	
@@ -61,12 +59,12 @@ Backbone-relational provides one-to-one, one-to-many and many-to-one relations b
 			console.debug( 'change to %o', model );
 		});
 	
-	<span style="color: #008000">// Make paul homeless; triggers 'remove:occupants' on ourHouse, and 'change:livesIn' on paul</span>
+	// Make paul homeless; triggers 'remove:occupants' on ourHouse, and 'change:livesIn' on paul
 	ourHouse.get('occupants').remove( paul.id ); 
 	
-	paul.get('livesIn'); <span style="color: #008000">// yup; nothing.</span>
+	paul.get('livesIn'); // yup; nothing.
 	
-	<span style="color: #008000">// Move back in; triggers 'add:occupants' on ourHouse, and 'change:livesIn on paul</span>
+	// Move back in; triggers 'add:occupants' on ourHouse, and 'change:livesIn on paul
 	paul.set( { 'livesIn': 'house-1' } );
 
 	
