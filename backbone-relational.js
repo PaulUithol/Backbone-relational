@@ -198,11 +198,12 @@
 		// When 'relatedModel' are created or destroyed, check if it affects this relation.
 		Backbone.store.getCollection( this.relatedModel )
 			.bind( 'add', function( model, coll ) {
-					//console.debug( 'adding model=%o to coll=%o', model, coll );
-					dit.tryAddRelated( model );
+					// Wait until the relations on the new model are set up properly
+					dit.instance.queue( function() {
+						dit.tryAddRelated( model );
+					});
 				})
 			.bind( 'remove', function( model, coll ) {
-					//console.debug( 'removing model=%o from coll=%o', model, coll );
 					dit.removeRelated( model );
 				});
 		
@@ -340,10 +341,15 @@
 			var model = this.findRelated();
 			this.setRelated( model );
 			
-			// Notify new 'related' object of the new relation
-			_.each( this.getReverseRelations(), function( relation ) {
-					relation.addRelated( this.instance );
-				}, this );
+			// Notify new 'related' object of the new relation.
+			// Deferred to allow other Relations on 'this.instance' to set up before
+			// notifiying related models, which can expect them to be present.
+			var dit = this;
+			this.instance.queue( function() {
+				_.each( dit.getReverseRelations(), function( relation ) {
+						relation.addRelated( dit.instance );
+					} );
+				});
 		},
 		
 		findRelated: function() {
@@ -410,6 +416,7 @@
 			if ( !changed ) {
 				this._synchronize = true;
 				this.instance.trigger( 'change:' + this.key, this.instance, this.related );
+				this.instance._isInitialized && this.instance.change();
 				this._synchronize = false;
 			}
 		},
@@ -491,7 +498,6 @@
 					});
 			});
 			
-			
 			this.setRelated( this.getNewCollection() );
 			this.findRelated();
 		},
@@ -542,40 +548,46 @@
 		},
 		
 		/**
-		 * When a model is added to a 'HasMany', a reverse 'HasOne' relation should be set to 'model'.
-		 * Call 'addRelated' to add 'model' to related model
+		 * When a model is added to a 'HasMany', trigger 'add' on 'this.instance' and notify reverse relations.
+		 * (should be 'HasOne', must set 'this.instance' as their related).
 		 */
 		handleAddition: function( model ) {
 			//console.debug( 'handleAddition to key=%s, model=%o', this.key, model );
-			_.each( this.getReverseRelations( model ), function( relation ) {
-					relation.addRelated( this.instance );
-				}, this );
-			this.instance._changed = true;
+			var dit = this;
+			this.instance.queue( function() {
+				_.each( dit.getReverseRelations( model ), function( relation ) {
+						relation.addRelated( dit.instance );
+					}, dit );
+				
+				// Only trigger 'add' once the newly added model is initialized (so, has it's relations set up)
+				model.queue( function() {
+					dit.instance.trigger( 'add:' + dit.key, model, dit.related );
+				});
+			});
 		},
 		
 		/**
-		 * When a model is removed from a 'HasMany', a reverse 'HasOne' relation should be nullified.
-		 * Call 'removeRelated' to remove 'model' from related model
+		 * When a model is removed from a 'HasMany', trigger 'remove' on 'this.instance' and notify reverse relations.
+		 * (should be 'HasOne', which should be nullified)
 		 */
 		handleRemoval: function( model ) {
 			//console.debug( 'handleRemoval to key=%s, model=%o', this.key, model );
+			this.instance.trigger( 'remove:' + this.key, model, this.related );
+			
 			_.each( this.getReverseRelations( model ), function( relation ) {
 					relation.removeRelated( this.instance );
 				}, this );
-			this.instance._changed = true;
 		},
 		
 		addRelated: function( model ) {
-			//console.debug( 'addRelated=%o', model );
 			if ( !this.related.getByCid( model ) && !this.related.get( model.id ) ) {
-				this.related.add( model, { silent: true } );
+				this.related.add( model );
 			}
 		},
 		
 		removeRelated: function( model ) {
-			//console.debug( 'removeRelated=%o', model );
 			if ( this.related.getByCid( model ) || this.related.get( model.id ) ) {
-				this.related.remove( model, { silent: true } );
+				this.related.remove( model );
 			}
 		}
 	});
@@ -589,6 +601,7 @@
 		
 		// Used for locking and loop detection in serialization
 		_synchronize: false,
+		_queue: null,
 		
 		/**
 		 * Initialize Relations present in this.relations; determine the type (HasOne/HasMany), then create a new instance.
@@ -596,6 +609,7 @@
 		 */
 		initializeRelations: function() {
 			this._synchronize = true; // Lock; setting up relations often also involve calls to 'set'
+			this._queue = [];
 			Backbone.store.register( this );
 			
 			_.each( this.relations, function( rel ) {
@@ -605,7 +619,24 @@
 				}
 			}, this );
 			
+			// Process queue
+			while ( this._queue.length ) {
+				this._queue.shift()();
+			}
+			
 			this._synchronize = false;
+		},
+		
+		/**
+		 * Either add to the queue (if 'this.instance' isn't initialized yet, or execute right away.
+		 */
+		queue: function( func ) {
+			if ( !this._isInitialized ) {
+				this._queue.push( func );
+			}
+			else {
+				func();
+			}
 		},
 		
 		getRelations: function() {

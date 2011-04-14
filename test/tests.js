@@ -185,7 +185,6 @@ $(document).ready(function() {
 			ok( !house, houseId + " is not found in the store anymore" );
 		});
 		
-		
 	module("Backbone.RelationalModel");
 	
 	
@@ -215,6 +214,12 @@ $(document).ready(function() {
 		});
 		
 	module("Backbone.HasOne");
+		
+		
+		test("Persons are set up properly", function() {
+			ok( person1.get('likesALot') === person2 );
+			ok( person2.get('likesALot') === person1 );
+		});
 		
 		
 	module("Backbone.HasMany");
