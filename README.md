@@ -54,8 +54,8 @@ Backbone-relational provides one-to-one, one-to-many and many-to-one relations b
 			console.debug( 'remove %o', model );
 		});
 	
-	paul.bind( 'change:livesIn', function( model, coll ) {
-			console.debug( 'change to %o', model );
+	paul.bind( 'change:livesIn', function( model, attr ) {
+			console.debug( 'change to %o', attr );
 		});
 	
 	// Make paul homeless; triggers 'remove:occupants' on ourHouse, and 'change:livesIn' on paul

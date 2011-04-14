@@ -70,58 +70,64 @@ $(document).ready(function() {
 			}]
 	});
 	
-	
-	person1 = new Person({
-		id: 'person-1',
-		name: 'boy',
-		likesALot: 'person-2',
-		cats: [],
-		resource_uri: 'person-1',
-		user: { id: 'user-1', login: 'dude', email: 'me@gmail.com', resource_uri: 'user-1' }
-	});
-	
-	person2 = new Person({
-		id: 'person-2',
-		name: 'girl',
-		likesALot: 'person-1',
-		cats: [ 'cat-1', 'cat-2' ],
-		resource_uri: 'person-2'
-	});
-	
-	cat1 = new Cat({
-		id: 'cat-1',
-		name: 'E',
-		owner: 'person-2',
-		resource_uri: 'cat-1',
-		likes: [ 'person-1', 'person-2' ]
-	});
-	
-	cat2 = new Cat({
-		id: 'cat-2',
-		name: 'L',
-		owner: 'person-2',
-		resource_uri: 'cat-2',
-		likes: [ 'person-2' ]
-	});
-	
-	ourHouse = new House({
-		id: 'house-1',
-		location: 'in the middle of the street',
-		occupants: ['person-2'],
-		resource_uri: 'house-1'
-	});
-	
-	theirHouse = new House({
-		id: 'house-2',
-		location: 'outside of town',
-		occupants: [],
-		resource_uri: 'house-2'
-	});
+	function initObjects() {
+		// save _autoRelations, otherwise we'll get a lot of warnings about existing relations
+		var oldAutoRelations = Backbone.store._autoRelations;
+		Backbone.store = new Backbone.Store();
+		Backbone.store._autoRelations = oldAutoRelations;
+		
+		person1 = new Person({
+			id: 'person-1',
+			name: 'boy',
+			likesALot: 'person-2',
+			cats: [],
+			resource_uri: 'person-1',
+			user: { id: 'user-1', login: 'dude', email: 'me@gmail.com', resource_uri: 'user-1' }
+		});
+		
+		person2 = new Person({
+			id: 'person-2',
+			name: 'girl',
+			likesALot: 'person-1',
+			cats: [ 'cat-1', 'cat-2' ],
+			resource_uri: 'person-2'
+		});
+		
+		cat1 = new Cat({
+			id: 'cat-1',
+			name: 'E',
+			owner: 'person-2',
+			resource_uri: 'cat-1',
+			likes: [ 'person-1', 'person-2' ]
+		});
+		
+		cat2 = new Cat({
+			id: 'cat-2',
+			name: 'L',
+			owner: 'person-2',
+			resource_uri: 'cat-2',
+			likes: [ 'person-2' ]
+		});
+		
+		ourHouse = new House({
+			id: 'house-1',
+			location: 'in the middle of the street',
+			occupants: ['person-2'],
+			resource_uri: 'house-1'
+		});
+		
+		theirHouse = new House({
+			id: 'house-2',
+			location: 'outside of town',
+			occupants: [],
+			resource_uri: 'house-2'
+		});
+	}
 	
 	//console.debug( 'ourHouse=%o, person1=%o, person2=%o, cat1=%o, cat2=%o', ourHouse, person1, person2, cat1, cat2 );
 
 	
-	module("Backbone.Store");
+	module("Backbone.Store", { setup: initObjects } );
 	
 	
 		test("Initialized", function() {
@@ -185,7 +191,7 @@ $(document).ready(function() {
 			ok( !house, houseId + " is not found in the store anymore" );
 		});
 		
-	module("Backbone.RelationalModel");
+	module("Backbone.RelationalModel", { setup: initObjects } );
 	
 	
 		test("IncludeInJSON: Person to JSON", function() {
@@ -213,7 +219,7 @@ $(document).ready(function() {
 			ok( result === person, "Destroy returns the model" );
 		});
 		
-	module("Backbone.HasOne");
+	module("Backbone.HasOne", { setup: initObjects } );
 		
 		
 		test("Persons are set up properly", function() {
@@ -222,10 +228,51 @@ $(document).ready(function() {
 		});
 		
 		
-	module("Backbone.HasMany");
+	module("Backbone.HasMany", { setup: initObjects } );
 		
 		
-	module("Reverse relationships");
+		test("Listeners on 'add'/'remove'", function() {
+			expect( 7 );
+			
+			ourHouse
+				.bind( 'add:occupants', function( model, coll ) {
+						ok( model === person1, "model === person1" );
+					})
+				.bind( 'remove:occupants', function( model, coll ) {
+						ok( model === person1, "model === person1" );
+					});
+				
+			theirHouse
+				.bind( 'add:occupants', function( model, coll ) {
+						ok( model === person1, "model === person1" );
+					})
+				.bind( 'remove:occupants', function( model, coll ) {
+						ok( model === person1, "model === person1" );
+					});
+			
+			var count = 0;
+			person1.bind( 'change:livesIn', function( model, attr ) {
+					console.debug( 'livesIn=%o', attr );
+					if ( count === 0 ) {
+						ok( attr === ourHouse, "model === ourHouse" );
+					}
+					else if ( count === 1 ) {
+						ok( attr === theirHouse, "model === theirHouse" );
+					}
+					else if ( count === 2 ) {
+						ok( attr === null, "model === null" );
+					}
+					
+					count++;
+				});
+			
+			ourHouse.get('occupants').add( person1 );
+			person1.set( { 'livesIn': theirHouse } );
+			theirHouse.get('occupants').remove( person1 );
+		});
+		
+		
+	module("Reverse relationships", { setup: initObjects } );
 	
 		
 		test("Add", function() {
