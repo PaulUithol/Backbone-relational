@@ -45,16 +45,16 @@ Backbone-relational provides one-to-one, one-to-many and many-to-one relations b
 		*/
 	
 	// New events to listen to additions/removals on the 'occupants' collection
-	ourHouse.bind( 'add:occupants', function( model, coll ) {
+	ourHouse.bind( 'add:occupants', function( model, coll ) ) {
 			// create a View?
 			console.debug( 'add %o', model );
 		});
-	ourHouse.bind( 'remove:occupants', function( model, coll ) {
+	ourHouse.bind( 'remove:occupants', function( model, coll ) ) {
 			// destroy a View?
 			console.debug( 'remove %o', model );
 		});
 	
-	paul.bind( 'change:livesIn', function( model, coll ) {
+	paul.bind( 'change:livesIn', function( model, coll ) ) {
 			console.debug( 'change to %o', model );
 		});
 	
