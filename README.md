@@ -20,7 +20,7 @@ Backbone-relational provides one-to-one, one-to-many and many-to-one relations b
 		occupants: ['person-1']
 	});
 	
-	paul.get('user').get('login'); // 'dude'
+	paul.get('user').get('login'); // A User object is automatically created from the JSON; so 'login' returns 'dude'
 	
 	// a ref to 'ourHouse', which is automatically defined because of the bi-directional HasMany relation on House to Person
 	paul.get('livesIn');
