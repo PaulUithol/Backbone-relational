@@ -7,6 +7,26 @@
 (function( window ) {
 	var Backbone = window.Backbone;
 	
+	Backbone.Lock = {
+		_synchronize: false,
+		
+		lock: function() {
+			if ( this._synchronize ) {
+				throw new Error('Object is locked');
+			}
+			
+			this._synchronize = true;
+		},
+		
+		unlock: function() {
+			this._synchronize = false;
+		},
+		
+		isLocked: function() {
+			return this._synchronize;
+		}
+	};
+	
 	/**
 	 * Backbone.Store keeps track of all created (and destruction of) Backbone.RelationalModel.
 	 * Handles lookup for relations.
@@ -213,14 +233,12 @@
 	Backbone.Relation.extend = Backbone.Model.extend;
 	
 	// Set up all inheritable **Backbone.Store** properties and methods.
-	_.extend(Backbone.Relation.prototype, Backbone.Events, {
+	_.extend( Backbone.Relation.prototype, Backbone.Events, Backbone.Lock, {
 		options: {
 			createModels: true,
 			includeInJSON: true,
 			isAutoRelation: false
 		},
-		
-		_synchronize: false,
 		
 		instance: null,
 		
@@ -279,7 +297,9 @@
 			this.related = related;
 			var value = {};
 			value[ this.key ] = related;
+			this.instance._synchronize = true;
 			this.instance.set( value, _.defaults( options || {}, { silent: true } ) );
+			this.instance._synchronize = false;
 		},
 		
 		/**
@@ -370,7 +390,7 @@
 		},
 		
 		onChange: function( model, attr, options ) {
-			if ( this._synchronize ) {
+			if ( this.isLocked() ) {
 				return;
 			}
 			
@@ -412,12 +432,12 @@
 				}, this);
 			
 			// 'options.related' is set by 'addRelated'/'removeRelated'; if present, a change
-			// event hasn't been fired yet. Do it now, but don't handle it again.
-			if ( !changed ) {
-				this._synchronize = true;
-				this.instance.trigger( 'change:' + this.key, this.instance, this.related );
-				this.instance._isInitialized && this.instance.change();
-				this._synchronize = false;
+			// event hasn't been fired yet. Do it now. Prevent a loop (calling ourselves) by synchronizing on _synchronize.
+			if ( !changed && !options.silent ) {
+				this.lock();
+				this.instance.trigger( 'change:' + this.key, this.instance, this.related, options );
+				this.instance._isInitialized && this.instance.change( options );
+				this.unlock();
 			}
 		},
 		
@@ -551,7 +571,8 @@
 		 * When a model is added to a 'HasMany', trigger 'add' on 'this.instance' and notify reverse relations.
 		 * (should be 'HasOne', must set 'this.instance' as their related).
 		 */
-		handleAddition: function( model ) {
+		handleAddition: function( model, options ) {
+			options = options || {};
 			//console.debug( 'handleAddition to key=%s, model=%o', this.key, model );
 			var dit = this;
 			this.instance.queue( function() {
@@ -561,7 +582,7 @@
 				
 				// Only trigger 'add' once the newly added model is initialized (so, has it's relations set up)
 				model.queue( function() {
-					dit.instance.trigger( 'add:' + dit.key, model, dit.related );
+					!options.silent && dit.instance.trigger( 'add:' + dit.key, model, dit.related );
 				});
 			});
 		},
@@ -570,9 +591,10 @@
 		 * When a model is removed from a 'HasMany', trigger 'remove' on 'this.instance' and notify reverse relations.
 		 * (should be 'HasOne', which should be nullified)
 		 */
-		handleRemoval: function( model ) {
+		handleRemoval: function( model, options ) {
+			options = options || {};
 			//console.debug( 'handleRemoval to key=%s, model=%o', this.key, model );
-			this.instance.trigger( 'remove:' + this.key, model, this.related );
+			!options.silent && this.instance.trigger( 'remove:' + this.key, model, this.related );
 			
 			_.each( this.getReverseRelations( model ), function( relation ) {
 					relation.removeRelated( this.instance );
@@ -592,6 +614,11 @@
 		}
 	});
 	
+	/**
+	 * New events:
+	 *  - 'add:<key>' (model, coll)
+	 *  - 'remove:<key>' (model, coll)
+	 */
 	Backbone.RelationalModel = Backbone.Model.extend({
 		autoSave: false,
 		
@@ -599,8 +626,6 @@
 		_relations: null, // Relation instances
 		_isInitialized: false,
 		
-		// Used for locking and loop detection in serialization
-		_synchronize: false,
 		_queue: null,
 		
 		/**
@@ -608,7 +633,7 @@
 		 * The regular constructor (which fills this.attributes, initialize, etc) hasn't run yet at this time!
 		 */
 		initializeRelations: function() {
-			this._synchronize = true; // Lock; setting up relations often also involve calls to 'set'
+			this.lock(); // Lock; setting up relations often also involve calls to 'set'
 			this._queue = [];
 			Backbone.store.register( this );
 			
@@ -624,7 +649,7 @@
 				this._queue.shift()();
 			}
 			
-			this._synchronize = false;
+			this.unlock();
 		},
 		
 		/**
@@ -651,7 +676,7 @@
 			// Ideal place to set up relations :)
 			// (btw: can't use '_relations' to check if relations are initialized because a reverse relation
 			// may have been created on this model separately.)
-			if ( !this._isInitialized && !this._synchronize && this.relations ) {
+			if ( !this._isInitialized && !this.isLocked() && this.relations ) {
 				this.initializeRelations();
 				this._isInitialized = true;
 			}
@@ -686,7 +711,7 @@
 		 */
 		toJSON: function() {
 			// For loop detection. If this Model has already been serialized in this branch, return to avoid loops
-			if ( this._synchronize ) {
+			if ( this.isLocked() ) {
 				return this.id;
 			}
 			
@@ -696,9 +721,9 @@
 					var value = json[ rel.key ];
 					
 					if ( rel.options.includeInJSON && value && _.isFunction( value.toJSON ) ) {
-						this._synchronize = true;
+						this.lock();
 						json[ rel.key ] = value.toJSON();
-						this._synchronize = false;
+						this.unlock();
 					}
 					else if ( value instanceof Backbone.Collection ) {
 						json[ rel.key ] = value.pluck( value.model.prototype.idAttribute );
@@ -711,4 +736,5 @@
 			return json;
 		}
 	});
+	_.extend( Backbone.RelationalModel.prototype, Backbone.Lock );
 })( this );
