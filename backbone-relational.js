@@ -211,7 +211,7 @@
 		
 		// When an 'instance' is destroyed, check if it is 'this.instance'.
 		Backbone.store.getCollection( this.instance ).bind( 'remove', function( model ) {
-				if ( model === this.instance ) {
+				if ( model === dit.instance ) {
 					dit.destroy();
 				}
 			});
@@ -669,7 +669,7 @@
 		set: function( attributes, options ) {
 			var result = Backbone.Model.prototype.set.apply( this, arguments );
 			
-			// Do notify this model's relations, even (especially :) ) if options.silent is set.
+			// Do notify this model's relations, even if options.silent is set.
 			// Relation.setRelated locks this model to prevent loops; this whole thing is a bit of a hack.. 
 			if( this._changed && options.silent && !this.isLocked() && this._relations ) {
 				// Remove options.silent, to make sure add/remove events propagate properly in HasMany
