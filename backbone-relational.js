@@ -177,11 +177,15 @@
 		this.relatedModel = this.options.relatedModel &&
 			( _.isString( this.options.relatedModel ) ? Backbone.store.getObjectByName( this.options.relatedModel ) : this.options.relatedModel );
 		
-		if ( !this.checkPreconditions( this.instance, this.key, this.relatedModel, this.reverseRelation ) ) {
+		if ( this.checkPreconditions() ) {
+			// Add this Relation to instance._relations
+			this.instance._relations.push( this );
+		}
+		else {
 			return false;
 		}
 		
-		// Set up the reverse relationship on 'relatedModel' if a 'reverseRelation' is specified (and 'reverseRelation.key' is valid)
+		// Initiate the reverse relationship on 'relatedModel' if a 'reverseRelation' is specified (and 'reverseRelation.key' is valid)
 		if ( !this.options.isAutoRelation && this.reverseRelation && this.reverseRelation.key ) {
 			var relation = {
 				isAutoRelation: true,
@@ -198,12 +202,7 @@
 		
 		var dit = this;
 		
-		// Add this Relation to instance._relations, if we're not already in there.
-		if( _.indexOf( this.instance._relations, this ) < 0 ) {
-			this.instance._relations.push( this );
-		}
-		
-		// When an 'instance' is destroyed, check if it is 'this.instance'.
+		// When a model in the store is destroyed, check if it is 'this.instance'.
 		Backbone.store.getCollection( this.instance ).bind( 'remove', function( model ) {
 				if ( model === dit.instance ) {
 					dit.destroy();
@@ -213,7 +212,7 @@
 		// When 'relatedModel' are created or destroyed, check if it affects this relation.
 		Backbone.store.getCollection( this.relatedModel )
 			.bind( 'add', function( model, coll, options ) {
-					// Wait until the relations on the new model are set up properly
+					// Wait until the relations on this instance are set up properly
 					dit.instance.queue( function() {
 						dit.tryAddRelated( model, options );
 					});
@@ -257,36 +256,36 @@
 		 * Check several pre-conditions.
 		 * @return {bool} True if pre-conditions are satisfied, false if they're not.
 		 */
-		checkPreconditions: function( instance, key, relatedModel, reverseRelation ) {
-			if ( !instance || !key || !relatedModel ) {
-				console && console.warn( 'Relation=%o; no instance, key or relatedModel (%o, %o, %o)', this, instance, key, relatedModel );
+		checkPreconditions: function() {
+			if ( !this.instance || !this.key || !this.relatedModel ) {
+				console && console.warn( 'Relation=%o; no instance, key or relatedModel (%o, %o, %o)', this, this.instance, this.key, this.relatedModel );
 				return false;
 			}
 			// Check if 'instance' is a Backbone.RelationalModel
-			if ( !( instance instanceof Backbone.RelationalModel ) ) {
-				console && console.warn( 'Relation=%o; instance is not a Backbone.RelationalModel (%o)', this, instance );
+			if ( !( this.instance instanceof Backbone.RelationalModel ) ) {
+				console && console.warn( 'Relation=%o; instance=%o is not a Backbone.RelationalModel', this, this.instance );
 				return false;
 			}
 			// Check if the type in 'relatedModel' inherits from Backbone.RelationalModel.
-			if ( !( relatedModel.prototype instanceof Backbone.RelationalModel.prototype.constructor ) ) {
+			if ( !( this.relatedModel.prototype instanceof Backbone.RelationalModel.prototype.constructor ) ) {
 				console && console.warn( 'Relation=%o; relatedModel does not inherit from Backbone.RelationalModel (%o)', this, relatedModel );
 				return false;
 			}
 			// Check if this is not a HasMany, and the reverse relation is HasMany as well
 			if ( this instanceof Backbone.HasMany.prototype.constructor
-					&& reverseRelation.type === Backbone.HasMany.prototype.constructor ) {
+					&& this.reverseRelation.type === Backbone.HasMany.prototype.constructor ) {
 				console && console.warn( 'Relation=%o; relation is a HasMany, and the reverseRelation is HasMany as well.', this );
 				return false;
 			}
 			// Check if we're not attempting to create a relationship twice (from two sides)
-			if ( instance._relations && instance._relations.length ) {
-				var exists = _.any( instance._relations, function( rel ) {
-					return rel.instance === instance && rel.relatedModel === relatedModel && rel.key === key;
+			if ( this.instance._relations.length ) {
+				var exists = _.any( this.instance._relations, function( rel ) {
+					return rel.instance === this.instance && rel.relatedModel === this.relatedModel && rel.key === this.key;
 				}, this );
 				
 				if ( exists ) {
 					console && console.warn( 'Relation=%o between instance=%o.%s and relatedModel=%o.%s already exists', this, 
-						instance, key, relatedModel, reverseRelation.key );
+						this.instance, this.key, this.relatedModel, this.reverseRelation.key );
 					return false;
 				}
 			}
@@ -610,8 +609,6 @@
 	 *  - 'remove:<key>' (model, coll)
 	 */
 	Backbone.RelationalModel = Backbone.Model.extend({
-		autoSave: false,
-		
 		relations: null, // Relation descriptions on the prototype
 		_relations: null, // Relation instances
 		_isInitialized: false,
@@ -639,6 +636,7 @@
 				options.collection.bind( 'add', processQueue );
 			}
 			
+			this._queue = [];
 			Backbone.Model.prototype.constructor.apply( this, arguments );
 		},
 		
@@ -649,7 +647,6 @@
 		initializeRelations: function() {
 			this.lock(); // Lock; setting up relations often also involve calls to 'set'
 			this._relations = [];
-			this._queue = [];
 			
 			Backbone.store.register( this );
 			
@@ -724,23 +721,6 @@
 		destroy: function( options ) {
 			Backbone.store.unregister( this );
 			return Backbone.Model.prototype.destroy.call( this, options );
-		},
-		
-		/**
-		 * If this.autoSave is enabled, save when the model is updated
-		 */
-		change: function( options ) {
-			// Because Backbone.sync is overriden to do an extra GET on creation, ignore the cases where
-			// the model is new, and being updated from the server (which should be the only time the 'id' attribute is changed).
-			var doUpdate = !this.isNew() && _.isUndefined( this.changedAttributes()[this.idAttribute] );
-			
-			var result = Backbone.Model.prototype.change.call(this, options);
-			
-			if ( doUpdate && this.autoSave ) {
-				this.save();
-			}
-			
-			return result;
 		},
 		
 		/**
