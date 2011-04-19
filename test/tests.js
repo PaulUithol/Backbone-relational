@@ -94,10 +94,10 @@ $(document).ready(function() {
 	});
 	
 	function initObjects() {
-		// save _autoRelations, otherwise we'll get a lot of warnings about existing relations
-		var oldAutoRelations = Backbone.store._autoRelations;
+		// save _reverseRelations, otherwise we'll get a lot of warnings about existing relations
+		var oldReverseRelations = Backbone.store._reverseRelations;
 		Backbone.store = new Backbone.Store();
-		Backbone.store._autoRelations = oldAutoRelations;
+		Backbone.store._reverseRelations = oldReverseRelations;
 		
 		person1 = new Person({
 			id: 'person-1',

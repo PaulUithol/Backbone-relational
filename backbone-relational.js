@@ -36,44 +36,45 @@
 	 */
 	Backbone.Store =  function() {
 		this._collections = [];
-		this._autoRelations = [];
+		this._reverseRelations = [];
 	};
 	
 	// Set up all inheritable **Backbone.Store** properties and methods.
 	_.extend(Backbone.Store.prototype, Backbone.Events, {
 		_collections: null,
-		_autoRelations: null,
+		_reverseRelations: null,
 		
 		/**
+		 * Add a reverse relation. Is added to the 'relations' property on model's prototype, and to
+		 * existing instances of 'model' in the store.
 		 * @param {object} relation; required properties:
-		 * 	- model
-		 *	- type
-		 *	- key
-		 *	- relatedModel
+		 *  - model, type, key and relatedModel
 		 */
-		addAutoRelation: function( relation ) {
-			var exists = _.any( this._autoRelations, function( rel ) {
+		addReverseRelation: function( relation ) {
+			
+			
+			var exists = _.any( this._reverseRelations, function( rel ) {
 				return _.all( relation, function( val, key ) {
 					return val === rel[ key ];
 				});
 			});
 			
 			if ( !exists && relation.model && relation.type ) {
-				this._autoRelations.push( relation );
+				this._reverseRelations.push( relation );
 				
 				if ( !relation.model.prototype.relations ) {
 					relation.model.prototype.relations = [];
 				}
 				relation.model.prototype.relations.push( relation );
 				
-				this.retroFitAutoRelation( relation );
+				this.retroFitRelation( relation );
 			}
 		},
 		
 		/**
-		 * Add a autoRelation to already existing objects in the store
+		 * Add a 'relation' to all existing instances of 'relation.model' in the store
 		 */
-		retroFitAutoRelation: function( relation ) {
+		retroFitRelation: function( relation ) {
 			var coll = this.getCollection( relation.model );
 			
 			coll.each( function( model ) {
@@ -161,21 +162,23 @@
 	 *        - {string|Backbone.Relation} type: 'HasOne' or 'HasMany'
 	 */
 	Backbone.Relation = function( instance, options ) {
+		var dit = this;
 		this.instance = instance;
 		
 		// Make sure 'options' is sane, and fill with defaults from subclasses and this object's prototype
 		options = ( typeof options === 'object' && options ) || {};
 		this.reverseRelation = _.defaults( options.reverseRelation || {}, this.options.reverseRelation );
-		this.reverseRelation.type = this.reverseRelation.type &&
-			( _.isString( this.reverseRelation.type ) ? Backbone[ this.reverseRelation.type ] : this.reverseRelation.type );
+		this.reverseRelation.type = _.isString( this.reverseRelation.type ) ? Backbone[ this.reverseRelation.type ] : this.reverseRelation.type;
 		this.options = _.defaults( options, this.options, Backbone.Relation.prototype.options );
 		
 		this.key = this.options.key;
 		this.keyContents = this.instance.get( this.key );
 		
 		// 'window' should be the global object where 'relatedModel' can be found on if given as a string.
-		this.relatedModel = this.options.relatedModel &&
-			( _.isString( this.options.relatedModel ) ? Backbone.store.getObjectByName( this.options.relatedModel ) : this.options.relatedModel );
+		this.relatedModel = this.options.relatedModel;
+		if ( _.isString( this.relatedModel ) ) {
+			this.relatedModel = Backbone.store.getObjectByName( this.relatedModel )
+		}
 		
 		if ( this.checkPreconditions() ) {
 			// Add this Relation to instance._relations
@@ -185,22 +188,17 @@
 			return false;
 		}
 		
-		// Initiate the reverse relationship on 'relatedModel' if a 'reverseRelation' is specified (and 'reverseRelation.key' is valid)
-		if ( !this.options.isAutoRelation && this.reverseRelation && this.reverseRelation.key ) {
-			var relation = {
-				isAutoRelation: true,
-				model: this.relatedModel,
-				relatedModel: this.instance.constructor,
-				reverseRelation: this.options
-			};
-			// Add further properties from this.reverseRelations (type, key, etc.)
-			relation = _.defaults( relation, this.reverseRelation );
-			
-			// Add the reverse relation to store.coll.autoRelations.
-			Backbone.store.addAutoRelation( relation );
+		// Add the reverse relation on 'relatedModel' to Backbone.store's reverseRelations
+		if ( !this.options.isAutoRelation && this.reverseRelation.type && this.reverseRelation.key ) {
+			Backbone.store.addReverseRelation( _.defaults( {
+					isAutoRelation: true,
+					model: this.relatedModel,
+					relatedModel: this.instance.constructor,
+					reverseRelation: this.options
+				},
+				this.reverseRelation // Take further properties from this.reverseRelation (type, key, etc.)
+			) );
 		}
-		
-		var dit = this;
 		
 		// When a model in the store is destroyed, check if it is 'this.instance'.
 		Backbone.store.getCollection( this.instance ).bind( 'remove', function( model ) {
@@ -245,47 +243,40 @@
 		
 		related: null,
 		
-		// Overridden functions per relation type.
-		initialize: function() {},
-		findRelated: function() {},
-		tryAddRelated: function( model, options ) {},
-		addRelated: function( model, options ) {},
-		removeRelated: function( model, options ) {},
-		
 		/**
 		 * Check several pre-conditions.
 		 * @return {bool} True if pre-conditions are satisfied, false if they're not.
 		 */
 		checkPreconditions: function() {
-			if ( !this.instance || !this.key || !this.relatedModel ) {
-				console && console.warn( 'Relation=%o; no instance, key or relatedModel (%o, %o, %o)', this, this.instance, this.key, this.relatedModel );
+			var i = this.instance, k = this.key, rm = this.relatedModel;
+			if ( !i || !k || !rm ) {
+				console && console.warn( 'Relation=%o; no instance, key or relatedModel (%o, %o, %o)', this, i, k, rm );
 				return false;
 			}
 			// Check if 'instance' is a Backbone.RelationalModel
-			if ( !( this.instance instanceof Backbone.RelationalModel ) ) {
-				console && console.warn( 'Relation=%o; instance=%o is not a Backbone.RelationalModel', this, this.instance );
+			if ( !( i instanceof Backbone.RelationalModel ) ) {
+				console && console.warn( 'Relation=%o; instance=%o is not a Backbone.RelationalModel', this, i );
 				return false;
 			}
 			// Check if the type in 'relatedModel' inherits from Backbone.RelationalModel.
-			if ( !( this.relatedModel.prototype instanceof Backbone.RelationalModel.prototype.constructor ) ) {
-				console && console.warn( 'Relation=%o; relatedModel does not inherit from Backbone.RelationalModel (%o)', this, relatedModel );
+			if ( !( rm.prototype instanceof Backbone.RelationalModel.prototype.constructor ) ) {
+				console && console.warn( 'Relation=%o; relatedModel does not inherit from Backbone.RelationalModel (%o)', this, rm );
 				return false;
 			}
 			// Check if this is not a HasMany, and the reverse relation is HasMany as well
-			if ( this instanceof Backbone.HasMany.prototype.constructor
-					&& this.reverseRelation.type === Backbone.HasMany.prototype.constructor ) {
+			if ( this instanceof Backbone.HasMany && this.reverseRelation.type === Backbone.HasMany.prototype.constructor ) {
 				console && console.warn( 'Relation=%o; relation is a HasMany, and the reverseRelation is HasMany as well.', this );
 				return false;
 			}
 			// Check if we're not attempting to create a relationship twice (from two sides)
-			if ( this.instance._relations.length ) {
-				var exists = _.any( this.instance._relations, function( rel ) {
-					return rel.instance === this.instance && rel.relatedModel === this.relatedModel && rel.key === this.key;
+			if ( i._relations.length ) {
+				var exists = _.any( i._relations, function( rel ) {
+					return rel.instance === i && rel.relatedModel === rm && rel.key === k;
 				}, this );
 				
 				if ( exists ) {
-					console && console.warn( 'Relation=%o between instance=%o.%s and relatedModel=%o.%s already exists', this, 
-						this.instance, this.key, this.relatedModel, this.reverseRelation.key );
+					console && console.warn( 'Relation=%o between instance=%o.%s and relatedModel=%o.%s already exists',
+						this, i, k, rm, this.reverseRelation.key );
 					return false;
 				}
 			}
@@ -470,7 +461,6 @@
 		},
 		
 		initialize: function( options ) {
-			var dit = this;
 			_.bindAll( this, 'onChange', 'handleAddition', 'handleRemoval' );
 			this.instance.bind( 'change:' + this.key, this.onChange );
 			this.instance.bind( 'silentChange:' + this.key, this.onChange );
@@ -521,14 +511,13 @@
 					relation.removeRelated( this.instance, options );
 				}, this );
 			
-			this.related.unbind( 'add', this.handleAdthision );
-			this.related.unbind('remove', this.handleRemoval );
-			
 			// Set new 'related'
 			if ( attr instanceof Backbone.Collection ) {
+				this.related.unbind( 'add', this.handleAddition );
+				this.related.unbind('remove', this.handleRemoval );
 				this.related = attr;
-				this.related.bind( 'add', this.handleAdthision );
-				this.related.bind('remove', this.handleRemoval );
+				this.related.bind( 'add', this.handleAddition );
+				this.related.bind( 'remove', this.handleRemoval );
 			}
 			else {
 				this.setRelated( this.getNewCollection() );
@@ -727,20 +716,20 @@
 		 * Convert relations to JSON, omits them when required
 		 */
 		toJSON: function() {
-			// For loop detection. If this Model has already been serialized in this branch, return to avoid loops
+			// If this Model has already been serialized in this branch, return to avoid loops
 			if ( this.isLocked() ) {
 				return this.id;
 			}
-			this.lock();
+			
 			var json = Backbone.Model.prototype.toJSON.call( this );
 			
 			_.each( this._relations, function( rel ) {
 					var value = json[ rel.key ];
 					
 					if ( rel.options.includeInJSON && value && _.isFunction( value.toJSON ) ) {
-						
+						this.lock();
 						json[ rel.key ] = value.toJSON();
-						
+						this.unlock();
 					}
 					else if ( value instanceof Backbone.Collection ) {
 						json[ rel.key ] = value.pluck( value.model.prototype.idAttribute );
@@ -750,7 +739,6 @@
 					}
 				}, this );
 			
-			this.unlock();
 			return json;
 		}
 	});
