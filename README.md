@@ -4,7 +4,9 @@ Backbone-relational provides one-to-one, one-to-many and many-to-one relations b
 * Bi-directional relations automatically notify related models of changes.
 * Decide how relations are serialized using the `includeInJSON` option (just id, or the full set of attributes, in which case the relations of this object are in turn serialized as well).
 * Convert nested objects in a model's attributes into Models when using the `createModels` option upon initialization.
-* Bind events to a RelationalModel for addition/removal on HasMany relations ('add:&lt;key>' and 'remove:&lt;key>').
+* Bind new events to a RelationalModel for:
+	* addition/removal on HasMany relations (bind to `add:<key>` and `remove:<key>`; arguments=`(model, collection)`),
+	* changes to the key itself on HasMany and HasOne relations (bind to `update:<key>`; arguments=`(model, attribute)`).
 
 ## Example:
 
@@ -54,7 +56,7 @@ Backbone-relational provides one-to-one, one-to-many and many-to-one relations b
 			console.debug( 'remove %o', model );
 		});
 	
-	paul.bind( 'change:livesIn', function( model, attr ) {
+	paul.bind( 'update:livesIn', function( model, attr ) {
 			console.debug( 'change to %o', attr );
 		});
 	
@@ -111,11 +113,11 @@ This is achieved using the following relations and models:
 
 ### HasOne relations (`Backbone.HasOne`)
 
-A HasOne relation consists of a single `Backbone.RelationalModel`, which is assigned to the given `key`. The default `reverseRelation.type` for a HasOne relation is HasMany. This can be configured to be `HasOne` instead, to create one-to-one relations.
+The key for a HasOne relation consists of a single `Backbone.RelationalModel`. The default `reverseRelation.type` for a HasOne relation is HasMany. This can be configured to be `HasOne` instead, to create one-to-one relations.
 
 ### HasMany relations (`Backbone.HasMany`)
 
-A HasMany relation consists of a `Backbone.Collection` of `Backbone.RelationalModel`s, which is assigned to the given `key`. The default `reverseRelation.type` for a HasMany relation is HasOne; this is the only option here, since many-to-many is not supported directly.
+The key for a HasMany relation consists of a `Backbone.Collection` of `Backbone.RelationalModel`s. The default `reverseRelation.type` for a HasMany relation is HasOne; this is the only option here, since many-to-many is not supported directly.
 
 ### Many-to-many relations (using two `Backbone.HasMany` relations)
 A many-to-many relation can be modeled using two HasMany relations:

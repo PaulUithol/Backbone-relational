@@ -385,10 +385,6 @@
 		 * If the key is changed, notify old & new reverse relations and initialize the new relation
 		 */
 		onChange: function( model, attr, options ) {
-			if ( this.isLocked() ) {
-				return;
-			}
-			
 			// 'options.related' is set by 'addRelated'/'removeRelated'. If it is set, the change
 			// is the result of a call from a relation. If it's not, the change is the result of 
 			// a 'set' call on this.instance.
@@ -412,33 +408,27 @@
 				}
 			}
 			
+			// Notify old 'related' object of the terminated relation
 			if ( oldRelated && this.related !== oldRelated ) {
-				// Notify old 'related' object of the terminated relation
 				_.each( this.getReverseRelations( oldRelated ), function( relation ) {
 						relation.removeRelated( this.instance, options );
 					}, this );
 			}
 			
-			// Notify new 'related' object of the new relation. Note we do re-apply even if this.related === oldRelated;
+			// Notify new 'related' object of the new relation. Note we do re-apply even if this.related is oldRelated;
 			// that can be necessary for bi-directional relations if 'this.instance' was created after 'this.related'.
 			// In that case, 'this.instance' will already know 'this.related', but the reverse might not exist yet.
 			_.each( this.getReverseRelations(), function( relation ) {
 					relation.addRelated( this.instance, options );
 				}, this);
 			
-			// 'options.related' is set by 'addRelated'/'removeRelated'; if present, a change event
-			// hasn't been fired yet. Do it now. Prevent a loop (calling ourselves) by locking 'this.instance'.
-			if ( !changed && !options.silentChange ) {
-				this.lock();
-				this.instance.trigger( 'change:' + this.key, this.instance, this.related, options );
-				this.instance._isInitialized && this.instance.change( options );
-				this.unlock();
-			}
+			// Fire the 'update:<key>' event.
+			!options.silentChange && this.instance.trigger( 'update:' + this.key, this.instance, this.related, options );
 		},
 		
 		/**
 		 * If a new 'this.relatedModel' appears in Backbone.store, try to match it to the original
-		 * contents of the key on 'this.instance'.
+		 * contents (well, at least since the last 'change') of the key on 'this.instance'.
 		 */
 		tryAddRelated: function( model, options ) {
 			if ( this.related ) {
@@ -550,6 +540,8 @@
 			_.each( this.getReverseRelations(), function( relation ) {
 					relation.addRelated( this.instance, options );
 				}, this );
+			
+			!options.silentChange&& this.instance.trigger( 'update:' + this.key, this.instance, this.related, options );
 		},
 		
 		tryAddRelated: function( model ) {
@@ -591,11 +583,12 @@
 		 */
 		handleRemoval: function( model, coll, options ) {
 			options = options || {};
-			!options.silentChange && this.instance.trigger( 'remove:' + this.key, model, this.related, options );
 			
 			_.each( this.getReverseRelations( model ), function( relation ) {
 					relation.removeRelated( this.instance, options );
 				}, this );
+			
+			!options.silentChange && this.instance.trigger( 'remove:' + this.key, model, this.related, options );
 		},
 		
 		addRelated: function( model, options ) {
@@ -627,8 +620,8 @@
 		
 		constructor: function( attributes, options ) {
 			// Nasty hack :\
-			// To make sure that when 'Relation.createModels' is used, we:
-			// a) Survive Backbone.Collection._add; this takes care we won't error on 'trying to add model to coll twice'
+			// Defer 'processQueue', so that when 'Relation.createModels' is used we:
+			// a) Survive 'Backbone.Collection._add'; this takes care we won't error on "can't add model to a set twice"
 			//    (by creating a model from properties, having the model add itself to the collection via one of
 			//    it's relations, then trying to add it to the collection).
 			// b) Trigger 'HasMany' collection events only after the model is really fully set up.
@@ -667,11 +660,12 @@
 				}
 			}, this );
 			
+			this._isInitialized = true;
+			this.unlock();
+			
 			if ( !this._deferProcessing ) {
 				this.processQueue();
 			}
-			this._isInitialized = true;
-			this.unlock();
 		},
 		
 		/**

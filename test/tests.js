@@ -256,6 +256,29 @@ $(document).ready(function() {
 			ok( person2.get('likesALot') === person1 );
 		});
 		
+		test("Listeners for 'update', on a HasOne relation, for a Model with multiple relations", function() {
+			expect( 1 );
+			Password = Backbone.RelationalModel.extend({
+				relations: [{
+					type: Backbone.HasOne,
+					key: 'user',
+					relatedModel: 'User',
+					reverseRelation: {
+						type: Backbone.HasOne,
+						key: 'password',
+					}
+				}]
+			});
+			password = new Password(); // trigger initialization of relations for Password
+			
+			person1.bind('update:user', function( model, attr, options ) {
+				ok( attr.get('person') === person1 && attr.get('password') instanceof Password, "" );
+			});
+			
+			var user = { login: 'me@hotmail.com', password: { plaintext: 'qwerty' } };
+			person1.set( { user: user } );
+		});
+		
 		
 	module("Backbone.HasMany", { setup: initObjects } );
 		
@@ -270,7 +293,7 @@ $(document).ready(function() {
 				.bind( 'remove:occupants', function( model, coll ) {
 						ok( model === person1, "model === person1" );
 					});
-				
+			
 			theirHouse
 				.bind( 'add:occupants', function( model, coll ) {
 						ok( model === person1, "model === person1" );
@@ -280,7 +303,7 @@ $(document).ready(function() {
 					});
 			
 			var count = 0;
-			person1.bind( 'change:livesIn', function( model, attr ) {
+			person1.bind( 'update:livesIn', function( model, attr ) {
 					if ( count === 0 ) {
 						ok( attr === ourHouse, "model === ourHouse" );
 					}
@@ -300,7 +323,7 @@ $(document).ready(function() {
 		});
 		
 		// All relations should be set up on a Model, before notifying related models.
-		test("Listeners on 'add'/'remove' for a Model with multiple relations", function() {
+		test("Listeners for 'add'/'remove', on a HasMany relation, for a Model with multiple relations", function() {
 			expect( 24 );
 			var job1 = { company: oldCompany };
 			var job2 = { company: oldCompany, person: person1 };
@@ -320,7 +343,7 @@ $(document).ready(function() {
 				});
 			
 			person1.bind( 'add:jobs', function( model, coll ) {
-					ok( model.get('company') instanceof Company && model.get('person') instanceof Person,
+					ok( model.get('company') === oldCompany && model.get('person') === person1,
 						"Both Person and Company are set on the Tenure instance" );
 				});
 			
@@ -378,7 +401,7 @@ $(document).ready(function() {
 			});
 			
 			var password = new Password({
-				password: 'qwerty',
+				plaintext: 'qwerty',
 				users: ['person-1', 'person-2', 'person-3' ]
 			});
 			
