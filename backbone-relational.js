@@ -1,8 +1,9 @@
 /**	
  * Backbone-relational.js 0.2
  * (c) 2011 Paul Uithol
- *
- * For all details and documentation: https://github.com/PaulUithol/Backbone-relational
+ * 
+ * For all details and documentation: https://github.com/PaulUithol/Backbone-relational.
+ * Depends on (as in, compeletely useless without) Backbone: https://github.com/documentcloud/backbone.
  */
 (function( window ) {
 	var Backbone = window.Backbone;
@@ -34,20 +35,14 @@
 	 * Handles lookup for relations.
 	 */
 	Backbone.Store =  function( options ) {
-		options = options || {};
 		this._collections = [];
 		this._autoRelations = [];
-		this.initialize( options );
 	};
 	
 	// Set up all inheritable **Backbone.Store** properties and methods.
 	_.extend(Backbone.Store.prototype, Backbone.Events, {
 		_collections: null,
 		_autoRelations: null,
-		
-		// Initialize is an empty function by default. Override it with your own
-		// initialization logic.
-		initialize: function(){},
 		
 		/**
 		 * @param {object} relation; required properties:
