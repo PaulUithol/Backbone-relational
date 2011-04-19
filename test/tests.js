@@ -4,14 +4,19 @@
 // jQueryUI examples: https://github.com/jquery/jquery-ui/tree/master/tests/unit
 
 //sessionStorage.clear();
+if ( !window.console ) {
+	var names = ['log', 'debug', 'info', 'warn', 'error', 'assert', 'dir', 'dirxml',
+	'group', 'groupEnd', 'time', 'timeEnd', 'count', 'trace', 'profile', 'profileEnd'];
+	window.console = {};
+	for ( var i = 0; i < names.length; ++i )
+		window.console[ names[i] ] = function() {};
+}
 
 $(document).ready(function() {
-	// Variable to catch the last request.
-	window.lastRequest = null;
-	
 	// Stub out Backbone.request...
 	Backbone.sync = function() {
-		lastRequest = _.toArray(arguments);
+		// Variable to catch the last request.
+		window.lastRequest = _.toArray(arguments);
 	};
 	
 	
@@ -25,6 +30,8 @@ $(document).ready(function() {
 				}
 			}]
 	});
+	
+	User = Backbone.RelationalModel.extend({});
 	
 	Person = Backbone.RelationalModel.extend({
 		relations: [{
@@ -41,33 +48,49 @@ $(document).ready(function() {
 				type: Backbone.HasOne,
 				key: 'user',
 				relatedModel: 'User',
+				includeInJSON: false,
 				reverseRelation: {
 					type: Backbone.HasOne,
 					key: 'person'
 				}
 			},
 			{
-				type: Backbone.HasMany,
-				key: 'cats',
-				relatedModel: 'Cat',
-				includeInJSON: false
-			}]
+				type: 'HasMany',
+				key: 'jobs',
+				relatedModel: 'Tenure',
+				reverseRelation: {
+					key: 'person'
+				}
+			}
+		]
 	});
 	
-	User = Backbone.RelationalModel.extend({
-	});
-
-	Cat = Backbone.RelationalModel.extend({
+	// A link table between 'Person' and 'Company', to achieve many-to-many relations
+	Tenure = Backbone.RelationalModel.extend({
+		defaults: {
+			'startDate': null,
+			'endDate': null
+		}
+	})
+	
+	Company = Backbone.RelationalModel.extend({
 		relations: [{
-				type: 'HasOne',
-				key: 'owner',
-				relatedModel: 'Person'
+				type: 'HasMany',
+				key: 'employees',
+				relatedModel: 'Tenure',
+				reverseRelation: {
+					key: 'company'
+				}
 			},
 			{
-				type: 'HasMany',
-				key: 'likes',
-				relatedModel: 'Person'
-			}]
+				type: 'HasOne',
+				key: 'ceo',
+				relatedModel: 'Person',
+				reverseRelation: {
+					key: 'runs'
+				}
+			}
+		]
 	});
 	
 	function initObjects() {
@@ -80,7 +103,6 @@ $(document).ready(function() {
 			id: 'person-1',
 			name: 'boy',
 			likesALot: 'person-2',
-			cats: [],
 			resource_uri: 'person-1',
 			user: { id: 'user-1', login: 'dude', email: 'me@gmail.com', resource_uri: 'user-1' }
 		});
@@ -89,24 +111,29 @@ $(document).ready(function() {
 			id: 'person-2',
 			name: 'girl',
 			likesALot: 'person-1',
-			cats: [ 'cat-1', 'cat-2' ],
 			resource_uri: 'person-2'
 		});
 		
-		cat1 = new Cat({
-			id: 'cat-1',
-			name: 'E',
-			owner: 'person-2',
-			resource_uri: 'cat-1',
-			likes: [ 'person-1', 'person-2' ]
+		person3 = new Person({
+			id: 'person-3',
+			resource_uri: 'person-3'
 		});
 		
-		cat2 = new Cat({
-			id: 'cat-2',
-			name: 'L',
-			owner: 'person-2',
-			resource_uri: 'cat-2',
-			likes: [ 'person-2' ]
+		oldCompany = new Company({
+			id: 'company-1',
+			name: 'Big Corp.',
+			ceo: {
+				name: 'Big Boy'
+			},
+			employees: [ { person: 'person-3' } ], // uses the 'Tenure' link table to achieve many-to-many. No 'id' specified!
+			resource_uri: 'company-1'
+		});
+		
+		newCompany = new Company({
+			id: 'company-2',
+			name: 'New Corp.',
+			employees: [ { person: 'person-2' } ],
+			resource_uri: 'company-2'
 		});
 		
 		ourHouse = new House({
@@ -131,7 +158,7 @@ $(document).ready(function() {
 	
 	
 		test("Initialized", function() {
-			equal( Backbone.store._collections.length, 4, "Store contains 4 collections" );
+			equal( Backbone.store._collections.length, 5, "Store contains 5 collections" );
 		});
 		
 		test("getObjectByName", function() {
@@ -191,6 +218,7 @@ $(document).ready(function() {
 			ok( !house, houseId + " is not found in the store anymore" );
 		});
 		
+		
 	module("Backbone.RelationalModel", { setup: initObjects } );
 	
 	
@@ -198,7 +226,7 @@ $(document).ready(function() {
 			var json = person1.toJSON();
 			console.debug( json );
 			
-			ok( _.isArray( json.likesALot.cats ), "No Cat objects (includeInJSON=false for those)" );
+			ok( _.isString( json.user ), "No User object (includeInJSON=false for those)" );
 			equal(  json.likesALot.likesALot, 'person-1', "Person is serialized only once" );
 		});
 		
@@ -218,6 +246,7 @@ $(document).ready(function() {
 			
 			ok( result === person, "Destroy returns the model" );
 		});
+		
 		
 	module("Backbone.HasOne", { setup: initObjects } );
 		
@@ -252,7 +281,6 @@ $(document).ready(function() {
 			
 			var count = 0;
 			person1.bind( 'change:livesIn', function( model, attr ) {
-					console.debug( 'livesIn=%o', attr );
 					if ( count === 0 ) {
 						ok( attr === ourHouse, "model === ourHouse" );
 					}
@@ -269,6 +297,92 @@ $(document).ready(function() {
 			ourHouse.get('occupants').add( person1 );
 			person1.set( { 'livesIn': theirHouse } );
 			theirHouse.get('occupants').remove( person1 );
+		});
+		
+		// All relations should be set up on a Model, before notifying related models.
+		test("Listeners on 'add'/'remove' for a Model with multiple relations", function() {
+			expect( 24 );
+			var job1 = { company: oldCompany };
+			var job2 = { company: oldCompany, person: person1 };
+			var job3 = { person: person1 };
+			var newJob = null;
+			
+			newCompany.bind( 'add:employees', function( model, coll ) {
+					ok( false, "person1 should only be added to 'oldCompany'." );
+				});
+			
+			oldCompany.bind( 'add:employees', function( model, coll ) {
+					newJob = model;
+					
+					ok( model instanceof Tenure );
+					ok( model.get('company') instanceof Company && model.get('person') instanceof Person,
+						"Both Person and Company are set on the Tenure instance" );
+				});
+			
+			person1.bind( 'add:jobs', function( model, coll ) {
+					ok( model.get('company') instanceof Company && model.get('person') instanceof Person,
+						"Both Person and Company are set on the Tenure instance" );
+				});
+			
+			// Add job1 and job2 to the 'Person' side of the relation
+			var jobs = person1.get('jobs');
+			
+			jobs.add( job1 );
+			ok( jobs.length === 1, "jobs.length is 1" );
+			
+			newJob.destroy();
+			ok( jobs.length === 0, "jobs.length is 0" );
+			
+			jobs.add( job2 );
+			ok( jobs.length === 1, "jobs.length is 1" );
+			
+			newJob.destroy();
+			ok( jobs.length === 0, "jobs.length is 0" );
+			
+			// Add job1 and job2 to the 'Company' side of the relation
+			var employees = oldCompany.get('employees');
+			
+			employees.add( job3 );
+			ok( employees.length === 2, "employees.length is 2" );
+			
+			newJob.destroy();
+			ok( employees.length === 1, "employees.length is 1" );
+			
+			employees.add( job2 );
+			ok( employees.length === 2, "employees.length is 2" );
+			
+			newJob.destroy();
+			ok( employees.length === 1, "employees.length is 1" );
+			
+			// Create a stand-alone Tenure ;)
+			new Tenure({
+				person: person1,
+				company: oldCompany
+			});
+			
+			ok( jobs.length === 1 && employees.length === 2, "jobs.length is 1 and employees.length is 2" );
+		});
+		
+		test("Precondition: HasMany with a reverseRelation HasMany is not allowed", function() {
+			Password = Backbone.RelationalModel.extend({
+				relations: [{
+					type: 'HasMany',
+					key: 'users',
+					relatedModel: 'User',
+					reverseRelation: {
+						type: 'HasMany',
+						key: 'passwords',
+						relatedModel: 'User'
+					}
+				}]
+			});
+			
+			var password = new Password({
+				password: 'qwerty',
+				users: ['person-1', 'person-2', 'person-3' ]
+			});
+			
+			ok( password._relations.length === 0, "No _relations created on Password" );
 		});
 		
 		
@@ -322,10 +436,14 @@ $(document).ready(function() {
 			ok( user2.get('person') === person2 );
 		});
 		
-		test("Set the same value a couple of time", function() {
-			person1.set( { 'likesALot': 'person-2' } );
-			person1.set( { 'likesALot': 'person-2' } );
-			person1.set( { 'likesALot': 'person-2' } );
+		test("Set the same value a couple of time, by 'id' and object", function() {
+			person1.set( { likesALot: 'person-2' } );
+			person1.set( { likesALot: person2 } );
+			
+			ok( person1.get('likesALot') === person2 );
+			ok( person2.get('likedALotBy' ) === person1 );
+			
+			person1.set( { likesALot: 'person-2' } );
 			
 			ok( person1.get('likesALot') === person2 );
 			ok( person2.get('likedALotBy' ) === person1 );
