@@ -623,6 +623,11 @@
 					options.collection.unbind( 'add', processQueue );
 				};
 				options.collection.bind( 'add', processQueue );
+				
+				// To make sure we do process the queue eventually, even if this model didn't get added to the collection..
+				_.defer( function() {
+					processQueue( dit );
+				});
 			}
 			
 			this._queue = [];
