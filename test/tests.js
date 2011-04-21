@@ -247,7 +247,7 @@ $(document).ready(function() {
 			ok( result === person, "Destroy returns the model" );
 		});
 		
-		
+	
 	module("Backbone.HasOne", { setup: initObjects } );
 		
 		
@@ -272,11 +272,15 @@ $(document).ready(function() {
 			password = new Password(); // trigger initialization of relations for Password
 			
 			person1.bind('update:user', function( model, attr, options ) {
+				console.debug( 'update:user, new=%o, login=', attr, attr.get('login'));
 				ok( attr.get('person') === person1 && attr.get('password') instanceof Password, "" );
 			});
 			
 			var user = { login: 'me@hotmail.com', password: { plaintext: 'qwerty' } };
+			console.debug('set...');
 			person1.set( { user: user } );
+			console.debug('...set');
+			console.debug(person1);
 		});
 		
 		
@@ -457,6 +461,41 @@ $(document).ready(function() {
 			ok( person.get('user') === null );
 			ok( person2.get('user') === user2 );
 			ok( user2.get('person') === person2 );
+		});
+		
+		test("'Save' objects", function() {
+			person3
+				.bind( 'add:jobs', function( model, coll ) {
+						var company = model.get('company');
+						console.debug( company.get('ceo') );
+						ok( company instanceof Company /*&& company.get('ceo') === 'Lunar boy'*/ && model.get('person') === person3,
+							"Both Person and Company are set on the Tenure instance" );
+					})
+				.bind( 'remove:jobs', function( model, coll ) {
+						console.debug('remove:jobs, model=%o, coll=%o', model, coll );
+					});
+			
+			// Create Models from an object
+			company = new Company({
+				name: 'Luna Corp.',
+				ceo: {
+					name: 'Lunar boy'
+				},
+				employees: [ { person: 'person-3' } ],
+			});
+			
+			// Backbone.save executes "model.set(model.parse(resp), options)". Set a full map over object, but now with ids.
+			company.set({
+				id: 'company-3',
+				name: 'Big Corp.',
+				ceo: {
+					id: 'person-4',
+					name: 'Lunar boy',
+					resource_uri: 'person-4'
+				},
+				employees: [ { id: 'tenure-1', person: 'person-3', resource_uri: 'tenure-1' } ],
+				resource_uri: 'company-3'
+			});
 		});
 		
 		test("Set the same value a couple of time, by 'id' and object", function() {
