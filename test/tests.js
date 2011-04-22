@@ -98,6 +98,7 @@ $(document).ready(function() {
 		var oldReverseRelations = Backbone.store._reverseRelations;
 		Backbone.store = new Backbone.Store();
 		Backbone.store._reverseRelations = oldReverseRelations;
+		Backbone.eventQueue = new Backbone.BlockingQueue();
 		
 		person1 = new Person({
 			id: 'person-1',
@@ -152,7 +153,85 @@ $(document).ready(function() {
 	}
 	
 	//console.debug( 'ourHouse=%o, person1=%o, person2=%o, cat1=%o, cat2=%o', ourHouse, person1, person2, cat1, cat2 );
-
+	
+	module("Backbone.Semaphore");
+	
+	
+		test("Unbounded", function() {
+			expect( 10 );
+			
+			var semaphore = _.extend( {}, Backbone.Semaphore );
+			ok( !semaphore.isLocked(), 'Semaphore is not locked initially' );
+			semaphore.acquire();
+			ok( semaphore.isLocked(), 'Semaphore is locked after acquire' );
+			semaphore.acquire();
+			equal( semaphore._permitsUsed, 2 ,'_permitsUsed should be incremented 2 times' );
+			
+			semaphore.setAvailablePermits( 4 );
+			equal( semaphore._permitsAvailable, 4 ,'_permitsAvailable should be 4' );
+			
+			semaphore.acquire();
+			semaphore.acquire();
+			equal( semaphore._permitsUsed, 4 ,'_permitsUsed should be incremented 4 times' );
+			
+			try {
+				semaphore.acquire();
+			}
+			catch( ex ) {
+				ok( true, 'Error thrown when attempting to acquire too often' );
+			}
+			
+			semaphore.release();
+			equal( semaphore._permitsUsed, 3 ,'_permitsUsed should be decremented to 3' );
+			
+			semaphore.release();
+			semaphore.release();
+			semaphore.release();
+			equal( semaphore._permitsUsed, 0 ,'_permitsUsed should be decremented to 0' );
+			ok( !semaphore.isLocked(), 'Semaphore is not locked when all permits are released' );
+			
+			try {
+				semaphore.release();
+			}
+			catch( ex ) {
+				ok( true, 'Error thrown when attempting to release too often' );
+			}
+		});
+	
+	
+	module("Backbone.BlockingQueue");
+	
+	
+		test("Block", function() {
+			var queue = new Backbone.BlockingQueue();
+			var count = 0;
+			var increment = function() { count++; };
+			var decrement = function() { count--; };
+			
+			queue.add( increment );
+			ok( count === 1, 'Increment executed right away' );
+			
+			queue.add( decrement );
+			ok( count === 0, 'Decrement executed right away' );
+			
+			queue.block();
+			queue.add( increment );
+			
+			ok( queue.isLocked(), 'Queue is blocked' );
+			equal( count, 0, 'Increment did not execute right away' );
+			
+			queue.block();
+			queue.block();
+			
+			equal( queue._permitsUsed, 3 ,'_permitsUsed should be incremented to 3' );
+			
+			queue.unblock();
+			queue.unblock();
+			queue.unblock();
+			
+			equal( count, 1, 'Increment executed' );
+		});
+	
 	
 	module("Backbone.Store", { setup: initObjects } );
 	
@@ -218,7 +297,7 @@ $(document).ready(function() {
 			ok( !house, houseId + " is not found in the store anymore" );
 		});
 		
-		
+	
 	module("Backbone.RelationalModel", { setup: initObjects } );
 	
 	
@@ -272,15 +351,11 @@ $(document).ready(function() {
 			password = new Password(); // trigger initialization of relations for Password
 			
 			person1.bind('update:user', function( model, attr, options ) {
-				console.debug( 'update:user, new=%o, login=', attr, attr.get('login'));
 				ok( attr.get('person') === person1 && attr.get('password') instanceof Password, "" );
 			});
 			
 			var user = { login: 'me@hotmail.com', password: { plaintext: 'qwerty' } };
-			console.debug('set...');
 			person1.set( { user: user } );
-			console.debug('...set');
-			console.debug(person1);
 		});
 		
 		
@@ -328,7 +403,7 @@ $(document).ready(function() {
 		
 		// All relations should be set up on a Model, before notifying related models.
 		test("Listeners for 'add'/'remove', on a HasMany relation, for a Model with multiple relations", function() {
-			expect( 24 );
+			//expect( 24 );
 			var job1 = { company: oldCompany };
 			var job2 = { company: oldCompany, person: person1 };
 			var job3 = { person: person1 };
@@ -468,7 +543,7 @@ $(document).ready(function() {
 				.bind( 'add:jobs', function( model, coll ) {
 						var company = model.get('company');
 						console.debug( company.get('ceo') );
-						ok( company instanceof Company /*&& company.get('ceo') === 'Lunar boy'*/ && model.get('person') === person3,
+						ok( company instanceof Company && company.get('ceo').get('name') === 'Lunar boy' && model.get('person') === person3,
 							"Both Person and Company are set on the Tenure instance" );
 					})
 				.bind( 'remove:jobs', function( model, coll ) {

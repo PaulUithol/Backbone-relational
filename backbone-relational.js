@@ -1,5 +1,5 @@
 /**	
- * Backbone-relational.js 0.2
+ * Backbone-relational.js 0.3
  * (c) 2011 Paul Uithol
  * 
  * For all details and documentation: https://github.com/PaulUithol/Backbone-relational.
@@ -8,27 +8,89 @@
 (function( window ) {
 	var Backbone = window.Backbone;
 	
-	Backbone.Lock = {
-		_synchronize: 0,
+	/**
+	 * Semaphore mixin; can be used as both binary and counting.
+	 **/
+	Backbone.Semaphore = {
+		_permitsAvailable: null,
+		_permitsUsed: 0,
 		
-		lock: function() {
-			this._synchronize++;
-		},
-		
-		unlock: function() {
-			if ( this._synchronize === 0 ) {
-				console && console.error( 'Object=%o is already unlocked', this );
-				throw new Error('Object is already unlocked');
+		acquire: function() {
+			if ( this._permitsAvailable && this._permitsUsed >= this._permitsAvailable ) {
+				throw new Error('Max permits acquired');
 			}
 			else {
-				this._synchronize--;
+				this._permitsUsed++;
+			}
+		},
+		
+		release: function() {
+			if ( this._permitsUsed === 0 ) {
+				throw new Error('All permits released');
+			}
+			else {
+				this._permitsUsed--;
 			}
 		},
 		
 		isLocked: function() {
-			return this._synchronize > 0;
+			return this._permitsUsed > 0;
+		},
+		
+		setAvailablePermits: function( amount ) {
+			if ( this._permitsUsed > amount ) {
+				throw new Error('Available permits cannot be less than used permits');
+			}
+			this._permitsAvailable = amount;
 		}
 	};
+	
+	/**
+	 * A BlockingQueue that accumulates items while blocked (via 'block'),
+	 * and processes them when unblocked (via 'unblock').
+	 * Process can also be called manually (via 'process').
+	 */
+	Backbone.BlockingQueue = function() {
+		this._queue = [];
+	};
+	_.extend( Backbone.BlockingQueue.prototype, Backbone.Semaphore, {
+		_queue: null,
+		
+		add: function( func ) {
+			if ( this.isBlocked() ) {
+				this._queue.push( func );
+			}
+			else {
+				func();
+			}
+		},
+		
+		process: function() {
+			while ( this._queue && this._queue.length ) {
+				this._queue.shift()();
+			}
+		},
+		
+		block: function() {
+			this.acquire();
+		},
+		
+		unblock: function() {
+			this.release();
+			if ( !this.isBlocked() ) {
+				this.process();
+			}
+		},
+		
+		isBlocked: function() {
+			return this.isLocked();
+		}
+	});
+	/**
+	 * Global event queue. Accumulates external events ('add:<key>', 'remove:<key>' and 'update:<key>')
+	 * until the top-level object is fully initialized (see 'Backbone.RelationalModel').
+	 */
+	Backbone.eventQueue = new Backbone.BlockingQueue();
 	
 	/**
 	 * Backbone.Store keeps track of all created (and destruction of) Backbone.RelationalModel.
@@ -38,9 +100,7 @@
 		this._collections = [];
 		this._reverseRelations = [];
 	};
-	
-	// Set up all inheritable **Backbone.Store** properties and methods.
-	_.extend(Backbone.Store.prototype, Backbone.Events, {
+	_.extend( Backbone.Store.prototype, Backbone.Events, {
 		_collections: null,
 		_reverseRelations: null,
 		
@@ -175,7 +235,7 @@
 		// 'window' should be the global object where 'relatedModel' can be found on if given as a string.
 		this.relatedModel = this.options.relatedModel;
 		if ( _.isString( this.relatedModel ) ) {
-			this.relatedModel = Backbone.store.getObjectByName( this.relatedModel )
+			this.relatedModel = Backbone.store.getObjectByName( this.relatedModel );
 		}
 		
 		if ( this.checkPreconditions() ) {
@@ -208,10 +268,7 @@
 		// When 'relatedModel' are created or destroyed, check if it affects this relation.
 		Backbone.store.getCollection( this.relatedModel )
 			.bind( 'add', function( model, coll, options ) {
-					// Wait until all relations on this instance are set up properly
-					dit.instance.queue( function() {
-						dit.tryAddRelated( model, options );
-					});
+					dit.tryAddRelated( model, options );
 				})
 			.bind( 'remove', function( model, coll, options ) {
 					dit.removeRelated( model, options );
@@ -221,9 +278,8 @@
 	};
 	// Fix inheritance :\
 	Backbone.Relation.extend = Backbone.Model.extend;
-	
 	// Set up all inheritable **Backbone.Relation** properties and methods.
-	_.extend( Backbone.Relation.prototype, Backbone.Events, Backbone.Lock, {
+	_.extend( Backbone.Relation.prototype, Backbone.Events, Backbone.Semaphore, {
 		options: {
 			createModels: true,
 			includeInJSON: true,
@@ -281,20 +337,15 @@
 			this.related = related;
 			var value = {};
 			value[ this.key ] = related;
-			this.instance.lock();
+			this.instance.acquire();
 			this.instance.set( value, _.defaults( options || {}, { silent: true } ) );
-			this.instance.unlock();
+			this.instance.release();
 		},
 		
 		createModel: function( item ) {
-			if ( !this.options.createModels || !( typeof( item ) === 'object' ) ) {
-				return null;
+			if ( this.options.createModels && typeof( item ) === 'object' ) {
+				return new this.relatedModel( item );
 			}
-			// Pre-fill this.instance in Model that is to be created, if applicable
-			if ( this.reverseRelation.key ) {
-				item[ this.reverseRelation.key ] = item[ this.reverseRelation.key ] || this.instance;
-			}
-			return new this.relatedModel( item );
 		},
 		
 		/**
@@ -347,14 +398,11 @@
 			var model = this.findRelated();
 			this.setRelated( model );
 			
-			// Notify new 'related' object of the new relation. Queued to allow other Relations on
-			// 'this.instance' to set up before notifiying related models, which can expect them to be present.
+			// Notify new 'related' object of the new relation.
 			var dit = this;
-			this.instance.queue( function() {
-				_.each( dit.getReverseRelations(), function( relation ) {
-						relation.addRelated( dit.instance, {} );
-					} );
-				});
+			_.each( dit.getReverseRelations(), function( relation ) {
+					relation.addRelated( dit.instance );
+				} );
 		},
 		
 		findRelated: function() {
@@ -381,7 +429,7 @@
 			if ( this.isLocked() ) {
 				return;
 			}
-			this.lock();
+			this.acquire();
 			
 			// 'options._related' is set by 'addRelated'/'removeRelated'. If it is set, the change
 			// is the result of a call from a relation. If it's not, the change is the result of 
@@ -421,9 +469,12 @@
 			
 			// Fire the 'update:<key>' event if 'related' was updated
 			if ( !options.silentChange && this.related !== oldRelated ) {
-				this.instance.trigger( 'update:' + this.key, this.instance, this.related, options );
+				var dit = this;
+				Backbone.eventQueue.add( function() {
+					dit.instance.trigger( 'update:' + dit.key, dit.instance, dit.related, options );
+				});
 			}
-			this.unlock();
+			this.release();
 		},
 		
 		/**
@@ -479,14 +530,12 @@
 		
 		getNewCollection: function() {
 			if ( this.related ) {
-				this.related.unbind( 'add', this.handleAddition )
-				this.related.unbind('remove', this.handleRemoval );
+				this.related.unbind( 'add', this.handleAddition ).unbind('remove', this.handleRemoval );
 			}
 			
 			var related = new Backbone.Collection();
 			related.model = this.relatedModel;
-			related.bind( 'add', this.handleAddition )
-			related.bind('remove', this.handleRemoval );
+			related.bind( 'add', this.handleAddition ).bind('remove', this.handleRemoval );
 			return related;
 		},
 		
@@ -517,11 +566,9 @@
 			
 			// Set new 'related'
 			if ( attr instanceof Backbone.Collection ) {
-				this.related.unbind( 'add', this.handleAddition )
-				this.related.unbind('remove', this.handleRemoval );
+				this.related.unbind( 'add', this.handleAddition ).unbind('remove', this.handleRemoval );
 				this.related = attr;
-				this.related.bind( 'add', this.handleAddition )
-				this.related.bind( 'remove', this.handleRemoval );
+				this.related.bind( 'add', this.handleAddition ).bind( 'remove', this.handleRemoval );
 			}
 			else {
 				this.setRelated( this.getNewCollection() );
@@ -533,7 +580,10 @@
 					relation.addRelated( this.instance, options );
 				}, this );
 			
-			!options.silentChange && this.instance.trigger( 'update:' + this.key, this.instance, this.related, options );
+			var dit = this;
+			Backbone.eventQueue.add( function() {
+				!options.silentChange && dit.instance.trigger( 'update:' + dit.key, dit.instance, dit.related, options );
+			});
 		},
 		
 		tryAddRelated: function( model ) {
@@ -557,15 +607,14 @@
 		handleAddition: function( model, coll, options ) {
 			options = options || {};
 			var dit = this;
-			this.instance.queue( function() {
-				_.each( dit.getReverseRelations( model ), function( relation ) {
-						relation.addRelated( dit.instance, options );
-					}, dit );
-				
-				// Only trigger 'add' once the newly added model is initialized (so, has it's relations set up)
-				model.queue( function() {
-					!options.silentChange && dit.instance.trigger( 'add:' + dit.key, model, dit.related, options );
-				});
+			
+			_.each( this.getReverseRelations( model ), function( relation ) {
+					relation.addRelated( this.instance, options );
+				}, this );
+			
+			// Only trigger 'add' once the newly added model is initialized (so, has it's relations set up)
+			Backbone.eventQueue.add( function() {
+				!options.silentChange && dit.instance.trigger( 'add:' + dit.key, model, dit.related, options );
 			});
 		},
 		
@@ -580,13 +629,19 @@
 					relation.removeRelated( this.instance, options );
 				}, this );
 			
-			!options.silentChange && this.instance.trigger( 'remove:' + this.key, model, this.related, options );
+			var dit = this;
+			Backbone.eventQueue.add( function() {
+				!options.silentChange && dit.instance.trigger( 'remove:' + dit.key, model, dit.related, options );
+			});
 		},
 		
 		addRelated: function( model, options ) {
-			if ( !this.related.getByCid( model ) && !this.related.get( model.id ) ) {
-				this.related._add( model, options );
-			}
+			var dit = this;
+			model.queue( function() { // Queued to avoid errors for adding 'model' to the 'this.related' set twice
+				if ( !dit.related.getByCid( model ) && !dit.related.get( model.id ) ) {
+					dit.related._add( model, options );
+				}
+			});
 		},
 		
 		removeRelated: function( model, options ) {
@@ -616,8 +671,8 @@
 			//    it's relations, then trying to add it to the collection).
 			// b) Trigger 'HasMany' collection events only after the model is really fully set up.
 			// Example that triggers both a and b: "p.get('jobs').add( { company: c, person: p } )".
+			var dit = this;
 			if ( options && options.collection ) {
-				var dit = this;
 				this._deferProcessing = true;
 				
 				var processQueue = function( model, coll ) {
@@ -629,14 +684,20 @@
 				};
 				options.collection.bind( 'add', processQueue );
 				
-				// To make sure we do process the queue eventually
+				// So we do process the queue eventually, regardless of whether this model really gets added to 'options.collection'.
 				_.defer( function() {
 					processQueue( dit );
 				});
 			}
 			
-			this._queue = [];
+			this._queue = new Backbone.BlockingQueue();
+			this._queue.block();
+			Backbone.eventQueue.block();
+			
 			Backbone.Model.prototype.constructor.apply( this, arguments );
+			
+			// Try to run the global queue holding external events
+			Backbone.eventQueue.unblock();
 		},
 		
 		/**
@@ -644,7 +705,7 @@
 		 * The regular constructor (which fills this.attributes, initialize, etc) hasn't run yet at this time!
 		 */
 		initializeRelations: function() {
-			this.lock(); // Lock; setting up relations often also involve calls to 'set'
+			this.acquire(); // Lock; setting up relations often also involve calls to 'set'
 			this._relations = [];
 			
 			Backbone.store.register( this );
@@ -657,31 +718,23 @@
 			}, this );
 			
 			this._isInitialized = true;
-			this.unlock();
-			
-			if ( !this._deferProcessing ) {
-				this.processQueue();
-			}
+			this.release();
+			this.processQueue();
 		},
 		
 		/**
 		 * Either add to the queue (if we're not initialized yet), or execute right away.
 		 */
 		queue: function( func ) {
-			if ( !this._isInitialized || this._deferProcessing ) {
-				this._queue.push( func );
-			}
-			else {
-				func();
-			}
+			this._queue.add( func );
 		},
 		
 		/**
 		 * Process _queue
 		 */
 		processQueue: function() {
-			while ( this._queue && this._queue.length ) {
-				this._queue.shift()();
+			if ( this._isInitialized && !this._deferProcessing && this._queue.isBlocked() ) {
+				this._queue.unblock();
 			}
 		},
 		
@@ -690,6 +743,8 @@
 		},
 		
 		set: function( attributes, options ) {
+			Backbone.eventQueue.block();
+			
 			var result = Backbone.Model.prototype.set.apply( this, arguments );
 			
 			// When new values are set, notify this model's relations (also if options.silent is set).
@@ -716,6 +771,9 @@
 				this.initializeRelations();
 			}
 			
+			// Try to run the global queue holding external events
+			Backbone.eventQueue.unblock();
+			
 			return result;
 		},
 		
@@ -739,9 +797,9 @@
 					var value = json[ rel.key ];
 					
 					if ( rel.options.includeInJSON && value && _.isFunction( value.toJSON ) ) {
-						this.lock();
+						this.acquire();
 						json[ rel.key ] = value.toJSON();
-						this.unlock();
+						this.release();
 					}
 					else if ( value instanceof Backbone.Collection ) {
 						json[ rel.key ] = value.pluck( value.model.prototype.idAttribute );
@@ -754,5 +812,5 @@
 			return json;
 		}
 	});
-	_.extend( Backbone.RelationalModel.prototype, Backbone.Lock );
+	_.extend( Backbone.RelationalModel.prototype, Backbone.Semaphore );
 })( this );
