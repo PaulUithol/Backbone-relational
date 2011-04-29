@@ -327,6 +327,143 @@ $(document).ready(function() {
 		});
 		
 	
+	module("Backbone.Relation preconditions", { setup: initObjects } );
+	
+		
+		test("HasMany with a reverseRelation HasMany is not allowed", function() {
+			Password = Backbone.RelationalModel.extend({
+				relations: [{
+					type: 'HasMany',
+					key: 'users',
+					relatedModel: 'User',
+					reverseRelation: {
+						type: 'HasMany',
+						key: 'passwords'
+					}
+				}]
+			});
+			
+			var password = new Password({
+				plaintext: 'qwerty',
+				users: ['person-1', 'person-2', 'person-3' ]
+			});
+			
+			ok( password._relations.length === 0, "No _relations created on Password" );
+		});
+		
+		test("Double relations not allowed", function() {
+			Properties = Backbone.RelationalModel.extend({});
+			Window = Backbone.RelationalModel.extend({
+				relations: [
+					{
+						type: Backbone.HasOne,
+						key: 'listProperties',
+						relatedModel: 'Properties',
+						reverseRelation: {
+							type: Backbone.HasOne,
+							key: 'window'
+						}
+					},
+					{
+						type: Backbone.HasOne,
+						key: 'listProperties',
+						relatedModel: 'Properties',
+						reverseRelation: {
+							type: Backbone.HasOne,
+							key: 'window'
+						}
+					}
+				]
+			});
+			
+			var window = new Window();
+			window.set({ listProperties: new Properties() } );
+			//console.debug( 'test1: %o', window._relations );
+			ok( window._relations.length === 1 );
+		});
+		
+		test("Double relations not allowed", function() {
+			Properties = Backbone.RelationalModel.extend({});
+			Window = Backbone.RelationalModel.extend({
+				relations: [
+					{
+						type: Backbone.HasOne,
+						key: 'listProperties',
+						relatedModel: 'Properties'
+					},
+					{
+						type: Backbone.HasOne,
+						key: 'listProperties',
+						relatedModel: 'Properties'
+					}
+				]
+			});
+			
+			var window = new Window();
+			window.set({ listProperties: new Properties() } );
+			//console.debug( 'test2: %o', window._relations );
+			ok( window._relations.length === 1 );
+		});
+		
+		test("Double relations not allowed", function() {
+			Properties = Backbone.RelationalModel.extend({});
+			Window = Backbone.RelationalModel.extend({
+				relations: [
+					{
+						type: Backbone.HasOne,
+						key: 'listProperties',
+						relatedModel: 'Properties',
+						reverseRelation: {
+							type: Backbone.HasOne,
+							key: 'window'
+						}
+					},
+					{
+						type: Backbone.HasOne,
+						key: 'listProperties',
+						relatedModel: 'Properties'
+					}
+				]
+			});
+			
+			var window = new Window();
+			window.set({ listProperties: new Properties() } );
+			//console.debug( 'test3: %o', window._relations );
+			ok( window._relations.length === 1 );
+		});
+		
+		test("Double relations not allowed", function() {
+			Properties = Backbone.RelationalModel.extend({});
+			Window = Backbone.RelationalModel.extend({
+				relations: [
+					{
+						type: Backbone.HasOne,
+						key: 'listProperties',
+						relatedModel: 'Properties',
+						reverseRelation: {
+							type: Backbone.HasOne,
+							key: 'window'
+						}
+					},
+					{
+						type: Backbone.HasOne,
+						key: 'windowProperties',
+						relatedModel: 'Properties',
+						reverseRelation: {
+							type: Backbone.HasOne,
+							key: 'window'
+						}
+					}
+				]
+			});
+			
+			var window = new Window();
+			window.set({ listProperties: new Properties(), windowProperties: new Properties() } );
+			//console.debug( 'test4: %o', window._relations );
+			ok( window._relations.length === 2 );
+		});
+		
+	
 	module("Backbone.HasOne", { setup: initObjects } );
 		
 		
@@ -463,28 +600,6 @@ $(document).ready(function() {
 			});
 			
 			ok( jobs.length === 1 && employees.length === 2, "jobs.length is 1 and employees.length is 2" );
-		});
-		
-		test("Precondition: HasMany with a reverseRelation HasMany is not allowed", function() {
-			Password = Backbone.RelationalModel.extend({
-				relations: [{
-					type: 'HasMany',
-					key: 'users',
-					relatedModel: 'User',
-					reverseRelation: {
-						type: 'HasMany',
-						key: 'passwords',
-						relatedModel: 'User'
-					}
-				}]
-			});
-			
-			var password = new Password({
-				plaintext: 'qwerty',
-				users: ['person-1', 'person-2', 'person-3' ]
-			});
-			
-			ok( password._relations.length === 0, "No _relations created on Password" );
 		});
 		
 		

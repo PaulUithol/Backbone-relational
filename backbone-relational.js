@@ -318,10 +318,12 @@
 				console && console.warn( 'Relation=%o; relation is a HasMany, and the reverseRelation is HasMany as well.', this );
 				return false;
 			}
-			// Check if we're not attempting to create a relationship twice (from two sides)
+			// Check if we're not attempting to create a duplicate relationship
 			if ( i._relations.length ) {
 				var exists = _.any( i._relations, function( rel ) {
-					return rel.instance === i && rel.relatedModel === rm && rel.key === k;
+					var hasReverseRelation = this.reverseRelation.key && rel.reverseRelation.key;
+					return rel.relatedModel === rm && rel.key === k
+						&& ( !hasReverseRelation || this.reverseRelation.key === rel.reverseRelation.key );
 				}, this );
 				
 				if ( exists ) {
@@ -664,7 +666,7 @@
 		_queue: null,
 		
 		constructor: function( attributes, options ) {
-			// Nasty hack :\
+			// Nasty hack, for cases like 'model.get( <HasMany key> ).add( item )'.
 			// Defer 'processQueue', so that when 'Relation.createModels' is used we:
 			// a) Survive 'Backbone.Collection._add'; this takes care we won't error on "can't add model to a set twice"
 			//    (by creating a model from properties, having the model add itself to the collection via one of
