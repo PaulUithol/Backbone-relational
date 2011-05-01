@@ -351,7 +351,55 @@ $(document).ready(function() {
 			ok( password._relations.length === 0, "No _relations created on Password" );
 		});
 		
-		test("Double relations not allowed", function() {
+		test("Duplicate relations not allowed (two simple relations)", function() {
+			Properties = Backbone.RelationalModel.extend({});
+			Window = Backbone.RelationalModel.extend({
+				relations: [
+					{
+						type: Backbone.HasOne,
+						key: 'listProperties',
+						relatedModel: 'Properties'
+					},
+					{
+						type: Backbone.HasOne,
+						key: 'listProperties',
+						relatedModel: 'Properties'
+					}
+				]
+			});
+			
+			var window = new Window();
+			window.set({ listProperties: new Properties() } );
+			ok( window._relations.length === 1 );
+		});
+		
+		test("Duplicate relations not allowed (one relation with a reverse relation, one without)", function() {
+			Properties = Backbone.RelationalModel.extend({});
+			Window = Backbone.RelationalModel.extend({
+				relations: [
+					{
+						type: Backbone.HasOne,
+						key: 'listProperties',
+						relatedModel: 'Properties',
+						reverseRelation: {
+							type: Backbone.HasOne,
+							key: 'window'
+						}
+					},
+					{
+						type: Backbone.HasOne,
+						key: 'listProperties',
+						relatedModel: 'Properties'
+					}
+				]
+			});
+			
+			var window = new Window();
+			window.set({ listProperties: new Properties() } );
+			ok( window._relations.length === 1 );
+		});
+		
+		test("Duplicate relations not allowed (two relations with reverse relations)", function() {
 			Properties = Backbone.RelationalModel.extend({});
 			Window = Backbone.RelationalModel.extend({
 				relations: [
@@ -378,61 +426,10 @@ $(document).ready(function() {
 			
 			var window = new Window();
 			window.set({ listProperties: new Properties() } );
-			//console.debug( 'test1: %o', window._relations );
 			ok( window._relations.length === 1 );
 		});
 		
-		test("Double relations not allowed", function() {
-			Properties = Backbone.RelationalModel.extend({});
-			Window = Backbone.RelationalModel.extend({
-				relations: [
-					{
-						type: Backbone.HasOne,
-						key: 'listProperties',
-						relatedModel: 'Properties'
-					},
-					{
-						type: Backbone.HasOne,
-						key: 'listProperties',
-						relatedModel: 'Properties'
-					}
-				]
-			});
-			
-			var window = new Window();
-			window.set({ listProperties: new Properties() } );
-			//console.debug( 'test2: %o', window._relations );
-			ok( window._relations.length === 1 );
-		});
-		
-		test("Double relations not allowed", function() {
-			Properties = Backbone.RelationalModel.extend({});
-			Window = Backbone.RelationalModel.extend({
-				relations: [
-					{
-						type: Backbone.HasOne,
-						key: 'listProperties',
-						relatedModel: 'Properties',
-						reverseRelation: {
-							type: Backbone.HasOne,
-							key: 'window'
-						}
-					},
-					{
-						type: Backbone.HasOne,
-						key: 'listProperties',
-						relatedModel: 'Properties'
-					}
-				]
-			});
-			
-			var window = new Window();
-			window.set({ listProperties: new Properties() } );
-			//console.debug( 'test3: %o', window._relations );
-			ok( window._relations.length === 1 );
-		});
-		
-		test("Double relations not allowed", function() {
+		test("Duplicate relations not allowed (different relations, reverse relations)", function() {
 			Properties = Backbone.RelationalModel.extend({});
 			Window = Backbone.RelationalModel.extend({
 				relations: [
@@ -458,9 +455,15 @@ $(document).ready(function() {
 			});
 			
 			var window = new Window();
-			window.set({ listProperties: new Properties(), windowProperties: new Properties() } );
-			//console.debug( 'test4: %o', window._relations );
+			var prop1 = new Properties({name:'a'});
+			var prop2 = new Properties({name:'b'});
+			
+			window.set( { listProperties: prop1, windowProperties: prop2 } );
+			
 			ok( window._relations.length === 2 );
+			ok( prop1._relations.length === 2 );
+			ok( window.get('listProperties').get('name') === 'a' );
+			ok( window.get('windowProperties').get('name') === 'b' );
 		});
 		
 	
@@ -606,7 +609,7 @@ $(document).ready(function() {
 	module("Reverse relationships", { setup: initObjects } );
 	
 		
-		test("Add", function() {
+		test("Add and remove", function() {
 			equal( ourHouse.get('occupants').length, 1, "ourHouse has 1 occupant" );
 			equal( person1.get('livesIn'), null, "Person 1 doesn't live anywhere" );
 			
@@ -653,11 +656,11 @@ $(document).ready(function() {
 			ok( user2.get('person') === person2 );
 		});
 		
-		test("'Save' objects", function() {
+		test("'Save' objects (performing 'set' multiple times without and with id)", function() {
 			person3
 				.bind( 'add:jobs', function( model, coll ) {
 						var company = model.get('company');
-						console.debug( company.get('ceo') );
+						//console.debug( company.get('ceo') );
 						ok( company instanceof Company && company.get('ceo').get('name') === 'Lunar boy' && model.get('person') === person3,
 							"Both Person and Company are set on the Tenure instance" );
 					})
@@ -699,5 +702,24 @@ $(document).ready(function() {
 			
 			ok( person1.get('likesALot') === person2 );
 			ok( person2.get('likedALotBy' ) === person1 );
+		});
+	
+	
+	module("Model loading", { setup: initObjects } );
+	
+	
+		test("Loading (fetching) the same model multiple times updates the model", function() {
+			var collA = new Backbone.Collection();
+			collA.model = User;
+			var collB = new Backbone.Collection();
+			collB.model = User;
+			
+			// Similar to what happens when calling 'fetch' on collA, then on collB
+			var user = collA._add( { id: '/user/1/', name: 'User 1' } );
+			equal( user.get('name'), 'User 1' );
+			
+			var updatedUser = collB._add( { id: '/user/1/', name: 'New name for User 1', title: 'Superuser' } );
+			equal( user.get('name'), 'New name for User 1' );
+			equal( updatedUser.get('name'), 'New name for User 1' );
 		});
 });

@@ -274,7 +274,7 @@
 					dit.removeRelated( model, options );
 				});
 		
-		this.initialize( this.options );
+		this.initialize();
 	};
 	// Fix inheritance :\
 	Backbone.Relation.extend = Backbone.Model.extend;
@@ -351,23 +351,25 @@
 		},
 		
 		/**
-		 * Try to figure out if a relation (on a different RelationalModel) is the reverse
+		 * Determine if a relation (on a different RelationalModel) is the reverse
 		 * relation of the current one.
 		 */
 		_isReverseRelation: function( relation ) {
-			if ( relation.instance instanceof this.relatedModel && this.reverseRelation.key === relation.key ) {
+			if ( relation.instance instanceof this.relatedModel && this.reverseRelation.key === relation.key
+					&&	this.key === relation.reverseRelation.key ) {
 				return true;
 			}
 			return false;
 		},
 		
 		/**
-		 * Get the reverse relations (pointing back to 'this.instance') for the currently related model(s).
+		 * Get the reverse relations (pointing back to 'this.key' on 'this.instance') for the currently related model(s).
 		 * @param model {Backbone.RelationalModel} Optional; get the reverse relations for a specific model.
 		 *		If not specified, 'this.related' is used.
 		 */
 		getReverseRelations: function( model ) {
 			var reverseRelations = [];
+			// Iterate over 'model', 'this.related.models' (if this.related is a Backbone.Collection), or wrap 'this.related' in an array.
 			var models = !_.isUndefined( model ) ? [ model ] : this.related && ( this.related.models || [ this.related ] );
 			_.each( models , function( related ) {
 				_.each( related.getRelations(), function( relation ) {
@@ -393,7 +395,7 @@
 			reverseRelation: { type: 'HasMany' }
 		},
 		
-		initialize: function( options ) {
+		initialize: function() {
 			_.bindAll( this, 'onChange' );
 			this.instance.bind( 'relationChange:' + this.key, this.onChange );
 			
@@ -522,7 +524,7 @@
 			reverseRelation: { type: 'HasOne' }
 		},
 		
-		initialize: function( options ) {
+		initialize: function() {
 			_.bindAll( this, 'onChange', 'handleAddition', 'handleRemoval' );
 			this.instance.bind( 'relationChange:' + this.key, this.onChange );
 			
@@ -588,7 +590,7 @@
 			});
 		},
 		
-		tryAddRelated: function( model ) {
+		tryAddRelated: function( model, options ) {
 			if ( !this.related.getByCid( model ) && !this.related.get( model ) ) {
 				// Check if this new model was specified in 'this.keyContents'
 				var item = _.any( this.keyContents, function( item ) {
@@ -597,7 +599,7 @@
 				}, this );
 				
 				if ( item ) {
-					this.related._add( model );
+					this.related._add( model, options );
 				}
 			}
 		},
@@ -815,4 +817,18 @@
 		}
 	});
 	_.extend( Backbone.RelationalModel.prototype, Backbone.Semaphore );
+	
+	// Override Backbone.Collection._add, so objects fetched from the server multiple times will
+	// update the existing Model.
+	var _add = Backbone.Collection.prototype._add;
+	Backbone.Collection.prototype._add = function( model, options ) {
+		if ( !( model instanceof Backbone.Model ) ) {
+			// Try to find 'model' in Backbone.store. If it already exists, set the new properties on it.
+			var found = Backbone.store.find( this.model, model[ this.model.prototype.idAttribute ] );
+			if ( found ) {
+				model = found.set( model, options );
+			}
+		}
+		return _add.call( this, model, options );
+	};
 })( this );
