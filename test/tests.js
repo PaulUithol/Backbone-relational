@@ -625,6 +625,28 @@ $(document).ready(function() {
 			equal( person1.get('livesIn') && person1.get('livesIn').id, theirHouse.id, "Person 1 lives in theirHouse" );
 		});
 		
+		test("One-to-many relations to self (tree-like stuff)", function() {
+			Deliverable = Backbone.RelationalModel.extend({
+				relations: [{
+						type: Backbone.HasOne,
+						key: 'parent',
+						relatedModel: 'Deliverable',
+						includeInJSON: false,
+						reverseRelation: {
+							key: 'children'
+						}
+					}]
+			});
+			
+			var child1 = new Deliverable({ id: '2', parent: '1', name: 'First child' });
+			var parent = new Deliverable({ id: '1', parent: null, name: 'Parent' });
+			var child2 = new Deliverable({ id: '3', parent: '1', name: 'Second child' });
+			
+			equal( parent.get('children').length, 2 );
+			ok( child1.get('parent') === parent );
+			ok( child2.get('parent') === parent );
+		});
+		
 		test("New objects (no 'id' yet)", function() {
 			var person = new Person({
 				name: 'Remi'

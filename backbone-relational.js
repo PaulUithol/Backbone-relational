@@ -268,7 +268,11 @@
 		// When 'relatedModel' are created or destroyed, check if it affects this relation.
 		Backbone.store.getCollection( this.relatedModel )
 			.bind( 'add', function( model, coll, options ) {
-					dit.tryAddRelated( model, options );
+					// Allow 'model' to set up it's relations, before calling 'tryAddRelated'
+					// (which can result in a call to 'addRelated' on a relation of 'model')
+					model.queue( function() {
+						dit.tryAddRelated( model, options );
+					});
 				})
 			.bind( 'remove', function( model, coll, options ) {
 					dit.removeRelated( model, options );
@@ -493,7 +497,7 @@
 			if ( item && ( _.isString( item ) || typeof( item ) === 'object' ) ) {
 				var id = _.isString( item ) ? item : item[ this.relatedModel.prototype.idAttribute ];
 				if ( model.id === id ) {
-					this.setRelated( model );
+					this.addRelated( model, options );
 				}
 			}
 		},
