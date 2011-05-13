@@ -9,7 +9,7 @@ Backbone-relational provides one-to-one, one-to-many and many-to-one relations b
 	* changes to the key itself on HasMany and HasOne relations (bind to `update:<key>`; arguments=`(model, attribute)`).
 
 ## Example:
-
+```javascript
 	paul = new Person({
 		id: 'person-1',
 		name: 'Paul',
@@ -80,11 +80,11 @@ Backbone-relational provides one-to-one, one-to-many and many-to-one relations b
 	
 	// Move back in; triggers 'add:occupants' on ourHouse, and 'update:livesIn' on paul
 	paul.set( { 'livesIn': 'house-1' } );
-
+```
 
 This is achieved using the following relations and models:
 
-
+```javascript
 	House = Backbone.RelationalModel.extend({
 		// The 'relations' property, on the House's prototype. Initialized separately for each instance of House.
 		// Each relation must define (as a minimum) the 'type', 'key' and 'relatedModel'. Options are
@@ -121,6 +121,7 @@ This is achieved using the following relations and models:
 	});
 	
 	User = Backbone.RelationalModel.extend();
+```
 
 ## Relation types
 
@@ -135,6 +136,7 @@ The key for a HasMany relation consists of a `Backbone.Collection` of `Backbone.
 ### Many-to-many relations (using two `Backbone.HasMany` relations)
 A many-to-many relation can be modeled using two HasMany relations:
 
+```javascript
 	Person = Backbone.RelationalModel.extend({
 		relations: [
 			{
@@ -175,6 +177,7 @@ A many-to-many relation can be modeled using two HasMany relations:
 		});
 	
 	paul.get('jobs').add( { company: niceCompany } );
+```
 
 ## Under the hood
 
