@@ -141,7 +141,8 @@
 		},
 		
 		/**
-		 * @param model
+		 * Find the Store's collection for a certain type of model.
+		 * @param model {Backbone.RelationalModel}
 		 * @return {Backbone.Collection} A collection if found (or applicable for 'model'), or null
 		 */
 		getCollection: function( model ) {
@@ -192,9 +193,14 @@
 			return coll && coll.get( id );
 		},
 		
+		/**
+		 * Add a 'model' to it's appropriate collection. Retain the original contents of 'model.collection'.
+		 */
 		register: function( model ) {
+			var modelColl = model.collection;
 			var coll = this.getCollection( model );
 			coll && coll._add( model );
+			model.collection = modelColl;
 		},
 		
 		unregister: function( model ) {

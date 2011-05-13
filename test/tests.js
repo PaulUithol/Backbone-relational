@@ -65,6 +65,10 @@ $(document).ready(function() {
 		]
 	});
 	
+	PersonCollection = Backbone.Collection.extend({
+		model: Person
+	});
+	
 	// A link table between 'Person' and 'Company', to achieve many-to-many relations
 	Tenure = Backbone.RelationalModel.extend({
 		defaults: {
@@ -308,6 +312,14 @@ $(document).ready(function() {
 			var house = Backbone.store.find( House, houseId );
 			
 			ok( !house, houseId + " is not found in the store anymore" );
+		});
+		
+		
+		test("Model.collection is the first collection a Model is added to by an end-user (not it's Backbone.Store collection!)", function() {
+			var person = new Person( { name: 'New guy' } );
+			var personColl = new PersonCollection();
+			personColl.add( person );
+			ok( person.collection === personColl );
 		});
 		
 	
