@@ -16,7 +16,7 @@ Backbone-relational provides one-to-one, one-to-many and many-to-one relations b
 		user: { id: 'user-1', login: 'dude', email: 'me@gmail.com' }
 	});
 	
-	// A User object is automatically created from the JSON; so 'login' returns 'dude'
+	// A User object is automatically created from the JSON; so 'login' returns 'dude'.
 	paul.get('user').get('login');
 	
 	ourHouse = new House({
@@ -25,11 +25,12 @@ Backbone-relational provides one-to-one, one-to-many and many-to-one relations b
 		occupants: ['person-1']
 	});
 	
-	// 'ourHouse.occupants' is turned into a Backbone.Collection of Persons. The first person in 'ourHouse.occupants' will point to 'paul'.
+	// 'ourHouse.occupants' is turned into a Backbone.Collection of Persons.
+	// The first person in 'ourHouse.occupants' will point to 'paul'.
 	ourHouse.occupants.at(0); // === paul
 	
-	// the relation from 'House.occupants' to 'Person' has been defined as a bi-directional HasMany relation, with a reverse relation to
-	// 'Person.livesIn'. So, 'paul.livesIn' will automatically point back to 'ourHouse'.
+	// the relation from 'House.occupants' to 'Person' has been defined as a bi-directional HasMany relation,
+	// with a reverse relation to 'Person.livesIn'. So, 'paul.livesIn' will automatically point back to 'ourHouse'.
 	paul.get('livesIn'); // === ourHouse
 	
 	
@@ -55,7 +56,7 @@ Backbone-relational provides one-to-one, one-to-many and many-to-one relations b
 		*/
 	
 	
-	// Use the 'add' and 'remove' events to listen for additions/removals on HasMany relations (like 'House.occupants')
+	// Use the 'add' and 'remove' events to listen for additions/removals on HasMany relations (like 'House.occupants').
 	ourHouse.bind( 'add:occupants', function( model, coll ) {
 			// create a View?
 			console.debug( 'add %o', model );
