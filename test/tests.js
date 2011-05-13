@@ -93,6 +93,19 @@ $(document).ready(function() {
 		]
 	});
 	
+	Node = Backbone.RelationalModel.extend({
+		relations: [{
+				type: Backbone.HasOne,
+				key: 'parent',
+				relatedModel: 'Node',
+				includeInJSON: false,
+				reverseRelation: {
+					key: 'children'
+				}
+			}
+		]
+	});
+	
 	function initObjects() {
 		// save _reverseRelations, otherwise we'll get a lot of warnings about existing relations
 		var oldReverseRelations = Backbone.store._reverseRelations;
@@ -245,7 +258,7 @@ $(document).ready(function() {
 			equal( Backbone.store.getObjectByName( 'Backbone.RelationalModel' ), Backbone.RelationalModel );
 		});
 		
-		test("Add and removes from store", function() {
+		test("Add and remove from store", function() {
 			var coll = Backbone.store.getCollection( person1 );
 			var length = coll.length;
 			
@@ -318,16 +331,13 @@ $(document).ready(function() {
 			});
 			
 			var result = person.set( { 'name': 'Hector Malot' } );
-			
 			ok( result === person, "Set returns the model" );
-			
 			result = person.destroy();
-			
 			ok( result === person, "Destroy returns the model" );
 		});
 		
 	
-	module("Backbone.Relation preconditions", { setup: initObjects } );
+	module("Backbone.Relation preconditions");
 	
 		
 		test("HasMany with a reverseRelation HasMany is not allowed", function() {
@@ -470,13 +480,21 @@ $(document).ready(function() {
 	module("Backbone.HasOne", { setup: initObjects } );
 		
 		
-		test("Persons are set up properly", function() {
+		test("HasOne relations on Person are set up properly", function() {
 			ok( person1.get('likesALot') === person2 );
+			equal( person1.get('user').id, 'user-1', "The id of 'person1's user is 'user-1'" );
 			ok( person2.get('likesALot') === person1 );
 		});
 		
+		test("Reverse HasOne relations on Person are set up properly", function() {
+			ok( person1.get('likedALotBy') === person2 );
+			ok( person1.get('user').get('person') === person1, "The person belonging to 'person1's user 'person1'" );
+			ok( person2.get('likedALotBy') === person1 );
+		});
+		
 		test("Listeners for 'update', on a HasOne relation, for a Model with multiple relations", function() {
-			expect( 1 );
+			expect( 4 );
+			
 			Password = Backbone.RelationalModel.extend({
 				relations: [{
 					type: Backbone.HasOne,
@@ -488,14 +506,25 @@ $(document).ready(function() {
 					}
 				}]
 			});
-			password = new Password(); // trigger initialization of relations for Password
+			// triggers initialization of the relation to Password on User
+			password = new Password({ plaintext: 'asdf'});
 			
 			person1.bind('update:user', function( model, attr, options ) {
-				ok( attr.get('person') === person1 && attr.get('password') instanceof Password, "" );
+				ok( attr.get('person') === person1, "The user's 'person' is 'person1'" );
+				ok( attr.get('password') instanceof Password, "The user's password attribute is a model of type Password");
+				equal( attr.get('password').get('plaintext'), 'qwerty', "The user's password is ''qwerty'" );
 			});
 			
 			var user = { login: 'me@hotmail.com', password: { plaintext: 'qwerty' } };
+			// Triggers first three assertions
 			person1.set( { user: user } );
+			
+			user = person1.get('user').bind('update:password', function( model, attr, options ) {
+				equal( attr.get('plaintext'), 'asdf', "The user's password is ''qwerty'" );
+			});
+			
+			// Triggers fourth assertion
+			user.set( { password: password } );
 		});
 		
 		
@@ -541,9 +570,7 @@ $(document).ready(function() {
 			theirHouse.get('occupants').remove( person1 );
 		});
 		
-		// All relations should be set up on a Model, before notifying related models.
 		test("Listeners for 'add'/'remove', on a HasMany relation, for a Model with multiple relations", function() {
-			//expect( 24 );
 			var job1 = { company: oldCompany };
 			var job2 = { company: oldCompany, person: person1 };
 			var job3 = { person: person1 };
@@ -553,6 +580,7 @@ $(document).ready(function() {
 					ok( false, "person1 should only be added to 'oldCompany'." );
 				});
 			
+			// Assert that all relations on a Model are set up, before notifying related models.
 			oldCompany.bind( 'add:employees', function( model, coll ) {
 					newJob = model;
 					
@@ -625,29 +653,57 @@ $(document).ready(function() {
 			equal( person1.get('livesIn') && person1.get('livesIn').id, theirHouse.id, "Person 1 lives in theirHouse" );
 		});
 		
-		test("One-to-many relations to self (tree-like stuff)", function() {
-			Deliverable = Backbone.RelationalModel.extend({
-				relations: [{
-						type: Backbone.HasOne,
-						key: 'parent',
-						relatedModel: 'Deliverable',
-						includeInJSON: false,
-						reverseRelation: {
-							key: 'children'
-						}
-					}]
-			});
-			
-			var child1 = new Deliverable({ id: '2', parent: '1', name: 'First child' });
-			var parent = new Deliverable({ id: '1', parent: null, name: 'Parent' });
-			var child2 = new Deliverable({ id: '3', parent: '1', name: 'Second child' });
+		test("HasOne relations to self (tree stucture)", function() {
+			var child1 = new Node({ id: '2', parent: '1', name: 'First child' });
+			var parent = new Node({ id: '1', name: 'Parent' });
+			var child2 = new Node({ id: '3', parent: '1', name: 'Second child' });
 			
 			equal( parent.get('children').length, 2 );
+			ok( parent.get('children').include( child1 ) );
+			ok( parent.get('children').include( child2 ) );
+			
 			ok( child1.get('parent') === parent );
+			equal( child1.get('children').length, 0 );
+			
 			ok( child2.get('parent') === parent );
+			equal( child2.get('children').length, 0 );
 		});
 		
-		test("New objects (no 'id' yet)", function() {
+		test("HasMany relations to self (tree structure)", function() {
+			var child1 = new Node({ id: '2', name: 'First child' });
+			var parent = new Node({ id: '1', children: ['2', '3'], name: 'Parent' });
+			var child2 = new Node({ id: '3', name: 'Second child' });
+			
+			equal( parent.get('children').length, 2 );
+			ok( parent.get('children').include( child1 ) );
+			ok( parent.get('children').include( child2 ) );
+			
+			ok( child1.get('parent') === parent );
+			equal( child1.get('children').length, 0 );
+			
+			ok( child2.get('parent') === parent );
+			equal( child2.get('children').length, 0 );
+		});
+		
+		test("HasOne relations to self (cycle, directed graph structure)", function() {
+			var node1 = new Node({ id: '1', parent: '3', name: 'First node' });
+			var node2 = new Node({ id: '2', parent: '1', name: 'Second node' });
+			var node3 = new Node({ id: '3', parent: '2', name: 'Third node' });
+			
+			ok( node1.get('parent') === node3 );
+			equal( node1.get('children').length, 1 );
+			ok( node1.get('children').at(0) === node2 );
+			
+			ok( node2.get('parent') === node1 );
+			equal( node2.get('children').length, 1 );
+			ok( node2.get('children').at(0) === node3 );
+			
+			ok( node3.get('parent') === node2 );
+			equal( node3.get('children').length, 1 );
+			ok( node3.get('children').at(0) === node1 );
+		});
+		
+		test("New objects (no 'id' yet) have working relations", function() {
 			var person = new Person({
 				name: 'Remi'
 			});
@@ -682,12 +738,11 @@ $(document).ready(function() {
 			person3
 				.bind( 'add:jobs', function( model, coll ) {
 						var company = model.get('company');
-						//console.debug( company.get('ceo') );
 						ok( company instanceof Company && company.get('ceo').get('name') === 'Lunar boy' && model.get('person') === person3,
 							"Both Person and Company are set on the Tenure instance" );
 					})
 				.bind( 'remove:jobs', function( model, coll ) {
-						console.debug('remove:jobs, model=%o, coll=%o', model, coll );
+						ok( false, "'person3' should not lose his job" );
 					});
 			
 			// Create Models from an object
