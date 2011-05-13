@@ -16,17 +16,25 @@ Backbone-relational provides one-to-one, one-to-many and many-to-one relations b
 		user: { id: 'user-1', login: 'dude', email: 'me@gmail.com' }
 	});
 	
+	// A User object is automatically created from the JSON; so 'login' returns 'dude'
+	paul.get('user').get('login');
+	
 	ourHouse = new House({
 		id: 'house-1',
 		location: 'in the middle of the street',
 		occupants: ['person-1']
 	});
 	
-	paul.get('user').get('login'); // A User object is automatically created from the JSON; so 'login' returns 'dude'
+	// 'ourHouse.occupants' is turned into a Backbone.Collection of Persons. The first person in 'ourHouse.occupants' will point to 'paul'.
+	ourHouse.occupants.at(0); // === paul
 	
-	// a ref to 'ourHouse', which is automatically defined because of the bi-directional HasMany relation on House to Person
-	paul.get('livesIn');
+	// the relation from 'House.occupants' to 'Person' has been defined as a bi-directional HasMany relation, with a reverse relation to
+	// 'Person.livesIn'. So, 'paul.livesIn' will automatically point back to 'ourHouse'.
+	paul.get('livesIn'); // === ourHouse
 	
+	
+	// You can control which relations get serialized to JSON (when saving), using the 'includeInJSON' property on a Relation.
+	// Also, each object will only get serialized once to prevent loops.
 	paul.get('user').toJSON();
 		/* result:
 			{
@@ -46,7 +54,8 @@ Backbone-relational provides one-to-one, one-to-many and many-to-one relations b
 			}
 		*/
 	
-	// New events to listen to additions/removals on the 'occupants' collection
+	
+	// Use the 'add' and 'remove' events to listen for additions/removals on HasMany relations (like 'House.occupants')
 	ourHouse.bind( 'add:occupants', function( model, coll ) {
 			// create a View?
 			console.debug( 'add %o', model );
@@ -56,16 +65,19 @@ Backbone-relational provides one-to-one, one-to-many and many-to-one relations b
 			console.debug( 'remove %o', model );
 		});
 	
+	// Use the 'update' event to listen for changes on a HasOne relation (like 'Person.livesIn').
 	paul.bind( 'update:livesIn', function( model, attr ) {
-			console.debug( 'change to %o', attr );
+			console.debug( 'update to %o', attr );
 		});
 	
-	// Make paul homeless; triggers 'remove:occupants' on ourHouse, and 'change:livesIn' on paul
+	
+	// Modifying either side of a bi-directional relation updates the other side automatically.
+	// Make paul homeless; triggers 'remove:occupants' on ourHouse, and 'update:livesIn' on paul
 	ourHouse.get('occupants').remove( paul.id ); 
 	
 	paul.get('livesIn'); // yup; nothing.
 	
-	// Move back in; triggers 'add:occupants' on ourHouse, and 'change:livesIn' on paul
+	// Move back in; triggers 'add:occupants' on ourHouse, and 'update:livesIn' on paul
 	paul.set( { 'livesIn': 'house-1' } );
 
 
