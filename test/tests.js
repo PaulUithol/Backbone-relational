@@ -334,7 +334,7 @@ $(document).ready(function() {
 			equal(  json.likesALot.likesALot, 'person-1', "Person is serialized only once" );
 		});
 		
-		test("Return values: set and destroy return the Model", function() {
+		test("Return values: set returns the Model", function() {
 			var personId = 'person-10';
 			var person = new Person({
 				id: personId,
@@ -344,8 +344,6 @@ $(document).ready(function() {
 			
 			var result = person.set( { 'name': 'Hector Malot' } );
 			ok( result === person, "Set returns the model" );
-			result = person.destroy();
-			ok( result === person, "Destroy returns the model" );
 		});
 		
 	

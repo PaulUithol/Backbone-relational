@@ -9,24 +9,37 @@
   // Initial Setup
   // -------------
 
+  // Save a reference to the global object.
+  var root = this;
+
+  // Save the previous value of the `Backbone` variable.
+  var previousBackbone = root.Backbone;
+
   // The top-level namespace. All public Backbone classes and modules will
   // be attached to this. Exported for both CommonJS and the browser.
   var Backbone;
   if (typeof exports !== 'undefined') {
     Backbone = exports;
   } else {
-    Backbone = this.Backbone = {};
+    Backbone = root.Backbone = {};
   }
 
   // Current version of the library. Keep in sync with `package.json`.
   Backbone.VERSION = '0.3.3';
 
   // Require Underscore, if we're on the server, and it's not already present.
-  var _ = this._;
+  var _ = root._;
   if (!_ && (typeof require !== 'undefined')) _ = require('underscore')._;
 
-  // For Backbone's purposes, either jQuery or Zepto owns the `$` variable.
-  var $ = this.jQuery || this.Zepto;
+  // For Backbone's purposes, jQuery or Zepto owns the `$` variable.
+  var $ = root.jQuery || root.Zepto;
+
+  // Runs Backbone.js in *noConflict* mode, returning the `Backbone` variable
+  // to its previous owner. Returns a reference to this Backbone object.
+  Backbone.noConflict = function() {
+    root.Backbone = previousBackbone;
+    return this;
+  };
 
   // Turn on `emulateHTTP` to use support legacy HTTP servers. Setting this option will
   // fake `"PUT"` and `"DELETE"` requests via the `_method` parameter and set a
@@ -77,7 +90,7 @@
           if (!list) return this;
           for (var i = 0, l = list.length; i < l; i++) {
             if (callback === list[i]) {
-              list.splice(i, 1);
+              list[i] = null;
               break;
             }
           }
@@ -89,19 +102,21 @@
     // Trigger an event, firing all bound callbacks. Callbacks are passed the
     // same arguments as `trigger` is, apart from the event name.
     // Listening for `"all"` passes the true event name as the first argument.
-    trigger : function(ev) {
-      var list, calls, i, l;
+    trigger : function(eventName) {
+      var list, calls, ev, callback, args, i, l;
+      var both = 2;
       if (!(calls = this._callbacks)) return this;
-      if (calls[ev]) {
-        list = calls[ev].slice(0);
-        for (i = 0, l = list.length; i < l; i++) {
-          list[i].apply(this, Array.prototype.slice.call(arguments, 1));
-        }
-      }
-      if (calls['all']) {
-        list = calls['all'].slice(0);
-        for (i = 0, l = list.length; i < l; i++) {
-          list[i].apply(this, arguments);
+      while (both--) {
+        ev = both ? eventName : 'all';
+        if (list = calls[ev]) {
+          for (i = 0, l = list.length; i < l; i++) {
+            if (!(callback = list[i])) {
+              list.splice(i, 1); i--; l--;
+            } else {
+              args = both ? Array.prototype.slice.call(arguments, 1) : arguments;
+              callback.apply(this, args);
+            }
+          }
         }
       }
       return this;
@@ -144,10 +159,6 @@
     // The default name for the JSON `id` attribute is `"id"`. MongoDB and
     // CouchDB users may want to set this to `"_id"`.
     idAttribute : 'id',
-
-    // The most recent request object (set on 'fetch', 'save' and 'destroy').
-	// Enables the use of jQuery.Deferred methods. 
-    request: null,
 
     // Initialize is an empty function by default. Override it with your own
     // initialization logic.
@@ -263,13 +274,12 @@
       options || (options = {});
       var model = this;
       var success = options.success;
-      options.success = function(resp) {
-        if (!model.set(model.parse(resp), options)) return false;
+      options.success = function(resp, status, xhr) {
+        if (!model.set(model.parse(resp, xhr), options)) return false;
         if (success) success(model, resp);
       };
       options.error = wrapError(options.error, model, options);
-      this.request = (this.sync || Backbone.sync).call(this, 'read', this, options);
-      return this;
+      return (this.sync || Backbone.sync).call(this, 'read', this, options);
     },
 
     // Set a hash of model attributes, and sync the model to the server.
@@ -280,14 +290,13 @@
       if (attrs && !this.set(attrs, options)) return false;
       var model = this;
       var success = options.success;
-      options.success = function(resp) {
-        if (!model.set(model.parse(resp), options)) return false;
-        if (success) success(model, resp);
+      options.success = function(resp, status, xhr) {
+        if (!model.set(model.parse(resp, xhr), options)) return false;
+        if (success) success(model, resp, xhr);
       };
       options.error = wrapError(options.error, model, options);
       var method = this.isNew() ? 'create' : 'update';
-      this.request = (this.sync || Backbone.sync).call(this, method, this, options);
-      return this;
+      return (this.sync || Backbone.sync).call(this, method, this, options);
     },
 
     // Destroy this model on the server. Upon success, the model is removed
@@ -301,8 +310,7 @@
         if (success) success(model, resp);
       };
       options.error = wrapError(options.error, model, options);
-      this.request = (this.sync || Backbone.sync).call(this, 'delete', this, options);
-      return this;
+      return (this.sync || Backbone.sync).call(this, 'delete', this, options);
     },
 
     // Default URL for the model's representation on the server -- if you're
@@ -316,7 +324,7 @@
 
     // **parse** converts a response into the hash of attributes to be `set` on
     // the model. The default implementation is just to pass the response along.
-    parse : function(resp) {
+    parse : function(resp, xhr) {
       return resp;
     },
 
@@ -419,10 +427,6 @@
     // This should be overridden in most cases.
     model : Backbone.Model,
 
-    // The most recent request object (set on 'fetch'). Enables the use of
-	// jQuery.Deferred methods.
-    request: null,
-
     // Initialize is an empty function by default. Override it with your own
     // initialization logic.
     initialize : function(){},
@@ -510,13 +514,12 @@
       options || (options = {});
       var collection = this;
       var success = options.success;
-      options.success = function(resp) {
-        collection[options.add ? 'add' : 'refresh'](collection.parse(resp), options);
+      options.success = function(resp, status, xhr) {
+        collection[options.add ? 'add' : 'refresh'](collection.parse(resp, xhr), options);
         if (success) success(collection, resp);
       };
       options.error = wrapError(options.error, collection, options);
-      this.request = (this.sync || Backbone.sync).call(this, 'read', this, options);
-      return this;
+      return (this.sync || Backbone.sync).call(this, 'read', this, options);
     },
 
     // Create a new instance of a model in this collection. After the model
@@ -527,21 +530,22 @@
       if (!(model instanceof Backbone.Model)) {
         var attrs = model;
         model = new this.model(null, {collection: coll});
-        if (!model.set(attrs)) return false;
+        if (!model.set(attrs, options)) return false;
       } else {
         model.collection = coll;
       }
       var success = options.success;
-      options.success = function(nextModel, resp) {
+      options.success = function(nextModel, resp, xhr) {
         coll.add(nextModel);
-        if (success) success(nextModel, resp);
+        if (success) success(nextModel, resp, xhr);
       };
-      return model.save(null, options);
+      model.save(null, options);
+      return model;
     },
 
     // **parse** converts a response into a list of models to be added to the
     // collection. The default implementation is just to pass it through.
-    parse : function(resp) {
+    parse : function(resp, xhr) {
       return resp;
     },
 
@@ -568,8 +572,7 @@
         model = new this.model(model, {collection: this});
       }
       var already = this.getByCid(model);
-      if (already)
-	    throw new Error(["Can't add the same model to a set twice", already.id]);
+      if (already) throw new Error(["Can't add the same model to a set twice", already.id]);
       this._byId[model.id] = model;
       this._byCid[model.cid] = model;
       if (!model.collection) {
@@ -615,7 +618,7 @@
       if (ev == 'destroy') {
         this._remove(model, options);
       }
-      if (ev === 'change:' + model.idAttribute) {
+      if (model && ev === 'change:' + model.idAttribute) {
         delete this._byId[model.previous(model.idAttribute)];
         this._byId[model.id] = model;
       }
@@ -727,7 +730,10 @@
   };
 
   // Cached regex for cleaning hashes.
-  var hashStrip = /^#*/;
+  var hashStrip = /^#*!?/;
+
+  // Cached regex for detecting MSIE.
+  var isExplorer = /msie [\w.]+/;
 
   // Has the history handling already been started?
   var historyStarted = false;
@@ -749,7 +755,7 @@
     start : function() {
       if (historyStarted) throw new Error("Backbone.history has already been started");
       var docMode = document.documentMode;
-      var oldIE = ($.browser.msie && (!docMode || docMode <= 7));
+      var oldIE = (isExplorer.exec(navigator.userAgent.toLowerCase()) && (!docMode || docMode <= 7));
       if (oldIE) {
         this.iframe = $('<iframe src="javascript:0" tabindex="-1" />').hide().appendTo('body')[0].contentWindow;
       }
@@ -980,7 +986,6 @@
     // Default JSON-request options.
     var params = _.extend({
       type:         type,
-      contentType:  'application/json',
       dataType:     'json',
       processData:  false
     }, options);
@@ -992,6 +997,7 @@
 
     // Ensure that we have the appropriate request data.
     if (!params.data && model && (method == 'create' || method == 'update')) {
+      params.contentType = 'application/json';
       params.data = JSON.stringify(model.toJSON());
     }
 
