@@ -9,7 +9,7 @@ require('http').createServer(function(req, res) {
 		} else {
 			var mime = 'text/html';
 			if (req.url.slice(-3) === '.js') mime = 'text/javascript';
-			if (req.url.slice(-4) === '.css') mime = 'text/stylesheet';
+			if (req.url.slice(-4) === '.css') mime = 'text/css';
 			res.writeHead(200, {'content-type': mime, 'content-length': data.length});
 			res.end(data);
 		}
