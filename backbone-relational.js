@@ -13,8 +13,7 @@
 	if (typeof window === 'undefined') {
 		var _ = require('underscore');
 		var Backbone = require('backbone');
-		var exports = module.exports;
-		exports.Backbone = Backbone;
+		var exports = module.exports = Backbone;
 	} else {
 		var _ = this._;
 		var Backbone = this.Backbone;
