@@ -2,7 +2,7 @@
   "name"          : "backbone-rel",
   "description"   : "Provides one-to-one, one-to-many and many-to-one relations between models for Backbone",
   "keywords"      : ["Backbone", "relation", "nested", "model"],
-  "repository"    : "git://github.com/PaulUithol/Backbone-relational.git"
+  "repository"    : "git://github.com/PaulUithol/Backbone-relational.git",
   "author"        : "Paul Uithol",
   "contributors"  : ["Vladimir Dronnikov <dronnikov@gmail.com>"],
   "dependencies"  : {
