@@ -227,7 +227,6 @@
 	 * @param {Backbone.RelationalModel} instance
 	 * @param {object} options.
 	 *  Required properties:
-	 *    - {Backbone.RelationalModel} instance
 	 *    - {string} key
 	 *    - {Backbone.RelationalModel.constructor} relatedModel
 	 *  Optional properties:
@@ -235,7 +234,7 @@
 	 *    - {bool} createModels: serialize the attributes for related model(s)' in toJSON on create/update, or just their ids.
 	 *    - {object} reverseRelation: Specify a bi-directional relation. If provided, Relation will reciprocate
 	 *        the relation to the 'relatedModel'. Required and optional properties match 'options', except for:
-	 *        - {string|Backbone.Relation} type: 'HasOne' or 'HasMany'
+	 *        - {Backbone.Relation|string} type: 'HasOne' or 'HasMany'
 	 */
 	Backbone.Relation = function( instance, options ) {
 		var dit = this;
@@ -731,15 +730,18 @@
 		 * The regular constructor (which fills this.attributes, initialize, etc) hasn't run yet at this time!
 		 */
 		initializeRelations: function() {
-			this.acquire(); // Lock; setting up relations often also involve calls to 'set'
+			this.acquire(); // Setting up relations often also involve calls to 'set', and we only want to enter this function once
 			this._relations = [];
 			
 			Backbone.store.register( this );
 			
 			_.each( this.relations, function( rel ) {
 				var type = rel.type && ( _.isString( rel.type ) ? Backbone[ rel.type ] : rel.type );
-				if ( type.prototype instanceof Backbone.Relation.prototype.constructor ) {
+				if ( type && type.prototype instanceof Backbone.Relation.prototype.constructor ) {
 					new type( this, rel ); // Also pushes the new Relation into _relations
+				}
+				else {
+					console && console.warn( 'Relation=%o; missing or invalid type!', rel );
 				}
 			}, this );
 			

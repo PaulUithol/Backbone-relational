@@ -350,6 +350,45 @@ $(document).ready(function() {
 	module("Backbone.Relation preconditions");
 	
 		
+		test("'type', 'key', 'relatedModel' are required properties", function() {
+			Properties = Backbone.RelationalModel.extend({});
+			Window = Backbone.RelationalModel.extend({
+				relations: [
+					{
+						key: 'listProperties',
+						relatedModel: 'Properties'
+					}
+				]
+			});
+			
+			var window = new Window();
+			ok( window._relations.length === 0 );
+			
+			Window = Backbone.RelationalModel.extend({
+				relations: [
+					{
+						type: Backbone.HasOne,
+						relatedModel: 'Properties'
+					}
+				]
+			});
+			
+			window = new Window();
+			ok( window._relations.length === 0 );
+			
+			Window = Backbone.RelationalModel.extend({
+				relations: [
+					{
+						type: Backbone.HasOne,
+						key: 'listProperties'
+					}
+				]
+			});
+			
+			window = new Window();
+			ok( window._relations.length === 0 );
+		});
+		
 		test("HasMany with a reverseRelation HasMany is not allowed", function() {
 			Password = Backbone.RelationalModel.extend({
 				relations: [{
