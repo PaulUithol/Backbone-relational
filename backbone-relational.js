@@ -5,8 +5,20 @@
  * For all details and documentation: https://github.com/PaulUithol/Backbone-relational.
  * Depends on (as in, compeletely useless without) Backbone: https://github.com/documentcloud/backbone.
  */
-(function( window ) {
-	var Backbone = window.Backbone;
+(function(undefined) {
+
+	/**
+	 * CommonJS shim
+	 **/
+	if (typeof window === 'undefined') {
+		var _ = require('underscore');
+		var Backbone = require('backbone');
+		var exports = module.exports = Backbone;
+	} else {
+		var _ = this._;
+		var Backbone = this.Backbone;
+		var exports = this;
+	}
 	
 	/**
 	 * Semaphore mixin; can be used as both binary and counting.
@@ -165,8 +177,8 @@
 		getObjectByName: function( name ) {
 			var type = _.reduce( name.split('.'), function( memo, val ) {
 				return memo[ val ];
-			}, window);
-			return type !== window ? type: null;
+			}, exports);
+			return type !== exports ? type: null;
 		},
 		
 		_createCollection: function( type ) {
@@ -238,7 +250,7 @@
 		this.key = this.options.key;
 		this.keyContents = this.instance.get( this.key );
 		
-		// 'window' should be the global object where 'relatedModel' can be found on if given as a string.
+		// 'exports' should be the global object where 'relatedModel' can be found on if given as a string.
 		this.relatedModel = this.options.relatedModel;
 		if ( _.isString( this.relatedModel ) ) {
 			this.relatedModel = Backbone.store.getObjectByName( this.relatedModel );
@@ -841,4 +853,4 @@
 		}
 		return _add.call( this, model, options );
 	};
-})( this );
+})();
