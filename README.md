@@ -8,7 +8,13 @@ Backbone-relational provides one-to-one, one-to-many and many-to-one relations b
 	* addition/removal on HasMany relations (bind to `add:<key>` and `remove:<key>`; arguments=`(model, collection)`),
 	* changes to the key itself on HasMany and HasOne relations (bind to `update:<key>`; arguments=`(model, attribute)`).
 
-## Example:
+
+## Installation
+
+Backbone-relational depends on [backbone.js](https://github.com/documentcloud/backbone) (and thus on [underscore.js](https://github.com/documentcloud/underscore)). **Please use a HEAD version of backbone.js (preferably [0.5.0](https://github.com/documentcloud/backbone/tree/0.5.0)), since the latest stable is quite old**.
+
+
+## Example
 ```javascript
 	paul = new Person({
 		id: 'person-1',
@@ -34,8 +40,8 @@ Backbone-relational provides one-to-one, one-to-many and many-to-one relations b
 	paul.get('livesIn'); // === ourHouse
 	
 	
-	// You can control which relations get serialized to JSON (when saving), using the 'includeInJSON' property on a Relation.
-	// Also, each object will only get serialized once to prevent loops.
+	// You can control which relations get serialized to JSON (when saving), using the 'includeInJSON'
+	// property on a Relation. Also, each object will only get serialized once to prevent loops.
 	paul.get('user').toJSON();
 		/* result:
 			{
