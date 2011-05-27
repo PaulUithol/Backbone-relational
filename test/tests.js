@@ -110,6 +110,10 @@ $(document).ready(function() {
 		]
 	});
 	
+	NodeList = Backbone.Collection.extend({
+		model: Node
+	});
+	
 	function initObjects() {
 		// save _reverseRelations, otherwise we'll get a lot of warnings about existing relations
 		var oldReverseRelations = Backbone.store._reverseRelations;
@@ -320,6 +324,25 @@ $(document).ready(function() {
 			var personColl = new PersonCollection();
 			personColl.add( person );
 			ok( person.collection === personColl );
+		});
+		
+		test("All models can be found after adding them to a Collection via 'Collection.reset'", function() {
+			var nodes = [
+				{ id: 1, parent: null },
+				{ id: 2, parent: 1 },
+				{ id: 3, parent: 4 },
+				{ id: 4, parent: 1 }
+			];
+			
+			var nodeList = new NodeList();
+			nodeList.reset( nodes );
+			
+			var storeColl = Backbone.store.getCollection( Node );
+			equals( storeColl.length, 4, "Every Node is in Backbone.store" );
+			ok( Backbone.store.find( Node, 1 ) instanceof Node, "Node 1 can be found" );
+			ok( Backbone.store.find( Node, 2 ) instanceof Node, "Node 2 can be found" );
+			ok( Backbone.store.find( Node, 3 ) instanceof Node, "Node 3 can be found" );
+			ok( Backbone.store.find( Node, 4 ) instanceof Node, "Node 4 can be found" );
 		});
 		
 	

@@ -215,6 +215,17 @@
 			model.collection = modelColl;
 		},
 		
+		/**
+		 * Explicitly update a model's id in it's store collection
+		 */
+		update: function( model ) {
+			var coll = this.getCollection( model );
+			coll._onModelEvent( 'change:' + model.idAttribute, model, coll );
+		},
+		
+		/**
+		 * Remove a 'model' from the store.
+		 */
 		unregister: function( model ) {
 			var coll = this.getCollection( model );
 			coll && coll.remove( model );
@@ -781,7 +792,7 @@
 				// Rename options.silent, so add/remove events propagate properly in HasMany
 				// relations from 'addRelated'->'handleAddition'
 				if ( options && options.silent ) {
-					options.silentChange = options.silent;
+					options = _.extend( {}, options, { silentChange: true } );
 					delete options.silent;
 				}
 				
@@ -797,6 +808,11 @@
 			// Ideal place to set up relations :)
 			if ( !this._isInitialized && !this.isLocked() && this.relations ) {
 				this.initializeRelations();
+			}
+			// Update the 'idAttribute' in Backbone.store if; we don't want it to miss an update due to {silent:true}
+			// (or any other cause..)
+			else if ( attributes && this.idAttribute in attributes ) {
+				Backbone.store.update( this );
 			}
 			
 			// Try to run the global queue holding external events
