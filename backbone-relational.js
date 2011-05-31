@@ -2,7 +2,8 @@
  * Backbone-relational.js 0.3
  * (c) 2011 Paul Uithol
  * 
- * For all details and documentation: https://github.com/PaulUithol/Backbone-relational.
+ * Backbone-relational may be freely distributed under the MIT license.
+ * For details and documentation: https://github.com/PaulUithol/Backbone-relational.
  * Depends on (as in, compeletely useless without) Backbone: https://github.com/documentcloud/backbone.
  */
 (function(undefined) {
