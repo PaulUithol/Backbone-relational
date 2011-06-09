@@ -845,6 +845,30 @@
 			return result;
 		},
 		
+		unset: function( attributes, options ) {
+			Backbone.Relational.eventQueue.block();
+			
+			var result = Backbone.Model.prototype.unset.apply( this, arguments );
+			this.updateRelations( options );
+			
+			// Try to run the global queue holding external events
+			Backbone.Relational.eventQueue.unblock();
+			
+			return result;
+		},
+		
+		clear: function( options ) {
+			Backbone.Relational.eventQueue.block();
+			
+			var result = Backbone.Model.prototype.clear.apply( this, arguments );
+			this.updateRelations( options );
+			
+			// Try to run the global queue holding external events
+			Backbone.Relational.eventQueue.unblock();
+			
+			return result;
+		},
+		
 		/**
 		 * Override 'change', so the change will only execute after 'set' has finised (relations are updated),
 		 * and 'previousAttributes' will be available when the event is fired.
