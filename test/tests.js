@@ -116,10 +116,10 @@ $(document).ready(function() {
 	
 	function initObjects() {
 		// save _reverseRelations, otherwise we'll get a lot of warnings about existing relations
-		var oldReverseRelations = Backbone.store._reverseRelations;
-		Backbone.store = new Backbone.Store();
-		Backbone.store._reverseRelations = oldReverseRelations;
-		Backbone.eventQueue = new Backbone.BlockingQueue();
+		var oldReverseRelations = Backbone.Relational.store._reverseRelations;
+		Backbone.Relational.store = new Backbone.Store();
+		Backbone.Relational.store._reverseRelations = oldReverseRelations;
+		Backbone.Relational.eventQueue = new Backbone.BlockingQueue();
 		
 		person1 = new Person({
 			id: 'person-1',
@@ -258,16 +258,16 @@ $(document).ready(function() {
 	
 	
 		test("Initialized", function() {
-			equal( Backbone.store._collections.length, 5, "Store contains 5 collections" );
+			equal( Backbone.Relational.store._collections.length, 5, "Store contains 5 collections" );
 		});
 		
 		test("getObjectByName", function() {
-			equal( Backbone.store.getObjectByName( 'Backbone' ), Backbone );
-			equal( Backbone.store.getObjectByName( 'Backbone.RelationalModel' ), Backbone.RelationalModel );
+			equal( Backbone.Relational.store.getObjectByName( 'Backbone' ), Backbone );
+			equal( Backbone.Relational.store.getObjectByName( 'Backbone.RelationalModel' ), Backbone.RelationalModel );
 		});
 		
 		test("Add and remove from store", function() {
-			var coll = Backbone.store.getCollection( person1 );
+			var coll = Backbone.Relational.store.getCollection( person1 );
 			var length = coll.length;
 			
 			var person = new Person({
@@ -301,19 +301,19 @@ $(document).ready(function() {
 			ok( anotherHouse.get('occupants') instanceof Backbone.Collection, "Occupants is a Collection" );
 			ok( anotherHouse.get('occupants').get( personId ) instanceof Person, "Occupants contains the Person with id='" + personId + "'" );
 			
-			var person = Backbone.store.find( Person, personId );
+			var person = Backbone.Relational.store.find( Person, personId );
 			
 			ok( person, "Person with id=" + personId + " is found in the store" );
 			
 			person.destroy();
-			person = Backbone.store.find( Person, personId );
+			person = Backbone.Relational.store.find( Person, personId );
 			
 			ok( !person, personId + " is not found in the store anymore" );
 			ok( !anotherHouse.get('occupants').get( personId ), "Occupants no longer contains the Person with id='" + personId + "'" );
 			
 			anotherHouse.destroy();
 			
-			var house = Backbone.store.find( House, houseId );
+			var house = Backbone.Relational.store.find( House, houseId );
 			
 			ok( !house, houseId + " is not found in the store anymore" );
 		});
@@ -337,12 +337,12 @@ $(document).ready(function() {
 			var nodeList = new NodeList();
 			nodeList.reset( nodes );
 			
-			var storeColl = Backbone.store.getCollection( Node );
-			equals( storeColl.length, 4, "Every Node is in Backbone.store" );
-			ok( Backbone.store.find( Node, 1 ) instanceof Node, "Node 1 can be found" );
-			ok( Backbone.store.find( Node, 2 ) instanceof Node, "Node 2 can be found" );
-			ok( Backbone.store.find( Node, 3 ) instanceof Node, "Node 3 can be found" );
-			ok( Backbone.store.find( Node, 4 ) instanceof Node, "Node 4 can be found" );
+			var storeColl = Backbone.Relational.store.getCollection( Node );
+			equals( storeColl.length, 4, "Every Node is in Backbone.Relational.store" );
+			ok( Backbone.Relational.store.find( Node, 1 ) instanceof Node, "Node 1 can be found" );
+			ok( Backbone.Relational.store.find( Node, 2 ) instanceof Node, "Node 2 can be found" );
+			ok( Backbone.Relational.store.find( Node, 3 ) instanceof Node, "Node 3 can be found" );
+			ok( Backbone.Relational.store.find( Node, 4 ) instanceof Node, "Node 4 can be found" );
 		});
 		
 	
@@ -560,12 +560,12 @@ $(document).ready(function() {
 		
 		test("Reverse HasOne relations on Person are set up properly", function() {
 			ok( person1.get('likedALotBy') === person2 );
-			ok( person1.get('user').get('person') === person1, "The person belonging to 'person1's user 'person1'" );
+			ok( person1.get('user').get('person') === person1, "The person belonging to 'person1's user is 'person1'" );
 			ok( person2.get('likedALotBy') === person1 );
 		});
 		
-		test("Listeners for 'update', on a HasOne relation, for a Model with multiple relations", function() {
-			expect( 4 );
+		test("'set' triggers 'change' and 'update', on a HasOne relation, for a Model with multiple relations", function() {
+			expect( 9 );
 			
 			Password = Backbone.RelationalModel.extend({
 				relations: [{
@@ -581,22 +581,72 @@ $(document).ready(function() {
 			// triggers initialization of the relation to Password on User
 			password = new Password({ plaintext: 'asdf'});
 			
+			person1.bind('change', function( model, options ) {
+					ok( model.get('user') instanceof User, "model.user is an instance of User" );
+					equals( model.previous('user').get('login'), oldLogin, "previousAttributes is available on 'change'" );
+				});
+			
+			person1.bind('change:user', function( model, options ) {
+					ok( model.get('user') instanceof User, "model.user is an instance of User" );
+					equals( model.previous('user').get('login'), oldLogin, "previousAttributes is available on 'change'" );
+				});
+			
 			person1.bind('update:user', function( model, attr, options ) {
-				ok( attr.get('person') === person1, "The user's 'person' is 'person1'" );
-				ok( attr.get('password') instanceof Password, "The user's password attribute is a model of type Password");
-				equal( attr.get('password').get('plaintext'), 'qwerty', "The user's password is ''qwerty'" );
-			});
+					ok( model.get('user') instanceof User, "model.user is an instance of User" );
+					ok( attr.get('person') === person1, "The user's 'person' is 'person1'" );
+					ok( attr.get('password') instanceof Password, "The user's password attribute is a model of type Password");
+					equal( attr.get('password').get('plaintext'), 'qwerty', "The user's password is ''qwerty'" );
+				});
 			
 			var user = { login: 'me@hotmail.com', password: { plaintext: 'qwerty' } };
-			// Triggers first three assertions
+			var oldLogin = person1.get('user').get('login');
+			// Triggers first # assertions
 			person1.set( { user: user } );
 			
 			user = person1.get('user').bind('update:password', function( model, attr, options ) {
-				equal( attr.get('plaintext'), 'asdf', "The user's password is ''qwerty'" );
-			});
+					equal( attr.get('plaintext'), 'asdf', "The user's password is ''qwerty'" );
+				});
 			
-			// Triggers fourth assertion
+			// Triggers last assertion
 			user.set( { password: password } );
+		});
+		
+		test("'unset' triggers 'change' and 'update:'", function() {
+			expect( 4 );
+			
+			person1.bind('change', function( model, options ) {
+					equals( model.get('user'), null, "model.user is unset" );
+				});
+			
+			person1.bind('update:user', function( model, attr, options ) {
+					equals( attr, null, "new value of attr (user) is null" );
+				});
+			
+			ok( person1.get('user') instanceof User, "person1 has a 'user'" );
+			
+			var user = person1.get('user');
+			person1.unset('user');
+			
+			equals( user.get('person'), null, "person1 is not set on 'user' anymore" );
+		});
+		
+		test("'clear' triggers 'change' and 'update:'", function() {
+			expect( 4 );
+			
+			person1.bind('change', function( model, options ) {
+					equals( model.get('user'), null, "model.user is unset" );
+				});
+			
+			person1.bind('update:user', function( model, attr, options ) {
+					equals( attr, null, "new value of attr (user) is null" );
+				});
+			
+			ok( person1.get('user') instanceof User, "person1 has a 'user'" );
+			
+			var user = person1.get('user');
+			person1.clear();
+			
+			equals( user.get('person'), null, "person1 is not set on 'user' anymore" );
 		});
 		
 		
