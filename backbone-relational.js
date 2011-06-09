@@ -829,8 +829,8 @@
 			// 'set' is called quite late in 'Backbone.Model.prototype.constructor', but before 'initialize'.
 			// Ideal place to set up relations :)
 			if ( !this._isInitialized && !this.isLocked() && this.relations ) {
-				this.initializeRelations();
 				Backbone.Relational.store.register( this );
+				this.initializeRelations();
 			}
 			// Update the 'idAttribute' in Backbone.store if; we don't want it to miss an 'id' update due to {silent:true}
 			else if ( attributes && this.idAttribute in attributes ) {
