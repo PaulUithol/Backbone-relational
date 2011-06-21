@@ -353,7 +353,7 @@ $(document).ready(function() {
 			var json = person1.toJSON();
 			console.debug( json );
 			
-			ok( _.isString( json.user ), "No User object (includeInJSON=false for those)" );
+			ok( _.isString( json.user_id ), "No User object (includeInJSON=false for those)" );
 			equal(  json.likesALot.likesALot, 'person-1', "Person is serialized only once" );
 		});
 		
