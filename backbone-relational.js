@@ -608,8 +608,10 @@
 				this.related.unbind( 'add', this.handleAddition ).unbind('remove', this.handleRemoval );
 				this.related = attr;
 				this.related.bind( 'add', this.handleAddition ).bind( 'remove', this.handleRemoval );
-			}
-			else {
+			} else if( this.related instanceof Backbone.Collection ) {
+				this.setRelated( this.related );
+				this.findRelated();
+			} else {
 				this.setRelated( this.getNewCollection() );
 				this.findRelated();
 			}
