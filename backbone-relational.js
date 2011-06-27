@@ -601,7 +601,7 @@
 				this.related.unbind( 'relational:add', this.handleAddition ).unbind('relational:remove', this.handleRemoval );
 			}
 			
-			collection.reset()
+			collection.reset();
 			collection.model = this.relatedModel;
 			collection.bind( 'relational:add', this.handleAddition ).bind('relational:remove', this.handleRemoval );
 			return collection;
