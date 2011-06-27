@@ -251,7 +251,6 @@
 	 *        - {Backbone.Relation|string} type: 'HasOne' or 'HasMany'
 	 */
 	Backbone.Relation = function( instance, options ) {
-		var dit = this;
 		this.instance = instance;
 		
 		// Make sure 'options' is sane, and fill with defaults from subclasses and this object's prototype
@@ -269,13 +268,12 @@
 			this.relatedModel = Backbone.Relational.store.getObjectByName( this.relatedModel );
 		}
 		
-		if ( this.checkPreconditions() ) {
-			// Add this Relation to instance._relations
-			this.instance._relations.push( this );
-		}
-		else {
+		if ( !this.checkPreconditions() ) {
 			return false;
 		}
+		
+		// Add this Relation to instance._relations
+		this.instance._relations.push( this );
 		
 		// Add the reverse relation on 'relatedModel' to the store's reverseRelations
 		if ( !this.options.isAutoRelation && this.reverseRelation.type && this.reverseRelation.key ) {
@@ -289,25 +287,15 @@
 			) );
 		}
 		
+		_.bindAll( this, '_modelRemovedFromCollection', '_relatedModelAdded', '_relatedModelRemoved' );
 		// When a model in the store is destroyed, check if it is 'this.instance'.
-		Backbone.Relational.store.getCollection( this.instance ).bind( 'remove', function( model ) {
-				if ( model === dit.instance ) {
-					dit.destroy();
-				}
-			});
+		Backbone.Relational.store.getCollection( this.instance )
+			.bind( 'relational:remove', this._modelRemovedFromCollection );
 		
 		// When 'relatedModel' are created or destroyed, check if it affects this relation.
 		Backbone.Relational.store.getCollection( this.relatedModel )
-			.bind( 'relational:add', function( model, coll, options ) {
-					// Allow 'model' to set up it's relations, before calling 'tryAddRelated'
-					// (which can result in a call to 'addRelated' on a relation of 'model')
-					model.queue( function() {
-						dit.tryAddRelated( model, options );
-					});
-				})
-			.bind( 'relational:remove', function( model, coll, options ) {
-					dit.removeRelated( model, options );
-				});
+			.bind( 'relational:add', this._relatedModelAdded )
+			.bind( 'relational:remove', this._relatedModelRemoved );
 		
 		this.initialize();
 	};
@@ -327,6 +315,25 @@
 		relatedModel: null,
 		reverseRelation: null,
 		related: null,
+		
+		_relatedModelAdded: function( model, coll, options ) {
+			// Allow 'model' to set up it's relations, before calling 'tryAddRelated'
+			// (which can result in a call to 'addRelated' on a relation of 'model')
+			var dit = this;
+			model.queue( function() {
+				dit.tryAddRelated( model, options );
+			});
+		},
+		
+		_relatedModelRemoved: function( model, coll, options ) {
+			this.removeRelated( model, options );
+		},
+		
+		_modelRemovedFromCollection: function( model ) {
+			if ( model === this.instance ) {
+				this.destroy();
+			}
+		},
 		
 		/**
 		 * Check several pre-conditions.
@@ -432,7 +439,12 @@
 		
 		// Cleanup. Get reverse relation, call removeRelated on each.
 		destroy: function() {
-			Backbone.Relational.store.getCollection( this.relatedModel ).unbind('relational:add').unbind('relational:remove');
+			Backbone.Relational.store.getCollection( this.instance )
+				.unbind( 'relational:remove', this._modelRemovedFromCollection );
+			
+			Backbone.Relational.store.getCollection( this.relatedModel )
+				.unbind( 'relational:add', this._relatedModelAdded )
+				.unbind( 'relational:remove', this._relatedModelRemoved );
 			
 			_.each( this.getReverseRelations(), function( relation ) {
 					relation.removeRelated( this.instance );
@@ -903,7 +915,7 @@
 		},
 		
 		/**
-		 * Convert relations to JSON. Fields where 'includeInJSON' is false only have their id's included.
+		 * Convert relations to JSON, omits them when required
 		 */
 		toJSON: function() {
 			// If this Model has already been fully serialized in this branch once, return to avoid loops
