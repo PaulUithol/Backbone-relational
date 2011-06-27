@@ -920,11 +920,12 @@
 						this.acquire();
 						json[ rel.key ] = value.toJSON();
 						this.release();
-					} else {
-						if ( value instanceof Backbone.Model ){
-							json[ rel.key + "_id" ] = value.id;
-						}
-						delete json[ rel.key ]
+					}
+					else if ( value instanceof Backbone.Collection ) {
+						json[ rel.key ] = value.pluck( value.model.prototype.idAttribute );
+					}
+					else if ( value instanceof Backbone.Model ) {
+						json[ rel.key ] = value.id;
 					}
 				}, this );
 			
