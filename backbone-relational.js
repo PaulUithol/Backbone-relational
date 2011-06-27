@@ -580,19 +580,19 @@
 			_.bindAll( this, 'onChange', 'handleAddition', 'handleRemoval' );
 			this.instance.bind( 'relational:change:' + this.key, this.onChange );
 			
-			this.setRelated( this.getNewCollection() );
+			this.setRelated( this.prepareCollection( new Backbone.Collection() ) );
 			this.findRelated();
 		},
 		
-		getNewCollection: function() {
+		prepareCollection: function( collection ) {
 			if ( this.related ) {
 				this.related.unbind( 'relational:add', this.handleAddition ).unbind('relational:remove', this.handleRemoval );
 			}
 			
-			var related = new Backbone.Collection();
-			related.model = this.relatedModel;
-			related.bind( 'relational:add', this.handleAddition ).bind('relational:remove', this.handleRemoval );
-			return related;
+			collection.reset()
+			collection.model = this.relatedModel;
+			collection.bind( 'relational:add', this.handleAddition ).bind('relational:remove', this.handleRemoval );
+			return collection;
 		},
 		
 		findRelated: function() {
@@ -621,14 +621,16 @@
 					relation.removeRelated( this.instance, options );
 				}, this );
 			
-			// Set new 'related'
+			// Replace 'this.related' by 'attr' if it is a Backbone.Collection
 			if ( attr instanceof Backbone.Collection ) {
-				this.related.unbind( 'relational:add', this.handleAddition ).unbind('relational:remove', this.handleRemoval );
+				this.prepareCollection( attr );
 				this.related = attr;
-				this.related.bind( 'relational:add', this.handleAddition ).bind( 'relational:remove', this.handleRemoval );
 			}
+			// Otherwise, 'attr' should be an array of related object ids
 			else {
-				this.setRelated( this.getNewCollection() );
+				// Re-use the current 'this.related' if it is a Backbone.Collection
+				var coll = this.related instanceof Backbone.Collection ? this.related : new Backbone.Collection();
+				this.setRelated( this.prepareCollection( coll ) );
 				this.findRelated();
 			}
 			
@@ -918,12 +920,11 @@
 						this.acquire();
 						json[ rel.key ] = value.toJSON();
 						this.release();
-					}
-					else if ( value instanceof Backbone.Collection ) {
-						json[ rel.key ] = value.pluck( value.model.prototype.idAttribute );
-					}
-					else if ( value instanceof Backbone.Model ) {
-						json[ rel.key ] = value.id;
+					} else {
+						if ( value instanceof Backbone.Model ){
+							json[ rel.key + "_id" ] = value.id;
+						}
+						delete json[ rel.key ]
 					}
 				}, this );
 			

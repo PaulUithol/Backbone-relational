@@ -353,7 +353,7 @@ $(document).ready(function() {
 			var json = person1.toJSON();
 			console.debug( json );
 			
-			ok( _.isString( json.user ), "No User object (includeInJSON=false for those)" );
+			ok( _.isString( json.user_id ), "No User object (includeInJSON=false for those)" );
 			equal(  json.likesALot.likesALot, 'person-1', "Person is serialized only once" );
 		});
 		
@@ -753,6 +753,23 @@ $(document).ready(function() {
 			});
 			
 			ok( jobs.length === 1 && employees.length === 2, "jobs.length is 1 and employees.length is 2" );
+		});
+		
+		test("The Collections used for HasMany relations are re-used if possible", function() {
+			var collId = ourHouse.get('occupants').id = 1;
+			
+			ourHouse.get('occupants').add( person1 );
+			ok( ourHouse.get('occupants').id === collId );
+			
+			// Set a value on 'occupants' that would cause the relation to be reset.
+			// The collection itself should be kept (along with it's properties)
+			ourHouse.set( { 'occupants': [ 'person-1' ] } );
+			ok( ourHouse.get('occupants').id === collId );
+			ok( ourHouse.get('occupants').length === 1 );
+			
+			// Setting a new collection loses the original collection
+			ourHouse.set( { 'occupants': new Backbone.Collection() } );
+			ok( ourHouse.get('occupants').id === undefined );
 		});
 		
 		
