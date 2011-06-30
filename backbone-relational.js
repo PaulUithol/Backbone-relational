@@ -961,7 +961,9 @@
 		}
 		
 		//console.debug( 'calling _add on coll=%o; model=%s (%o), options=%o', this, model.cid, model, options );
-		model = _add.call( this, model, options );
+		if ( !this.get( model ) && !this.getByCid( model ) ) {
+			model = _add.call( this, model, options );
+		}
 		this.trigger('relational:add', model, this, options);
 		
 		return model;

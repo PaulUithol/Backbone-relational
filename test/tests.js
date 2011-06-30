@@ -352,7 +352,7 @@ $(document).ready(function() {
 		test("IncludeInJSON: Person to JSON", function() {
 			var json = person1.toJSON();
 			console.debug( json );
-			
+			console.debug( person1, person2 );
 			ok( _.isString( json.user ), "No User object (includeInJSON=false for those)" );
 			equal(  json.likesALot.likesALot, 'person-1', "Person is serialized only once" );
 		});
@@ -879,7 +879,7 @@ $(document).ready(function() {
 			person3
 				.bind( 'add:jobs', function( model, coll ) {
 						var company = model.get('company');
-						ok( company instanceof Company && /*company.get('ceo').get('name') === 'Lunar boy' &&*/ model.get('person') === person3,
+						ok( company instanceof Company && company.get('ceo').get('name') === 'Lunar boy' && model.get('person') === person3,
 							"Both Person and Company are set on the Tenure instance" );
 					})
 				.bind( 'remove:jobs', function( model, coll ) {
@@ -932,12 +932,21 @@ $(document).ready(function() {
 			var collB = new Backbone.Collection();
 			collB.model = User;
 			
-			// Similar to what happens when calling 'fetch' on collA, then on collB
+			// Similar to what happens when calling 'fetch' on collA, updating it, calling 'fetch' on collB
 			var user = collA._add( { id: '/user/1/', name: 'User 1' } );
 			equal( user.get('name'), 'User 1' );
 			
-			var updatedUser = collB._add( { id: '/user/1/', name: 'New name for User 1', title: 'Superuser' } );
+			var updatedUser = collA._add( { id: '/user/1/', name: 'New name for User 1' } );
 			equal( user.get('name'), 'New name for User 1' );
 			equal( updatedUser.get('name'), 'New name for User 1' );
+			
+			var userUpdatedAgain = collB._add( { id: '/user/1/', name: 'Another new name for User 1', title: 'Superuser' } );
+			equal( user.get('name'), 'Another new name for User 1' );
+			equal( userUpdatedAgain.get('name'), 'Another new name for User 1' );
+			
+			ok( collA.get('/user/1/') === user );
+			ok( collA.get('/user/1/') === userUpdatedAgain );
+			ok( collB.get('/user/1/') === user );
+			ok( collB.get('/user/1/') === userUpdatedAgain );
 		});
 });
