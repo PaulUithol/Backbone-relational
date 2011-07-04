@@ -798,17 +798,17 @@ $(document).ready(function() {
 			// Set values so that the relation gets filled
 			zoo.set({
 				animals: [
-				{race: "Lion"},
-				{race: "Zebra"}
+				{ race: 'Lio' },
+				{ race: 'Zebra' }
 				]
 			});
 			
 			// Check that the animals were created
-			ok( zoo.get("animals").at(0).get("race") === "Lion" );
-			ok( zoo.get("animals").at(1).get("race") === "Zebra" );
+			ok( zoo.get( 'animals' ).at( 0 ).get( 'race' ) === 'Lion' );
+			ok( zoo.get( 'animals' ).at( 1 ).get( 'race' ) === 'Zebra' );
 			
 			// Check that the generated collection is of the correct kind
-			ok( zoo.get('animals') instanceof AnimalCollection );
+			ok( zoo.get( 'animals' ) instanceof AnimalCollection );
 			
 		});
 		
