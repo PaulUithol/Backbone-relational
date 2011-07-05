@@ -31,6 +31,24 @@ $(document).ready(function() {
 			}]
 	});
 	
+	Zoo = Backbone.RelationalModel.extend({
+		relations: [{
+				type: Backbone.HasMany,
+				key: 'animals',
+				relatedModel: 'Animal',
+				relatedCollection: "AnimalCollection",
+				reverseRelation: {
+					key: 'livesIn'
+				}
+			}]		
+	});
+	
+	Animal = Backbone.RelationalModel.extend({});
+	
+	AnimalCollection = Backbone.Collection.extend({
+		model: Animal
+	});
+	
 	User = Backbone.RelationalModel.extend({});
 	
 	Person = Backbone.RelationalModel.extend({
@@ -75,7 +93,7 @@ $(document).ready(function() {
 			'startDate': null,
 			'endDate': null
 		}
-	})
+	});
 	
 	Company = Backbone.RelationalModel.extend({
 		relations: [{
@@ -284,7 +302,7 @@ $(document).ready(function() {
 		});
 		
 		test("Models are created from objects, can then be found, destroyed, cannot be found anymore", function() {
-			var houseId = 'house-10'
+			var houseId = 'house-10';
 			var personId = 'person-10';
 			
 			var anotherHouse = new House({
@@ -758,6 +776,8 @@ $(document).ready(function() {
 		test("The Collections used for HasMany relations are re-used if possible", function() {
 			var collId = ourHouse.get('occupants').id = 1;
 			
+			// 
+			
 			ourHouse.get('occupants').add( person1 );
 			ok( ourHouse.get('occupants').id === collId );
 			
@@ -770,6 +790,26 @@ $(document).ready(function() {
 			// Setting a new collection loses the original collection
 			ourHouse.set( { 'occupants': new Backbone.Collection() } );
 			ok( ourHouse.get('occupants').id === undefined );
+		});
+
+		test("Setting a custom collection in relatedCollection uses that collection for instantiation", function() {
+			var zoo = new Zoo();
+			
+			// Set values so that the relation gets filled
+			zoo.set({
+				animals: [
+				{ race: 'Lio' },
+				{ race: 'Zebra' }
+				]
+			});
+			
+			// Check that the animals were created
+			ok( zoo.get( 'animals' ).at( 0 ).get( 'race' ) === 'Lion' );
+			ok( zoo.get( 'animals' ).at( 1 ).get( 'race' ) === 'Zebra' );
+			
+			// Check that the generated collection is of the correct kind
+			ok( zoo.get( 'animals' ) instanceof AnimalCollection );
+			
 		});
 		
 		
