@@ -1010,7 +1010,7 @@ $(document).ready(function() {
 				}]
 			});
 			
-			var user = new NewUser( { id: 'newuser-1', person: 'newperson-1' } );
+			var user = new NewUser( { id: 'newuser-1' } );
 			var person = new NewPerson( { id: 'newperson-1', user: user } );
 			
 			ok( person.get('user') === user );
