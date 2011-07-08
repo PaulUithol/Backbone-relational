@@ -584,22 +584,27 @@
 	});
 	
 	Backbone.HasMany = Backbone.Relation.extend({
+		collectionType: null,
+		
 		options: {
 			reverseRelation: { type: 'HasOne' },
-			relatedCollection: Backbone.Collection
+			collectionType: Backbone.Collection
 		},
 		
 		initialize: function() {
 			_.bindAll( this, 'onChange', 'handleAddition', 'handleRemoval' );
 			this.instance.bind( 'relational:change:' + this.key, this.onChange );
-
-			// Handle custom relatedCollection
-			if ( _( this.options.relatedCollection ).isString() ) this.options.relatedCollection =
-					Backbone.Relational.store.getObjectByName( this.options.relatedCollection );
-			if ( !this.options.relatedCollection.prototype instanceof Backbone.Collection.prototype.constructor ){
-				throw new Error( "relatedCollection must inherit from Backbone.Collection" );
+			
+			// Handle a custom 'collectionType'
+			this.collectionType = this.options.collectionType;
+			if ( _( this.collectionType ).isString() ) {
+				this.collectionType = Backbone.Relational.store.getObjectByName( this.collectionType );
 			}
-			this.setRelated( this.prepareCollection( new this.options.relatedCollection() ) );
+			if ( !this.collectionType.prototype instanceof Backbone.Collection.prototype.constructor ){
+				throw new Error( 'collectionType must inherit from Backbone.Collection' );
+			}
+			
+			this.setRelated( this.prepareCollection( new this.collectionType() ) );
 			this.findRelated();
 		},
 		
@@ -648,7 +653,7 @@
 			// Otherwise, 'attr' should be an array of related object ids
 			else {
 				// Re-use the current 'this.related' if it is a Backbone.Collection
-				var coll = this.related instanceof Backbone.Collection ? this.related : new this.options.relatedCollection();
+				var coll = this.related instanceof Backbone.Collection ? this.related : new this.collectionType();
 				this.setRelated( this.prepareCollection( coll ) );
 				this.findRelated();
 			}

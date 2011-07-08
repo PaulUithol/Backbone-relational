@@ -36,7 +36,7 @@ $(document).ready(function() {
 				type: Backbone.HasMany,
 				key: 'animals',
 				relatedModel: 'Animal',
-				relatedCollection: "AnimalCollection",
+				collectionType: 'AnimalCollection',
 				reverseRelation: {
 					key: 'livesIn'
 				}
@@ -776,8 +776,6 @@ $(document).ready(function() {
 		test("The Collections used for HasMany relations are re-used if possible", function() {
 			var collId = ourHouse.get('occupants').id = 1;
 			
-			// 
-			
 			ourHouse.get('occupants').add( person1 );
 			ok( ourHouse.get('occupants').id === collId );
 			
@@ -798,8 +796,8 @@ $(document).ready(function() {
 			// Set values so that the relation gets filled
 			zoo.set({
 				animals: [
-				{ race: 'Lio' },
-				{ race: 'Zebra' }
+					{ race: 'Lion' },
+					{ race: 'Zebra' }
 				]
 			});
 			
@@ -809,7 +807,6 @@ $(document).ready(function() {
 			
 			// Check that the generated collection is of the correct kind
 			ok( zoo.get( 'animals' ) instanceof AnimalCollection );
-			
 		});
 		
 		
