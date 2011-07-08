@@ -958,6 +958,44 @@ $(document).ready(function() {
 			ok( person1.get('likesALot') === person2 );
 			ok( person2.get('likedALotBy' ) === person1 );
 		});
+		
+		test("Numerical keys", function() {
+			var child1 = new Node({ id: 2, name: 'First child' });
+			var parent = new Node({ id: 1, children: [2, 3], name: 'Parent' });
+			var child2 = new Node({ id: 3, name: 'Second child' });
+			
+			equal( parent.get('children').length, 2 );
+			ok( parent.get('children').include( child1 ) );
+			ok( parent.get('children').include( child2 ) );
+			
+			ok( child1.get('parent') === parent );
+			equal( child1.get('children').length, 0 );
+			
+			ok( child2.get('parent') === parent );
+			equal( child2.get('children').length, 0 );
+		});
+		
+		test("Relations that use refs to other models (instead of keys)", function() {
+			var child1 = new Node({ id: 2, name: 'First child' });
+			var parent = new Node({ id: 1, children: [child1, 3], name: 'Parent' });
+			var child2 = new Node({ id: 3, name: 'Second child' });
+			
+			ok( child1.get('parent') === parent );
+			equal( child1.get('children').length, 0 );
+			
+			equal( parent.get('children').length, 2 );
+			ok( parent.get('children').include( child1 ) );
+			ok( parent.get('children').include( child2 ) );
+			
+			var child3 = new Node({ id: 4, parent: parent, name: 'Second child' });
+			
+			equal( parent.get('children').length, 3 );
+			ok( parent.get('children').include( child3 ) );
+			
+			ok( child3.get('parent') === parent );
+			equal( child3.get('children').length, 0 );
+			console.debug( parent );
+		});
 	
 	
 	module("Model loading", { setup: initObjects } );

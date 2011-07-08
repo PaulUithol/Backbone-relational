@@ -478,9 +478,9 @@
 			if ( item instanceof this.relatedModel ) {
 				model = item;
 			}
-			else if ( item && ( _.isString( item ) || typeof( item ) === 'object' ) ) {
+			else if ( item && ( _.isString( item ) || _.isNumber( item ) || typeof( item ) === 'object' ) ) {
 				// Try to find an instance of the appropriate 'relatedModel' in the store, or create it
-				var id = _.isString( item ) ? item : item[ this.relatedModel.prototype.idAttribute ];
+				var id = _.isString( item ) || _.isNumber( item ) ? item : item[ this.relatedModel.prototype.idAttribute ];
 				model = Backbone.Relational.store.find( this.relatedModel, id ) || this.createModel( item );
 			}
 			
@@ -554,8 +554,8 @@
 			options = this.sanitizeOptions( options );
 			
 			var item = this.keyContents;
-			if ( item && ( _.isString( item ) || typeof( item ) === 'object' ) ) {
-				var id = _.isString( item ) ? item : item[ this.relatedModel.prototype.idAttribute ];
+			if ( item && ( _.isString( item ) || _.isNumber( item ) || typeof( item ) === 'object' ) ) {
+				var id = _.isString( item ) || _.isNumber( item ) ? item : item[ this.relatedModel.prototype.idAttribute ];
 				if ( model.id === id ) {
 					this.addRelated( model, options );
 				}
@@ -623,7 +623,7 @@
 			if ( this.keyContents && _.isArray( this.keyContents ) ) {
 				// Try to find instances of the appropriate 'relatedModel' in the store
 				_.each( this.keyContents, function( item ) {
-					var id = _.isString( item ) ? item : item[ this.relatedModel.prototype.idAttribute ];
+					var id = _.isString( item ) || _.isNumber( item ) ? item : item[ this.relatedModel.prototype.idAttribute ];
 					var model = Backbone.Relational.store.find( this.relatedModel, id ) || this.createModel( item );
 					
 					if ( model && !this.related.getByCid( model ) && !this.related.get( model ) ) {
@@ -674,7 +674,7 @@
 			if ( !this.related.getByCid( model ) && !this.related.get( model ) ) {
 				// Check if this new model was specified in 'this.keyContents'
 				var item = _.any( this.keyContents, function( item ) {
-					var id = _.isString( item ) ? item : item[ this.relatedModel.prototype.idAttribute ];
+					var id = _.isString( item ) || _.isNumber( item ) ? item : item[ this.relatedModel.prototype.idAttribute ];
 					return id && id === model.id;
 				}, this );
 				
@@ -858,6 +858,10 @@
 			}
 		},
 		
+		/**
+		 * Get the created relations for this model
+		 * @return {array}
+		 */
 		getRelations: function() {
 			return this._relations;
 		},
@@ -973,7 +977,7 @@
 		}
 		
 		//console.debug( 'calling _add on coll=%o; model=%s (%o), options=%o', this, model.cid, model, options );
-		if ( !this.get( model ) && !this.getByCid( model ) ) {
+		if ( !( model instanceof Backbone.Model ) || !( this.get( model ) || this.getByCid( model ) ) ) {
 			model = _add.call( this, model, options );
 		}
 		this.trigger('relational:add', model, this, options);
