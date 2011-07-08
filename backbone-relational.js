@@ -121,7 +121,7 @@
 		
 		/**
 		 * Add a reverse relation. Is added to the 'relations' property on model's prototype, and to
-		 * existing instances of 'model' in the store.
+		 * existing instances of 'model' in the store as well.
 		 * @param {object} relation; required properties:
 		 *  - model, type, key and relatedModel
 		 */
@@ -149,9 +149,8 @@
 		 */
 		retroFitRelation: function( relation ) {
 			var coll = this.getCollection( relation.model );
-			
 			coll.each( function( model ) {
-				new relation.type( model, relation );
+				var rel = new relation.type( model, relation );
 			}, this);
 		},
 		
@@ -859,11 +858,46 @@
 		},
 		
 		/**
+		 * @param key {string}
+		 * @return {string|array}
+		 */
+		getRelation: function( key ) {
+			return _.detect( this._relations, function( rel ) {
+					if ( rel.key === key ) {
+						return true;
+					}
+				}, this );
+		},
+		
+		/**
 		 * Get the created relations for this model
 		 * @return {array}
 		 */
 		getRelations: function() {
 			return this._relations;
+		},
+		
+		/**
+		 * Retrieve related objects
+		 * @param key {string}
+		 */
+		fetchRelated: function( key ) {
+			var rel = this.getRelation( key );
+			var keyContents = rel && _.isArray( rel.keyContents ) ? rel.keyContents : [ rel.keyContents ];
+			var toFetch = keyContents && _.select( keyContents, function( id ) {
+						return !Backbone.Relational.store.find( rel.relatedModel, id );
+					}, this );
+			
+			// Try if the 'collection' can
+			var url = rel.related instanceof Backbone.Collection && rel.related.getUrl( toFetch );
+			
+			_.each( toFetch, function( key ) {
+					var model = new rel.relatedModel( key );
+					var request = model.fetch();
+					$.when( request ).fail( function() {
+							model.destroy();
+						});
+				}, this );
 		},
 		
 		set: function( attributes, options ) {
@@ -873,7 +907,7 @@
 			
 			// 'set' is called quite late in 'Backbone.Model.prototype.constructor', but before 'initialize'.
 			// Ideal place to set up relations :)
-			if ( !this._isInitialized && !this.isLocked() && this.relations ) {
+			if ( !this._isInitialized && !this.isLocked() ) {
 				Backbone.Relational.store.register( this );
 				this.initializeRelations();
 			}

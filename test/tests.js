@@ -40,7 +40,7 @@ $(document).ready(function() {
 				reverseRelation: {
 					key: 'livesIn'
 				}
-			}]		
+			}]
 	});
 	
 	Animal = Backbone.RelationalModel.extend({});
@@ -191,7 +191,6 @@ $(document).ready(function() {
 		});
 	}
 	
-	//console.debug( 'ourHouse=%o, person1=%o, person2=%o, cat1=%o, cat2=%o', ourHouse, person1, person2, cat1, cat2 );
 	
 	module("Backbone.Semaphore");
 	
@@ -994,7 +993,29 @@ $(document).ready(function() {
 			
 			ok( child3.get('parent') === parent );
 			equal( child3.get('children').length, 0 );
-			console.debug( parent );
+		});
+		
+		test("ReverseRelations are applied retroactively", function() {
+			// Use brand new Model types, so we can be sure we don't have any reverse relations cached
+			NewUser = Backbone.RelationalModel.extend({});
+			NewPerson = Backbone.RelationalModel.extend({
+				relations: [{
+					type: Backbone.HasOne,
+					key: 'user',
+					relatedModel: 'NewUser',
+					reverseRelation: {
+						type: Backbone.HasOne,
+						key: 'person'
+					}
+				}]
+			});
+			
+			var user = new NewUser( { id: 'newuser-1', person: 'newperson-1' } );
+			var person = new NewPerson( { id: 'newperson-1', user: user } );
+			
+			ok( person.get('user') === user );
+			ok( user.get('person') === person );
+			console.debug( user, user.get('person'), person );
 		});
 	
 	
