@@ -11,7 +11,7 @@ Backbone-relational provides one-to-one, one-to-many and many-to-one relations b
 
 ## Installation
 
-Backbone-relational depends on [backbone](https://github.com/documentcloud/backbone) (and thus on [underscore](https://github.com/documentcloud/underscore)). **Please use a HEAD version of [backbone.js](https://github.com/documentcloud/backbone/raw/master/backbone.js), since the latest stable is quite old**.
+Backbone-relational depends on [backbone](https://github.com/documentcloud/backbone) (and thus on [underscore](https://github.com/documentcloud/underscore)). Backbone-relational has been tested to work with Backbone 0.5+.
 
 
 ## Example
