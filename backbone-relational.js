@@ -858,11 +858,96 @@
 		},
 		
 		/**
-		 * Get the created relations for this model
-		 * @return {array}
+		 * Get a specific relation.
+		 * @param key {string} The relation key to look for.
+		 * @return {Backbone.Relation|null} An instance of 'Backbone.Relation', if a relation was found for 'key', or null.
+		 */
+		getRelation: function( key ) {
+			return _.detect( this._relations, function( rel ) {
+					if ( rel.key === key ) {
+						return true;
+					}
+				}, this );
+		},
+		
+		/**
+		 * Get all of the created relations.
+		 * @return {array of Backbone.Relation}
 		 */
 		getRelations: function() {
 			return this._relations;
+		},
+		
+		/**
+		 * Retrieve related objects.
+		 * @param key {string} The relation key to fetch models for.
+		 * @param options {object} Options for 'Backbone.Model.fetch' and 'Backbone.sync'.
+		 * @return {xhr} An array or request objects
+		 */
+		fetchRelated: function( key, options ) {
+			options || ( options = {} );
+			var rel = this.getRelation( key ),
+				keyContents = rel && rel.keyContents,
+				toFetch = keyContents && _.select( _.isArray( keyContents ) ? keyContents : [ keyContents ], function( item ) {
+						var id = _.isString( item ) || _.isNumber( item ) ? item : item[ rel.relatedModel.prototype.idAttribute ];
+						return id && !Backbone.Relational.store.find( rel.relatedModel, id );
+					}, this );
+			
+			if ( toFetch.length ) {
+				// Create a model for each entry in 'keyContents' that is to be fetched
+				var models = _.map( toFetch, function( item ) {
+						if ( typeof( item ) === 'object' ) {
+							var model = new rel.relatedModel( item );
+						}
+						else {
+							var attrs = {};
+							attrs[ rel.relatedModel.prototype.idAttribute ] = item;
+							var model = new rel.relatedModel( attrs );
+						}
+						return model;
+					}, this );
+				
+				// Try if the 'collection' can provide a url to fetch a set of models in one request.
+				if ( rel.related instanceof Backbone.Collection && _.isFunction( rel.related.url ) ) {
+					var setUrl = rel.related.url( models );
+				}
+				
+				// An assumption is that when 'Backbone.Collection.url' is a function, it can handle building of set urls.
+				// To make sure it can, test if the url we got by supplying a list of models to fetch is different from
+				// the one supplied for the default fetch action (without args to 'url').
+				if ( setUrl && setUrl !== rel.related.url() ) {
+					var opts = _.defaults( {
+							error: function() {
+									var args = arguments;
+									_.each( models, function( model ) {
+											model.destroy();
+											options.error && options.error.apply( model, args );
+										})
+								},
+							url: setUrl
+						},
+						options,
+						{ add: true }
+					);
+					
+					var requests = [ rel.related.fetch( opts ) ];
+				}
+				else {
+					var requests = _.map( models, function( model ) {
+							var opts = _.defaults( {
+								error: function() {
+										model.destroy();
+										options.error && options.error.apply( model, arguments );
+									}
+								},
+								options
+							);
+							return model.fetch( opts );
+						}, this );
+				}
+			}
+			
+			return _.isUndefined( requests ) ? [] : requests;
 		},
 		
 		set: function( attributes, options ) {
