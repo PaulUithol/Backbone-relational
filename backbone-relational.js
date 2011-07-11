@@ -893,7 +893,7 @@
 						return id && !Backbone.Relational.store.find( rel.relatedModel, id );
 					}, this );
 			
-			if ( toFetch.length ) {
+			if ( toFetch && toFetch.length ) {
 				// Create a model for each entry in 'keyContents' that is to be fetched
 				var models = _.map( toFetch, function( item ) {
 						if ( typeof( item ) === 'object' ) {

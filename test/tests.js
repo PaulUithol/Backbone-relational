@@ -415,7 +415,7 @@ $(document).ready(function() {
 				user: 'user-10'
 			});
 			
-			var requests = person.fetchRelated('user', { error: function() { errorCount++; } });
+			var requests = person.fetchRelated( 'user', { error: function() { errorCount++; } } );
 			ok( _.isArray( requests ) );
 			equal( requests.length, 1, "A request has been made" );
 			ok( person.get('user') instanceof User );
@@ -424,6 +424,14 @@ $(document).ready(function() {
 			requests[0].error();
 			equal( person.get('user'), null );
 			ok( errorCount, 1, "The error callback executed successfully" );
+			
+			var person2 = new Person({
+				id: 'person-10',
+				resource_uri: 'person-10'
+			});
+			
+			requests = person2.fetchRelated('user');
+			equal( requests.length, 0, "No request was made" );
 		});
 		
 		test("fetchRelated on a HasMany relation", function() {
@@ -435,7 +443,7 @@ $(document).ready(function() {
 			/**
 			 * Case 1: separate requests for each model
 			 */
-			var requests = zoo.fetchRelated('animals', { error: function() { errorCount++; } });
+			var requests = zoo.fetchRelated( 'animals', { error: function() { errorCount++; } } );
 			ok( _.isArray( requests ) );
 			equal( requests.length, 2, "Two requests have been made (a separate one for each animal)" );
 			equal( zoo.get('animals').length, 2 );
@@ -459,7 +467,7 @@ $(document).ready(function() {
 			
 			equal( zoo.get('animals').length, 0 );
 			
-			var requests = zoo.fetchRelated( 'animals', { error: function() { errorCount++; } });
+			requests = zoo.fetchRelated( 'animals', { error: function() { errorCount++; } } );
 			
 			ok( _.isArray( requests ) );
 			equal( requests.length, 1 );
@@ -472,13 +480,13 @@ $(document).ready(function() {
 			ok( errorCount, 2, "The error callback executed successfully for both models" );
 			
 			// Re-fetch them
-			var requests = zoo.fetchRelated('animals');
+			requests = zoo.fetchRelated('animals');
 			
 			equal( requests.length, 1 );
 			equal( zoo.get('animals').length, 2 );
 			
 			// No more animals to fetch!
-			var requests = zoo.fetchRelated('animals');
+			requests = zoo.fetchRelated('animals');
 			
 			ok( _.isArray( requests ) );
 			equal( requests.length, 0 );
