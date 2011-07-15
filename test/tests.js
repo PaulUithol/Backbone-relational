@@ -13,10 +13,10 @@ if ( !window.console ) {
 }
 
 $(document).ready(function() {
-    $.ajax = function( obj ) {
-      window.requests.push( obj );
-	  return obj;
-    };
+	$.ajax = function( obj ) {
+		window.requests.push( obj );
+		return obj;
+	};
 	
 	Backbone.Model.prototype.url = function() {
 		// Use the 'resource_uri' if possible
@@ -41,7 +41,8 @@ $(document).ready(function() {
 				key: 'occupants',
 				relatedModel: 'Person',
 				reverseRelation: {
-					key: 'livesIn'
+					key: 'livesIn',
+					includeInJSON: false
 				}
 			}]
 	});
@@ -53,7 +54,8 @@ $(document).ready(function() {
 				relatedModel: 'Animal',
 				collectionType: 'AnimalCollection',
 				reverseRelation: {
-					key: 'livesIn'
+					key: 'livesIn',
+					includeInJSON: 'id'
 				}
 			}]
 	});
@@ -83,9 +85,10 @@ $(document).ready(function() {
 				type: Backbone.HasOne,
 				key: 'user',
 				relatedModel: 'User',
-				includeInJSON: false,
+				includeInJSON: Backbone.Model.prototype.idAttribute,
 				reverseRelation: {
 					type: Backbone.HasOne,
+					includeInJSON: 'name',
 					key: 'person'
 				}
 			},
@@ -499,22 +502,30 @@ $(document).ready(function() {
 		
 		test("includeInJSON (Person to JSON)", function() {
 			var json = person1.toJSON();
-			ok( _.isString( json.user ), "No User object (includeInJSON=false for those)" );
+			equal( json.user, 'user-1', "The value 'user' is the user's id (not an object, since 'includeInJSON' is set to the idAttribute)" );
+			ok ( json.likesALot instanceof Object, "The value of 'likesALot' is an object ('includeInJSON' is 'true')" );
 			equal(  json.likesALot.likesALot, 'person-1', "Person is serialized only once" );
+			
+			json = person1.get('user').toJSON();
+			equal( json.person, 'boy', "The value of 'person' is the person's name ('includeInJSON is set to 'name')" );
+			
+			json = person2.toJSON();
+			ok( person2.get('livesIn') instanceof House, "'person2' has a 'livesIn' relation" );
+			equal( json.livesIn, undefined , "The value of 'livesIn' is not serialized ('includeInJSON is 'false')" );
 		});
 		
 		test("createModels is false", function() {
-			NewUser = Backbone.RelationalModel.extend({});
-			NewPerson = Backbone.RelationalModel.extend({
+			var NewUser = Backbone.RelationalModel.extend({});
+			var NewPerson = Backbone.RelationalModel.extend({
 				relations: [{
 					type: Backbone.HasOne,
 					key: 'user',
-					relatedModel: 'NewUser',
+					relatedModel: NewUser,
 					createModels: false
 				}]
 			});
 			
-			person = new NewPerson({
+			var person = new NewPerson({
 				id: 'newperson-1',
 				resource_uri: 'newperson-1',
 				user: { id: 'newuser-1', resource_uri: 'newuser-1' }
@@ -522,7 +533,7 @@ $(document).ready(function() {
 			
 			ok( person.get('user') == null );
 			
-			user = new NewUser( { id: 'newuser-1', name: 'SuperUser' } );
+			var user = new NewUser( { id: 'newuser-1', name: 'SuperUser' } );
 			
 			ok( person.get('user') === user );
 			// Old data gets overwritten by the explicitly created user, since a model was never created from the old data
@@ -534,12 +545,12 @@ $(document).ready(function() {
 		
 		
 		test("'type', 'key', 'relatedModel' are required properties", function() {
-			Properties = Backbone.RelationalModel.extend({});
-			Window = Backbone.RelationalModel.extend({
+			var Properties = Backbone.RelationalModel.extend({});
+			var Window = Backbone.RelationalModel.extend({
 				relations: [
 					{
 						key: 'listProperties',
-						relatedModel: 'Properties'
+						relatedModel: Properties
 					}
 				]
 			});
@@ -551,7 +562,7 @@ $(document).ready(function() {
 				relations: [
 					{
 						type: Backbone.HasOne,
-						relatedModel: 'Properties'
+						relatedModel: Properties
 					}
 				]
 			});
@@ -570,6 +581,79 @@ $(document).ready(function() {
 			
 			window = new Window();
 			ok( window._relations.length === 0 );
+		});
+		
+		test("'type' can be a string or an object reference", function() {
+			var Properties = Backbone.RelationalModel.extend({});
+			var Window = Backbone.RelationalModel.extend({
+				relations: [
+					{
+						type: 'Backbone.HasOne',
+						key: 'listProperties',
+						relatedModel: Properties
+					}
+				]
+			});
+			
+			var window = new Window();
+			ok( window._relations.length === 1 );
+			
+			Window = Backbone.RelationalModel.extend({
+				relations: [
+					{
+						type: 'HasOne',
+						key: 'listProperties',
+						relatedModel: Properties
+					}
+				]
+			});
+			
+			window = new Window();
+			ok( window._relations.length === 1 );
+			
+			Window = Backbone.RelationalModel.extend({
+				relations: [
+					{
+						type: Backbone.HasOne,
+						key: 'listProperties',
+						relatedModel: Properties
+					}
+				]
+			});
+			
+			window = new Window();
+			ok( window._relations.length === 1 );
+		});
+		
+		test("'key' can be a string or an object reference", function() {
+			Properties = Backbone.RelationalModel.extend({});
+			var Window = Backbone.RelationalModel.extend({
+				relations: [
+					{
+						type: Backbone.HasOne,
+						key: 'listProperties',
+						relatedModel: 'Properties'
+					}
+				]
+			});
+			
+			var window = new Window();
+			ok( window._relations.length === 1 );
+			
+			Window = Backbone.RelationalModel.extend({
+				relations: [
+					{
+						type: Backbone.HasOne,
+						key: 'listProperties',
+						relatedModel: Properties
+					}
+				]
+			});
+			
+			window = new Window();
+			ok( window._relations.length === 1 );
+			
+			delete Properties;
 		});
 		
 		test("HasMany with a reverseRelation HasMany is not allowed", function() {
@@ -594,18 +678,18 @@ $(document).ready(function() {
 		});
 		
 		test("Duplicate relations not allowed (two simple relations)", function() {
-			Properties = Backbone.RelationalModel.extend({});
-			Window = Backbone.RelationalModel.extend({
+			var Properties = Backbone.RelationalModel.extend({});
+			var Window = Backbone.RelationalModel.extend({
 				relations: [
 					{
 						type: Backbone.HasOne,
 						key: 'listProperties',
-						relatedModel: 'Properties'
+						relatedModel: Properties
 					},
 					{
 						type: Backbone.HasOne,
 						key: 'listProperties',
-						relatedModel: 'Properties'
+						relatedModel: Properties
 					}
 				]
 			});
@@ -616,13 +700,13 @@ $(document).ready(function() {
 		});
 		
 		test("Duplicate relations not allowed (one relation with a reverse relation, one without)", function() {
-			Properties = Backbone.RelationalModel.extend({});
-			Window = Backbone.RelationalModel.extend({
+			var Properties = Backbone.RelationalModel.extend({});
+			var Window = Backbone.RelationalModel.extend({
 				relations: [
 					{
 						type: Backbone.HasOne,
 						key: 'listProperties',
-						relatedModel: 'Properties',
+						relatedModel: Properties,
 						reverseRelation: {
 							type: Backbone.HasOne,
 							key: 'window'
@@ -631,7 +715,7 @@ $(document).ready(function() {
 					{
 						type: Backbone.HasOne,
 						key: 'listProperties',
-						relatedModel: 'Properties'
+						relatedModel: Properties
 					}
 				]
 			});
@@ -642,13 +726,13 @@ $(document).ready(function() {
 		});
 		
 		test("Duplicate relations not allowed (two relations with reverse relations)", function() {
-			Properties = Backbone.RelationalModel.extend({});
-			Window = Backbone.RelationalModel.extend({
+			var Properties = Backbone.RelationalModel.extend({});
+			var Window = Backbone.RelationalModel.extend({
 				relations: [
 					{
 						type: Backbone.HasOne,
 						key: 'listProperties',
-						relatedModel: 'Properties',
+						relatedModel: Properties,
 						reverseRelation: {
 							type: Backbone.HasOne,
 							key: 'window'
@@ -657,7 +741,7 @@ $(document).ready(function() {
 					{
 						type: Backbone.HasOne,
 						key: 'listProperties',
-						relatedModel: 'Properties',
+						relatedModel: Properties,
 						reverseRelation: {
 							type: Backbone.HasOne,
 							key: 'window'
@@ -672,13 +756,13 @@ $(document).ready(function() {
 		});
 		
 		test("Duplicate relations not allowed (different relations, reverse relations)", function() {
-			Properties = Backbone.RelationalModel.extend({});
-			Window = Backbone.RelationalModel.extend({
+			var Properties = Backbone.RelationalModel.extend({});
+			var Window = Backbone.RelationalModel.extend({
 				relations: [
 					{
 						type: Backbone.HasOne,
 						key: 'listProperties',
-						relatedModel: 'Properties',
+						relatedModel: Properties,
 						reverseRelation: {
 							type: Backbone.HasOne,
 							key: 'window'
@@ -687,7 +771,7 @@ $(document).ready(function() {
 					{
 						type: Backbone.HasOne,
 						key: 'windowProperties',
-						relatedModel: 'Properties',
+						relatedModel: Properties,
 						reverseRelation: {
 							type: Backbone.HasOne,
 							key: 'window'
@@ -1066,7 +1150,7 @@ $(document).ready(function() {
 					});
 			
 			// Create Models from an object
-			company = new Company({
+			var company = new Company({
 				name: 'Luna Corp.',
 				ceo: {
 					name: 'Lunar boy'
@@ -1140,12 +1224,12 @@ $(document).ready(function() {
 		
 		test("ReverseRelations are applied retroactively", function() {
 			// Use brand new Model types, so we can be sure we don't have any reverse relations cached from previous tests
-			NewUser = Backbone.RelationalModel.extend({});
-			NewPerson = Backbone.RelationalModel.extend({
+			var NewUser = Backbone.RelationalModel.extend({});
+			var NewPerson = Backbone.RelationalModel.extend({
 				relations: [{
 					type: Backbone.HasOne,
 					key: 'user',
-					relatedModel: 'NewUser',
+					relatedModel: NewUser,
 					reverseRelation: {
 						type: Backbone.HasOne,
 						key: 'person'
@@ -1158,7 +1242,6 @@ $(document).ready(function() {
 			
 			ok( person.get('user') === user );
 			ok( user.get('person') === person );
-			console.debug( user, user.get('person'), person );
 		});
 	
 	
