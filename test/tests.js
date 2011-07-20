@@ -1222,6 +1222,35 @@ $(document).ready(function() {
 			equal( child3.get('children').length, 0 );
 		});
 		
+		test("Add an already existing model (reverseRelation shouldn't exist yet) to a relation as a hash", function() {
+			// This test caused a race condition to surface:
+			// The 'relation's constructor initializes the 'reverseRelation', which called 'relation.addRelated' in it's 'initialize'.
+			// However, 'relation's 'initialize' has not been executed yet, so it doesn't have a 'related' collection yet.
+			var Properties = Backbone.RelationalModel.extend({});
+			var View = Backbone.RelationalModel.extend({
+				relations: [
+					{
+						type: Backbone.HasMany,
+						key: 'properties',
+						relatedModel: Properties,
+						reverseRelation: {
+							type: Backbone.HasOne,
+							key: 'view'
+						}
+					}
+				]
+			});
+			
+			var props = new Properties( { id: 1, key: 'width', value: '300px', view: 1 } );
+			var view = new View({
+				id: 1,
+				properties: [ { id: 1, key: 'width', value: '300px', view: 1 } ]
+			});
+			
+			ok( props.get( 'view' ) === view );
+			ok( view.get( 'properties' ).include( props ) );
+		});
+		
 		test("ReverseRelations are applied retroactively", function() {
 			// Use brand new Model types, so we can be sure we don't have any reverse relations cached from previous tests
 			var NewUser = Backbone.RelationalModel.extend({});

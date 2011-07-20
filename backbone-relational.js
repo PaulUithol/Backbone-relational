@@ -287,6 +287,8 @@
 			) );
 		}
 		
+		this.initialize();
+		
 		_.bindAll( this, '_modelRemovedFromCollection', '_relatedModelAdded', '_relatedModelRemoved' );
 		// When a model in the store is destroyed, check if it is 'this.instance'.
 		Backbone.Relational.store.getCollection( this.instance )
@@ -296,8 +298,6 @@
 		Backbone.Relational.store.getCollection( this.relatedModel )
 			.bind( 'relational:add', this._relatedModelAdded )
 			.bind( 'relational:remove', this._relatedModelRemoved );
-		
-		this.initialize();
 	};
 	// Fix inheritance :\
 	Backbone.Relation.extend = Backbone.Model.extend;
@@ -724,7 +724,7 @@
 		addRelated: function( model, options ) {
 			var dit = this;
 			model.queue( function() { // Queued to avoid errors for adding 'model' to the 'this.related' set twice
-				if ( !dit.related.getByCid( model ) && !dit.related.get( model ) ) {
+				if ( dit.related && !dit.related.getByCid( model ) && !dit.related.get( model ) ) {
 					dit.related._add( model, options );
 				}
 			});

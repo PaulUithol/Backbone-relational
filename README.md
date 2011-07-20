@@ -135,19 +135,19 @@ paul.get('jobs').add( { company: niceCompany } );
 
 Value: a string (which can be resolved to an object type on the global scope), or a reference to a `Backbone.Collection` type.
 
-Determine the type of collections used for a `HasMany` relation. Defining a `url(models<Backbone.Model>)` function on this Collection that's able to build a url for either the whole collection, or a set of models enables `fetchRelated` to fetch all missing models in one request, instead of firing a separate request for each. See [Backbone-tastypie](https://github.com/PaulUithol/backbone-tastypie/blob/master/backbone-tastypie.js#L70) for an example.
+Determine the type of collections used for a `HasMany` relation. Defining a `url(models<Backbone.Model[]>)` function on this Collection that's able to build a url for either the whole collection, or a set of models enables `fetchRelated` to fetch all missing models in one request, instead of firing a separate request for each. See [Backbone-tastypie](https://github.com/PaulUithol/backbone-tastypie/blob/master/backbone-tastypie.js#L74) for an example.
 
 ### includeInJSON
 
-Value: a boolean (true/false), or a string referencing one of the model's attributes. Default: `true`.
+Value: a boolean, or a string referencing one of the model's attributes. Default: `true`.
 
-Determines how a relation will be serialized following a call to the `toJSON` method. A value of `true` serializes the full set of attributes on the related model(s), in which case the relations of this object are serialized as well. Set to `false to exclude the relation completely. You can also choose to include a single attribute from the related model by using a string. Example: `'name'`, or `Backbone.Model.prototype.idAttribute` to include ids.
+Determines how a relation will be serialized following a call to the `toJSON` method. A value of `true` serializes the full set of attributes on the related model(s), in which case the relations of this object are serialized as well. Set to `false` to exclude the relation completely. You can also choose to include a single attribute from the related model by using a string. For example, `'name'`, or `Backbone.Model.prototype.idAttribute` to include ids.
 
 ### createModels
 
 Value: a boolean. Default: `true`.
 
-Should models be created from nested hashes, or not?
+Should models be created from nested objects, or not?
 
 ### reverseRelation
 
@@ -165,7 +165,9 @@ Returns the set of initialized relations on the model.
 
 #### fetchRelated `relationalModel.fetchRelated(key<string>, [options<object>])`
 
-Fetch models from the server that were referenced in the model's attributes, but have not been found/created yet.
+Fetch models from the server that were referenced in the model's attributes, but have not been found/created yet. This can be used specifically for lazy-loading scenarios.
+
+By default, a separate request will be fired for each additional model that is to be fetched from the server. However, if your server/API supports it, you can fetch the set of models in one request by specifying a `collectionType` for the relation you call `fetchRelated` on. The specificed `collectionType` should have an overridden `url(models<Backbone.Model[]>)` method. See the example at the top of [Backbone.Relation options](#backbone-relation) or [Backbone-tastypie](https://github.com/PaulUithol/backbone-tastypie/blob/master/backbone-tastypie.js#L74) for an example.
 
 ### Events
 
