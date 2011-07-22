@@ -29,7 +29,7 @@ Backbone-relational depends on [backbone](https://github.com/documentcloud/backb
 <script type="text/javascript" src="./js/backbone-relational.js"></script>
 ```
 
-Backbone-relational has been tested with Backbone 0.5+.
+Backbone-relational has been tested with Backbone 0.5.1 (or newer) and Underscore 1.1.6 (or newer).
 
 ## <a name="backbone-relation"/>Backbone.Relation options
 
@@ -167,7 +167,7 @@ Returns the set of initialized relations on the model.
 
 Fetch models from the server that were referenced in the model's attributes, but have not been found/created yet. This can be used specifically for lazy-loading scenarios.
 
-By default, a separate request will be fired for each additional model that is to be fetched from the server. However, if your server/API supports it, you can fetch the set of models in one request by specifying a `collectionType` for the relation you call `fetchRelated` on. The specificed `collectionType` should have an overridden `url(models<Backbone.Model[]>)` method. See the example at the top of [Backbone.Relation options](#backbone-relation) or [Backbone-tastypie](https://github.com/PaulUithol/backbone-tastypie/blob/master/backbone-tastypie.js#L74) for an example.
+By default, a separate request will be fired for each additional model that is to be fetched from the server. However, if your server/API supports it, you can fetch the set of models in one request by specifying a `collectionType` for the relation you call `fetchRelated` on. The `collectionType` should have an overridden `url(models<Backbone.Model[]>)` method that allows it to construct a url for an array of models. See the example at the top of [Backbone.Relation options](#backbone-relation) or [Backbone-tastypie](https://github.com/PaulUithol/backbone-tastypie/blob/master/backbone-tastypie.js#L74) for an example.
 
 ### Events
 
