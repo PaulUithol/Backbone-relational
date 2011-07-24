@@ -198,7 +198,7 @@ ourHouse = new House({
 
 // 'ourHouse.occupants' is turned into a Backbone.Collection of Persons.
 // The first person in 'ourHouse.occupants' will point to 'paul'.
-ourHouse.occupants.at(0); // === paul
+ourHouse.get('occupants').at(0); // === paul
 
 // the relation from 'House.occupants' to 'Person' has been defined as a bi-directional HasMany relation,
 // with a reverse relation to 'Person.livesIn'. So, 'paul.livesIn' will automatically point back to 'ourHouse'.
