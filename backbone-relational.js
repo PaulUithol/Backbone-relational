@@ -805,8 +805,8 @@
 		},
 		
 		/**
-		 * Initialize Relations present in this.relations; determine the type (HasOne/HasMany), then create a new instance.
-		 * The regular constructor (which fills this.attributes, initialize, etc) hasn't run yet at this time!
+		 * Initialize Relations present in this.relations; determine the type (HasOne/HasMany), then creates a new instance.
+		 * Invoked in the first call so 'set' (which is made from the Backbone.Model constructor).
 		 */
 		initializeRelations: function() {
 			this.acquire(); // Setting up relations often also involve calls to 'set', and we only want to enter this function once
