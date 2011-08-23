@@ -5,8 +5,8 @@
 
 //sessionStorage.clear();
 if ( !window.console ) {
-	var names = ['log', 'debug', 'info', 'warn', 'error', 'assert', 'dir', 'dirxml',
-	'group', 'groupEnd', 'time', 'timeEnd', 'count', 'trace', 'profile', 'profileEnd'];
+	var names = [ 'log', 'debug', 'info', 'warn', 'error', 'assert', 'dir', 'dirxml',
+	'group', 'groupEnd', 'time', 'timeEnd', 'count', 'trace', 'profile', 'profileEnd' ];
 	window.console = {};
 	for ( var i = 0; i < names.length; ++i )
 		window.console[ names[i] ] = function() {};
@@ -20,7 +20,7 @@ $(document).ready(function() {
 	
 	Backbone.Model.prototype.url = function() {
 		// Use the 'resource_uri' if possible
-		var url = this.get('resource_uri');
+		var url = this.get( 'resource_uri' );
 		
 		// Try to have the collection construct a url
 		if ( !url && this.collection ) {
@@ -28,8 +28,12 @@ $(document).ready(function() {
 		}
 		
 		// Fallback to 'urlRoot'
-		if ( !url ) {
+		if ( !url && this.urlRoot ) {
 			url = this.urlRoot + this.id;
+		}
+		
+		if ( !url ) {
+			throw new Error( 'Url could not be determined!' );
 		}
 		
 		return url;
@@ -68,7 +72,9 @@ $(document).ready(function() {
 		model: Animal
 	});
 	
-	User = Backbone.RelationalModel.extend({});
+	User = Backbone.RelationalModel.extend({
+		urlRoot: '/user/'
+	});
 	
 	Person = Backbone.RelationalModel.extend({
 		relations: [{
@@ -318,7 +324,9 @@ $(document).ready(function() {
 			
 			ok( coll.length === length + 1, "Collection size increased by 1" );
 			
-			person.destroy();
+			var request = person.destroy();
+			// Trigger the 'success' callback to fire the 'destroy' event
+			request.success();
 			
 			ok( coll.length === length, "Collection size decreased by 1" );
 		});
@@ -345,13 +353,18 @@ $(document).ready(function() {
 			
 			ok( person, "Person with id=" + personId + " is found in the store" );
 			
-			person.destroy();
+			var request = person.destroy();
+			// Trigger the 'success' callback to fire the 'destroy' event
+			request.success();
+			
 			person = Backbone.Relational.store.find( Person, personId );
 			
 			ok( !person, personId + " is not found in the store anymore" );
 			ok( !anotherHouse.get('occupants').get( personId ), "Occupants no longer contains the Person with id='" + personId + "'" );
 			
-			anotherHouse.destroy();
+			var request = anotherHouse.destroy();
+			// Trigger the 'success' callback to fire the 'destroy' event
+			request.success();
 			
 			var house = Backbone.Relational.store.find( House, houseId );
 			
@@ -418,13 +431,19 @@ $(document).ready(function() {
 				user: 'user-10'
 			});
 			
-			var requests = person.fetchRelated( 'user', { error: function() { errorCount++; } } );
+			var requests = person.fetchRelated( 'user', { error: function() {
+					errorCount++;
+				}
+			});
 			ok( _.isArray( requests ) );
 			equal( requests.length, 1, "A request has been made" );
 			ok( person.get('user') instanceof User );
 			
 			// Triggering the 'error' callback should destroy the model
-			requests[0].error();
+			requests[ 0 ].error();
+			// Trigger the 'success' callback to fire the 'destroy' event
+			window.requests[ window.requests.length - 1 ].success();
+			
 			equal( person.get('user'), null );
 			ok( errorCount, 1, "The error callback executed successfully" );
 			
@@ -449,11 +468,14 @@ $(document).ready(function() {
 			var requests = zoo.fetchRelated( 'animals', { error: function() { errorCount++; } } );
 			ok( _.isArray( requests ) );
 			equal( requests.length, 2, "Two requests have been made (a separate one for each animal)" );
-			equal( zoo.get('animals').length, 2 );
+			equal( zoo.get('animals').length, 2, "Two animals in the zoo" );
 			
 			// Triggering the 'error' callback for either request should destroy the model
-			requests[0].error();
-			equal( zoo.get('animals').length, 1 );
+			requests[ 0 ].error();
+			// Trigger the 'success' callback to fire the 'destroy' event
+			window.requests[ window.requests.length - 1 ].success();
+			
+			equal( zoo.get('animals').length, 1, "One animal left in the zoo" );
 			ok( errorCount, 1, "The error callback executed successfully" );
 			
 			//
@@ -479,7 +501,11 @@ $(document).ready(function() {
 			
 			// Triggering the 'error' callback should destroy both of the fetched models
 			requests[0].error();
-			equal( zoo.get('animals').length, 0 );
+			// Trigger the 'success' callback for both 'delete' calls to fire the 'destroy' event
+			window.requests[ window.requests.length - 1 ].success();
+			window.requests[ window.requests.length - 2 ].success();
+			
+			equal( zoo.get('animals').length, 0, "Both animals are destroyed" );
 			ok( errorCount, 2, "The error callback executed successfully for both models" );
 			
 			// Re-fetch them
@@ -497,7 +523,7 @@ $(document).ready(function() {
 		});
 		
 	
-	module("Backbone.Relation options");
+	module("Backbone.Relation options", { setup: initObjects } );
 		
 		
 		test("includeInJSON (Person to JSON)", function() {

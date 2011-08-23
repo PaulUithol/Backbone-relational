@@ -214,6 +214,7 @@
 			var modelColl = model.collection;
 			var coll = this.getCollection( model );
 			coll && coll._add( model );
+			model.bind( 'destroy', this.unregister, this );
 			model.collection = modelColl;
 		},
 		
@@ -229,6 +230,7 @@
 		 * Remove a 'model' from the store.
 		 */
 		unregister: function( model ) {
+			model.unbind( 'destroy', this.unregister );
 			var coll = this.getCollection( model );
 			coll && coll.remove( model );
 		}
@@ -883,7 +885,7 @@
 		 * Retrieve related objects.
 		 * @param key {string} The relation key to fetch models for.
 		 * @param options {object} Options for 'Backbone.Model.fetch' and 'Backbone.sync'.
-		 * @return {xhr} An array or request objects
+		 * @return {xhr} An array of request objects
 		 */
 		fetchRelated: function( key, options ) {
 			options || ( options = {} );
@@ -1008,11 +1010,6 @@
 			Backbone.Relational.eventQueue.add( function() {
 					Backbone.Model.prototype.change.apply( dit, arguments );
 				});
-		},
-		
-		destroy: function( options ) {
-			Backbone.Relational.store.unregister( this );
-			return Backbone.Model.prototype.destroy.call( this, options );
 		},
 		
 		/**
