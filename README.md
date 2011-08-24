@@ -94,7 +94,7 @@ Person = Backbone.RelationalModel.extend({
 		{
 			type: 'HasMany',
 			key: 'jobs',
-			relatedModel: 'Tenure',
+			relatedModel: 'Job',
 			reverseRelation: {
 				key: 'person'
 			}
@@ -103,7 +103,7 @@ Person = Backbone.RelationalModel.extend({
 });
 
 // A link object between 'Person' and 'Company', to achieve many-to-many relations.
-Tenure = Backbone.RelationalModel.extend({
+Job = Backbone.RelationalModel.extend({
 	defaults: {
 		'startDate': null,
 		'endDate': null
@@ -115,7 +115,7 @@ Company = Backbone.RelationalModel.extend({
 		{
 			type: 'HasMany',
 			key: 'employees',
-			relatedModel: 'Tenure',
+			relatedModel: 'Job',
 			reverseRelation: {
 				key: 'company'
 			}
@@ -125,7 +125,7 @@ Company = Backbone.RelationalModel.extend({
 
 niceCompany = new Company( { name: 'niceCompany' } );
 niceCompany.bind( 'add:employees', function( model, coll ) {
-		// Will see a Tenure with attributes { person: paul, company: niceCompany } being added here
+		// Will see a Job with attributes { person: paul, company: niceCompany } being added here
 	});
 
 paul.get('jobs').add( { company: niceCompany } );
@@ -152,6 +152,8 @@ Should models be created from nested objects, or not?
 ### reverseRelation
 
 If the relation should be bidirectional, specify the details for the reverse relation here. It's only mandatory to supply a `key`; `relatedModel` is automatically set. The default `type` for a `reverseRelation` is `HasMany` for a `HasOne` relation (which can be overridden to `HasOne` in order to create a one-to-one relation), and `HasOne` for a `HasMany` relation. In this case, you cannot create a reverseRelation with type `HasMany` as well; please see [Many-to-many relations](#many-to-many) on how to model these type of relations.
+
+**Please note**: if you define a relation (plus a `reverseRelation`) on a model, but never actually create an instance of that model, the model's `constructor` will never run, which means it's `initializeRelations` will never get called, and the reverseRelation will not be initialized either. In that case, you could either define the relation on the opposite model, or define two single relations. See [issue 20](https://github.com/PaulUithol/Backbone-relational/issues/20) for a discussion.
 
 ## <a name="backbone-relationalmodel"/>Backbone.RelationalModel
 
@@ -306,4 +308,4 @@ User = Backbone.RelationalModel.extend();
 
 ## <a name="under-the-hood"/>Under the hood
 
-Each `Backbone.RelationalModel` registers itself with `Backbone.Store` upon creation (and removes itself from the `Store` when destroyed). When creating or updating an attribute that is a key in a relation, removed related objects are notified of their removal, and new related objects are looked up in the `Store`.
+Each `Backbone.RelationalModel` registers itself with `Backbone.Store` upon creation (and is removed from the `Store` when destroyed). When creating or updating an attribute that is a key in a relation, removed related objects are notified of their removal, and new related objects are looked up in the `Store`.
