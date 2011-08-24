@@ -473,7 +473,7 @@
 				} );
 		},
 		
-		findRelated: function() {
+		findRelated: function( options ) {
 			var item = this.keyContents;
 			var model = null;
 			
@@ -483,7 +483,13 @@
 			else if ( item && ( _.isString( item ) || _.isNumber( item ) || typeof( item ) === 'object' ) ) {
 				// Try to find an instance of the appropriate 'relatedModel' in the store, or create it
 				var id = _.isString( item ) || _.isNumber( item ) ? item : item[ this.relatedModel.prototype.idAttribute ];
-				model = Backbone.Relational.store.find( this.relatedModel, id ) || this.createModel( item );
+				model = Backbone.Relational.store.find( this.relatedModel, id );
+				if ( model && _.isObject( item ) ) {
+					model.set( item, options );
+				}
+				else if ( !model ) {
+					model = this.createModel( item );
+				}
 			}
 			
 			return model;
@@ -514,7 +520,7 @@
 					this.related = attr;
 				}
 				else if ( attr ) {
-					var related = this.findRelated();
+					var related = this.findRelated( options );
 					this.setRelated( related );
 				}
 				else {
@@ -621,12 +627,19 @@
 			return collection;
 		},
 		
-		findRelated: function() {
+		findRelated: function( options ) {
 			if ( this.keyContents && _.isArray( this.keyContents ) ) {
 				// Try to find instances of the appropriate 'relatedModel' in the store
 				_.each( this.keyContents, function( item ) {
 					var id = _.isString( item ) || _.isNumber( item ) ? item : item[ this.relatedModel.prototype.idAttribute ];
-					var model = Backbone.Relational.store.find( this.relatedModel, id ) || this.createModel( item );
+					
+					var model = Backbone.Relational.store.find( this.relatedModel, id );
+					if ( model && _.isObject( item ) ) {
+						model.set( item, options );
+					}
+					else if ( !model ) {
+						model = this.createModel( item );
+					}
 					
 					if ( model && !this.related.getByCid( model ) && !this.related.get( model ) ) {
 						this.related._add( model );
@@ -652,12 +665,12 @@
 				this.prepareCollection( attr );
 				this.related = attr;
 			}
-			// Otherwise, 'attr' should be an array of related object ids
+			// Otherwise, 'attr' should be an array of related object ids.
+			// Re-use the current 'this.related' if it is a Backbone.Collection.
 			else {
-				// Re-use the current 'this.related' if it is a Backbone.Collection
 				var coll = this.related instanceof Backbone.Collection ? this.related : new this.collectionType();
 				this.setRelated( this.prepareCollection( coll ) );
-				this.findRelated();
+				this.findRelated( options );
 			}
 			
 			// Notify new 'related' object of the new relation
