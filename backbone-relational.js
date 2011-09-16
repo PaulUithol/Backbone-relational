@@ -11,9 +11,9 @@
 	/**
 	 * CommonJS shim
 	 **/
-	if (typeof window === 'undefined') {
-		var _ = require('underscore');
-		var Backbone = require('backbone');
+	if ( typeof window === 'undefined' ) {
+		var _ = require( 'underscore' );
+		var Backbone = require( 'backbone' );
 		var exports = module.exports = Backbone;
 	} else {
 		var _ = this._;
@@ -32,7 +32,7 @@
 		
 		acquire: function() {
 			if ( this._permitsAvailable && this._permitsUsed >= this._permitsAvailable ) {
-				throw new Error('Max permits acquired');
+				throw new Error( 'Max permits acquired' );
 			}
 			else {
 				this._permitsUsed++;
@@ -41,7 +41,7 @@
 		
 		release: function() {
 			if ( this._permitsUsed === 0 ) {
-				throw new Error('All permits released');
+				throw new Error( 'All permits released' );
 			}
 			else {
 				this._permitsUsed--;
@@ -54,7 +54,7 @@
 		
 		setAvailablePermits: function( amount ) {
 			if ( this._permitsUsed > amount ) {
-				throw new Error('Available permits cannot be less than used permits');
+				throw new Error( 'Available permits cannot be less than used permits' );
 			}
 			this._permitsAvailable = amount;
 		}
@@ -162,7 +162,7 @@
 		getCollection: function( model ) {
 			var coll =  _.detect( this._collections, function( c ) {
 					// Check if model is the type itself (a ref to the constructor), or is of type c.model
-					return model === c.model || model instanceof c.model;
+					return model === c.model || model.constructor === c.model;
 				});
 			
 			if ( !coll ) {
@@ -177,7 +177,7 @@
 		 * @param {string} name
 		 */
 		getObjectByName: function( name ) {
-			var type = _.reduce( name.split('.'), function( memo, val ) {
+			var type = _.reduce( name.split( '.' ), function( memo, val ) {
 				return memo[ val ];
 			}, exports);
 			return type !== exports ? type: null;

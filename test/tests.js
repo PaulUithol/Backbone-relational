@@ -401,6 +401,34 @@ $(document).ready(function() {
 			ok( Backbone.Relational.store.find( Node, 4 ) instanceof Node, "Node 4 can be found" );
 		});
 		
+		test( "Inheritance creates and uses a separate relation", function() {
+			var whale = new Animal( { id: 1, species: 'whale' } );
+			ok( Backbone.Relational.store.find( Animal, 1 ) === whale );
+			
+			var numCollections = Backbone.Relational.store._collections.length;
+			
+			Mammal = Animal.extend({
+				urlRoot: '/mammal/'
+			});
+			
+			var lion = new Mammal( { id: 1, species: 'lion' } );
+			var donkey = new Mammal( { id: 2, species: 'donkey' } );
+			
+			equals( Backbone.Relational.store._collections.length, numCollections + 1 );
+			ok( Backbone.Relational.store.find( Animal, 1 ) === whale );
+			ok( Backbone.Relational.store.find( Mammal, 1 ) === lion );
+			ok( Backbone.Relational.store.find( Mammal, 2 ) === donkey );
+			
+			Primate = Mammal.extend({
+				urlRoot: '/primate/'
+			})
+			
+			var gorilla = new Primate( { id: 1, species: 'gorilla' } );
+			
+			equals( Backbone.Relational.store._collections.length, numCollections + 2 );
+			ok( Backbone.Relational.store.find( Primate, 1 ) === gorilla );
+		});
+		
 	
 	module( "Backbone.RelationalModel", { setup: initObjects } );
 		
@@ -1052,14 +1080,14 @@ $(document).ready(function() {
 			// Set values so that the relation gets filled
 			zoo.set({
 				animals: [
-					{ race: 'Lion' },
-					{ race: 'Zebra' }
+					{ species: 'Lion' },
+					{ species: 'Zebra' }
 				]
 			});
 			
 			// Check that the animals were created
-			ok( zoo.get( 'animals' ).at( 0 ).get( 'race' ) === 'Lion' );
-			ok( zoo.get( 'animals' ).at( 1 ).get( 'race' ) === 'Zebra' );
+			ok( zoo.get( 'animals' ).at( 0 ).get( 'species' ) === 'Lion' );
+			ok( zoo.get( 'animals' ).at( 1 ).get( 'species' ) === 'Zebra' );
 			
 			// Check that the generated collection is of the correct kind
 			ok( zoo.get( 'animals' ) instanceof AnimalCollection );
