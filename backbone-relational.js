@@ -779,9 +779,11 @@
 				
 				var processQueue = function( model, coll ) {
 					if ( model === dit ) {
-						dit._deferProcessing = false;
+						if ( dit._deferProcessing ) {
+							dit._deferProcessing = false;
+							options.collection.unbind( 'relational:add', processQueue );
+						}
 						dit.processQueue();
-						options.collection.unbind( 'relational:add', processQueue );
 					}
 				};
 				options.collection.bind( 'relational:add', processQueue );
@@ -850,11 +852,21 @@
 			if( this._isInitialized && !this.isLocked() ) {
 				_.each( this._relations, function( rel ) {
 					var val = this.attributes[ rel.key ];
-					if ( rel.related !== val ) {
+					if ( _.isArray(val) || this._relationHasChanged(rel,val) ) {
 						this.trigger('relational:change:' + rel.key, this, val, options || {} );
 					}
 				}, this );
 			}
+		},
+		
+		/**
+		 * Checks relation for changes including checking nested model id changes. 
+		 */
+		_relationHasChanged: function( rel, val ) {
+			var related_key = ( rel.options.includeInJSON && _.isString( rel.options.includeInJSON ) ) ? rel.options.includeInJSON : rel.relatedModel.prototype.idAttribute;
+			var related_value = ( rel.related instanceof Backbone.Collection ) ? rel.related.pluck( related_key ) : rel.related;
+			var comparison_value = ( val instanceof Backbone.Collection ) ? val.pluck( related_key ) : val;
+			return _.isArray(related_value) ? _.difference(related_value, comparison_value).length : _.isEqual(related_value, comparison_value);
 		},
 		
 		/**
@@ -1050,6 +1062,14 @@
 						}
 						else if ( value instanceof Backbone.Model ) {
 							json[ rel.key ] = value.get( rel.options.includeInJSON );
+						}
+						// POD array (serialized collection)
+						else if ( _.isArray(value) ) {
+							json[ rel.key ] = _.pluck( value, rel.options.includeInJSON );
+						}
+						// POD object (serialized model)
+						else {
+							json[ rel.key ] = value[rel.options.includeInJSON];
 						}
 					}
 					else {
