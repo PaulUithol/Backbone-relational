@@ -204,7 +204,10 @@
 		
 		find: function( type, id ) {
 			var coll = this.getCollection( type );
-			return coll && coll.get( id );
+			if (!coll) return null;
+			var model = coll.get( id );
+			if (!model && _.isString(id) && id.length && id[0]==='c') model = coll.getByCid( id );
+			return model;
 		},
 		
 		/**
@@ -482,7 +485,7 @@
 			}
 			else if ( item && ( _.isString( item ) || _.isNumber( item ) || typeof( item ) === 'object' ) ) {
 				// Try to find an instance of the appropriate 'relatedModel' in the store, or create it
-				var id = _.isString( item ) || _.isNumber( item ) ? item : item[ this.relatedModel.prototype.idAttribute ];
+				var id = !item || _.isString( item ) || _.isNumber( item ) ? item : item[ this.relatedModel.prototype.idAttribute ];
 				model = Backbone.Relational.store.find( this.relatedModel, id );
 				if ( model && _.isObject( item ) ) {
 					model.set( item, options );
@@ -563,7 +566,7 @@
 			
 			var item = this.keyContents;
 			if ( item && ( _.isString( item ) || _.isNumber( item ) || typeof( item ) === 'object' ) ) {
-				var id = _.isString( item ) || _.isNumber( item ) ? item : item[ this.relatedModel.prototype.idAttribute ];
+				var id = !item || _.isString( item ) || _.isNumber( item ) ? item : item[ this.relatedModel.prototype.idAttribute ];
 				if ( model.id === id ) {
 					this.addRelated( model, options );
 				}
@@ -631,8 +634,10 @@
 			if ( this.keyContents && _.isArray( this.keyContents ) ) {
 				// Try to find instances of the appropriate 'relatedModel' in the store
 				_.each( this.keyContents, function( item ) {
-					var id = _.isString( item ) || _.isNumber( item ) ? item : item[ this.relatedModel.prototype.idAttribute ];
-					
+					var id = !item || _.isString( item ) || _.isNumber( item ) ? item : item[ this.relatedModel.prototype.idAttribute ];
+					if (item==null) {
+					  return;
+					}
 					var model = Backbone.Relational.store.find( this.relatedModel, id );
 					if ( model && _.isObject( item ) ) {
 						model.set( item, options );
@@ -689,7 +694,7 @@
 			if ( !this.related.getByCid( model ) && !this.related.get( model ) ) {
 				// Check if this new model was specified in 'this.keyContents'
 				var item = _.any( this.keyContents, function( item ) {
-					var id = _.isString( item ) || _.isNumber( item ) ? item : item[ this.relatedModel.prototype.idAttribute ];
+					var id = !item || _.isString( item ) || _.isNumber( item ) ? item : item[ this.relatedModel.prototype.idAttribute ];
 					return id && id === model.id;
 				}, this );
 				
@@ -917,7 +922,7 @@
 			var rel = this.getRelation( key ),
 				keyContents = rel && rel.keyContents,
 				toFetch = keyContents && _.select( _.isArray( keyContents ) ? keyContents : [ keyContents ], function( item ) {
-						var id = _.isString( item ) || _.isNumber( item ) ? item : item[ rel.relatedModel.prototype.idAttribute ];
+						var id = !item || _.isString( item ) || _.isNumber( item ) ? item : item[ rel.relatedModel.prototype.idAttribute ];
 						return id && !Backbone.Relational.store.find( rel.relatedModel, id );
 					}, this );
 			
@@ -1043,8 +1048,9 @@
 		toJSON: function() {
 			// If this Model has already been fully serialized in this branch once, return to avoid loops
 			if ( this.isLocked() ) {
-				return this.id;
+				return _.isUndefined(this.id) ? this.cid : this.id;
 			}
+			this.acquire();
 			
 			var json = Backbone.Model.prototype.toJSON.call( this );
 			
@@ -1057,19 +1063,22 @@
 						this.release();
 					}
 					else if ( _.isString( rel.options.includeInJSON ) ) {
-						if ( value instanceof Backbone.Collection ) {
-							json[ rel.key ] = value.pluck( rel.options.includeInJSON );
+						if ( !value ) {
+  						json[ rel.key ] = null;
+						}
+						else if ( value instanceof Backbone.Collection ) {
+							json[ rel.key ] = _.map( value, function(model) { return model.hasOwnProperty(rel.options.includeInJSON) ? model[rel.options.includeInJSON] : model_JSON.cid; } );
 						}
 						else if ( value instanceof Backbone.Model ) {
-							json[ rel.key ] = value.get( rel.options.includeInJSON );
+							json[ rel.key ] = value.has( rel.options.includeInJSON ) ? value.get( rel.options.includeInJSON ) : value.cid;
 						}
 						// POD array (serialized collection)
 						else if ( _.isArray(value) ) {
-							json[ rel.key ] = _.pluck( value, rel.options.includeInJSON );
+							json[ rel.key ] = _.map( value, function(model_json, index) { return model_json.hasOwnProperty(rel.options.includeInJSON) ? model_json[rel.options.includeInJSON] : rel.related.models[index].cid; } );
 						}
 						// POD object (serialized model)
-						else {
-							json[ rel.key ] = value[rel.options.includeInJSON];
+						else if (value instanceof Object) {
+							json[ rel.key ] = value.hasOwnProperty(rel.options.includeInJSON) ? value[rel.options.includeInJSON] : value.cid;
 						}
 					}
 					else {
@@ -1077,6 +1086,7 @@
 					}
 				}, this );
 			
+			this.release();
 			return json;
 		}
 	});
