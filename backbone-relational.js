@@ -1033,6 +1033,7 @@
 			if ( this.isLocked() ) {
 				return this.id;
 			}
+			this.acquire();
 			
 			var json = Backbone.Model.prototype.toJSON.call( this );
 			
@@ -1057,6 +1058,7 @@
 					}
 				}, this );
 			
+			this.release();
 			return json;
 		}
 	});
