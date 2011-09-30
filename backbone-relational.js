@@ -1036,7 +1036,7 @@
 				return this.id;
 			}
 			this.acquire();
-			
+
 			var json = Backbone.Model.prototype.toJSON.call( this );
 			
 			_.each( this._relations, function( rel ) {
