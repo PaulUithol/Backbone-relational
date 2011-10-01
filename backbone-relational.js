@@ -463,7 +463,7 @@
 			_.bindAll( this, 'onChange' );
 			this.instance.bind( 'relational:change:' + this.key, this.onChange );
 			
-			var model = this.findRelated();
+			var model = this.findRelated( { silent: true } );
 			this.setRelated( model );
 			
 			// Notify new 'related' object of the new relation.
@@ -613,7 +613,7 @@
 			}
 			
 			this.setRelated( this.prepareCollection( new this.collectionType() ) );
-			this.findRelated();
+			this.findRelated( { silent: true } );
 		},
 		
 		prepareCollection: function( collection ) {
