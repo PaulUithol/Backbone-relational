@@ -54,7 +54,14 @@ $(document).ready(function() {
 	});
 
 	Animal = Backbone.RelationalModel.extend({
-		urlRoot: '/animal/'
+		urlRoot: '/animal/',
+		
+		// For validation testing. Wikipedia says elephants are reported up to 12.000 kg. Any more, we must've weighted wrong ;).
+		validate: function( attrs ) {
+			if ( attrs.species === 'elephant' && attrs.weight && attrs.weight > 12000 ) {
+				return "Too heavy.";
+			}
+		}
 	});
 
 	AnimalCollection = Backbone.Collection.extend({
@@ -149,7 +156,6 @@ $(document).ready(function() {
 				type: Backbone.HasOne,
 				key: 'parent',
 				relatedModel: 'Node',
-				includeInJSON: false,
 				reverseRelation: {
 					key: 'children'
 				}
@@ -554,7 +560,16 @@ $(document).ready(function() {
 			equal( zoo.get( 'animals' ).length, 2 );
 		});
 
-
+		test( "toJSON", function() {
+			var node1 = new Node({ id: '1', parent: '3', name: 'First node' });
+			var node2 = new Node({ id: '2', parent: '1', name: 'Second node' });
+			var node3 = new Node({ id: '3', parent: '2', name: 'Third node' });
+			
+			var json = node1.toJSON();
+			//console.debug( json );
+			ok( json.children.length === 1 );
+		});
+		
 	module( "Backbone.Relation options", { setup: initObjects } );
 
 
@@ -849,7 +864,23 @@ $(document).ready(function() {
 			ok( view.get( 'listProperties' ).get( 'name' ) === 'a' );
 			ok( view.get( 'windowProperties' ).get( 'name' ) === 'b' );
 		});
-
+	
+	module( "Backbone.Relation general", { setup: initObjects } );
+		
+		
+		test( "Only valid models (no validation failure) should be added to a relation", function() {
+			var zoo = new Zoo();
+			
+			zoo.bind( 'add:animals', function( animal ) {
+					ok( animal instanceof Animal );
+				});
+			
+			var smallElephant = new Animal( { name: 'Jumbo', species: 'elephant', weight: 2000, livesIn: zoo } );
+			equals( zoo.get( 'animals' ).length, 1, "Just 1 elephant in the zoo" );
+			
+			zoo.get( 'animals' ).add( { name: 'Big guy', species: 'elephant', weight: 13000 } );
+			equals( zoo.get( 'animals' ).length, 1, "Still just 1 elephant in the zoo" );
+		});
 
 	module( "Backbone.HasOne", { setup: initObjects } );
 
