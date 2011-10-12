@@ -390,7 +390,8 @@
 
 		createModel: function( item ) {
 			if ( this.options.createModels && typeof( item ) === 'object' ) {
-				return new this.relatedModel( item );
+			  var model = new this.relatedModel();
+				return model.set(model.parse( item ));
 			}
 		},
 
@@ -485,7 +486,7 @@
 				var id = _.isString( item ) || _.isNumber( item ) ? item : item[ this.relatedModel.prototype.idAttribute ];
 				model = Backbone.Relational.store.find( this.relatedModel, id );
 				if ( model && _.isObject( item ) ) {
-					model.set( item, options );
+					model.set( model.parse(item), options );
 				}
 				else if ( !model ) {
 					model = this.createModel( item );
@@ -635,7 +636,7 @@
 
 					var model = Backbone.Relational.store.find( this.relatedModel, id );
 					if ( model && _.isObject( item ) ) {
-						model.set( item, options );
+						model.set( model.parse(item), options );
 					}
 					else if ( !model ) {
 						model = this.createModel( item );
@@ -1042,9 +1043,9 @@
 			_.each( this._relations, function( rel ) {
 					var value = json[ rel.key ];
 
-					if ( rel.options.includeInJSON === true && value && _.isFunction( value.toJSON ) ) {
+					if ( rel.options.includeInJSON === true && value && (typeof( value ) === 'object')) {
 						this.acquire();
-						json[ rel.key ] = value.toJSON();
+						json[ rel.key ] = _.isFunction( value.toJSON ) ? value.toJSON() : value;
 						this.release();
 					}
 					else if ( _.isString( rel.options.includeInJSON ) ) {
