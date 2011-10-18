@@ -1033,6 +1033,7 @@
 			if ( this.isLocked() ) {
 				return this.id;
 			}
+			this.acquire();
 			
 			this.acquire();
 			var json = Backbone.Model.prototype.toJSON.call( this );
