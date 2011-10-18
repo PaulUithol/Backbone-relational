@@ -149,7 +149,6 @@ $(document).ready(function() {
 				type: Backbone.HasOne,
 				key: 'parent',
 				relatedModel: 'Node',
-				includeInJSON: false,
 				reverseRelation: {
 					key: 'children'
 				}
@@ -552,6 +551,16 @@ $(document).ready(function() {
 			ok( _.isArray( requests ) );
 			equal( requests.length, 0 );
 			equal( zoo.get( 'animals' ).length, 2 );
+		});
+		
+		test( "toJSON", function() {
+			var node1 = new Node({ id: '1', parent: '3', name: 'First node' });
+			var node2 = new Node({ id: '2', parent: '1', name: 'Second node' });
+			var node3 = new Node({ id: '3', parent: '2', name: 'Third node' });
+			
+			var json = node1.toJSON();
+			//console.debug( json );
+			ok( json.children.length === 1 );
 		});
 		
 	
