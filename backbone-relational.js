@@ -1034,15 +1034,14 @@
 				return this.id;
 			}
 			
+			this.acquire();
 			var json = Backbone.Model.prototype.toJSON.call( this );
 			
 			_.each( this._relations, function( rel ) {
 					var value = json[ rel.key ];
 					
 					if ( rel.options.includeInJSON === true && value && _.isFunction( value.toJSON ) ) {
-						this.acquire();
 						json[ rel.key ] = value.toJSON();
-						this.release();
 					}
 					else if ( _.isString( rel.options.includeInJSON ) ) {
 						if ( value instanceof Backbone.Collection ) {
@@ -1057,6 +1056,7 @@
 					}
 				}, this );
 			
+			this.release();
 			return json;
 		}
 	});
