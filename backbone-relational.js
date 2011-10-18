@@ -705,8 +705,11 @@
 		 */
 		handleAddition: function( model, coll, options ) {
 			//console.debug('handleAddition called; args=%o', arguments);
-			// Make sure the model is in fact a valid model before continuing
-			if( !(model instanceof Backbone.Model) ) return;
+			// Make sure the model is in fact a valid model before continuing.
+			// (it can be invalid as a result of failing validation in Backbone.Collection._prepareModel)
+			if( !( model instanceof Backbone.Model ) ) {
+				return;
+			}
 			
 			options = this.sanitizeOptions( options );
 			var dit = this;
