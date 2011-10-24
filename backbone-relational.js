@@ -1086,7 +1086,7 @@
 		if ( !( model instanceof Backbone.Model ) || !( this.get( model ) || this.getByCid( model ) ) ) {
 			model = _add.call( this, model, options );
 		}
-		this.trigger('relational:add', model, this, options);
+		model && this.trigger('relational:add', model, this, options);
 		
 		return model;
 	};
@@ -1098,7 +1098,7 @@
 	Backbone.Collection.prototype._remove = function( model, options ) {
 		//console.debug('calling _remove on coll=%o; model=%s (%o), options=%o', this, model.cid, model, options );
 		model = _remove.call( this, model, options );
-		this.trigger('relational:remove', model, this, options);
+		model && this.trigger('relational:remove', model, this, options);
 		
 		return model;
 	};
