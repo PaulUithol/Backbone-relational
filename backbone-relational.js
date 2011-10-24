@@ -1039,6 +1039,7 @@
 			if ( this.isLocked() ) {
 				return this.id;
 			}
+			this.acquire();
 			
 			this.acquire();
 			var json = Backbone.Model.prototype.toJSON.call( this );
@@ -1050,11 +1051,27 @@
 						json[ rel.key ] = value.toJSON();
 					}
 					else if ( _.isString( rel.options.includeInJSON ) ) {
-						if ( value instanceof Backbone.Collection ) {
-							json[ rel.key ] = value.pluck( rel.options.includeInJSON );
+						if ( !value ) {
+  						json[ rel.key ] = null;
+						}
+						else if ( value instanceof Backbone.Collection ) {
+							json[ rel.key ] = _.map( value, function(model) { return model.hasOwnProperty(rel.options.includeInJSON) ? model[rel.options.includeInJSON] : model_JSON.cid; } );
 						}
 						else if ( value instanceof Backbone.Model ) {
-							json[ rel.key ] = value.get( rel.options.includeInJSON );
+							json[ rel.key ] = value.has( rel.options.includeInJSON ) ? value.get( rel.options.includeInJSON ) : value.cid;
+						}
+						// POD array (serialized collection)
+						else if ( _.isArray(value) ) {
+							json[ rel.key ] = [];
+							_.each( value, function(model_json, index) { 
+							  if (!_.isUndefined(model_json)) {
+							    json[ rel.key ].push(model_json.hasOwnProperty(rel.options.includeInJSON) ? model_json[rel.options.includeInJSON] : rel.related.models[index].cid); 
+							  }
+							});
+						}
+						// POD object (serialized model)
+						else if (value instanceof Object) {
+							json[ rel.key ] = value.hasOwnProperty(rel.options.includeInJSON) ? value[rel.options.includeInJSON] : value.cid;
 						}
 					}
 					else {

@@ -26,13 +26,14 @@
 
   // Current version of the library. Keep in sync with `package.json`.
   Backbone.VERSION = '0.5.3';
+  Backbone.HAS_ATTRIBUTE_OWNERSHIP = true; // a version check until this is integrated into the main branch and given a real VERSION number
 
   // Require Underscore, if we're on the server, and it's not already present.
   var _ = root._;
   if (!_ && (typeof require !== 'undefined')) _ = require('underscore')._;
 
-  // For Backbone's purposes, jQuery or Zepto owns the `$` variable.
-  var $ = root.jQuery || root.Zepto;
+  // For Backbone's purposes, jQuery, Zepto, or Ender owns the `$` variable.
+  var $ = root.jQuery || root.Zepto || root.ender;
 
   // Runs Backbone.js in *noConflict* mode, returning the `Backbone` variable
   // to its previous owner. Returns a reference to this Backbone object.
@@ -90,7 +91,7 @@
           if (!list) return this;
           for (var i = 0, l = list.length; i < l; i++) {
             if (list[i] && callback === list[i][0]) {
-              list[i] = null;
+              list.splice(i, 1);
               break;
             }
           }
@@ -109,18 +110,39 @@
       while (both--) {
         ev = both ? eventName : 'all';
         if (list = calls[ev]) {
+          list = _.clone(list); // clone the list in case it changes during processing
           for (var i = 0, l = list.length; i < l; i++) {
-            if (!(callback = list[i])) {
-              list.splice(i, 1); i--; l--;
-            } else {
-              args = both ? Array.prototype.slice.call(arguments, 1) : arguments;
-              callback[0].apply(callback[1] || this, args);
-            }
+            callback = list[i];
+            if(!_.contains(calls[ev], callback)) continue; // the list has changed and this item is no longer part of it
+            args = both ? Array.prototype.slice.call(arguments, 1) : arguments;
+            callback[0].apply(callback[1] || this, args);
           }
         }
       }
       return this;
+    },
+
+    /*
+    * @kmalakoffs helpers
+    */
+    bindMultiple : function(events, callback) {
+      if(!_.isArray(events)) alert("Error: bindMultiple not an array");
+      
+      for (var i = 0, l = events.length; i < l; i++) {
+        this.bind(events[i], callback);
+      }
+      
+    },
+    unbindMultiple : function(events, callback) {
+      if(!_.isArray(events)) alert("Error: unbindMultiple not an array");
+
+      for (var i = 0, l = events.length; i < l; i++) {
+        this.unbind(events[i], callback);
+      }
     }
+    /*
+    * @kmalakoffs helpers
+    */
 
   };
 
@@ -141,7 +163,11 @@
     this.cid = _.uniqueId('c');
     this.set(attributes, {silent : true});
     this._changed = false;
-    this._previousAttributes = _.clone(this.attributes);
+    if (this._ownAttribute) {
+      var model = this; model._previousAttributes = {};
+      _.each(model.attributes, function(attribute, key) { model._previousAttributes[key] = model._ownAttribute(key, attribute); });
+    }
+    else this._previousAttributes = _.clone(this.attributes);
     if (options && options.collection) this.collection = options.collection;
     this.initialize(attributes, options);
   };
@@ -202,20 +228,35 @@
       if (!options.silent && this.validate && !this._performValidation(attrs, options)) return false;
 
       // Check for changes of `id`.
-      if (this.idAttribute in attrs) this.id = attrs[this.idAttribute];
+      if (this.idAttribute in attrs) {
+        var previous_id = this.id;
+        var new_id = attrs[this.idAttribute];
+        // a change in 'id'
+        if (previous_id !== new_id) {
+          this.id = new_id;
+          if (this.collection) this.collection._updateModelId(this, previous_id); // make sure the collection updates before notification 
+          this.trigger('change:' + this.idAttribute, this, new_id, options); // special case: an id change should not be silent
+        }
+      }
 
       // We're about to start triggering change events.
       var alreadyChanging = this._changing;
       this._changing = true;
 
       // Update attributes.
+      var val, prev;
       for (var attr in attrs) {
-        var val = attrs[attr];
+        val = attrs[attr];
         if (!_.isEqual(now[attr], val)) {
+          prev = now[attr];
           now[attr] = val;
           delete escaped[attr];
           this._changed = true;
           if (!options.silent) this.trigger('change:' + attr, this, val, options);
+          if (this._ownAttribute) this._disownAttribute(attr, prev);
+
+          // auto resort
+          if (this.collection && this.collection.sortAttribute && (attr == this.collection.sortAttribute)) this.collection.resort(this);
         }
       }
 
@@ -238,6 +279,7 @@
       if (!options.silent && this.validate && !this._performValidation(validObj, options)) return false;
 
       // Remove the attribute.
+      if (this._ownAttribute) this._disownAttribute(attr, this.attributes[attr]);
       delete this.attributes[attr];
       delete this._escapedAttributes[attr];
       if (attr == this.idAttribute) delete this.id;
@@ -261,7 +303,13 @@
       for (attr in old) validObj[attr] = void 0;
       if (!options.silent && this.validate && !this._performValidation(validObj, options)) return false;
 
+      if (this._ownAttribute) {
+        var model = this;
+        _.each(model.attributes, function(attribute, key) { model._disownAttribute(key, attribute); }); 
+        _.each(model._previousAttributes, function(attribute, key) { model._disownAttribute(key, attribute); }); 
+      }
       this.attributes = {};
+      this._previousAttributes = {};
       this._escapedAttributes = {};
       this._changed = true;
       if (!options.silent) {
@@ -314,6 +362,10 @@
       var success = options.success;
       options.success = function(resp) {
         model.trigger('destroy', model, model.collection, options);
+        if (model._disownAttribute) {
+          _.each(model.attributes, function(attribute, key) { model._disownAttribute(attribute, key); }); 
+        }
+        model.attributes = {};
         if (success) success(model, resp);
       };
       options.error = wrapError(options.error, model, options);
@@ -349,7 +401,12 @@
     // Calling this will cause all objects observing the model to update.
     change : function(options) {
       this.trigger('change', this, options);
-      this._previousAttributes = _.clone(this.attributes);
+      if (this._ownAttribute) {
+        var model = this;
+        _.each(model._previousAttributes, function(attribute, key) { model._disownAttribute(key, attribute); }); model._previousAttributes = {};
+        _.each(model.attributes, function(attribute, key) { model._previousAttributes[key] = model._ownAttribute(key, attribute); });
+      }
+      else this._previousAttributes = _.clone(this.attributes);
       this._changed = false;
     },
 
@@ -386,8 +443,19 @@
 
     // Get all of the attributes of the model at the time of the previous
     // `"change"` event.
-    previousAttributes : function() {
-      return _.clone(this._previousAttributes);
+     previousAttributes : function(take_ownership) {
+      if (take_ownership) {
+        var model = this, caller_owned_attributes = {};
+        _.each(model._previousAttributes, function(attribute, key) { caller_owned_attributes[key] = model._ownAttribute(key, attribute); });
+        return caller_owned_attributes;
+      } 
+      else return _.clone(this._previousAttributes);
+    },
+
+    // Incrementally resorts a model
+    resort : function(options) {
+      if (!this.collection) return;
+      return this.collection.resort(this);
     },
 
     // Run validation against a set of incoming attributes, returning `true`
@@ -406,6 +474,10 @@
       return true;
     }
 
+    // // Customization hook for owning an attribute. For example, cloning it, updating a reference count, binding it, etc.
+    // _ownAttribute : function (key, value) {},
+    // // Customization hook for disowning an attribute. For example, calling destroy()
+    // _disownAttribute : function (key, value) {}
   });
 
   // Backbone.Collection
@@ -492,6 +564,46 @@
       return this;
     },
 
+    // Incrementally resorts a model or an array of models.
+    resort : function(model_or_models, options) {
+      options || (options={});
+      if (!this.comparator) throw new Error('Cannot sort a set without a comparator');
+      var model, previous_index, new_index;
+      if (_.isArray(model_or_models)) {
+        var changed_models = [];
+        for (var i = 0, l = model_or_models.length; i < l; i++) {
+          model = model_or_models[i]; previous_index = this.indexOf(model);
+
+          // remove so don't find yourself, find new model position, and add back
+          this.models.splice(previous_index, 1);
+          new_index = this.sortedIndex(model, this.comparator);
+          this.models.splice(new_index, 0, model);
+
+          // a change in position, save trigger
+          if (!options.silent && (previous_index != new_index)) changed_models.push(model);
+        }
+        
+        if (changed_models.length) {
+          for (i = 0, l = changed_models.length; i < l; i++) this.trigger('resort', changed_models[i], {});
+        }
+      }
+      else {
+        model = model_or_models;
+        if (model.collection!=this) return undefined;
+        previous_index = this.indexOf(model);
+        if (previous_index<0) throw new Error('Model not part of the collection');
+
+        // remove so don't find yourself, find new model position, and add back
+        this.models.splice(previous_index, 1);
+        new_index = this.sortedIndex(model, this.comparator);
+        this.models.splice(new_index, 0, model);
+
+        // a change in position, trigger
+        if (!options.silent && (previous_index != new_index)) this.trigger('resort', model, {});
+      }
+      return this;
+    },
+
     // Pluck an attribute from each model in the collection.
     pluck : function(attr) {
       return _.map(this.models, function(model){ return model.get(attr); });
@@ -558,6 +670,7 @@
     // Reset all internal state. Called when the collection is reset.
     _reset : function(options) {
       this.length = 0;
+      if (this.models && this.models.length) { _.each(this.models, function(model) { model.clear({silent: true}); }); }
       this.models = [];
       this._byId  = {};
       this._byCid = {};
@@ -584,7 +697,7 @@
       if (!model) return false;
       var already = this.getByCid(model);
       if (already) throw new Error(["Can't add the same model to a set twice", already.id]);
-      this._byId[model.id] = model;
+      if (!_.isUndefined(model.id)) this._byId[model.id] = model;
       this._byCid[model.cid] = model;
       var index = options.at != null ? options.at :
                   this.comparator ? this.sortedIndex(model, this.comparator) :
@@ -629,10 +742,14 @@
         this._remove(model, options);
       }
       if (model && ev === 'change:' + model.idAttribute) {
-        delete this._byId[model.previous(model.idAttribute)];
-        this._byId[model.id] = model;
+        this._updateModelId(model, model.previous(model.idAttribute));
       }
       this.trigger.apply(this, arguments);
+    },
+    
+    _updateModelId : function(model, previous_id) {
+      if (!_.isUndefined(previous_id)) delete this._byId[previous_id];
+      if (!_.isUndefined(model.id)) this._byId[model.id] = model;
     }
 
   });
@@ -761,12 +878,13 @@
           fragment = window.location.pathname;
           var search = window.location.search;
           if (search) fragment += search;
-          if (fragment.indexOf(this.options.root) == 0) fragment = fragment.substr(this.options.root.length);
         } else {
           fragment = window.location.hash;
         }
       }
-      return decodeURIComponent(fragment.replace(hashStrip, ''));
+      fragment = decodeURIComponent(fragment.replace(hashStrip, ''));
+      if (!fragment.indexOf(this.options.root)) fragment = fragment.substr(this.options.root.length);
+      return fragment;
     },
 
     // Start the hash change handling, returning `true` if the current URL matches
@@ -936,7 +1054,7 @@
       return el;
     },
 
-    // Set callbacks, where `this.callbacks` is a hash of
+    // Set callbacks, where `this.events` is a hash of
     //
     // *{"event selector": "callback"}*
     //
@@ -984,7 +1102,7 @@
     // Ensure that the View has a DOM element to render into.
     // If `this.el` is a string, pass it through `$()`, take the first
     // matching element, and re-assign it to `el`. Otherwise, create
-    // an element from the `id`, `className` and `tagName` proeprties.
+    // an element from the `id`, `className` and `tagName` properties.
     _ensureElement : function() {
       if (!this.el) {
         var attrs = this.attributes || {};
@@ -1022,7 +1140,7 @@
 
   // Override this function to change the manner in which Backbone persists
   // models to the server. You will be passed the type of request, and the
-  // model in question. By default, uses makes a RESTful Ajax request
+  // model in question. By default, makes a RESTful Ajax request
   // to the model's `url()`. Some possible customizations could be:
   //
   // * Use `setTimeout` to batch rapid-fire updates into a single request.
