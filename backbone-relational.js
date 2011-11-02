@@ -22,7 +22,8 @@
 	}
 	
 	Backbone.Relational = {};
-	
+	Backbone.Relational.HAS_POJSON = true; // a version check until this is integrated into the main branch
+  
 	/**
 	 * Semaphore mixin; can be used as both binary and counting.
 	 **/
