@@ -560,7 +560,6 @@ $(document).ready(function() {
 			equal( zoo.get( 'animals' ).length, 2 );
 		});
 
-<<<<<<< HEAD
 		test( "toJSON", function() {
 			var node1 = new Node({ id: '1', parent: '3', name: 'First node' });
 			var node2 = new Node({ id: '2', parent: '1', name: 'Second node' });
@@ -571,9 +570,6 @@ $(document).ready(function() {
 			ok( json.children.length === 1 );
 		});
 		
-=======
-
->>>>>>> Added test for self-referencing models.
 	module( "Backbone.Relation options", { setup: initObjects } );
 
 
@@ -868,10 +864,8 @@ $(document).ready(function() {
 			ok( view.get( 'listProperties' ).get( 'name' ) === 'a' );
 			ok( view.get( 'windowProperties' ).get( 'name' ) === 'b' );
 		});
-<<<<<<< HEAD
 	
 	module( "Backbone.Relation general", { setup: initObjects } );
-		
 		
 		test( "Only valid models (no validation failure) should be added to a relation", function() {
 			var zoo = new Zoo();
@@ -886,9 +880,6 @@ $(document).ready(function() {
 			zoo.get( 'animals' ).add( { name: 'Big guy', species: 'elephant', weight: 13000 } );
 			equals( zoo.get( 'animals' ).length, 1, "Still just 1 elephant in the zoo" );
 		});
-=======
-
->>>>>>> Added test for self-referencing models.
 
 	module( "Backbone.HasOne", { setup: initObjects } );
 
