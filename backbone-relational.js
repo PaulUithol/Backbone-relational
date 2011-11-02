@@ -1045,16 +1045,28 @@
 			
 			_.each( this._relations, function( rel ) {
 					var value = json[ rel.key ];
-					
-					if ( rel.options.includeInJSON === true && value && _.isFunction( value.toJSON ) ) {
-						json[ rel.key ] = value.toJSON();
+
+					if ( rel.options.includeInJSON === true && value && (typeof( value ) === 'object')) {
+						json[ rel.key ] = _.isFunction( value.toJSON ) ? value.toJSON() : value;
 					}
 					else if ( _.isString( rel.options.includeInJSON ) ) {
-						if ( value instanceof Backbone.Collection ) {
+						if ( !value ) {
+  						json[ rel.key ] = null;
+						}
+						else if ( value instanceof Backbone.Collection ) {
 							json[ rel.key ] = value.pluck( rel.options.includeInJSON );
 						}
 						else if ( value instanceof Backbone.Model ) {
 							json[ rel.key ] = value.get( rel.options.includeInJSON );
+						}
+						// POD array (serialized collection)
+						else if ( _.isArray(value) ) {
+							json[ rel.key ] = [];
+							_.each( value, function(model_json, index) { if (!_.isUndefined(model_json)) json[ rel.key ].push(model_json[rel.options.includeInJSON]); });
+						}
+						// POD object (serialized model)
+						else if (value instanceof Object) {
+							json[ rel.key ] = value[rel.options.includeInJSON];
 						}
 					}
 					else {
