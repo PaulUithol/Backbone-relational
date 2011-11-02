@@ -390,8 +390,7 @@
 		
 		createModel: function( item ) {
 			if ( this.options.createModels && typeof( item ) === 'object' ) {
-			  var model = new this.relatedModel();
-				return model.set( item );
+				return new this.relatedModel( item );
 			}
 		},
 		
@@ -1048,9 +1047,7 @@
 					var value = json[ rel.key ];
 
 					if ( rel.options.includeInJSON === true && value && (typeof( value ) === 'object')) {
-						this.acquire();
 						json[ rel.key ] = _.isFunction( value.toJSON ) ? value.toJSON() : value;
-						this.release();
 					}
 					else if ( _.isString( rel.options.includeInJSON ) ) {
 						if ( !value ) {
