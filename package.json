@@ -6,8 +6,8 @@
   "author"        : "Paul Uithol <https://github.com/PaulUithol>",
   "contributors"  : ["Vladimir Dronnikov <dronnikov@gmail.com>", "Jacob Henry (jachreny)", "Jens Alm (ulmus)"],
   "dependencies"  : {
-    "underscore": ">=1.1.6",
-    "backbone": ">=0.5.1"
+    "underscore": ">=1.2.1",
+    "backbone": ">=0.5.3"
   },
   "lib"           : ".",
   "main"          : "backbone-relational.js",
