@@ -4,14 +4,6 @@
 // jQueryUI examples: https://github.com/jquery/jquery-ui/tree/master/tests/unit
 
 //sessionStorage.clear();
-if ( !window.console ) {
-	var names = [ 'log', 'debug', 'info', 'warn', 'error', 'assert', 'dir', 'dirxml',
-	'group', 'groupEnd', 'time', 'timeEnd', 'count', 'trace', 'profile', 'profileEnd' ];
-	window.console = {};
-	for ( var i = 0; i < names.length; ++i )
-		window.console[ names[i] ] = function() {};
-}
-
 $(document).ready(function() {
 	$.ajax = function( obj ) {
 		window.requests.push( obj );
