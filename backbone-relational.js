@@ -598,7 +598,8 @@
 		
 		options: {
 			reverseRelation: { type: 'HasOne' },
-			collectionType: Backbone.Collection
+			collectionType: Backbone.Collection,
+			collectionKey: true
 		},
 		
 		initialize: function() {
@@ -625,6 +626,14 @@
 			
 			collection.reset();
 			collection.model = this.relatedModel;
+			var collectionKey = this.options.collectionKey;
+			if(collectionKey) {
+				if(collectionKey === true) {
+					collection[this.options.reverseRelation.key] = this.instance;
+				} else {
+					collection[collectionKey] = this.instance;
+				}
+			}
 			collection.bind( 'relational:add', this.handleAddition ).bind('relational:remove', this.handleRemoval );
 			return collection;
 		},
