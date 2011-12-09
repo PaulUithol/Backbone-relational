@@ -4,7 +4,7 @@
   "keywords"      : ["Backbone", "relation", "nested", "model"],
   "repository"    : "git://github.com/PaulUithol/Backbone-relational.git",
   "author"        : "Paul Uithol <https://github.com/PaulUithol>",
-  "contributors"  : ["Vladimir Dronnikov <dronnikov@gmail.com>", "Jacob Henry (jachreny)", "Jens Alm (ulmus)"],
+  "contributors"  : ["Vladimir Dronnikov <dronnikov@gmail.com>", "Jacob Henry (jachreny)", "Jens Alm (ulmus)", "David Baumgold (singingwolfboy)"],
   "dependencies"  : {
     "underscore": ">=1.2.1",
     "backbone": ">=0.5.3"
