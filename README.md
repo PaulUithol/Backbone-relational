@@ -141,9 +141,7 @@ Determine the type of collections used for a `HasMany` relation. Defining a `url
 
 Value: a string or a boolean
 
-By default, the relation's `key` attribute will be used to create a reference to the RelationalModel instance from the generated collection. If you set `collectionKey` to a string, it will use that string as the reference to the RelationalModel, rather than the relation's `key` attribute. Be careful: if you use a value for `key` or `collectionKey` that is the name of an already-existing property on the RelationalModel, that property will be overwritten by the reference to the RelationalModel instance.
-
-If you don't want this behavior at all, just set `collectionKey` to false (or any falsy value) and this reference will not be created.
+By default, the relation's `key` attribute will be used to create a reference to the RelationalModel instance from the generated collection. If you set `collectionKey` to a string, it will use that string as the reference to the RelationalModel, rather than the relation's `key` attribute. If you don't want this behavior at all, just set `collectionKey` to false (or any falsy value) and this reference will not be created.
 
 ### includeInJSON
 

@@ -627,11 +627,17 @@
 			collection.reset();
 			collection.model = this.relatedModel;
 			var collectionKey = this.options.collectionKey;
-			if(collectionKey) {
-				if(collectionKey === true) {
-					collection[this.options.reverseRelation.key] = this.instance;
+			if (collectionKey) {
+				var key;
+				if (collectionKey === true) {
+					key = this.options.reverseRelation.key;
 				} else {
-					collection[collectionKey] = this.instance;
+					key = collectionKey;
+				}
+				if (collection[key] && collection[key] !== this.instance) {
+					throw new Error( 'collectionKey must not already exist on Backbone.Collection' );
+				} else {
+					collection[key] = this.instance;
 				}
 			}
 			collection.bind( 'relational:add', this.handleAddition ).bind('relational:remove', this.handleRemoval );
