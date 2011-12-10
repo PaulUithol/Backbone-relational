@@ -210,6 +210,10 @@ ourHouse = new House({
 // The first person in 'ourHouse.occupants' will point to 'paul'.
 ourHouse.get('occupants').at(0); // === paul
 
+// If a collection is created from a HasMany relation, it contains a reference
+// back to the originator of the relation
+ourHouse.get('occupants').livesIn; // === ourHouse
+
 // the relation from 'House.occupants' to 'Person' has been defined as a bi-directional HasMany relation,
 // with a reverse relation to 'Person.livesIn'. So, 'paul.livesIn' will automatically point back to 'ourHouse'.
 paul.get('livesIn'); // === ourHouse
