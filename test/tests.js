@@ -1459,6 +1459,26 @@ $(document).ready(function() {
 
 				equals( barn.get( 'animals' ).livesIn, undefined );
 				equals( barn.get( 'animals' ).barn, barn );
+
+				BarnNoKey = Backbone.RelationalModel.extend({
+					relations: [{
+							type: Backbone.HasMany,
+							key: 'animals',
+							relatedModel: 'Animal',
+							collectionType: 'AnimalCollection',
+							collectionKey: false,
+							reverseRelation: {
+								key: 'livesIn',
+								includeInJSON: 'id'
+							}
+						}]
+				})
+				var barnNoKey = new BarnNoKey({
+					animals: [ 'chicken-1', 'cow-1' ]
+				});
+
+				equals( barnNoKey.get( 'animals' ).livesIn, undefined );
+				equals( barnNoKey.get( 'animals' ).barn, undefined );
 			});
 	
 });
