@@ -996,8 +996,18 @@
 			return requests;
 		},
 		
-		set: function( attributes, options ) {
+		set: function( key, value, options ) {
 			Backbone.Relational.eventQueue.block();
+			
+			// Duplicate backbone's behavior to allow separate key/value parameters, instead of a single 'attributes' object
+			if (_.isObject( key ) ) {
+				attributes = key;
+				options = value;
+			}
+			else {
+				attributes = {};
+				attributes[ key ] = value;
+			}
 			
 			var result = Backbone.Model.prototype.set.apply( this, arguments );
 			
@@ -1020,7 +1030,7 @@
 			return result;
 		},
 		
-		unset: function( attributes, options ) {
+		unset: function( attribute, options ) {
 			Backbone.Relational.eventQueue.block();
 			
 			var result = Backbone.Model.prototype.unset.apply( this, arguments );
