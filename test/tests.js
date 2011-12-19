@@ -1107,7 +1107,7 @@ $(document).ready(function() {
 			ok( ourHouse.get( 'occupants' ).id === undefined );
 		});
 
-		test( "Setting a custom collection in relatedCollection uses that collection for instantiation", function() {
+		test( "Setting a custom collection in 'relatedCollection' uses that collection for instantiation", function() {
 			var zoo = new Zoo();
 			
 			// Set values so that the relation gets filled
@@ -1125,6 +1125,55 @@ $(document).ready(function() {
 			// Check that the generated collection is of the correct kind
 			ok( zoo.get( 'animals' ) instanceof AnimalCollection );
 		});
+		
+		test("The 'collectionKey' options is used to create references on generated Collections back to its RelationalModel", function() {
+				var zoo = new Zoo({
+					animals: [ 'lion-1', 'zebra-1' ]
+				});
+				
+				equals( zoo.get( 'animals' ).livesIn, zoo );
+				equals( zoo.get( 'animals' ).zoo, undefined );
+				
+				Barn = Backbone.RelationalModel.extend({
+					relations: [{
+							type: Backbone.HasMany,
+							key: 'animals',
+							relatedModel: 'Animal',
+							collectionType: 'AnimalCollection',
+							collectionKey: 'barn',
+							reverseRelation: {
+								key: 'livesIn',
+								includeInJSON: 'id'
+							}
+						}]
+				})
+				var barn = new Barn({
+					animals: [ 'chicken-1', 'cow-1' ]
+				});
+
+				equals( barn.get( 'animals' ).livesIn, undefined );
+				equals( barn.get( 'animals' ).barn, barn );
+
+				BarnNoKey = Backbone.RelationalModel.extend({
+					relations: [{
+							type: Backbone.HasMany,
+							key: 'animals',
+							relatedModel: 'Animal',
+							collectionType: 'AnimalCollection',
+							collectionKey: false,
+							reverseRelation: {
+								key: 'livesIn',
+								includeInJSON: 'id'
+							}
+						}]
+				})
+				var barnNoKey = new BarnNoKey({
+					animals: [ 'chicken-1', 'cow-1' ]
+				});
+
+				equals( barnNoKey.get( 'animals' ).livesIn, undefined );
+				equals( barnNoKey.get( 'animals' ).barn, undefined );
+			});
 		
 		
 	module( "Reverse relationships", { setup: initObjects } );
@@ -1431,54 +1480,4 @@ $(document).ready(function() {
 				equals( zoo.get( 'name' ), 'Zoo Station' );
 				equals( lion.get( 'name' ), 'Simba' );
 			});
-
-		test("collectionKey attribute is used to create references on generated Collections back to its RelationalModel", function() {
-				var zoo = new Zoo({
-					animals: [ 'lion-1', 'zebra-1' ]
-				});
-
-				equals( zoo.get( 'animals' ).livesIn, zoo );
-				equals( zoo.get( 'animals' ).zoo, undefined );
-
-				Barn = Backbone.RelationalModel.extend({
-					relations: [{
-							type: Backbone.HasMany,
-							key: 'animals',
-							relatedModel: 'Animal',
-							collectionType: 'AnimalCollection',
-							collectionKey: 'barn',
-							reverseRelation: {
-								key: 'livesIn',
-								includeInJSON: 'id'
-							}
-						}]
-				})
-				var barn = new Barn({
-					animals: [ 'chicken-1', 'cow-1' ]
-				});
-
-				equals( barn.get( 'animals' ).livesIn, undefined );
-				equals( barn.get( 'animals' ).barn, barn );
-
-				BarnNoKey = Backbone.RelationalModel.extend({
-					relations: [{
-							type: Backbone.HasMany,
-							key: 'animals',
-							relatedModel: 'Animal',
-							collectionType: 'AnimalCollection',
-							collectionKey: false,
-							reverseRelation: {
-								key: 'livesIn',
-								includeInJSON: 'id'
-							}
-						}]
-				})
-				var barnNoKey = new BarnNoKey({
-					animals: [ 'chicken-1', 'cow-1' ]
-				});
-
-				equals( barnNoKey.get( 'animals' ).livesIn, undefined );
-				equals( barnNoKey.get( 'animals' ).barn, undefined );
-			});
-	
 });

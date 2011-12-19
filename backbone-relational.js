@@ -6,19 +6,20 @@
  * For details and documentation: https://github.com/PaulUithol/Backbone-relational.
  * Depends on (as in, compeletely useless without) Backbone: https://github.com/documentcloud/backbone.
  */
-(function(undefined) {
-
+( function( undefined ) {
 	/**
 	 * CommonJS shim
 	 **/
+	var _, Backbone, exports;
 	if ( typeof window === 'undefined' ) {
-		var _ = require( 'underscore' );
-		var Backbone = require( 'backbone' );
-		var exports = module.exports = Backbone;
-	} else {
-		var _ = this._;
-		var Backbone = this.Backbone;
-		var exports = this;
+		_ = require( 'underscore' );
+		Backbone = require( 'backbone' );
+		exports = module.exports = Backbone;
+	}
+	else {
+		var _ = window._;
+		Backbone = window.Backbone;
+		exports = window;
 	}
 	
 	Backbone.Relational = {
@@ -368,8 +369,8 @@
 			if ( i._relations.length ) {
 				var exists = _.any( i._relations, function( rel ) {
 					var hasReverseRelation = this.reverseRelation.key && rel.reverseRelation.key;
-					return rel.relatedModel === rm && rel.key === k
-						&& ( !hasReverseRelation || this.reverseRelation.key === rel.reverseRelation.key );
+					return rel.relatedModel === rm && rel.key === k &&
+						( !hasReverseRelation || this.reverseRelation.key === rel.reverseRelation.key );
 				}, this );
 				
 				if ( exists ) {
@@ -401,8 +402,8 @@
 		 * relation of the current one.
 		 */
 		_isReverseRelation: function( relation ) {
-			if ( relation.instance instanceof this.relatedModel && this.reverseRelation.key === relation.key
-					&&	this.key === relation.reverseRelation.key ) {
+			if ( relation.instance instanceof this.relatedModel && this.reverseRelation.key === relation.key &&
+					this.key === relation.reverseRelation.key ) {
 				return true;
 			}
 			return false;
@@ -626,21 +627,22 @@
 			
 			collection.reset();
 			collection.model = this.relatedModel;
-			var collectionKey = this.options.collectionKey;
-			if (collectionKey) {
-				var key;
-				if (collectionKey === true) {
-					key = this.options.reverseRelation.key;
-				} else {
-					key = collectionKey;
+			
+			if ( this.options.collectionKey ) {
+				var key = this.options.collectionKey === true ? this.options.reverseRelation.key : this.options.collectionKey;
+				
+				if (collection[ key ] && collection[ key ] !== this.instance ) {
+					if ( Backbone.Relational.showWarnings && console ) {
+						console.warn( 'Relation=%o; collectionKey=%s already exists on collection=%o', this, key, this.options.collectionKey );
+					}
 				}
-				if (collection[key] && collection[key] !== this.instance) {
-					Backbone.Relational.showWarnings && console && console.warn( 'Relation=%o; collectionKey=%s already exists on collection=%o', this, key, collection );
-				} else {
-					collection[key] = this.instance;
+				else {
+					collection[ key ] = this.instance;
 				}
 			}
+			
 			collection.bind( 'relational:add', this.handleAddition ).bind('relational:remove', this.handleRemoval );
+			
 			return collection;
 		},
 		
@@ -925,7 +927,9 @@
 		 */
 		fetchRelated: function( key, options ) {
 			options || ( options = {} );
-			var rel = this.getRelation( key ),
+			var setUrl,
+				requests = [],
+				rel = this.getRelation( key ),
 				keyContents = rel && rel.keyContents,
 				toFetch = keyContents && _.select( _.isArray( keyContents ) ? keyContents : [ keyContents ], function( item ) {
 						var id = _.isString( item ) || _.isNumber( item ) ? item : item[ rel.relatedModel.prototype.idAttribute ];
@@ -935,20 +939,23 @@
 			if ( toFetch && toFetch.length ) {
 				// Create a model for each entry in 'keyContents' that is to be fetched
 				var models = _.map( toFetch, function( item ) {
+						var model;
+						
 						if ( typeof( item ) === 'object' ) {
-							var model = new rel.relatedModel( item );
+							model = new rel.relatedModel( item );
 						}
 						else {
 							var attrs = {};
 							attrs[ rel.relatedModel.prototype.idAttribute ] = item;
-							var model = new rel.relatedModel( attrs );
+							model = new rel.relatedModel( attrs );
 						}
+						
 						return model;
 					}, this );
 				
 				// Try if the 'collection' can provide a url to fetch a set of models in one request.
 				if ( rel.related instanceof Backbone.Collection && _.isFunction( rel.related.url ) ) {
-					var setUrl = rel.related.url( models );
+					setUrl = rel.related.url( models );
 				}
 				
 				// An assumption is that when 'Backbone.Collection.url' is a function, it can handle building of set urls.
@@ -961,7 +968,7 @@
 									_.each( models, function( model ) {
 											model.destroy();
 											options.error && options.error.apply( model, args );
-										})
+										});
 								},
 							url: setUrl
 						},
@@ -969,10 +976,10 @@
 						{ add: true }
 					);
 					
-					var requests = [ rel.related.fetch( opts ) ];
+					requests = [ rel.related.fetch( opts ) ];
 				}
 				else {
-					var requests = _.map( models, function( model ) {
+					requests = _.map( models, function( model ) {
 							var opts = _.defaults( {
 								error: function() {
 										model.destroy();
@@ -986,7 +993,7 @@
 				}
 			}
 			
-			return _.isUndefined( requests ) ? [] : requests;
+			return requests;
 		},
 		
 		set: function( attributes, options ) {
