@@ -598,7 +598,8 @@
 		
 		options: {
 			reverseRelation: { type: 'HasOne' },
-			collectionType: Backbone.Collection
+			collectionType: Backbone.Collection,
+			collectionKey: true
 		},
 		
 		initialize: function() {
@@ -625,6 +626,20 @@
 			
 			collection.reset();
 			collection.model = this.relatedModel;
+			var collectionKey = this.options.collectionKey;
+			if (collectionKey) {
+				var key;
+				if (collectionKey === true) {
+					key = this.options.reverseRelation.key;
+				} else {
+					key = collectionKey;
+				}
+				if (collection[key] && collection[key] !== this.instance) {
+					Backbone.Relational.showWarnings && console && console.warn( 'Relation=%o; collectionKey=%s already exists on collection=%o', this, key, collection );
+				} else {
+					collection[key] = this.instance;
+				}
+			}
 			collection.bind( 'relational:add', this.handleAddition ).bind('relational:remove', this.handleRemoval );
 			return collection;
 		},
