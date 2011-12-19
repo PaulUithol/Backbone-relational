@@ -635,7 +635,7 @@
 					key = collectionKey;
 				}
 				if (collection[key] && collection[key] !== this.instance) {
-					throw new Error( 'collectionKey must not already exist on Backbone.Collection' );
+					Backbone.Relational.showWarnings && console && console.warn( 'Relation=%o; collectionKey=%s already exists on collection=%o', this, key, collection );
 				} else {
 					collection[key] = this.instance;
 				}
