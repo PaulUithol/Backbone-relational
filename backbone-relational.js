@@ -1000,7 +1000,8 @@
 			Backbone.Relational.eventQueue.block();
 			
 			// Duplicate backbone's behavior to allow separate key/value parameters, instead of a single 'attributes' object
-			if (_.isObject( key ) ) {
+			var attributes;
+			if ( _.isObject( key ) ) {
 				attributes = key;
 				options = value;
 			}
