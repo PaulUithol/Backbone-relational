@@ -749,9 +749,9 @@
 			_.each( this.getReverseRelations( model ), function( relation ) {
 					relation.addRelated( this.instance, options );
 				}, this );
-			
-			var dit = this;
+
 			// Only trigger 'add' once the newly added model is initialized (so, has it's relations set up)
+			var dit = this;
 			Backbone.Relational.eventQueue.add( function() {
 				!options.silentChange && dit.instance.trigger( 'add:' + dit.key, model, dit.related, options );
 			});
@@ -763,6 +763,10 @@
 		 */
 		handleRemoval: function( model, coll, options ) {
 			//console.debug('handleRemoval called; args=%o', arguments);
+			if( !( model instanceof Backbone.Model ) ) {
+				return;
+			}
+
 			options = this.sanitizeOptions( options );
 			
 			_.each( this.getReverseRelations( model ), function( relation ) {

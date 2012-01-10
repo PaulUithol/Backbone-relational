@@ -18,6 +18,7 @@ Backbone-relational provides one-to-one, one-to-many and many-to-one relations b
 * [Backbone.Relation options](#backbone-relation)
 * [Backbone.RelationalModel](#backbone-relationalmodel)
 * [Example](#example)
+* [Known problems and solutions](#q-and-a)
 * [Under the hood](#under-the-hood)
 
 ## <a name="installation"/>Installation
@@ -34,7 +35,9 @@ Backbone-relational has been tested with Backbone 0.5.3 (or newer) and Underscor
 
 ## <a name="backbone-relation"/>Backbone.Relation options
 
-Each `Backbone.RelationalModel` can contain an array of `relations`. Each relation supports a number of options, of which `relatedModel`, `key` and `type` are mandatory. A relation could look like the following:
+Each `Backbone.RelationalModel` can contain an array of `relations`.
+Each relation supports a number of options, of which `relatedModel`, `key` and `type` are mandatory.
+A relation could look like the following:
 
 ```javascript
 Zoo = Backbone.RelationalModel.extend({
@@ -78,15 +81,17 @@ Value: a string, or a reference to a `Backbone.Relation` type
 
 Example: `Backbone.HasOne` or `'HasMany'`.
 
-#### HasOne relations (`Backbone.HasOne`)
+###### **HasOne relations (`Backbone.HasOne`)**
 
-The key for a `HasOne` relation consists of a single `Backbone.RelationalModel`. The default `reverseRelation.type` for a HasOne relation is HasMany. This can be set to `HasOne` instead, to create a one-to-one relation.
+The key for a `HasOne` relation consists of a single `Backbone.RelationalModel`. The default `reverseRelation.type` for a HasOne relation is HasMany.
+This can be set to `HasOne` instead, to create a one-to-one relation.
 
-#### HasMany relations (`Backbone.HasMany`)
+###### **HasMany relations (`Backbone.HasMany`)**
 
-The key for a `HasMany` relation consists of a `Backbone.Collection`, containing zero or more `Backbone.RelationalModel`s. The default `reverseRelation.type` for a HasMany relation is HasOne; this is the only option here, since many-to-many is not supported directly.
+The key for a `HasMany` relation consists of a `Backbone.Collection`, containing zero or more `Backbone.RelationalModel`s.
+The default `reverseRelation.type` for a HasMany relation is HasOne; this is the only option here, since many-to-many is not supported directly.
 
-#### <a name="many-to-many"/>Many-to-many relations
+###### **<a name="many-to-many"/>Many-to-many relations**
 A many-to-many relation can be modeled using two `Backbone.HasMany` relations, with a link model in between:
 
 ```javascript
@@ -136,19 +141,27 @@ paul.get('jobs').add( { company: niceCompany } );
 
 Value: a string (which can be resolved to an object type on the global scope), or a reference to a `Backbone.Collection` type.
 
-Determine the type of collections used for a `HasMany` relation. Defining a `url(models<Backbone.Model[]>)` function on this Collection that's able to build a url for either the whole collection, or a set of models enables `fetchRelated` to fetch all missing models in one request, instead of firing a separate request for each. See [Backbone-tastypie](https://github.com/PaulUithol/backbone-tastypie/blob/master/backbone-tastypie.js#L74) for an example.
+Determine the type of collections used for a `HasMany` relation. If you define a `url(models<Backbone.Model[]>)` function on
+the specified collection, this enables `fetchRelated` to fetch all missing models in one request, instead of firing a separate request for each.
+See [Backbone-tastypie](https://github.com/PaulUithol/backbone-tastypie/blob/master/backbone_tastypie/static/js/backbone-tastypie.js#L92) for an example
+of a `url` function that can build a url for the collection (or a subset of models).
 
 ### collectionKey
 
 Value: a string or a boolean
 
-By default, the relation's `key` attribute will be used to create a reference to the RelationalModel instance from the generated collection. If you set `collectionKey` to a string, it will use that string as the reference to the RelationalModel, rather than the relation's `key` attribute. If you don't want this behavior at all, just set `collectionKey` to false (or any falsy value) and this reference will not be created.
+By default, the relation's `key` attribute will be used to create a reference to the RelationalModel instance from the generated collection.
+If you set `collectionKey` to a string, it will use that string as the reference to the RelationalModel, rather than the relation's `key` attribute.
+If you don't want this behavior at all, just set `collectionKey` to false (or any falsy value) and this reference will not be created.
 
 ### includeInJSON
 
 Value: a boolean, or a string referencing one of the model's attributes. Default: `true`.
 
-Determines how a relation will be serialized following a call to the `toJSON` method. A value of `true` serializes the full set of attributes on the related model(s), in which case the relations of this object are serialized as well. Set to `false` to exclude the relation completely. You can also choose to include a single attribute from the related model by using a string. For example, `'name'`, or `Backbone.Model.prototype.idAttribute` to include ids.
+Determines how a relation will be serialized following a call to the `toJSON` method. A value of `true` serializes the full set of attributes
+on the related model(s), in which case the relations of this object are serialized as well. Set to `false` to exclude the relation completely.
+You can also choose to include a single attribute from the related model by using a string.
+For example, `'name'`, or `Backbone.Model.prototype.idAttribute` to include ids.
 
 ### createModels
 
@@ -158,7 +171,8 @@ Should models be created from nested objects, or not?
 
 ### reverseRelation
 
-If the relation should be bidirectional, specify the details for the reverse relation here. It's only mandatory to supply a `key`; `relatedModel` is automatically set. The default `type` for a `reverseRelation` is `HasMany` for a `HasOne` relation (which can be overridden to `HasOne` in order to create a one-to-one relation), and `HasOne` for a `HasMany` relation. In this case, you cannot create a reverseRelation with type `HasMany` as well; please see [Many-to-many relations](#many-to-many) on how to model these type of relations.
+If the relation should be bidirectional, specify the details for the reverse relation here.
+It's only mandatory to supply a `key`; `relatedModel` is automatically set. The default `type` for a `reverseRelation` is `HasMany` for a `HasOne` relation (which can be overridden to `HasOne` in order to create a one-to-one relation), and `HasOne` for a `HasMany` relation. In this case, you cannot create a reverseRelation with type `HasMany` as well; please see [Many-to-many relations](#many-to-many) on how to model these type of relations.
 
 **Please note**: if you define a relation (plus a `reverseRelation`) on a model, but never actually create an instance of that model, the model's `constructor` will never run, which means it's `initializeRelations` will never get called, and the reverseRelation will not be initialized either. In that case, you could either define the relation on the opposite model, or define two single relations. See [issue 20](https://github.com/PaulUithol/Backbone-relational/issues/20) for a discussion.
 
@@ -168,15 +182,21 @@ If the relation should be bidirectional, specify the details for the reverse rel
 
 ### Methods
 
-#### getRelations `relationalModel.getRelations()`
+###### **getRelations `relationalModel.getRelations()`**
 
 Returns the set of initialized relations on the model.
 
-#### fetchRelated `relationalModel.fetchRelated(key<string>, [options<object>])`
+###### **fetchRelated `relationalModel.fetchRelated(key<string>, [options<object>])`**
 
-Fetch models from the server that were referenced in the model's attributes, but have not been found/created yet. This can be used specifically for lazy-loading scenarios.
+Fetch models from the server that were referenced in the model's attributes, but have not been found/created yet.
+This can be used specifically for lazy-loading scenarios.
 
-By default, a separate request will be fired for each additional model that is to be fetched from the server. However, if your server/API supports it, you can fetch the set of models in one request by specifying a `collectionType` for the relation you call `fetchRelated` on. The `collectionType` should have an overridden `url(models<Backbone.Model[]>)` method that allows it to construct a url for an array of models. See the example at the top of [Backbone.Relation options](#backbone-relation) or [Backbone-tastypie](https://github.com/PaulUithol/backbone-tastypie/blob/master/backbone-tastypie.js#L74) for an example.
+By default, a separate request will be fired for each additional model that is to be fetched from the server.
+However, if your server/API supports it, you can fetch the set of models in one request by specifying a `collectionType`
+for the relation you call `fetchRelated` on. The `collectionType` should have an overridden `url(models<Backbone.Model[]>)`
+method that allows it to construct a url for an array of models.
+See the example at the top of [Backbone.Relation options](#backbone-relation) or
+[Backbone-tastypie](https://github.com/PaulUithol/backbone-tastypie/blob/master/backbone_tastypie/static/js/backbone-tastypie.js#L92) for an example.
 
 ### Events
 
@@ -317,6 +337,41 @@ PersonCollection = Backbone.Collection.extend({
 User = Backbone.RelationalModel.extend();
 ```
 
+## <a name="q-and-a"/>Known problems and solutions
+
+> **Q:** Relations do not seem to be initialized properly.
+
+**A:** This (mostly) seems to occur because a relation is defined in the `reverseRelations` of another model, which hasn't
+been instantiated yet (which in turn means it's `relations` haven't been created yet, so the `reverseRelation` hasn't been created yet either).
+The current workaround is to create an instance of this other model first (this can be either a dummy that gets destroyed right away,
+or one that you actually use).
+
+> **Q:** After a fetch, `add:<key>` events don't occur for nested relations.
+
+**A:** This is due to the `{silent: true}` in `Backbone.Collection.reset`. Pass `fetch( {add: true} )` to bypass this problem.
+You may want to override `Backbone.Collection.fetch` for this, and also trigger an event when the fetch has finished while you're at it.
+Example:
+
+```javascript
+var _fetch = Backbone.Collection.prototype.fetch;
+Backbone.Collection.prototype.fetch = function( options ) {
+	options || ( options = {} );
+	_.defaults( options, { add: true } );
+
+	var dit = this,
+		request = _fetch.call( this, options );
+	request.done( function() {
+			if ( !options.silent ) {
+				dit.trigger( 'fetch', dit, options );
+			}
+		});
+
+	return request;
+};
+```
+
 ## <a name="under-the-hood"/>Under the hood
 
-Each `Backbone.RelationalModel` registers itself with `Backbone.Store` upon creation (and is removed from the `Store` when destroyed). When creating or updating an attribute that is a key in a relation, removed related objects are notified of their removal, and new related objects are looked up in the `Store`.
+Each `Backbone.RelationalModel` registers itself with `Backbone.Store` upon creation (and is removed from the `Store` when destroyed).
+When creating or updating an attribute that is a key in a relation, removed related objects are notified of their removal,
+and new related objects are looked up in the `Store`.
