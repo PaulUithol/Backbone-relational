@@ -9,6 +9,7 @@ Backbone-relational provides one-to-one, one-to-many and many-to-one relations b
 * Bind new events to a `Backbone.RelationalModel` for:
 	* addition to a `HasMany` relation (bind to `add:<key>`; arguments: `(addedModel, relatedCollection)`),
 	* removal from a `HasMany` relation (bind to `remove:<key>`; arguments: `(removedModel, relatedCollection)`),
+	* reset of a `HasMany` relation (bind to `reset:<key>`; arguments: `(relatedCollection)`),
 	* changes to the key itself on `HasMany` and `HasOne` relations (bind to `update:<key>`; arguments=`(model, relatedModel/relatedCollection)`).
 
 ## Contents
