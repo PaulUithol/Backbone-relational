@@ -481,8 +481,8 @@ $(document).ready(function() {
 			requests[ 0 ].error();
 			// Trigger the 'success' callback to fire the 'destroy' event
 			window.requests[ window.requests.length - 1 ].success();
-			
-			equal( person.get( 'user' ), null );
+
+			equal( person.get( 'user' ), null, "User has been destroyed & removed" );
 			equal( errorCount, 1, "The error callback executed successfully" );
 			
 			var person2 = new Person({
@@ -878,7 +878,13 @@ $(document).ready(function() {
 			var smallElephant = new Animal( { name: 'Jumbo', species: 'elephant', weight: 2000, livesIn: zoo } );
 			equal( zoo.get( 'animals' ).length, 1, "Just 1 elephant in the zoo" );
 			
-			zoo.get( 'animals' ).add( { name: 'Big guy', species: 'elephant', weight: 13000 } );
+			try {
+				zoo.get( 'animals' ).add( { name: 'Big guy', species: 'elephant', weight: 13000 } );
+			}
+			catch ( e ) {
+				// Throws an error in new verions of backbone after failing validation.
+			}
+
 			equal( zoo.get( 'animals' ).length, 1, "Still just 1 elephant in the zoo" );
 		});
 	
@@ -1425,25 +1431,28 @@ $(document).ready(function() {
 			
 			// Similar to what happens when calling 'fetch' on collA, updating it, calling 'fetch' on collB
 			var name = 'User 1';
-			var user = collA._add( { id: '/user/1/', name: name } );
+			collA.add( { id: '/user/1/', name: name } );
+			var user = collA.at( 0 );
 			equal( user.get( 'name' ), name );
 			
 			// The 'name' of 'user' is updated when adding a new hash to the collection
 			name = 'New name';
-			var updatedUser = collA._add( { id: '/user/1/', name: name } );
+			collA.add( { id: '/user/1/', name: name } );
+			var updatedUser = collA.at( 0 );
 			equal( user.get( 'name' ), name );
 			equal( updatedUser.get( 'name' ), name );
 			
 			// The 'name' of 'user' is also updated when adding a new hash to another collection
 			name = 'Another new name';
-			var updatedUser2 = collB._add( { id: '/user/1/', name: name, title: 'Superuser' } );
+			collB.add( { id: '/user/1/', name: name, title: 'Superuser' } );
+			var updatedUser2 = collA.at( 0 );
 			equal( user.get( 'name' ), name );
 			equal( updatedUser2.get('name'), name );
-			
-			ok( collA.get('/user/1/') === updatedUser );
-			ok( collA.get('/user/1/') === updatedUser2 );
-			ok( collB.get('/user/1/') === user );
-			ok( collB.get('/user/1/') === updatedUser );
+
+			console.log( collA.models, collA.get( '/user/1/' ), user, updatedUser, updatedUser2 );
+			ok( collA.get( '/user/1/' ) === updatedUser );
+			ok( collA.get( '/user/1/' ) === updatedUser2 );
+			ok( collB.get( '/user/1/' ) === user );
 		});
 		
 		test("Loading (fetching) multiple times updates related models as well (HasOne)", function() {

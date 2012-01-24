@@ -222,7 +222,7 @@
 		register: function( model ) {
 			var modelColl = model.collection;
 			var coll = this.getCollection( model );
-			coll && coll._add( model );
+			coll && coll.add( model );
 			model.bind( 'destroy', this.unregister, this );
 			model.collection = modelColl;
 		},
@@ -675,7 +675,7 @@
 					}
 					
 					if ( model && !this.related.getByCid( model ) && !this.related.get( model ) ) {
-						this.related._add( model );
+						this.related.add( model );
 					}
 				}, this);
 			}
@@ -727,7 +727,7 @@
 				}, this );
 				
 				if ( item ) {
-					this.related._add( model, options );
+					this.related.add( model, options );
 				}
 			}
 		},
@@ -792,7 +792,7 @@
 			var dit = this;
 			model.queue( function() { // Queued to avoid errors for adding 'model' to the 'this.related' set twice
 				if ( dit.related && !dit.related.getByCid( model ) && !dit.related.get( model ) ) {
-					dit.related._add( model, options );
+					dit.related.add( model, options );
 				}
 			});
 		},
@@ -821,7 +821,7 @@
 		constructor: function( attributes, options ) {
 			// Nasty hack, for cases like 'model.get( <HasMany key> ).add( item )'.
 			// Defer 'processQueue', so that when 'Relation.createModels' is used we:
-			// a) Survive 'Backbone.Collection._add'; this takes care we won't error on "can't add model to a set twice"
+			// a) Survive 'Backbone.Collection.add'; this takes care we won't error on "can't add model to a set twice"
 			//    (by creating a model from properties, having the model add itself to the collection via one of
 			//    it's relations, then trying to add it to the collection).
 			// b) Trigger 'HasMany' collection events only after the model is really fully set up.
@@ -1029,7 +1029,7 @@
 			
 			// Duplicate backbone's behavior to allow separate key/value parameters, instead of a single 'attributes' object
 			var attributes;
-			if ( _.isObject( key ) ) {
+			if (_.isObject( key ) || key == null) {
 				attributes = key;
 				options = value;
 			}
@@ -1051,7 +1051,9 @@
 				Backbone.Relational.store.update( this );
 			}
 			
-			this.updateRelations( options );
+			if ( attributes ) {
+				this.updateRelations( options );
+			}
 			
 			// Try to run the global queue holding external events
 			Backbone.Relational.eventQueue.unblock();
@@ -1132,46 +1134,71 @@
 	_.extend( Backbone.RelationalModel.prototype, Backbone.Semaphore );
 	
 	/**
-	 * Override Backbone.Collection._add, so objects fetched from the server multiple times will
+	 * Override Backbone.Collection.add, so objects fetched from the server multiple times will
 	 * update the existing Model. Also, trigger 'relational:add'.
 	 */
-	var _add = Backbone.Collection.prototype._add;
-	Backbone.Collection.prototype._add = function( model, options ) {
-		if ( !( model instanceof Backbone.Model ) ) {
-			// Try to find 'model' in Backbone.store. If it already exists, set the new properties on it.
-			var found = Backbone.Relational.store.find( this.model, model[ this.model.prototype.idAttribute ] );
-			if ( found ) {
-				model = found.set( model, options );
+	var add = Backbone.Collection.prototype.add;
+	Backbone.Collection.prototype.add = function( models, options ) {
+		if (!_.isArray( models ) ) {
+			models = [ models ];
+		}
+
+		var currentModels = _.clone( this.models );
+
+		//console.debug( 'calling add on coll=%o; model=%o, options=%o', this, models, options );
+		_.each( models, function( model ) {
+			if ( !( model instanceof Backbone.Model ) ) {
+				// Try to find 'model' in Backbone.store. If it already exists, set the new properties on it.
+				var found = Backbone.Relational.store.find( this.model, model[ this.model.prototype.idAttribute ] );
+				if ( found ) {
+					found.set( model, options );
+					model = found;
+				}
 			}
-		}
+
+			if ( !( model instanceof Backbone.Model ) || !( this.get( model ) || this.getByCid( model ) ) ) {
+				add.call( this, model, options );
+			}
+		}, this );
+
+		var addedModels = _.difference( this.models, currentModels );
+
+		_.each( addedModels, function( model ) {
+			this.trigger('relational:add', model, this, options);
+		}, this );
 		
-		//console.debug( 'calling _add on coll=%o; model=%s (%o), options=%o', this, model.cid, model, options );
-		if ( !( model instanceof Backbone.Model ) || !( this.get( model ) || this.getByCid( model ) ) ) {
-			model = _add.call( this, model, options );
-		}
-		model && this.trigger('relational:add', model, this, options);
-		
-		return model;
+		return this;
 	};
 	
 	/**
-	 * Override 'Backbone.Collection._remove' to trigger 'relational:remove'.
+	 * Override 'Backbone.Collection.remove' to trigger 'relational:remove'.
 	 */
-	var _remove = Backbone.Collection.prototype._remove;
-	Backbone.Collection.prototype._remove = function( model, options ) {
-		//console.debug('calling _remove on coll=%o; model=%s (%o), options=%o', this, model.cid, model, options );
-		model = _remove.call( this, model, options );
-		model && this.trigger('relational:remove', model, this, options);
+	var remove = Backbone.Collection.prototype.remove;
+	Backbone.Collection.prototype.remove = function( models, options ) {
+		if (!_.isArray( models ) ) {
+			models = [ models ];
+		}
+
+		var currentModels = _.clone( this.models );
+
+		//console.debug('calling remove on coll=%o; models=%o, options=%o', this, models, options );
+		remove.call( this, models, options );
+
+		var removedModels = _.difference( currentModels, this.models );
+
+		_.each( removedModels, function( model ) {
+			this.trigger('relational:remove', model, this, options);
+		}, this );
 		
-		return model;
+		return this;
 	};
 
 	/**
 	 * Override 'Backbone.Collection.reset' to trigger 'relational:reset'.
 	 */
-	var _reset = Backbone.Collection.prototype.reset;
+	var reset = Backbone.Collection.prototype.reset;
 	Backbone.Collection.prototype.reset = function( models, options ) {
-		 _reset.call( this, models, options );
+		reset.call( this, models, options );
 		this.trigger( 'relational:reset', models, options );
 
 		return this;
