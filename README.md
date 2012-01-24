@@ -25,7 +25,7 @@ Backbone-relational provides one-to-one, one-to-many and many-to-one relations b
 
 Backbone-relational depends on [backbone](https://github.com/documentcloud/backbone) (and thus on  [underscore](https://github.com/documentcloud/underscore)). Include Backbone-relational right after Backbone and Underscore:
 
-```javascript
+```html
 <script type="text/javascript" src="./js/underscore.js"></script>
 <script type="text/javascript" src="./js/backbone.js"></script>
 <script type="text/javascript" src="./js/backbone-relational.js"></script>
@@ -358,6 +358,10 @@ Backbone.Collection.prototype.fetch = function( options ) {
 	options || ( options = {} );
 	_.defaults( options, { add: true } );
 
+	// Remove old models
+	this.reset();
+	
+	// Call 'fetch', and trigger an event when done.
 	var dit = this,
 		request = _fetch.call( this, options );
 	request.done( function() {
