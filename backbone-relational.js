@@ -355,22 +355,22 @@
 		checkPreconditions: function() {
 			var i = this.instance, k = this.key, rm = this.relatedModel, warn = Backbone.Relational.showWarnings;
 			if ( !i || !k || !rm ) {
-				warn && console && console.warn( 'Relation=%o; no instance, key or relatedModel (%o, %o, %o)', this, i, k, rm );
+				warn && typeof console !== 'undefined' && console.warn( 'Relation=%o; no instance, key or relatedModel (%o, %o, %o)', this, i, k, rm );
 				return false;
 			}
 			// Check if 'instance' is a Backbone.RelationalModel
 			if ( !( i instanceof Backbone.RelationalModel ) ) {
-				warn && console && console.warn( 'Relation=%o; instance=%o is not a Backbone.RelationalModel', this, i );
+				warn && typeof console !== 'undefined' && console.warn( 'Relation=%o; instance=%o is not a Backbone.RelationalModel', this, i );
 				return false;
 			}
 			// Check if the type in 'relatedModel' inherits from Backbone.RelationalModel
 			if ( !( rm.prototype instanceof Backbone.RelationalModel.prototype.constructor ) ) {
-				warn && console && console.warn( 'Relation=%o; relatedModel does not inherit from Backbone.RelationalModel (%o)', this, rm );
+				warn && typeof console !== 'undefined' && console.warn( 'Relation=%o; relatedModel does not inherit from Backbone.RelationalModel (%o)', this, rm );
 				return false;
 			}
 			// Check if this is not a HasMany, and the reverse relation is HasMany as well
 			if ( this instanceof Backbone.HasMany && this.reverseRelation.type === Backbone.HasMany.prototype.constructor ) {
-				warn && console && console.warn( 'Relation=%o; relation is a HasMany, and the reverseRelation is HasMany as well.', this );
+				warn && typeof console !== 'undefined' && console.warn( 'Relation=%o; relation is a HasMany, and the reverseRelation is HasMany as well.', this );
 				return false;
 			}
 			// Check if we're not attempting to create a duplicate relationship
@@ -382,7 +382,7 @@
 				}, this );
 				
 				if ( exists ) {
-					warn && console.warn( 'Relation=%o between instance=%o.%s and relatedModel=%o.%s already exists',
+					warn && typeof console !== 'undefined' && console.warn( 'Relation=%o between instance=%o.%s and relatedModel=%o.%s already exists',
 						this, i, k, rm, this.reverseRelation.key );
 					return false;
 				}
@@ -643,7 +643,7 @@
 				var key = this.options.collectionKey === true ? this.options.reverseRelation.key : this.options.collectionKey;
 				
 				if (collection[ key ] && collection[ key ] !== this.instance ) {
-					if ( Backbone.Relational.showWarnings && console ) {
+					if ( Backbone.Relational.showWarnings && typeof console !== 'undefined' ) {
 						console.warn( 'Relation=%o; collectionKey=%s already exists on collection=%o', this, key, this.options.collectionKey );
 					}
 				}
@@ -886,7 +886,7 @@
 						new type( this, rel ); // Also pushes the new Relation into _relations
 					}
 					else {
-						Backbone.Relational.showWarnings && console && console.warn( 'Relation=%o; missing or invalid type!', rel );
+						Backbone.Relational.showWarnings && typeof console !== 'undefined' && console.warn( 'Relation=%o; missing or invalid type!', rel );
 					}
 				}, this );
 			
