@@ -933,10 +933,10 @@
 		 */
 		getRelation: function( key ) {
 			return _.detect( this._relations, function( rel ) {
-					if ( rel.key === key ) {
-						return true;
-					}
-				}, this );
+				if ( rel.key === key ) {
+					return true;
+				}
+			}, this );
 		},
 		
 		/**
@@ -960,26 +960,26 @@
 				rel = this.getRelation( key ),
 				keyContents = rel && rel.keyContents,
 				toFetch = keyContents && _.select( _.isArray( keyContents ) ? keyContents : [ keyContents ], function( item ) {
-						var id = _.isString( item ) || _.isNumber( item ) ? item : item[ rel.relatedModel.prototype.idAttribute ];
-						return id && !Backbone.Relational.store.find( rel.relatedModel, id );
-					}, this );
+					var id = _.isString( item ) || _.isNumber( item ) ? item : item[ rel.relatedModel.prototype.idAttribute ];
+					return id && !Backbone.Relational.store.find( rel.relatedModel, id );
+				}, this );
 			
 			if ( toFetch && toFetch.length ) {
 				// Create a model for each entry in 'keyContents' that is to be fetched
 				var models = _.map( toFetch, function( item ) {
-						var model;
-						
-						if ( typeof( item ) === 'object' ) {
-							model = new rel.relatedModel( item );
-						}
-						else {
-							var attrs = {};
-							attrs[ rel.relatedModel.prototype.idAttribute ] = item;
-							model = new rel.relatedModel( attrs );
-						}
-						
-						return model;
-					}, this );
+					var model;
+
+					if ( typeof( item ) === 'object' ) {
+						model = new rel.relatedModel( item );
+					}
+					else {
+						var attrs = {};
+						attrs[ rel.relatedModel.prototype.idAttribute ] = item;
+						model = new rel.relatedModel( attrs );
+					}
+
+					return model;
+				}, this );
 				
 				// Try if the 'collection' can provide a url to fetch a set of models in one request.
 				if ( rel.related instanceof Backbone.Collection && _.isFunction( rel.related.url ) ) {
@@ -990,14 +990,15 @@
 				// To make sure it can, test if the url we got by supplying a list of models to fetch is different from
 				// the one supplied for the default fetch action (without args to 'url').
 				if ( setUrl && setUrl !== rel.related.url() ) {
-					var opts = _.defaults( {
+					var opts = _.defaults(
+						{
 							error: function() {
-									var args = arguments;
-									_.each( models, function( model ) {
-											model.destroy();
-											options.error && options.error.apply( model, args );
-										});
-								},
+								var args = arguments;
+								_.each( models, function( model ) {
+									model.destroy();
+									options.error && options.error.apply( model, args );
+								});
+							},
 							url: setUrl
 						},
 						options,
@@ -1008,16 +1009,17 @@
 				}
 				else {
 					requests = _.map( models, function( model ) {
-							var opts = _.defaults( {
+						var opts = _.defaults(
+						{
 								error: function() {
-										model.destroy();
-										options.error && options.error.apply( model, arguments );
-									}
-								},
-								options
-							);
-							return model.fetch( opts );
-						}, this );
+									model.destroy();
+									options.error && options.error.apply( model, arguments );
+								}
+							},
+							options
+						);
+						return model.fetch( opts );
+					}, this );
 				}
 			}
 			
@@ -1139,32 +1141,29 @@
 	 */
 	var add = Backbone.Collection.prototype.add;
 	Backbone.Collection.prototype.add = function( models, options ) {
+		options || (options = {});
 		if (!_.isArray( models ) ) {
 			models = [ models ];
 		}
-
-		var currentModels = _.clone( this.models );
 
 		//console.debug( 'calling add on coll=%o; model=%o, options=%o', this, models, options );
 		_.each( models, function( model ) {
 			if ( !( model instanceof Backbone.Model ) ) {
 				// Try to find 'model' in Backbone.store. If it already exists, set the new properties on it.
-				var found = Backbone.Relational.store.find( this.model, model[ this.model.prototype.idAttribute ] );
-				if ( found ) {
-					found.set( model, options );
-					model = found;
+				var existingModel = Backbone.Relational.store.find( this.model, model[ this.model.prototype.idAttribute ] );
+				if ( existingModel ) {
+					existingModel.set( model, options );
+					model = existingModel;
+				}
+				else {
+					model = Backbone.Collection.prototype._prepareModel.call( this, model, options );
 				}
 			}
 
-			if ( !( model instanceof Backbone.Model ) || !( this.get( model ) || this.getByCid( model ) ) ) {
+			if ( model instanceof Backbone.Model && !this.get( model ) && !this.getByCid( model ) ) {
 				add.call( this, model, options );
+				this.trigger('relational:add', model, this, options);
 			}
-		}, this );
-
-		var addedModels = _.difference( this.models, currentModels );
-
-		_.each( addedModels, function( model ) {
-			this.trigger('relational:add', model, this, options);
 		}, this );
 		
 		return this;
@@ -1175,19 +1174,19 @@
 	 */
 	var remove = Backbone.Collection.prototype.remove;
 	Backbone.Collection.prototype.remove = function( models, options ) {
+		options || (options = {});
 		if (!_.isArray( models ) ) {
 			models = [ models ];
 		}
 
-		var currentModels = _.clone( this.models );
-
 		//console.debug('calling remove on coll=%o; models=%o, options=%o', this, models, options );
-		remove.call( this, models, options );
+		_.each( models, function( model ) {
+			model = this.getByCid( model ) || this.get( model );
 
-		var removedModels = _.difference( currentModels, this.models );
-
-		_.each( removedModels, function( model ) {
-			this.trigger('relational:remove', model, this, options);
+			if ( model instanceof Backbone.Model ) {
+				remove.call( this, model, options );
+				this.trigger('relational:remove', model, this, options);
+			}
 		}, this );
 		
 		return this;
