@@ -1221,4 +1221,19 @@
 		
 		return this;
 	};
+
+
+  // Override .extend() to check for reverseRelations to initialize.
+  Backbone.RelationalModel.extend = function (protoProps, classProps) {
+    var child = Backbone.Model.extend.apply(this, arguments);
+
+    // Initialize reverse relations
+    var relations = protoProps.relations || [];
+    _.each(relations, function(rel) {
+      if(rel.reverseRelation) new child();
+    });
+
+    return child;
+  };
+
 })();
