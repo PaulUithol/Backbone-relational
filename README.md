@@ -227,7 +227,7 @@ ourHouse = new House({
 
 // 'ourHouse.occupants' is turned into a Backbone.Collection of Persons.
 // The first person in 'ourHouse.occupants' will point to 'paul'.
-ourHouse.get('occupants').at(0); // === paul
+ourHouse.get('occupants').at(0); // === person-1
 
 // If a collection is created from a HasMany relation, it contains a reference
 // back to the originator of the relation
