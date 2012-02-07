@@ -1395,6 +1395,31 @@ $(document).ready(function() {
 			ok( view.get( 'properties' ).include( props ) );
 		});
 		
+		test("Reverse relations are found for models that have not been instantiated", function() {
+      var View = Backbone.RelationalModel.extend({ });
+      var Properties = Backbone.RelationalModel.extend({
+        relations: [
+          {
+            type: Backbone.HasOne,
+            key: 'view',
+            relatedModel: View,
+            reverseRelation: {
+              type: Backbone.HasMany,
+              key: 'properties'
+            }
+          }
+        ]
+      });
+
+      var view = new View({
+        id: 1,
+        properties: [ { id: 1, key: 'width', value: '300px' } ]
+      });
+
+      ok( view.get( 'properties' ) instanceof Backbone.Collection );
+    });
+
+
 		test("ReverseRelations are applied retroactively", function() {
 			// Use brand new Model types, so we can be sure we don't have any reverse relations cached from previous tests
 			var NewUser = Backbone.RelationalModel.extend({});
