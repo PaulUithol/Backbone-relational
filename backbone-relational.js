@@ -1004,7 +1004,7 @@
 							error: function() {
 								var args = arguments;
 								_.each( models, function( model ) {
-									model.destroy();
+									model.trigger( 'destroy', model, model.collection, options );
 									options.error && options.error.apply( model, args );
 								});
 							},
@@ -1021,7 +1021,7 @@
 						var opts = _.defaults(
 							{
 								error: function() {
-									model.destroy();
+									model.trigger( 'destroy', model, model.collection, options );
 									options.error && options.error.apply( model, arguments );
 								}
 							},

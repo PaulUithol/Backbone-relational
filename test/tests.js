@@ -537,11 +537,11 @@ $(document).ready(function() {
 			ok( requests[ 0 ].url === '/animal/set/lion-2;zebra-2/' );
 			equal( zoo.get('animals').length, 2 );
 			
-			// Triggering the 'error' callback should destroy both of the fetched models
+			// Triggering the 'error' callback (some error occured during fetching) should trigger the 'destroy' event
+			// on both fetched models, but should NOT actually make 'delete' requests to the server!
+			var numRequests = window.requests.length;
 			requests[ 0 ].error();
-			// Trigger the 'success' callback for both 'delete' calls to fire the 'destroy' event
-			window.requests[ window.requests.length - 1 ].success();
-			window.requests[ window.requests.length - 2 ].success();
+			ok( window.requests.length === numRequests, "An error occured when fetching, but no DELETE requests are made to the server while handling local cleanup." );
 			
 			equal( zoo.get( 'animals' ).length, 0, "Both animals are destroyed" );
 			equal( errorCount, 2, "The error callback executed successfully for both models" );
