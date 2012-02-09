@@ -409,7 +409,7 @@
 		
 		createModel: function( item ) {
 			if ( this.options.createModels && typeof( item ) === 'object' ) {
-				return new this.relatedModel( item );
+				return new this.relatedModel( item, this.instance );
 			}
 		},
 		
