@@ -670,24 +670,32 @@
 		},
 		
 		findRelated: function( options ) {
+			var setItem
+				;
+				
+			setItem = function(item) {
+				var id = _.isString( item ) || _.isNumber( item ) ? item : item[ this.relatedModel.prototype.idAttribute ];
+				
+				var model = Backbone.Relational.store.find( this.relatedModel, id );
+				if ( model && _.isObject( item ) ) {
+					model.set( item, options );
+				}
+				else if ( !model ) {
+					model = this.createModel( item );
+				}
+				
+				if ( model && !this.related.getByCid( model ) && !this.related.get( model ) ) {
+					this.related.add( model );
+				}
+			}
+			
 			if ( this.keyContents && _.isArray( this.keyContents ) ) {
 				// Try to find instances of the appropriate 'relatedModel' in the store
-				_.each( this.keyContents, function( item ) {
-					var id = _.isString( item ) || _.isNumber( item ) ? item : item[ this.relatedModel.prototype.idAttribute ];
-					
-					var model = Backbone.Relational.store.find( this.relatedModel, id );
-					if ( model && _.isObject( item ) ) {
-						model.set( item, options );
-					}
-					else if ( !model ) {
-						model = this.createModel( item );
-					}
-					
-					if ( model && !this.related.getByCid( model ) && !this.related.get( model ) ) {
-						this.related.add( model );
-					}
-				}, this);
-			}
+				_.each( this.keyContents, setItem, this);
+			} else if (this.keyContents) {
+				setItem.call(this, this.keyContents);
+			} 
+			
 		},
 		
 		/**
