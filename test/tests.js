@@ -1188,6 +1188,18 @@ $(document).ready(function() {
 			equal( barnNoKey.get( 'animals' ).livesIn, undefined );
 			equal( barnNoKey.get( 'animals' ).barn, undefined );
 		});
+
+		test( "Handle edge-cases where the server supplies a single Object/id instead of an Array", function() {
+			var zoo = new Zoo({
+				animals: { id: 'lion-1' }
+			});
+
+			equal( zoo.get( 'animals' ).length, 1, "There is 1 animal in the zoo" );
+
+			zoo.set( 'animals', { id: 'lion-2' } );
+
+			equal( zoo.get( 'animals' ).length, 1, "There is 1 animal in the zoo" );
+		});
 		
 		
 	module( "Reverse relationships", { setup: initObjects } );

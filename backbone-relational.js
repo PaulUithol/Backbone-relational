@@ -670,7 +670,10 @@
 		},
 		
 		findRelated: function( options ) {
-			if ( this.keyContents && _.isArray( this.keyContents ) ) {
+			if ( this.keyContents ) {
+				// Handle cases the an API/user supplies just an Object/id instead of an Array
+				this.keyContents = _.isArray( this.keyContents ) ? this.keyContents : [ this.keyContents ];
+
 				// Try to find instances of the appropriate 'relatedModel' in the store
 				_.each( this.keyContents, function( item ) {
 					var id = _.isString( item ) || _.isNumber( item ) ? item : item[ this.relatedModel.prototype.idAttribute ];
