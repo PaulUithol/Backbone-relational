@@ -1106,6 +1106,19 @@
 					Backbone.Model.prototype.change.apply( dit, arguments );
 				});
 		},
+
+		clone: function() {
+			var attributes = _.clone( this.attributes );
+			if ( !_.isUndefined( attributes[ this.idAttribute ] ) ) {
+				attributes[ this.idAttribute ] = null;
+			}
+
+			_.each( this.getRelations(), function( rel ) {
+				delete attributes[ rel.key ];
+			});
+
+			return new this.constructor( attributes );
+		},
 		
 		/**
 		 * Convert relations to JSON, omits them when required
@@ -1231,36 +1244,35 @@
 		return this;
 	};
 
+	// Override .extend() to check for reverseRelations to initialize.
+	Backbone.RelationalModel.extend = function( protoProps, classProps ) {
+		var child = Backbone.Model.extend.apply( this, arguments );
 
-  // Override .extend() to check for reverseRelations to initialize.
-  Backbone.RelationalModel.extend = function (protoProps, classProps) {
-    var child = Backbone.Model.extend.apply(this, arguments);
+		var relations = protoProps.relations || [];
+		_.each( relations, function( rel ) {
+			if( rel.reverseRelation ) {
+				rel.model = child;
 
-    var relations = protoProps.relations || [];
-    _.each(relations, function(rel) {
-      if(rel.reverseRelation) {
-        rel.model = child;
+				var preInitialize = true;
+				if ( _.isString( rel.relatedModel ) ) {
+					/**
+					 * The related model might not be defined for two reasons
+					 *  1. it never gets defined, e.g. a typo
+					 *  2. it is related to itself
+					 * In neither of these cases do we need to pre-initialize reverse relations.
+					 */
+					var relatedModel = Backbone.Relational.store.getObjectByName( rel.relatedModel );
+					preInitialize = relatedModel && ( relatedModel.prototype instanceof Backbone.RelationalModel.prototype.constructor );
+				}
 
-        var preInitialize = true;
-        if ( _.isString( rel.relatedModel ) ) {
+				var type = !_.isString( rel.type ) ? rel.type : Backbone[ rel.type ] || Backbone.Relational.store.getObjectByName( rel.type );
+				if ( preInitialize && type && type.prototype instanceof Backbone.Relation.prototype.constructor ) {
+					new type( null, rel );
+				}
+			}
+		});
 
-          /* The related model might not be defined for two reasons
-           *  1. it never gets defined, e.g. a typo
-           *  2. it is related to itself
-           * In neither of these cases do we need to pre-initialize inverse relations.
-           */
-          var relatedModel = Backbone.Relational.store.getObjectByName( rel.relatedModel );
-          preInitialize = relatedModel && ( relatedModel.prototype instanceof Backbone.RelationalModel.prototype.constructor );
-        }
-
-        var type = !_.isString( rel.type ) ? rel.type : Backbone[ rel.type ] || Backbone.Relational.store.getObjectByName( rel.type );
-        if ( preInitialize && type && type.prototype instanceof Backbone.Relation.prototype.constructor ) {
-          new type( null, rel );
-        }
-      }
-    });
-
-    return child;
-  };
+		return child;
+	};
 
 })();

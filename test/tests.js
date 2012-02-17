@@ -559,6 +559,16 @@ $(document).ready(function() {
 			equal( requests.length, 0 );
 			equal( zoo.get( 'animals' ).length, 2 );
 		});
+
+		test( "clone", function() {
+			var user = person1.get( 'user' );
+
+			// HasOne relations should stay with the original model
+			var newPerson = person1.clone();
+
+			equal( newPerson.get( 'user' ), null );
+			equal( person1.get( 'user' ), user );
+		});
 		
 		test( "toJSON", function() {
 			var node = new Node({ id: '1', parent: '3', name: 'First node' });
@@ -1130,54 +1140,54 @@ $(document).ready(function() {
 			ok( zoo.get( 'animals' ) instanceof AnimalCollection );
 		});
 		
-		test("The 'collectionKey' options is used to create references on generated Collections back to its RelationalModel", function() {
-				var zoo = new Zoo({
-					animals: [ 'lion-1', 'zebra-1' ]
-				});
-				
-				equal( zoo.get( 'animals' ).livesIn, zoo );
-				equal( zoo.get( 'animals' ).zoo, undefined );
-				
-				var Barn = Backbone.RelationalModel.extend({
-					relations: [{
-							type: Backbone.HasMany,
-							key: 'animals',
-							relatedModel: 'Animal',
-							collectionType: 'AnimalCollection',
-							collectionKey: 'barn',
-							reverseRelation: {
-								key: 'livesIn',
-								includeInJSON: 'id'
-							}
-						}]
-				})
-				var barn = new Barn({
-					animals: [ 'chicken-1', 'cow-1' ]
-				});
-
-				equal( barn.get( 'animals' ).livesIn, undefined );
-				equal( barn.get( 'animals' ).barn, barn );
-
-				var BarnNoKey = Backbone.RelationalModel.extend({
-					relations: [{
-							type: Backbone.HasMany,
-							key: 'animals',
-							relatedModel: 'Animal',
-							collectionType: 'AnimalCollection',
-							collectionKey: false,
-							reverseRelation: {
-								key: 'livesIn',
-								includeInJSON: 'id'
-							}
-						}]
-				})
-				var barnNoKey = new BarnNoKey({
-					animals: [ 'chicken-1', 'cow-1' ]
-				});
-
-				equal( barnNoKey.get( 'animals' ).livesIn, undefined );
-				equal( barnNoKey.get( 'animals' ).barn, undefined );
+		test( "The 'collectionKey' options is used to create references on generated Collections back to its RelationalModel", function() {
+			var zoo = new Zoo({
+				animals: [ 'lion-1', 'zebra-1' ]
 			});
+
+			equal( zoo.get( 'animals' ).livesIn, zoo );
+			equal( zoo.get( 'animals' ).zoo, undefined );
+
+			var Barn = Backbone.RelationalModel.extend({
+				relations: [{
+						type: Backbone.HasMany,
+						key: 'animals',
+						relatedModel: 'Animal',
+						collectionType: 'AnimalCollection',
+						collectionKey: 'barn',
+						reverseRelation: {
+							key: 'livesIn',
+							includeInJSON: 'id'
+						}
+					}]
+			});
+			var barn = new Barn({
+				animals: [ 'chicken-1', 'cow-1' ]
+			});
+
+			equal( barn.get( 'animals' ).livesIn, undefined );
+			equal( barn.get( 'animals' ).barn, barn );
+
+			var BarnNoKey = Backbone.RelationalModel.extend({
+				relations: [{
+						type: Backbone.HasMany,
+						key: 'animals',
+						relatedModel: 'Animal',
+						collectionType: 'AnimalCollection',
+						collectionKey: false,
+						reverseRelation: {
+							key: 'livesIn',
+							includeInJSON: 'id'
+						}
+					}]
+			})
+			var barnNoKey = new BarnNoKey({
+				animals: [ 'chicken-1', 'cow-1' ]
+			});
+
+			equal( barnNoKey.get( 'animals' ).livesIn, undefined );
+			equal( barnNoKey.get( 'animals' ).barn, undefined );
+		});
 		
 		
 	module( "Reverse relationships", { setup: initObjects } );
@@ -1249,7 +1259,7 @@ $(document).ready(function() {
 			ok( node3.get( 'children' ).at(0) === node1 );
 		});
 		
-		test("New objects (no 'id' yet) have working relations", function() {
+		test( "New objects (no 'id' yet) have working relations", function() {
 			var person = new Person({
 				name: 'Remi'
 			});
@@ -1280,7 +1290,7 @@ $(document).ready(function() {
 			ok( user2.get( 'person' ) === person2 );
 		});
 		
-		test("'Save' objects (performing 'set' multiple times without and with id)", function() {
+		test( "'Save' objects (performing 'set' multiple times without and with id)", function() {
 			expect( 2 );
 			
 			person3
@@ -1316,7 +1326,7 @@ $(document).ready(function() {
 			});
 		});
 		
-		test("Set the same value a couple of time, by 'id' and object", function() {
+		test( "Set the same value a couple of time, by 'id' and object", function() {
 			person1.set( { likesALot: 'person-2' } );
 			person1.set( { likesALot: person2 } );
 			
@@ -1329,7 +1339,7 @@ $(document).ready(function() {
 			ok( person2.get('likedALotBy' ) === person1 );
 		});
 		
-		test("Numerical keys", function() {
+		test( "Numerical keys", function() {
 			var child1 = new Node({ id: 2, name: 'First child' });
 			var parent = new Node({ id: 1, children: [2, 3], name: 'Parent' });
 			var child2 = new Node({ id: 3, name: 'Second child' });
@@ -1345,7 +1355,7 @@ $(document).ready(function() {
 			equal( child2.get('children').length, 0 );
 		});
 		
-		test("Relations that use refs to other models (instead of keys)", function() {
+		test( "Relations that use refs to other models (instead of keys)", function() {
 			var child1 = new Node({ id: 2, name: 'First child' });
 			var parent = new Node({ id: 1, children: [child1, 3], name: 'Parent' });
 			var child2 = new Node({ id: 3, name: 'Second child' });
@@ -1366,7 +1376,7 @@ $(document).ready(function() {
 			equal( child3.get('children').length, 0 );
 		});
 		
-		test("Add an already existing model (reverseRelation shouldn't exist yet) to a relation as a hash", function() {
+		test( "Add an already existing model (reverseRelation shouldn't exist yet) to a relation as a hash", function() {
 			// This test caused a race condition to surface:
 			// The 'relation's constructor initializes the 'reverseRelation', which called 'relation.addRelated' in it's 'initialize'.
 			// However, 'relation's 'initialize' has not been executed yet, so it doesn't have a 'related' collection yet.
@@ -1395,32 +1405,32 @@ $(document).ready(function() {
 			ok( view.get( 'properties' ).include( props ) );
 		});
 		
-		test("Reverse relations are found for models that have not been instantiated", function() {
-      var View = Backbone.RelationalModel.extend({ });
-      var Properties = Backbone.RelationalModel.extend({
-        relations: [
-          {
-            type: Backbone.HasOne,
-            key: 'view',
-            relatedModel: View,
-            reverseRelation: {
-              type: Backbone.HasMany,
-              key: 'properties'
-            }
-          }
-        ]
-      });
+		test( "Reverse relations are found for models that have not been instantiated", function() {
+			var View = Backbone.RelationalModel.extend({ });
+			var Properties = Backbone.RelationalModel.extend({
+				relations: [
+						{
+							type: Backbone.HasOne,
+							key: 'view',
+							relatedModel: View,
+							reverseRelation: {
+							type: Backbone.HasMany,
+							key: 'properties'
+						}
+					}
+				]
+			});
 
-      var view = new View({
-        id: 1,
-        properties: [ { id: 1, key: 'width', value: '300px' } ]
-      });
+			var view = new View({
+				id: 1,
+				properties: [ { id: 1, key: 'width', value: '300px' } ]
+			});
 
-      ok( view.get( 'properties' ) instanceof Backbone.Collection );
-    });
+			ok( view.get( 'properties' ) instanceof Backbone.Collection );
+		});
 
 
-		test("ReverseRelations are applied retroactively", function() {
+		test( "ReverseRelations are applied retroactively", function() {
 			// Use brand new Model types, so we can be sure we don't have any reverse relations cached from previous tests
 			var NewUser = Backbone.RelationalModel.extend({});
 			var NewPerson = Backbone.RelationalModel.extend({
@@ -1445,10 +1455,10 @@ $(document).ready(function() {
 		});
 	
 	
-	module("Model loading", { setup: initObjects } );
+	module( "Model loading", { setup: initObjects } );
 	
 	
-		test("Loading (fetching) multiple times updates the model", function() {
+		test( "Loading (fetching) multiple times updates the model", function() {
 			var collA = new Backbone.Collection();
 			collA.model = User;
 			var collB = new Backbone.Collection();
@@ -1474,42 +1484,42 @@ $(document).ready(function() {
 			equal( user.get( 'name' ), name );
 			equal( updatedUser2.get('name'), name );
 
-			console.log( collA.models, collA.get( '/user/1/' ), user, updatedUser, updatedUser2 );
+			//console.log( collA.models, collA.get( '/user/1/' ), user, updatedUser, updatedUser2 );
 			ok( collA.get( '/user/1/' ) === updatedUser );
 			ok( collA.get( '/user/1/' ) === updatedUser2 );
 			ok( collB.get( '/user/1/' ) === user );
 		});
 		
-		test("Loading (fetching) multiple times updates related models as well (HasOne)", function() {
-				var coll = new PersonCollection();
-				coll.add( { id: 'person-10', name: 'Person', user: { id: 'user-10', login: 'User' } } );
-				
-				var person = coll.at( 0 );
-				var user = person.get( 'user' );
-				
-				equal( user.get( 'login' ), 'User' );
-				
-				coll.add( { id: 'person-10', name: 'New person', user: { id: 'user-10', login: 'New user' } } );
-				
-				equal( person.get( 'name' ), 'New person' );
-				equal( user.get( 'login' ), 'New user' );
-			});
+		test( "Loading (fetching) multiple times updates related models as well (HasOne)", function() {
+			var coll = new PersonCollection();
+			coll.add( { id: 'person-10', name: 'Person', user: { id: 'user-10', login: 'User' } } );
+
+			var person = coll.at( 0 );
+			var user = person.get( 'user' );
+
+			equal( user.get( 'login' ), 'User' );
+
+			coll.add( { id: 'person-10', name: 'New person', user: { id: 'user-10', login: 'New user' } } );
+
+			equal( person.get( 'name' ), 'New person' );
+			equal( user.get( 'login' ), 'New user' );
+		});
 		
-		test("Loading (fetching) multiple times updates related models as well (HasMany)", function() {
-				var coll = new Backbone.Collection();
-				coll.model = Zoo;
-				
-				// Create a 'zoo' with 1 animal in it
-				coll.add( { id: 'zoo-1', name: 'Zoo', animals: [ { id: 'lion-1', name: 'Mufasa' } ] } );
-				var zoo = coll.at( 0 );
-				var lion = zoo.get( 'animals' ) .at( 0 );
-				
-				equal( lion.get( 'name' ), 'Mufasa' );
-				
-				// Update the name of 'zoo' and 'lion'
-				coll.add( { id: 'zoo-1', name: 'Zoo Station', animals: [ { id: 'lion-1', name: 'Simba' } ] } );
-				
-				equal( zoo.get( 'name' ), 'Zoo Station' );
-				equal( lion.get( 'name' ), 'Simba' );
-			});
+		test( "Loading (fetching) multiple times updates related models as well (HasMany)", function() {
+			var coll = new Backbone.Collection();
+			coll.model = Zoo;
+
+			// Create a 'zoo' with 1 animal in it
+			coll.add( { id: 'zoo-1', name: 'Zoo', animals: [ { id: 'lion-1', name: 'Mufasa' } ] } );
+			var zoo = coll.at( 0 );
+			var lion = zoo.get( 'animals' ) .at( 0 );
+
+			equal( lion.get( 'name' ), 'Mufasa' );
+
+			// Update the name of 'zoo' and 'lion'
+			coll.add( { id: 'zoo-1', name: 'Zoo Station', animals: [ { id: 'lion-1', name: 'Simba' } ] } );
+
+			equal( zoo.get( 'name' ), 'Zoo Station' );
+			equal( lion.get( 'name' ), 'Simba' );
+		});
 });
