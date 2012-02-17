@@ -1251,7 +1251,7 @@
 	Backbone.RelationalModel.extend = function( protoProps, classProps ) {
 		var child = Backbone.Model.extend.apply( this, arguments );
 
-		var relations = protoProps.relations || [];
+		var relations = ( protoProps && protoProps.relations ) || [];
 		_.each( relations, function( rel ) {
 			if( rel.reverseRelation ) {
 				rel.model = child;
