@@ -1177,7 +1177,7 @@
 				// Try to find 'model' in Backbone.store. If it already exists, set the new properties on it.
 				var existingModel = Backbone.Relational.store.find( this.model, model[ this.model.prototype.idAttribute ] );
 				if ( existingModel ) {
-					existingModel.set( model, options );
+					existingModel.set( options.parse ? existingModel.parse(model) : model, options );
 					model = existingModel;
 				}
 				else {
