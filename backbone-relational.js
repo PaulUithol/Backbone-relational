@@ -360,7 +360,7 @@
 		checkPreconditions: function() {
 			var i = this.instance, k = this.key, m = this.model, rm = this.relatedModel, warn = Backbone.Relational.showWarnings;
 			if ( !m || !k || !rm ) {
-				warn && typeof console !== 'undefined' && console.warn( 'Relation=%o; no model, key or relatedModel (%o, %o, %o)', this, k, rm );
+				warn && typeof console !== 'undefined' && console.warn( 'Relation=%o; no model, key or relatedModel (%o, %o, %o)', this, m, k, rm );
 				return false;
 			}
 			// Check if the type in 'relatedModel' inherits from Backbone.RelationalModel
