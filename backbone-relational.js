@@ -1164,7 +1164,7 @@
 	 * Override Backbone.Collection.add, so objects fetched from the server multiple times will
 	 * update the existing Model. Also, trigger 'relational:add'.
 	 */
-	var add = Backbone.Collection.prototype.add;
+	var add = Backbone.Collection.prototype.__add = Backbone.Collection.prototype.add;
 	Backbone.Collection.prototype.add = function( models, options ) {
 		options || (options = {});
 		if (!_.isArray( models ) ) {
@@ -1197,7 +1197,7 @@
 	/**
 	 * Override 'Backbone.Collection.remove' to trigger 'relational:remove'.
 	 */
-	var remove = Backbone.Collection.prototype.remove;
+	var remove = Backbone.Collection.prototype.__remove = Backbone.Collection.prototype.remove;
 	Backbone.Collection.prototype.remove = function( models, options ) {
 		options || (options = {});
 		if (!_.isArray( models ) ) {
@@ -1220,7 +1220,7 @@
 	/**
 	 * Override 'Backbone.Collection.reset' to trigger 'relational:reset'.
 	 */
-	var reset = Backbone.Collection.prototype.reset;
+	var reset = Backbone.Collection.prototype.__reset = Backbone.Collection.prototype.reset;
 	Backbone.Collection.prototype.reset = function( models, options ) {
 		reset.call( this, models, options );
 		this.trigger( 'relational:reset', models, options );
@@ -1232,16 +1232,16 @@
 	 * Override 'Backbone.Collection.trigger' so 'add', 'remove' and 'reset' events are queued until relations
 	 * are ready.
 	 */
-	var _trigger = Backbone.Collection.prototype.trigger;
+	var trigger = Backbone.Collection.prototype.__trigger = Backbone.Collection.prototype.trigger;
 	Backbone.Collection.prototype.trigger = function( eventName ) {
 		if ( eventName === 'add' || eventName === 'remove' || eventName === 'reset' ) {
 			var dit = this, args = arguments;
 			Backbone.Relational.eventQueue.add( function() {
-					_trigger.apply( dit, args );
+					trigger.apply( dit, args );
 				});
 		}
 		else {
-			_trigger.apply( this, arguments );
+			trigger.apply( this, arguments );
 		}
 		
 		return this;
