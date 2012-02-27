@@ -137,6 +137,22 @@ niceCompany.bind( 'add:employees', function( model, coll ) {
 paul.get('jobs').add( { company: niceCompany } );
 ```
 
+### keySource
+
+Value: a string. References an attribute on the data used to instantiate `relatedModel`.
+
+Used to override `key` when determining what data to use when (de)serializing a relation, since the data backing your relations may use different naming conventions.
+For example, a Rails backend may provide the keys suffixed with `_id` or `_ids`. The behavior for `keySource` corresponds to the following rules:
+
+1. When a relation is instantiated, the contents of the `keySource` are used as it's initial data.
+2. The application uses the regular `key` attribute to interface with the relation and the models in it; the `keySource` is not available as an attribute for the model.
+3. When calling `toJSON` on a model (either via `Backbone.sync`, or directly), the data in the `key` attribute is tranformed and assigned to the `keySource`.
+
+So you may be provided with data containing `animal_ids`, while you want to access this relation as `zoo.get( 'animals' );`.
+When saving `zoo`, the `animals` attribute will be serialized back into the `animal_ids` key.
+
+**WARNING**: when using a `keySource`, you should refrain from using that attribute name for other purposes.
+
 ### collectionType
 
 Value: a string (which can be resolved to an object type on the global scope), or a reference to a `Backbone.Collection` type.
@@ -150,9 +166,10 @@ of a `url` function that can build a url for the collection (or a subset of mode
 
 Value: a string or a boolean
 
+Used to create a back reference from the `Backbone.Collection` used for a `HasMany` relation to the model on the other side of this relation.
 By default, the relation's `key` attribute will be used to create a reference to the RelationalModel instance from the generated collection.
 If you set `collectionKey` to a string, it will use that string as the reference to the RelationalModel, rather than the relation's `key` attribute.
-If you don't want this behavior at all, just set `collectionKey` to false (or any falsy value) and this reference will not be created.
+If you don't want this behavior at all, set `collectionKey` to false (or any falsy value) and this reference will not be created.
 
 ### includeInJSON
 
