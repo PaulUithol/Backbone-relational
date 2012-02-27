@@ -273,6 +273,7 @@
 		this.options = _.defaults( options, this.options, Backbone.Relation.prototype.options );
 		
 		this.key = this.options.key;
+		this.keySource = this.options.keySource || this.key;
 
 		// 'exports' should be the global object where 'relatedModel' can be found on if given as a string.
 		this.relatedModel = this.options.relatedModel;
@@ -284,8 +285,12 @@
 			return false;
 		}
 
-		if(instance) {
-			this.keyContents = this.instance.get( this.key );
+		if ( instance ) {
+			this.keyContents = this.instance.get( this.keySource );
+
+			// Explicitly clear from 'keySource', to prevent a leaky abstraction if 'keySource' differs from 'key'.
+			this.instance.unset( this.keySource, { silent: true } );
+
 			// Add this Relation to instance._relations
 			this.instance._relations.push( this );
 		}
@@ -1146,23 +1151,27 @@
 			var json = Backbone.Model.prototype.toJSON.call( this );
 			
 			_.each( this._relations, function( rel ) {
-					var value = json[ rel.key ];
-					
-					if ( rel.options.includeInJSON === true && value && _.isFunction( value.toJSON ) ) {
-						json[ rel.key ] = value.toJSON();
+				var value = json[ rel.key ];
+
+				if ( rel.options.includeInJSON === true && value && _.isFunction( value.toJSON ) ) {
+					json[ rel.keySource ] = value.toJSON();
+				}
+				else if ( _.isString( rel.options.includeInJSON ) ) {
+					if ( value instanceof Backbone.Collection ) {
+						json[ rel.keySource ] = value.pluck( rel.options.includeInJSON );
 					}
-					else if ( _.isString( rel.options.includeInJSON ) ) {
-						if ( value instanceof Backbone.Collection ) {
-							json[ rel.key ] = value.pluck( rel.options.includeInJSON );
-						}
-						else if ( value instanceof Backbone.Model ) {
-							json[ rel.key ] = value.get( rel.options.includeInJSON );
-						}
+					else if ( value instanceof Backbone.Model ) {
+						json[ rel.keySource ] = value.get( rel.options.includeInJSON );
 					}
-					else {
-						delete json[ rel.key ];
-					}
-				}, this );
+				}
+				else {
+					delete json[ rel.key ];
+				}
+
+				if ( rel.keySource !== rel.key ) {
+					delete json[ rel.key ];
+				}
+			}, this );
 			
 			this.release();
 			return json;

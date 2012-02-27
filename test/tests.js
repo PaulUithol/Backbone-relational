@@ -566,8 +566,8 @@ $(document).ready(function() {
 			// HasOne relations should stay with the original model
 			var newPerson = person1.clone();
 
-			equal( newPerson.get( 'user' ), null );
-			equal( person1.get( 'user' ), user );
+			ok( newPerson.get( 'user' ) === null );
+			ok( person1.get( 'user' ) === user );
 		});
 		
 		test( "toJSON", function() {
@@ -584,7 +584,7 @@ $(document).ready(function() {
 	module( "Backbone.Relation options", { setup: initObjects } );
 		
 		
-		test( "includeInJSON (Person to JSON)", function() {
+		test( "'includeInJSON' (Person to JSON)", function() {
 			var json = person1.toJSON();
 			equal( json.user, 'user-1', "The value 'user' is the user's id (not an object, since 'includeInJSON' is set to the idAttribute)" );
 			ok ( json.likesALot instanceof Object, "The value of 'likesALot' is an object ('includeInJSON' is 'true')" );
@@ -598,7 +598,7 @@ $(document).ready(function() {
 			equal( json.livesIn, undefined , "The value of 'livesIn' is not serialized ('includeInJSON is 'false')" );
 		});
 		
-		test( "createModels is false", function() {
+		test( "'createModels' is false", function() {
 			var NewUser = Backbone.RelationalModel.extend({});
 			var NewPerson = Backbone.RelationalModel.extend({
 				relations: [{
@@ -622,6 +622,54 @@ $(document).ready(function() {
 			ok( person.get( 'user' ) === user );
 			// Old data gets overwritten by the explicitly created user, since a model was never created from the old data
 			ok( person.get( 'user' ).get( 'resource_uri' ) == null );
+		});
+
+		test( "'keySource' loads from & saves to 'key'", function() {
+			var Property = Backbone.RelationalModel.extend({
+				idAttribute: 'property_id'
+			});
+			var View = Backbone.RelationalModel.extend({
+				idAttribute: 'id',
+
+				relations: [{
+					type: Backbone.HasMany,
+					key: 'properties',
+					keySource: 'property_ids',
+					relatedModel: Property,
+					reverseRelation: {
+						key: 'view',
+						keySource: 'view_id'
+					}
+				}]
+			});
+
+			var property1 = new Property({
+				property_id: 1,
+				key: 'width',
+				value: 500,
+				view_id: 5
+			});
+
+			var view = new View({
+				id: 5,
+				property_ids: [ 2 ]
+			});
+
+			var property2 = new Property({
+				property_id: 2,
+				key: 'height',
+				value: 400
+			});
+
+			// The values from view.property_ids should be loaded into view.properties
+			ok( view.get( 'properties' ) && view.get( 'properties' ).length === 2, "'view' has two 'properties'" );
+			ok( typeof view.get( 'property_ids' ) === 'undefined', "'view' does not have 'property_ids'" );
+
+			var viewJSON = view.toJSON();
+			ok( viewJSON.property_ids && viewJSON.property_ids.length === 2, "'viewJSON' has two 'property_ids'" );
+			ok( typeof viewJSON.properties === 'undefined', "'viewJSON' does not have 'properties'" );
+
+			console.log( view, viewJSON, property1, property2 );
 		});
 		
 		
@@ -1180,7 +1228,7 @@ $(document).ready(function() {
 							includeInJSON: 'id'
 						}
 					}]
-			})
+			});
 			var barnNoKey = new BarnNoKey({
 				animals: [ 'chicken-1', 'cow-1' ]
 			});
@@ -1419,18 +1467,16 @@ $(document).ready(function() {
 		
 		test( "Reverse relations are found for models that have not been instantiated", function() {
 			var View = Backbone.RelationalModel.extend({ });
-			var Properties = Backbone.RelationalModel.extend({
-				relations: [
-						{
-							type: Backbone.HasOne,
-							key: 'view',
-							relatedModel: View,
-							reverseRelation: {
-							type: Backbone.HasMany,
-							key: 'properties'
-						}
+			var Property = Backbone.RelationalModel.extend({
+				relations: [{
+					type: Backbone.HasOne,
+					key: 'view',
+					relatedModel: View,
+					reverseRelation: {
+						type: Backbone.HasMany,
+						key: 'properties'
 					}
-				]
+				}]
 			});
 
 			var view = new View({
