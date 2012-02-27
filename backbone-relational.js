@@ -358,52 +358,60 @@
 		 * @return {Boolean} True if pre-conditions are satisfied, false if they're not.
 		 */
 		checkPreconditions: function() {
-			var i = this.instance, k = this.key, m = this.model, rm = this.relatedModel, warn = Backbone.Relational.showWarnings;
+			var i = this.instance,
+				k = this.key,
+				m = this.model,
+				rm = this.relatedModel,
+				warn = Backbone.Relational.showWarnings && typeof console !== 'undefined';
+
 			if ( !m || !k || !rm ) {
-				warn && typeof console !== 'undefined' && console.warn( 'Relation=%o; no model, key or relatedModel (%o, %o, %o)', this, m, k, rm );
+				warn && console.warn( 'Relation=%o; no model, key or relatedModel (%o, %o, %o)', this, m, k, rm );
 				return false;
 			}
 			// Check if the type in 'relatedModel' inherits from Backbone.RelationalModel
 			if ( !( m.prototype instanceof Backbone.RelationalModel.prototype.constructor ) ) {
-				warn && typeof console !== 'undefined' && console.warn( 'Relation=%o; model does not inherit from Backbone.RelationalModel (%o)', this, i );
+				warn && console.warn( 'Relation=%o; model does not inherit from Backbone.RelationalModel (%o)', this, i );
 				return false;
 			}
 			// Check if the type in 'relatedModel' inherits from Backbone.RelationalModel
 			if ( !( rm.prototype instanceof Backbone.RelationalModel.prototype.constructor ) ) {
-				warn && typeof console !== 'undefined' && console.warn( 'Relation=%o; relatedModel does not inherit from Backbone.RelationalModel (%o)', this, rm );
+				warn && console.warn( 'Relation=%o; relatedModel does not inherit from Backbone.RelationalModel (%o)', this, rm );
 				return false;
 			}
 			// Check if this is not a HasMany, and the reverse relation is HasMany as well
 			if ( this instanceof Backbone.HasMany && this.reverseRelation.type === Backbone.HasMany.prototype.constructor ) {
-				warn && typeof console !== 'undefined' && console.warn( 'Relation=%o; relation is a HasMany, and the reverseRelation is HasMany as well.', this );
+				warn && console.warn( 'Relation=%o; relation is a HasMany, and the reverseRelation is HasMany as well.', this );
 				return false;
 			}
 
-			if( i ) {
-				// Check if we're not attempting to create a duplicate relationship
-				if ( i._relations.length ) {
-					var exists = _.any( i._relations, function( rel ) {
-						var hasReverseRelation = this.reverseRelation.key && rel.reverseRelation.key;
-						return rel.relatedModel === rm && rel.key === k &&
-							( !hasReverseRelation || this.reverseRelation.key === rel.reverseRelation.key );
-					}, this );
+			// Check if we're not attempting to create a duplicate relationship
+			if( i && i._relations.length ) {
+				var exists = _.any( i._relations, function( rel ) {
+					var hasReverseRelation = this.reverseRelation.key && rel.reverseRelation.key;
+					return rel.relatedModel === rm && rel.key === k &&
+						( !hasReverseRelation || this.reverseRelation.key === rel.reverseRelation.key );
+				}, this );
 
-					if ( exists ) {
-						warn && typeof console !== 'undefined' && console.warn( 'Relation=%o between instance=%o.%s and relatedModel=%o.%s already exists',
+				if ( exists ) {
+					warn && console.warn( 'Relation=%o between instance=%o.%s and relatedModel=%o.%s already exists',
 						this, i, k, rm, this.reverseRelation.key );
-						return false;
-					}
+					return false;
 				}
 			}
+
 			return true;
 		},
-		
+
+		/**
+		 * Set the related model(s) for this relation
+		 * @param {Backbone.Mode|Backbone.Collection} related
+		 * @param {Object} [options]
+		 */
 		setRelated: function( related, options ) {
 			this.related = related;
-			var value = {};
-			value[ this.key ] = related;
+
 			this.instance.acquire();
-			this.instance.set( value, _.defaults( options || {}, { silent: true } ) );
+			this.instance.set( this.key, related, _.defaults( options || {}, { silent: true } ) );
 			this.instance.release();
 		},
 		
@@ -416,6 +424,7 @@
 		/**
 		 * Determine if a relation (on a different RelationalModel) is the reverse
 		 * relation of the current one.
+		 * @param {Backbone.Relation} relation
 		 */
 		_isReverseRelation: function( relation ) {
 			if ( relation.instance instanceof this.relatedModel && this.reverseRelation.key === relation.key &&
@@ -448,6 +457,7 @@
 		/**
 		 * Rename options.silent, so add/remove events propagate properly.
 		 * (for example in HasMany, from 'addRelated'->'handleAddition')
+		 * @param {Object} [options]
 		 */
 		sanitizeOptions: function( options ) {
 			options || ( options = {} );
