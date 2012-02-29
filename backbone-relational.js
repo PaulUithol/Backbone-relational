@@ -288,8 +288,10 @@
 		if ( instance ) {
 			this.keyContents = this.instance.get( this.keySource );
 
-			// Explicitly clear from 'keySource', to prevent a leaky abstraction if 'keySource' differs from 'key'.
-			this.instance.unset( this.keySource, { silent: true } );
+			// Explicitly clear 'keySource', to prevent a leaky abstraction if 'keySource' differs from 'key'.
+			if ( this.key !== this.keySource ) {
+				this.instance.unset( this.keySource, { silent: true } );
+			}
 
 			// Add this Relation to instance._relations
 			this.instance._relations.push( this );
