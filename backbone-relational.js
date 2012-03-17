@@ -157,6 +157,9 @@
 		retroFitRelation: function( relation ) {
 			var coll = this.getCollection( relation.model );
 			coll.each( function( model ) {
+			  if( !(model instanceof relation.model) ) {
+			    return;
+			  }
 				new relation.type( model, relation );
 			}, this);
 		},
@@ -167,9 +170,17 @@
 		 * @return {Backbone.Collection} A collection if found (or applicable for 'model'), or null
 		 */
 		getCollection: function( model ) {
+			// If 'model' is an instance, take its constructor
+		  if ( model instanceof Backbone.RelationalModel ) {
+		    model = model.constructor
+		  }
+		  
+		  while( (partOfModel = model.prototype.partOfModel) && (model.prototype instanceof partOfModel) ) {
+		    model = partOfModel
+		  }
+		  
 			var coll =  _.detect( this._collections, function( c ) {
-					// Check if model is the type itself (a ref to the constructor), or is of type c.model
-					return model === c.model || model.constructor === c.model;
+					return model === c.model
 				});
 			
 			if ( !coll ) {
@@ -194,7 +205,7 @@
 		_createCollection: function( type ) {
 			var coll;
 			
-			// If 'type' is an instance, take it's constructor
+			// If 'type' is an instance, take its constructor
 			if ( type instanceof Backbone.RelationalModel ) {
 				type = type.constructor;
 			}
@@ -212,7 +223,10 @@
 		
 		find: function( type, id ) {
 			var coll = this.getCollection( type );
-			return coll && coll.get( id );
+			if( coll && (obj = coll.get( id )) && obj instanceof type ) {
+			  return obj;
+			}
+			return null
 		},
 		
 		/**
@@ -847,7 +861,9 @@
 		_deferProcessing: false,
 		_queue: null,
 		
-		constructor: function( attributes, options ) {
+		partOfModel: null,
+		
+		constructor: function( attributes, options ) {  		
 			// Nasty hack, for cases like 'model.get( <HasMany key> ).add( item )'.
 			// Defer 'processQueue', so that when 'Relation.createModels' is used we:
 			// a) Survive 'Backbone.Collection.add'; this takes care we won't error on "can't add model to a set twice"

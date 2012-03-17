@@ -195,7 +195,7 @@ It's only mandatory to supply a `key`; `relatedModel` is automatically set. The 
 
 ## <a name="backbone-relationalmodel"/>Backbone.RelationalModel
 
-`Backbone.RelationalModel` introduces a couple of new methods and events.
+`Backbone.RelationalModel` introduces a couple of new methods, events and properties.
 
 ### Methods
 
@@ -223,6 +223,23 @@ See the example at the top of [Backbone.Relation options](#backbone-relation) or
   Bind to `remove:<key>`; arguments: `(removedModel<Backbone.Model>, related<Backbone.Collection>)`.
 * `update`: triggered on changes to the key itself on `HasMany` and `HasOne` relations.  
   Bind to `update:<key>`; arguments: `(model<Backbone.Model>, related<Backbone.Model|Backbone.Collection>)`.
+    
+### Properties
+
+###### **partOfModel**
+
+Value: a reference to a `Backbone.RelationalModel` type, or `null`.
+
+Should this model be considered a part of the specified model? Suppose `Cow` 
+extends `Animal` and has `partOfModel` set to `Animal`. Relations on other
+objects with type `Animal` will now also look for `Cow` objects. 
+
+Note that this means that there cannot be any overlap in ids between objects 
+of types `Animal` and `Cow`, as `Cow` objects are regarded specific kinds of 
+`Animal` objects.
+
+Note that if this property will only have effect if its value is equal to the 
+model that the model in question extends.
 
 ## <a name="example"/>Example
 

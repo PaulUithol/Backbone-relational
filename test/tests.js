@@ -435,6 +435,39 @@ $(document).ready(function() {
 			ok( Backbone.Relational.store.find( Primate, 1 ) === gorilla );
 		});
 		
+		test( "Inheritance with a partOfModel set uses the same relation as the partOfModel", function() {
+			var whale = new Animal( { id: 1, species: 'whale' } );
+			ok( Backbone.Relational.store.find( Animal, 1 ) === whale );
+			
+			var numCollections = Backbone.Relational.store._collections.length;
+		  
+			var Mammal = Animal.extend({
+				partOfModel: Animal
+			});
+			
+			var lion = new Mammal( { id: 2, species: 'lion' } );
+			var donkey = new Mammal( { id: 3, species: 'donkey' } );
+			
+			equal( Backbone.Relational.store._collections.length, numCollections );
+			ok( Backbone.Relational.store.find( Animal, 1 ) === whale );
+			ok( Backbone.Relational.store.find( Animal, 2 ) === lion );
+			ok( Backbone.Relational.store.find( Animal, 3 ) === donkey );
+			ok( Backbone.Relational.store.find( Mammal, 1 ) !== whale );
+			ok( Backbone.Relational.store.find( Mammal, 2 ) === lion );
+			ok( Backbone.Relational.store.find( Mammal, 3 ) === donkey );
+			
+			var Primate = Mammal.extend({
+				partOfModel: Mammal
+			});
+			
+			var gorilla = new Primate( { id: 4, species: 'gorilla' } );
+			
+			equal( Backbone.Relational.store._collections.length, numCollections );
+			ok( Backbone.Relational.store.find( Animal, 4 ) === gorilla );
+			ok( Backbone.Relational.store.find( Mammal, 4 ) === gorilla );
+			ok( Backbone.Relational.store.find( Primate, 4 ) === gorilla );
+		});
+		
 	
 	module( "Backbone.RelationalModel", { setup: initObjects } );
 		
