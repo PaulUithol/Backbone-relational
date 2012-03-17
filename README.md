@@ -186,6 +186,19 @@ Value: a boolean. Default: `true`.
 
 Should models be created from nested objects, or not?
 
+### modelBuilder `modelBuilder(attrs<object>)`
+
+Value: a function returning a new `Backbone.RelationalModel` instance. Default: `null`.
+
+Used to build a model based on the attributes provided. Can be used to return
+a different model type than the specified `relatedModel` under certain
+conditions.
+
+Note that this option will only have effect if the returned object is an
+instance of a type that `relatedModel` extends, and if the returned object's
+type is defined to be regarded a part of `relatedModel` using the 
+[`partOfModel`](#property-part-of-model) property.
+
 ### reverseRelation
 
 If the relation should be bidirectional, specify the details for the reverse relation here.
@@ -226,9 +239,9 @@ See the example at the top of [Backbone.Relation options](#backbone-relation) or
     
 ### Properties
 
-###### **partOfModel**
+###### **<a name="property-part-of-model"/>partOfModel**
 
-Value: a reference to a `Backbone.RelationalModel` type, or `null`.
+Value: a reference to a `Backbone.RelationalModel` type. Default: `null`.
 
 Should this model be considered a part of the specified model? Suppose `Cow` 
 extends `Animal` and has `partOfModel` set to `Animal`. Relations on other
@@ -238,7 +251,7 @@ Note that this means that there cannot be any overlap in ids between objects
 of types `Animal` and `Cow`, as `Cow` objects are regarded specific kinds of 
 `Animal` objects.
 
-Note that if this property will only have effect if its value is equal to the 
+Note that this property will only have effect if its value is equal to the 
 model that the model in question extends.
 
 ## <a name="example"/>Example

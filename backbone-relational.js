@@ -288,6 +288,7 @@
 		
 		this.key = this.options.key;
 		this.keySource = this.options.keySource || this.key;
+		this.modelBuilder = this.options.modelBuilder;
 
 		// 'exports' should be the global object where 'relatedModel' can be found on if given as a string.
 		this.relatedModel = this.options.relatedModel;
@@ -438,8 +439,41 @@
 		
 		createModel: function( item ) {
 			if ( this.options.createModels && typeof( item ) === 'object' ) {
-				return new this.relatedModel( item );
+				return this.buildModel( item );
 			}
+		},
+		
+		buildModelUsingBuilder: function( item ) {
+		  if ( !this.modelBuilder || typeof this.modelBuilder !== "function" ) {
+		    return null;
+	    }
+	    
+	    builtModel = this.modelBuilder( item )
+	    
+	    if ( !builtModel ) {
+	      return null;
+	    }
+	    
+	    partOfRelatedModel = false;
+	    for( m = builtModel.constructor; !!m; m = m.prototype.partOfModel ) {
+	      if ( m === this.relatedModel ) {
+	        partOfRelatedModel = true;
+	        break;
+	      }
+	    }
+	    
+	    if ( !partOfRelatedModel || !(builtModel instanceof this.relatedModel)) {
+	      return null;
+	    }
+	    
+	    return builtModel;
+		},
+		
+		buildModel: function( item ) {	
+		  model = this.buildModelUsingBuilder( item )
+		  model || (model = new this.relatedModel( item ));
+		  
+			return model;
 		},
 		
 		/**
@@ -668,6 +702,13 @@
 			this.findRelated( { silent: true } );
 		},
 		
+		buildModel: function( item ) {		
+		  model = this.buildModelUsingBuilder( item )
+		  model || (model = new this.related.model( item ));
+		  
+			return model;
+		},
+		
 		prepareCollection: function( collection ) {
 			if ( this.related ) {
 				this.related
@@ -677,7 +718,9 @@
 			}
 			
 			collection.reset();
-			collection.model = this.relatedModel;
+			if( collection.model === Backbone.Model ) {
+			  collection.model = this.relatedModel;
+		  }
 			
 			if ( this.options.collectionKey ) {
 				var key = this.options.collectionKey === true ? this.options.reverseRelation.key : this.options.collectionKey;
@@ -1015,12 +1058,12 @@
 					var model;
 
 					if ( typeof( item ) === 'object' ) {
-						model = new rel.relatedModel( item );
+						model = rel.buildModel( item );
 					}
 					else {
 						var attrs = {};
 						attrs[ rel.relatedModel.prototype.idAttribute ] = item;
-						model = new rel.relatedModel( attrs );
+						model = rel.buildModel( attrs );
 					}
 
 					return model;

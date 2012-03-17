@@ -705,6 +705,46 @@ $(document).ready(function() {
 			console.log( view, viewJSON, property1, property2 );
 		});
 		
+		test( "'modelBuilder' builds models", function() {
+		  var PetAnimal = Backbone.RelationalModel.extend({
+		  });
+		  var Dog = PetAnimal.extend({
+		    partOfModel: PetAnimal
+		  });
+		  var Cat = PetAnimal.extend({
+		    partOfModel: PetAnimal
+		  });
+		  
+		  var NewPerson = Backbone.RelationalModel.extend({
+		    relations: [{
+					type: Backbone.HasOne,
+					key: 'pet',
+					relatedModel: PetAnimal,
+					reverseRelation: {
+						key: 'owner'
+					},
+					modelBuilder: function( attrs ) {
+					  if (attrs.type == "cat" ) {
+					    return new Cat( attrs )
+					  }
+					  if ( attrs.type == "dog" ) {
+					    return new Dog( attrs )
+					  }
+					  return new PetAnimal( attrs )
+					}
+		    }]
+		  });
+		  
+		  var person = new NewPerson({
+		    pet: {
+		      type: "dog",
+		      name: "Spot"
+		    }
+		  });
+		  
+		  ok( person.get("pet") instanceof Dog );
+		});
+		
 		
 	module( "Backbone.Relation preconditions" );
 		
@@ -1192,7 +1232,7 @@ $(document).ready(function() {
 			ok( ourHouse.get( 'occupants' ).id === collId );
 			
 			// Set a value on 'occupants' that would cause the relation to be reset.
-			// The collection itself should be kept (along with it's properties)
+			// The collection itself should be kept (along with its properties)
 			ourHouse.set( { 'occupants': [ 'person-1' ] } );
 			ok( ourHouse.get( 'occupants' ).id === collId );
 			ok( ourHouse.get( 'occupants' ).length === 1 );
@@ -1219,6 +1259,55 @@ $(document).ready(function() {
 			
 			// Check that the generated collection is of the correct kind
 			ok( zoo.get( 'animals' ) instanceof AnimalCollection );
+		});
+		
+		test( "Uses the collection's model method for building models", function() {
+		  var PetAnimal = Backbone.RelationalModel.extend({
+		  });
+		  var Dog = PetAnimal.extend({
+		    partOfModel: PetAnimal
+		  });
+		  var Cat = PetAnimal.extend({
+		    partOfModel: PetAnimal
+		  });
+		  
+		  var PetsCollection = Backbone.Collection.extend({
+		    model: function( attrs, options) {
+				  if (attrs.type == "cat" ) {
+				    return new Cat( attrs, options )
+				  }
+				  if ( attrs.type == "dog" ) {
+				    return new Dog( attrs, options )
+				  }
+				  return new PetAnimal( attrs, options )
+		    }
+		  });
+		  
+		  var NewPerson = Backbone.RelationalModel.extend({
+		    relations: [{
+					type: Backbone.HasMany,
+					key: 'pets',
+					relatedModel: PetAnimal,
+					collectionType: PetsCollection,
+					reverseRelation: {
+						key: 'owner'
+					}
+		    }]
+		  });
+		  
+		  var person = new NewPerson({
+		    pets: [{
+	        type: "dog",
+		      name: "Spot"
+		    },
+		    {
+		      type: "cat",
+		      name: "Whiskers"
+		    }]
+		  });
+		  
+		  ok( person.get("pets").at(0) instanceof Dog );
+		  ok( person.get("pets").at(1) instanceof Cat );
 		});
 		
 		test( "The 'collectionKey' options is used to create references on generated Collections back to its RelationalModel", function() {
