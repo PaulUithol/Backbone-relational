@@ -197,25 +197,25 @@ Default: `null`.
 
 Used to build a model based on the attributes provided. 
 
-##### If an array
-Build a model based on the `type` attribute of the object for which a model
-should be built, which should equal the `type` property on one of the model 
-types in the array.
-
-##### If an object
-Build a model based on the `type` attribute of the object for which a model
-should be built, which should equal the key to one of the model types in this
-object.
-
-##### If a function `modelBuilder(attrs<object>, options<object>)`
-Build a model by calling this method with the attributes of the object for
-which a model should be built. Be sure to pass the specified `attrs` and 
-`options` to the constructor for the new `Backbone.RelationalModel` instance.
-
 Note that this option will only have effect if the built model is an
 instance of `relatedModel` itself or of a type that extends `relatedModel`,
 and if that type is defined to be regarded a part of `relatedModel` using the
 [`partOfModel`](#property-part-of-model) property.
+
+###### **If an array (`modelBuilder: [ ModelA, ModelB ]`)**
+Build a model based on the `type` attribute of the object for which a model
+should be built, which should equal the `type` property on one of the model 
+types in the array.
+
+###### **If an object (`modelBuilder: { "a": ModelA, "b": ModelB }`)**
+Build a model based on the `type` attribute of the object for which a model
+should be built, which should equal the key for one of the model types in this
+object.
+
+###### **If a function (`modelBuilder(attrs<object>, options<object>)`)**
+Build a model by calling this method with the attributes of the object for
+which a model should be built. Be sure to pass the specified `attrs` and 
+`options` to the constructor for the new `Backbone.RelationalModel` instance.
 
 ### reverseRelation
 
