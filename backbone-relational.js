@@ -369,7 +369,7 @@
 				.bind( 'relational:remove', this._relatedModelRemoved );
 		}
 	};
-	// Fix inheritance :\
+
 	Backbone.Relation.extend = Backbone.Model.extend;
 	// Set up all inheritable **Backbone.Relation** properties and methods.
 	_.extend( Backbone.Relation.prototype, Backbone.Events, Backbone.Semaphore, {
