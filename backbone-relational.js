@@ -288,12 +288,42 @@
 		
 		this.key = this.options.key;
 		this.keySource = this.options.keySource || this.key;
-		this.modelBuilder = this.options.modelBuilder;
 
 		// 'exports' should be the global object where 'relatedModel' can be found on if given as a string.
 		this.relatedModel = this.options.relatedModel;
 		if ( _.isString( this.relatedModel ) ) {
 			this.relatedModel = Backbone.Relational.store.getObjectByName( this.relatedModel );
+		}
+		
+		this.modelBuilder = this.options.modelBuilder;
+		if ( this.modelBuilder && !_.isFunction( this.modelBuilder ) ) {
+		  modelBuildingMap = this.modelBuilder;
+		  if ( _.isArray( modelBuildingMap ) ) {
+		    newModelBuildingMap = {};
+  		  
+		    _.each( modelBuildingMap, function( model ) {
+		      if ( _.isString( model ) ) {
+		        model = Backbone.Relational.store.getObjectByName( model );
+		      }
+		      
+		      newModelBuildingMap[model.prototype.type] = model;
+		    })
+		    
+		    modelBuildingMap = newModelBuildingMap;
+		  }
+		  		  
+		  dit = this
+		  this.modelBuilder = function( attrs, options ) {
+		    if( model = modelBuildingMap[ attrs.type ] ) {
+		      if ( _.isString( model ) ) {
+		        model = Backbone.Relational.store.getObjectByName( model );
+		      }
+		      
+		      return new model( attrs, options);
+		    }
+		    
+		    return new dit.relatedModel( attrs, options )
+		  }
 		}
 
 		if ( !this.checkPreconditions() ) {

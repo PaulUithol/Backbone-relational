@@ -706,7 +706,7 @@ $(document).ready(function() {
 			console.log( view, viewJSON, property1, property2 );
 		});
 		
-		test( "Uses 'modelBuilder' to build models for HasOne relations", function() {
+		test( "Uses 'modelBuilder' function to build models for HasOne relations", function() {
 			var PetAnimal = Backbone.RelationalModel.extend({
 			});
 			var Dog = PetAnimal.extend({
@@ -732,6 +732,89 @@ $(document).ready(function() {
 							return new Dog( attrs, options )
 						}
 						return new PetAnimal( attrs, options )
+					}
+				}]
+			});
+			
+			var person = new NewPerson({
+				pet: {
+					type: "dog",
+					name: "Spot"
+				}
+			});
+			
+			ok( person.get("pet") instanceof Dog );
+			
+			person.set("pet", { 
+				type: "cat", 
+				name: "Whiskers" 
+			});
+			
+			ok( person.get("pet") instanceof Cat )
+		});
+		
+		test( "Uses 'modelBuilder' array to build models for HasOne relations", function() {
+			var PetAnimal = Backbone.RelationalModel.extend({
+			});
+			var Dog = PetAnimal.extend({
+				partOfModel: PetAnimal,
+				type: "dog"
+			});
+			var Cat = PetAnimal.extend({
+				partOfModel: PetAnimal,
+				type: "cat"
+			});
+			
+			var NewPerson = Backbone.RelationalModel.extend({
+				relations: [{
+					type: Backbone.HasOne,
+					key: 'pet',
+					relatedModel: PetAnimal,
+					reverseRelation: {
+						key: 'owner'
+					},
+					modelBuilder: [ Cat, Dog ]
+				}]
+			});
+			
+			var person = new NewPerson({
+				pet: {
+					type: "dog",
+					name: "Spot"
+				}
+			});
+			
+			ok( person.get("pet") instanceof Dog );
+			
+			person.set("pet", { 
+				type: "cat", 
+				name: "Whiskers" 
+			});
+			
+			ok( person.get("pet") instanceof Cat )
+		});
+		
+		test( "Uses 'modelBuilder' object to build models for HasOne relations", function() {
+			var PetAnimal = Backbone.RelationalModel.extend({
+			});
+			var Dog = PetAnimal.extend({
+				partOfModel: PetAnimal
+			});
+			var Cat = PetAnimal.extend({
+				partOfModel: PetAnimal
+			});
+			
+			var NewPerson = Backbone.RelationalModel.extend({
+				relations: [{
+					type: Backbone.HasOne,
+					key: 'pet',
+					relatedModel: PetAnimal,
+					reverseRelation: {
+						key: 'owner'
+					},
+					modelBuilder: {
+					  "cat": Cat, 
+					  "dog": Dog 
 					}
 				}]
 			});

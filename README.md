@@ -186,18 +186,35 @@ Value: a boolean. Default: `true`.
 
 Should models be created from nested objects, or not?
 
-### modelBuilder `modelBuilder(attrs<object>, options<object>)`
+### modelBuilder 
 
-Value: a function returning a new `Backbone.RelationalModel` instance. Default: `null`.
+Value: an array of strings (which can be resolved to an object type on the global scope);
+an array of references to `Backbone.RelationalModel` types;
+an object mapping type strings to strings (which can be resolved to an object type on the global scope);
+an object mapping type strings to references to `Backbone.RelationalModel` types;
+a function returning a new `Backbone.RelationalModel` instance. 
+Default: `null`.
 
-Used to build a model based on the attributes provided. Can be used to return
-a different model type than the specified `relatedModel` under certain
-conditions. Be sure to pass the specified `attrs` and `options` to the newly
-generated `Backbone.RelationalModel`.
+Used to build a model based on the attributes provided. 
 
-Note that this option will only have effect if the returned object is an
-instance of a type that `relatedModel` extends, and if the returned object's
-type is defined to be regarded a part of `relatedModel` using the 
+##### If an array
+Build a model based on the `type` attribute of the object for which a model
+should be built, which should equal the `type` property on one of the model 
+types in the array.
+
+##### If an object
+Build a model based on the `type` attribute of the object for which a model
+should be built, which should equal the key to one of the model types in this
+object.
+
+##### If a function `modelBuilder(attrs<object>, options<object>)`
+Build a model by calling this method with the attributes of the object for
+which a model should be built. Be sure to pass the specified `attrs` and 
+`options` to the constructor for the new `Backbone.RelationalModel` instance.
+
+Note that this option will only have effect if the built model is an
+instance of `relatedModel` itself or of a type that extends `relatedModel`,
+and if that type is defined to be regarded a part of `relatedModel` using the
 [`partOfModel`](#property-part-of-model) property.
 
 ### reverseRelation
