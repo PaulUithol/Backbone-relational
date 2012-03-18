@@ -157,9 +157,9 @@
 		retroFitRelation: function( relation ) {
 			var coll = this.getCollection( relation.model );
 			coll.each( function( model ) {
-			  if( !(model instanceof relation.model) ) {
-			    return;
-			  }
+				if( !(model instanceof relation.model) ) {
+					return;
+				}
 				new relation.type( model, relation );
 			}, this);
 		},
@@ -171,15 +171,15 @@
 		 */
 		getCollection: function( model ) {
 			// If 'model' is an instance, take its constructor
-		  if ( model instanceof Backbone.RelationalModel ) {
-		    model = model.constructor
-		  }
-		  
-		  while( (partOfModel = model.prototype.partOfModel) && (model.prototype instanceof partOfModel) ) {
-		    model = partOfModel
-		  }
-		  
-			var coll =  _.detect( this._collections, function( c ) {
+			if ( model instanceof Backbone.RelationalModel ) {
+				model = model.constructor
+			}
+			
+			while( (partOfModel = model.prototype.partOfModel) && (model.prototype instanceof partOfModel) ) {
+				model = partOfModel
+			}
+			
+			var coll =	_.detect( this._collections, function( c ) {
 					return model === c.model
 				});
 			
@@ -223,8 +223,8 @@
 		
 		find: function( type, id ) {
 			var coll = this.getCollection( type );
-			if( coll && (obj = coll.get( id )) && obj instanceof type ) {
-			  return obj;
+			if( coll && (obj = coll.get( id )) && (obj instanceof type) ) {
+				return obj;
 			}
 			return null
 		},
@@ -444,37 +444,37 @@
 		},
 		
 		buildModelUsingBuilder: function( item ) {
-		  if ( !this.modelBuilder || typeof this.modelBuilder !== "function" ) {
-		    return null;
-	    }
-	    
-	    builtModel = this.modelBuilder( item )
-	    
-	    if ( !builtModel ) {
-	      return null;
-	    }
-	    
-	    partOfRelatedModel = false;
-	    for( m = builtModel.constructor; !!m; m = m.prototype.partOfModel ) {
-	      if ( m === this.relatedModel ) {
-	        partOfRelatedModel = true;
-	        break;
-	      }
-	    }
-	    
-	    if ( !partOfRelatedModel || !(builtModel instanceof this.relatedModel)) {
-	      return null;
-	    }
-	    
-	    return builtModel;
+			if ( !this.modelBuilder || typeof this.modelBuilder !== "function" ) {
+				return null;
+			}
+			
+			builtModel = this.modelBuilder( item )
+			
+			if ( !builtModel ) {
+				return null;
+			}
+			
+			partOfRelatedModel = false;
+			for( m = builtModel.constructor; !!m; m = m.prototype.partOfModel ) {
+				if ( m === this.relatedModel ) {
+					partOfRelatedModel = true;
+					break;
+				}
+			}
+			
+			if ( !partOfRelatedModel || !(builtModel instanceof this.relatedModel)) {
+				return null;
+			}
+			
+			return builtModel;
 		},
 		
 		buildModel: function( item ) {	
 			// If we have a modelBuilder, use it.
-		  model = this.buildModelUsingBuilder( item )
+			model = this.buildModelUsingBuilder( item )
 			// If not: Use this.relatedModel
-		  model || (model = new this.relatedModel( item ));
-		  
+			model || (model = new this.relatedModel( item ));
+			
 			return model;
 		},
 		
@@ -706,10 +706,10 @@
 		
 		buildModel: function( item ) {		
 			// If we have a modelBuilder, use it.
-		  model = this.buildModelUsingBuilder( item )
-		  // If not: Respect the collection's custom #model implementation.
-		  model || (model = new this.related.model( item ));
-		  
+			model = this.buildModelUsingBuilder( item )
+			// If not: Respect the collection's custom #model implementation.
+			model || (model = new this.related.model( item ));
+			
 			return model;
 		},
 		
@@ -725,15 +725,15 @@
 			
 			// If we have a modelBuilder, make sure this is used for build models
 			// from objects passed directly to the collection through #add as well.
-		  if ( this.modelBuilder && typeof this.modelBuilder === "function" ) {
-		    collection.model = this.modelBuilder
-	    }
-	    // If the collection doesn't have a model specified, make sure it 
-			// casts objects passed directly to the collection as this.relatedModel.
+			if ( this.modelBuilder && typeof this.modelBuilder === "function" ) {
+				collection.model = this.modelBuilder
+			}
+			// If the collection doesn't have a model specified, make sure it 
+			// casts objects passed directly to the collection as relatedModel.
 			else if( collection.model === Backbone.Model ) {
-			  collection.model = this.relatedModel;
-		  }
-		  // Else: Respect the collection's custom #model implementation.
+				collection.model = this.relatedModel;
+			}
+			// Else: Respect the collection's custom #model implementation.
 			
 			if ( this.options.collectionKey ) {
 				var key = this.options.collectionKey === true ? this.options.reverseRelation.key : this.options.collectionKey;

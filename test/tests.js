@@ -440,7 +440,7 @@ $(document).ready(function() {
 			ok( Backbone.Relational.store.find( Animal, 1 ) === whale );
 			
 			var numCollections = Backbone.Relational.store._collections.length;
-		  
+			
 			var Mammal = Animal.extend({
 				partOfModel: Animal
 			});
@@ -622,6 +622,7 @@ $(document).ready(function() {
 			equal( json.user, 'user-1', "The value 'user' is the user's id (not an object, since 'includeInJSON' is set to the idAttribute)" );
 			ok ( json.likesALot instanceof Object, "The value of 'likesALot' is an object ('includeInJSON' is 'true')" );
 			equal(  json.likesALot.likesALot, 'person-1', "Person is serialized only once" );
+			equal(	json.likesALot.likesALot, 'person-1', "Person is serialized only once" );
 			
 			json = person1.get( 'user' ).toJSON();
 			equal( json.person, 'boy', "The value of 'person' is the person's name ('includeInJSON is set to 'name')" );
@@ -706,17 +707,17 @@ $(document).ready(function() {
 		});
 		
 		test( "Uses 'modelBuilder' to build models for HasOne relations", function() {
-		  var PetAnimal = Backbone.RelationalModel.extend({
-		  });
-		  var Dog = PetAnimal.extend({
-		    partOfModel: PetAnimal
-		  });
-		  var Cat = PetAnimal.extend({
-		    partOfModel: PetAnimal
-		  });
-		  
-		  var NewPerson = Backbone.RelationalModel.extend({
-		    relations: [{
+			var PetAnimal = Backbone.RelationalModel.extend({
+			});
+			var Dog = PetAnimal.extend({
+				partOfModel: PetAnimal
+			});
+			var Cat = PetAnimal.extend({
+				partOfModel: PetAnimal
+			});
+			
+			var NewPerson = Backbone.RelationalModel.extend({
+				relations: [{
 					type: Backbone.HasOne,
 					key: 'pet',
 					relatedModel: PetAnimal,
@@ -724,46 +725,46 @@ $(document).ready(function() {
 						key: 'owner'
 					},
 					modelBuilder: function( attrs, options ) {
-					  if ( attrs.type == "cat" ) {
-					    return new Cat( attrs, options )
-					  }
-					  if ( attrs.type == "dog" ) {
-					    return new Dog( attrs, options )
-					  }
-					  return new PetAnimal( attrs, options )
+						if ( attrs.type == "cat" ) {
+							return new Cat( attrs, options )
+						}
+						if ( attrs.type == "dog" ) {
+							return new Dog( attrs, options )
+						}
+						return new PetAnimal( attrs, options )
 					}
-		    }]
-		  });
-		  
-		  var person = new NewPerson({
-		    pet: {
-		      type: "dog",
-		      name: "Spot"
-		    }
-		  });
-		  
-		  ok( person.get("pet") instanceof Dog );
-		  
-		  person.set("pet", { 
-		    type: "cat", 
-		    name: "Whiskers" 
-		  });
-		  
-		  ok( person.get("pet") instanceof Cat )
+				}]
+			});
+			
+			var person = new NewPerson({
+				pet: {
+					type: "dog",
+					name: "Spot"
+				}
+			});
+			
+			ok( person.get("pet") instanceof Dog );
+			
+			person.set("pet", { 
+				type: "cat", 
+				name: "Whiskers" 
+			});
+			
+			ok( person.get("pet") instanceof Cat )
 		});
 		
 		test( "Uses 'modelBuilder' to build models for HasMany relations", function() {
-		  var PetAnimal = Backbone.RelationalModel.extend({
-		  });
-		  var Dog = PetAnimal.extend({
-		    partOfModel: PetAnimal
-		  });
-		  var Cat = PetAnimal.extend({
-		    partOfModel: PetAnimal
-		  });
-		  
-		  var NewPerson = Backbone.RelationalModel.extend({
-		    relations: [{
+			var PetAnimal = Backbone.RelationalModel.extend({
+			});
+			var Dog = PetAnimal.extend({
+				partOfModel: PetAnimal
+			});
+			var Cat = PetAnimal.extend({
+				partOfModel: PetAnimal
+			});
+			
+			var NewPerson = Backbone.RelationalModel.extend({
+				relations: [{
 					type: Backbone.HasMany,
 					key: 'pets',
 					relatedModel: PetAnimal,
@@ -771,37 +772,37 @@ $(document).ready(function() {
 						key: 'owner'
 					},
 					modelBuilder: function( attrs, options) {
-  				  if ( attrs.type == "cat" ) {
-  				    return new Cat( attrs, options )
-  				  }
-  				  if ( attrs.type == "dog" ) {
-  				    return new Dog( attrs, options )
-  				  }
-  				  return new PetAnimal( attrs, options )
-  		    }
-		    }]
-		  });
-		  
-		  var person = new NewPerson({
-		    pets: [{
-	        type: "dog",
-		      name: "Spot"
-		    },
-		    {
-		      type: "cat",
-		      name: "Whiskers"
-		    }]
-		  });
-		  
-		  ok( person.get("pets").at(0) instanceof Dog );
-		  ok( person.get("pets").at(1) instanceof Cat );
-		  
-		  person.get("pets").add( { 
-		    type: "dog", 
-		    name: "Spot II" 
-		  });
-		  
-		  ok( person.get("pets").at(2) instanceof Dog )
+						if ( attrs.type == "cat" ) {
+							return new Cat( attrs, options )
+						}
+						if ( attrs.type == "dog" ) {
+							return new Dog( attrs, options )
+						}
+						return new PetAnimal( attrs, options )
+					}
+				}]
+			});
+			
+			var person = new NewPerson({
+				pets: [{
+					type: "dog",
+					name: "Spot"
+				},
+				{
+					type: "cat",
+					name: "Whiskers"
+				}]
+			});
+			
+			ok( person.get("pets").at(0) instanceof Dog );
+			ok( person.get("pets").at(1) instanceof Cat );
+			
+			person.get("pets").add( { 
+				type: "dog", 
+				name: "Spot II" 
+			});
+			
+			ok( person.get("pets").at(2) instanceof Dog )
 		});
 		
 		
@@ -1321,29 +1322,29 @@ $(document).ready(function() {
 		});
 		
 		test( "Uses the collection's model method for building models", function() {
-		  var PetAnimal = Backbone.RelationalModel.extend({
-		  });
-		  var Dog = PetAnimal.extend({
-		    partOfModel: PetAnimal
-		  });
-		  var Cat = PetAnimal.extend({
-		    partOfModel: PetAnimal
-		  });
-		  
-		  var PetsCollection = Backbone.Collection.extend({
-		    model: function( attrs, options) {
-				  if ( attrs.type == "cat" ) {
-				    return new Cat( attrs, options )
-				  }
-				  if ( attrs.type == "dog" ) {
-				    return new Dog( attrs, options )
-				  }
-				  return new PetAnimal( attrs, options )
-		    }
-		  });
-		  
-		  var NewPerson = Backbone.RelationalModel.extend({
-		    relations: [{
+			var PetAnimal = Backbone.RelationalModel.extend({
+			});
+			var Dog = PetAnimal.extend({
+				partOfModel: PetAnimal
+			});
+			var Cat = PetAnimal.extend({
+				partOfModel: PetAnimal
+			});
+			
+			var PetsCollection = Backbone.Collection.extend({
+				model: function( attrs, options) {
+					if ( attrs.type == "cat" ) {
+						return new Cat( attrs, options )
+					}
+					if ( attrs.type == "dog" ) {
+						return new Dog( attrs, options )
+					}
+					return new PetAnimal( attrs, options )
+				}
+			});
+			
+			var NewPerson = Backbone.RelationalModel.extend({
+				relations: [{
 					type: Backbone.HasMany,
 					key: 'pets',
 					relatedModel: PetAnimal,
@@ -1351,22 +1352,22 @@ $(document).ready(function() {
 					reverseRelation: {
 						key: 'owner'
 					}
-		    }]
-		  });
-		  
-		  var person = new NewPerson({
-		    pets: [{
-	        type: "dog",
-		      name: "Spot"
-		    },
-		    {
-		      type: "cat",
-		      name: "Whiskers"
-		    }]
-		  });
-		  
-		  ok( person.get("pets").at(0) instanceof Dog );
-		  ok( person.get("pets").at(1) instanceof Cat );
+				}]
+			});
+			
+			var person = new NewPerson({
+				pets: [{
+					type: "dog",
+					name: "Spot"
+				},
+				{
+					type: "cat",
+					name: "Whiskers"
+				}]
+			});
+			
+			ok( person.get("pets").at(0) instanceof Dog );
+			ok( person.get("pets").at(1) instanceof Cat );
 		});
 		
 		test( "The 'collectionKey' options is used to create references on generated Collections back to its RelationalModel", function() {
