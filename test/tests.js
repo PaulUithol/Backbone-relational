@@ -407,7 +407,7 @@ $(document).ready(function() {
 			ok( Backbone.Relational.store.find( Node, 4 ) instanceof Node, "Node 4 can be found" );
 		});
 		
-		test( "Inheritance creates and uses a separate relation", function() {
+		test( "Inheritance creates and uses a separate collection", function() {
 			var whale = new Animal( { id: 1, species: 'whale' } );
 			ok( Backbone.Relational.store.find( Animal, 1 ) === whale );
 			
@@ -435,7 +435,7 @@ $(document).ready(function() {
 			ok( Backbone.Relational.store.find( Primate, 1 ) === gorilla );
 		});
 		
-		test( "Inheritance with a partOfModel set uses the same relation as the partOfModel", function() {
+		test( "Inheritance with a partOfModel set uses the same collection as the partOfModel", function() {
 			var whale = new Animal( { id: 1, species: 'whale' } );
 			ok( Backbone.Relational.store.find( Animal, 1 ) === whale );
 			
@@ -705,7 +705,7 @@ $(document).ready(function() {
 			console.log( view, viewJSON, property1, property2 );
 		});
 		
-		test( "'modelBuilder' builds models", function() {
+		test( "Uses 'modelBuilder' to build models for HasOne relations", function() {
 		  var PetAnimal = Backbone.RelationalModel.extend({
 		  });
 		  var Dog = PetAnimal.extend({
@@ -723,14 +723,14 @@ $(document).ready(function() {
 					reverseRelation: {
 						key: 'owner'
 					},
-					modelBuilder: function( attrs ) {
-					  if (attrs.type == "cat" ) {
-					    return new Cat( attrs )
+					modelBuilder: function( attrs, options ) {
+					  if ( attrs.type == "cat" ) {
+					    return new Cat( attrs, options )
 					  }
 					  if ( attrs.type == "dog" ) {
-					    return new Dog( attrs )
+					    return new Dog( attrs, options )
 					  }
-					  return new PetAnimal( attrs )
+					  return new PetAnimal( attrs, options )
 					}
 		    }]
 		  });
@@ -743,6 +743,65 @@ $(document).ready(function() {
 		  });
 		  
 		  ok( person.get("pet") instanceof Dog );
+		  
+		  person.set("pet", { 
+		    type: "cat", 
+		    name: "Whiskers" 
+		  });
+		  
+		  ok( person.get("pet") instanceof Cat )
+		});
+		
+		test( "Uses 'modelBuilder' to build models for HasMany relations", function() {
+		  var PetAnimal = Backbone.RelationalModel.extend({
+		  });
+		  var Dog = PetAnimal.extend({
+		    partOfModel: PetAnimal
+		  });
+		  var Cat = PetAnimal.extend({
+		    partOfModel: PetAnimal
+		  });
+		  
+		  var NewPerson = Backbone.RelationalModel.extend({
+		    relations: [{
+					type: Backbone.HasMany,
+					key: 'pets',
+					relatedModel: PetAnimal,
+					reverseRelation: {
+						key: 'owner'
+					},
+					modelBuilder: function( attrs, options) {
+  				  if ( attrs.type == "cat" ) {
+  				    return new Cat( attrs, options )
+  				  }
+  				  if ( attrs.type == "dog" ) {
+  				    return new Dog( attrs, options )
+  				  }
+  				  return new PetAnimal( attrs, options )
+  		    }
+		    }]
+		  });
+		  
+		  var person = new NewPerson({
+		    pets: [{
+	        type: "dog",
+		      name: "Spot"
+		    },
+		    {
+		      type: "cat",
+		      name: "Whiskers"
+		    }]
+		  });
+		  
+		  ok( person.get("pets").at(0) instanceof Dog );
+		  ok( person.get("pets").at(1) instanceof Cat );
+		  
+		  person.get("pets").add( { 
+		    type: "dog", 
+		    name: "Spot II" 
+		  });
+		  
+		  ok( person.get("pets").at(2) instanceof Dog )
 		});
 		
 		
@@ -1273,7 +1332,7 @@ $(document).ready(function() {
 		  
 		  var PetsCollection = Backbone.Collection.extend({
 		    model: function( attrs, options) {
-				  if (attrs.type == "cat" ) {
+				  if ( attrs.type == "cat" ) {
 				    return new Cat( attrs, options )
 				  }
 				  if ( attrs.type == "dog" ) {

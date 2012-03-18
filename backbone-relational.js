@@ -470,7 +470,9 @@
 		},
 		
 		buildModel: function( item ) {	
+			// If we have a modelBuilder, use it.
 		  model = this.buildModelUsingBuilder( item )
+			// If not: Use this.relatedModel
 		  model || (model = new this.relatedModel( item ));
 		  
 			return model;
@@ -703,7 +705,9 @@
 		},
 		
 		buildModel: function( item ) {		
+			// If we have a modelBuilder, use it.
 		  model = this.buildModelUsingBuilder( item )
+		  // If not: Respect the collection's custom #model implementation.
 		  model || (model = new this.related.model( item ));
 		  
 			return model;
@@ -718,9 +722,18 @@
 			}
 			
 			collection.reset();
-			if( collection.model === Backbone.Model ) {
+			
+			// If we have a modelBuilder, make sure this is used for build models
+			// from objects passed directly to the collection through #add as well.
+		  if ( this.modelBuilder && typeof this.modelBuilder === "function" ) {
+		    collection.model = this.modelBuilder
+	    }
+	    // If the collection doesn't have a model specified, make sure it 
+			// casts objects passed directly to the collection as this.relatedModel.
+			else if( collection.model === Backbone.Model ) {
 			  collection.model = this.relatedModel;
 		  }
+		  // Else: Respect the collection's custom #model implementation.
 			
 			if ( this.options.collectionKey ) {
 				var key = this.options.collectionKey === true ? this.options.reverseRelation.key : this.options.collectionKey;

@@ -186,13 +186,14 @@ Value: a boolean. Default: `true`.
 
 Should models be created from nested objects, or not?
 
-### modelBuilder `modelBuilder(attrs<object>)`
+### modelBuilder `modelBuilder(attrs<object>, options<object>)`
 
 Value: a function returning a new `Backbone.RelationalModel` instance. Default: `null`.
 
 Used to build a model based on the attributes provided. Can be used to return
 a different model type than the specified `relatedModel` under certain
-conditions.
+conditions. Be sure to pass the specified `attrs` and `options` to the newly
+generated `Backbone.RelationalModel`.
 
 Note that this option will only have effect if the returned object is an
 instance of a type that `relatedModel` extends, and if the returned object's
