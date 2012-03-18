@@ -723,8 +723,8 @@
 			
 			collection.reset();
 			
-			// If we have a modelBuilder, make sure this is used for build models
-			// from objects passed directly to the collection through #add as well.
+			// If we have a modelBuilder, make sure this is used to build models
+			// from objects passed directly to the collection as well.
 			if ( this.modelBuilder && typeof this.modelBuilder === "function" ) {
 				collection.model = this.modelBuilder
 			}
