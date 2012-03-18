@@ -297,33 +297,33 @@
 		
 		this.modelBuilder = this.options.modelBuilder;
 		if ( this.modelBuilder && !_.isFunction( this.modelBuilder ) ) {
-		  modelBuildingMap = this.modelBuilder;
-		  if ( _.isArray( modelBuildingMap ) ) {
-		    newModelBuildingMap = {};
-  		  
-		    _.each( modelBuildingMap, function( model ) {
-		      if ( _.isString( model ) ) {
-		        model = Backbone.Relational.store.getObjectByName( model );
-		      }
-		      
-		      newModelBuildingMap[model.prototype.type] = model;
-		    })
-		    
-		    modelBuildingMap = newModelBuildingMap;
-		  }
-		  		  
-		  dit = this
-		  this.modelBuilder = function( attrs, options ) {
-		    if( model = modelBuildingMap[ attrs.type ] ) {
-		      if ( _.isString( model ) ) {
-		        model = Backbone.Relational.store.getObjectByName( model );
-		      }
-		      
-		      return new model( attrs, options);
-		    }
-		    
-		    return new dit.relatedModel( attrs, options )
-		  }
+			modelBuildingMap = this.modelBuilder;
+			if ( _.isArray( modelBuildingMap ) ) {
+				newModelBuildingMap = {};
+				
+				_.each( modelBuildingMap, function( model ) {
+					if ( _.isString( model ) ) {
+						model = Backbone.Relational.store.getObjectByName( model );
+					}
+					
+					newModelBuildingMap[ model.prototype.type ] = model;
+				});
+				
+				modelBuildingMap = newModelBuildingMap;
+			}
+						
+			dit = this
+			this.modelBuilder = function( attrs, options ) {
+				if ( model = modelBuildingMap[ attrs.type ] ) {
+					if ( _.isString( model ) ) {
+						model = Backbone.Relational.store.getObjectByName( model );
+					}
+					
+					return new model( attrs, options);
+				}
+				
+				return new dit.relatedModel( attrs, options )
+			}
 		}
 
 		if ( !this.checkPreconditions() ) {
@@ -474,7 +474,7 @@
 		},
 		
 		buildModelUsingBuilder: function( item ) {
-			if ( !this.modelBuilder || typeof this.modelBuilder !== "function" ) {
+			if ( !this.modelBuilder || !_.isFunction( this.modelBuilder ) ) {
 				return null;
 			}
 			
@@ -949,7 +949,7 @@
 		
 		partOfModel: null,
 		
-		constructor: function( attributes, options ) {  		
+		constructor: function( attributes, options ) {			
 			// Nasty hack, for cases like 'model.get( <HasMany key> ).add( item )'.
 			// Defer 'processQueue', so that when 'Relation.createModels' is used we:
 			// a) Survive 'Backbone.Collection.add'; this takes care we won't error on "can't add model to a set twice"

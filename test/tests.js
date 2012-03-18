@@ -813,8 +813,8 @@ $(document).ready(function() {
 						key: 'owner'
 					},
 					modelBuilder: {
-					  "cat": Cat, 
-					  "dog": Dog 
+						"cat": Cat, 
+						"dog": Dog 
 					}
 				}]
 			});
@@ -854,14 +854,9 @@ $(document).ready(function() {
 					reverseRelation: {
 						key: 'owner'
 					},
-					modelBuilder: function( attrs, options) {
-						if ( attrs.type == "cat" ) {
-							return new Cat( attrs, options )
-						}
-						if ( attrs.type == "dog" ) {
-							return new Dog( attrs, options )
-						}
-						return new PetAnimal( attrs, options )
+					modelBuilder: {
+						"cat": Cat, 
+						"dog": Dog 
 					}
 				}]
 			});
