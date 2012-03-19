@@ -432,6 +432,7 @@
 		 * Determine if a relation (on a different RelationalModel) is the reverse
 		 * relation of the current one.
 		 * @param {Backbone.Relation} relation
+		 * @return {Boolean}
 		 */
 		_isReverseRelation: function( relation ) {
 			if ( relation.instance instanceof this.relatedModel && this.reverseRelation.key === relation.key &&
@@ -445,6 +446,7 @@
 		 * Get the reverse relations (pointing back to 'this.key' on 'this.instance') for the currently related model(s).
 		 * @param {Backbone.RelationalModel} [model] Get the reverse relations for a specific model.
 		 *    If not specified, 'this.related' is used.
+		 * @return {Backbone.Relation[]}
 		 */
 		getReverseRelations: function( model ) {
 			var reverseRelations = [];
@@ -462,15 +464,31 @@
 		},
 		
 		/**
-		 * Rename options.silent, so add/remove events propagate properly.
+		 * Rename options.silent to options.silentChange, so events propagate properly.
 		 * (for example in HasMany, from 'addRelated'->'handleAddition')
 		 * @param {Object} [options]
+		 * @return {Object}
 		 */
 		sanitizeOptions: function( options ) {
-			options || ( options = {} );
+			options = options ? _.clone( options ) : {};
 			if ( options.silent ) {
 				options = _.extend( {}, options, { silentChange: true } );
 				delete options.silent;
+			}
+			return options;
+		},
+
+		/**
+		 * Rename options.silentChange to options.silent, so events are silenced as intended in Backbone's
+		 * original functions.
+		 * @param {Object} [options]
+		 * @return {Object}
+		 */
+		unsanitizeOptions: function( options ) {
+			options = options ? _.clone( options ) : {};
+			if ( options.silentChange ) {
+				options = _.extend( {}, options, { silent: true } );
+				delete options.silentChange;
 			}
 			return options;
 		},
@@ -662,7 +680,7 @@
 					.unbind( 'relational:reset', this.handleReset )
 			}
 			
-			collection.reset();
+			collection.reset( [], { silent: true } );
 			collection.model = this.relatedModel;
 			
 			if ( this.options.collectionKey ) {
@@ -704,7 +722,8 @@
 					}
 					
 					if ( model && !this.related.getByCid( model ) && !this.related.get( model ) ) {
-						this.related.add( model );
+						options = this.unsanitizeOptions( options );
+						this.related.add( model, options );
 					}
 				}, this);
 			}
@@ -819,6 +838,7 @@
 		
 		addRelated: function( model, options ) {
 			var dit = this;
+			options = this.unsanitizeOptions( options );
 			model.queue( function() { // Queued to avoid errors for adding 'model' to the 'this.related' set twice
 				if ( dit.related && !dit.related.getByCid( model ) && !dit.related.get( model ) ) {
 					dit.related.add( model, options );
@@ -827,6 +847,7 @@
 		},
 		
 		removeRelated: function( model, options ) {
+			options = this.unsanitizeOptions( options );
 			if ( this.related.getByCid( model ) || this.related.get( model ) ) {
 				this.related.remove( model, options );
 			}
