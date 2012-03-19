@@ -423,8 +423,16 @@
 		},
 		
 		createModel: function( item ) {
-			if ( this.options.createModels && typeof( item ) === 'object' ) {
+			if ( !this.options.createModels ) {
+				return;
+			}
+			if ( typeof( item ) === 'object' ) {
 				return new this.relatedModel( item );
+			}
+			if ( item !== undefined && typeof( this.options.includeInJSON ) === 'string' ) {
+				var data = {};
+				data[this.options.includeInJSON] = item;
+				return new this.relatedModel( data );
 			}
 		},
 		
