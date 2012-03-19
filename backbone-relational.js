@@ -429,9 +429,9 @@
 			if ( typeof( item ) === 'object' ) {
 				return new this.relatedModel( item );
 			}
-			if ( item !== undefined && typeof( this.options.key ) === 'string' ) {
+			if ( item !== undefined && typeof( this.options.includeInJSON ) === 'string' ) {
 				var data = {};
-				data[this.options.key] = item;
+				data[this.options.includeInJSON] = item;
 				return new this.relatedModel( data );
 			}
 		},
