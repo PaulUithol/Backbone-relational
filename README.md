@@ -356,13 +356,6 @@ User = Backbone.RelationalModel.extend();
 
 ## <a name="q-and-a"/>Known problems and solutions
 
-> **Q:** Relations do not seem to be initialized properly.
-
-**A:** This (mostly) seems to occur because a relation is defined in the `reverseRelations` of another model, which hasn't
-been instantiated yet (which in turn means it's `relations` haven't been created yet, so the `reverseRelation` hasn't been created yet either).
-The current workaround is to create an instance of this other model first (this can be either a dummy that gets destroyed right away,
-or one that you actually use).
-
 > **Q:** After a fetch, `add:<key>` events don't occur for nested relations.
 
 **A:** This is due to the `{silent: true}` in `Backbone.Collection.reset`. Pass `fetch( {add: true} )` to bypass this problem.

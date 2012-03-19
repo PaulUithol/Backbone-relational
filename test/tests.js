@@ -1198,7 +1198,7 @@ $(document).ready(function() {
 
 			zoo.set( 'animals', animals );
 
-			ok( zoo.get( 'animals' ).length === 2 );
+			equal( zoo.get( 'animals' ).length, 2 );
 
 			var newAnimals = new AnimalCollection([
 				{ id: 2, species: 'Zebra' },
@@ -1208,7 +1208,27 @@ $(document).ready(function() {
 
 			zoo.set( 'animals', newAnimals );
 
-			ok( zoo.get( 'animals' ).length === 3 );
+			equal( zoo.get( 'animals' ).length, 3 );
+		});
+
+		test( "Models found in 'findRelated' are all added in one go (and 'sort' will only be called once)", function() {
+			var count = 0,
+				sort = Backbone.Collection.prototype.sort;
+
+			Backbone.Collection.prototype.sort = function() {
+				count++;
+			};
+
+			var zoo = new Zoo({
+				animals: [
+					{ id: 1, species: 'Lion' },
+					{ id: 2 ,species: 'Zebra' }
+				]
+			});
+
+			equal( count, 1, "Sort is called only once" );
+
+			Backbone.Collection.prototype.sort = sort;
 		});
 		
 		test( "The 'collectionKey' options is used to create references on generated Collections back to its RelationalModel", function() {
