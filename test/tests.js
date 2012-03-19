@@ -1169,7 +1169,7 @@ $(document).ready(function() {
 			ok( ourHouse.get( 'occupants' ).id === undefined );
 		});
 
-		test( "Setting a custom collection in 'relatedCollection' uses that collection for instantiation", function() {
+		test( "Setting a custom collection in 'collectionType' uses that collection for instantiation", function() {
 			var zoo = new Zoo();
 			
 			// Set values so that the relation gets filled
@@ -1186,6 +1186,29 @@ $(document).ready(function() {
 			
 			// Check that the generated collection is of the correct kind
 			ok( zoo.get( 'animals' ) instanceof AnimalCollection );
+		});
+
+		test( "Settings a new collection maintains that collection's current 'models'", function() {
+			var zoo = new Zoo();
+
+			var animals = new AnimalCollection([
+				{ id: 1, species: 'Lion' },
+				{ id: 2 ,species: 'Zebra' }
+			]);
+
+			zoo.set( 'animals', animals );
+
+			ok( zoo.get( 'animals' ).length === 2 );
+
+			var newAnimals = new AnimalCollection([
+				{ id: 2, species: 'Zebra' },
+				{ id: 3, species: 'Elephant' },
+				{ id: 4, species: 'Tiger' }
+			]);
+
+			zoo.set( 'animals', newAnimals );
+
+			ok( zoo.get( 'animals' ).length === 3 );
 		});
 		
 		test( "The 'collectionKey' options is used to create references on generated Collections back to its RelationalModel", function() {
@@ -1247,6 +1270,38 @@ $(document).ready(function() {
 			zoo.set( 'animals', { id: 'lion-2' } );
 
 			equal( zoo.get( 'animals' ).length, 1, "There is 1 animal in the zoo" );
+		});
+
+		test( "Polymorhpic relations", function() {
+			var Location = Backbone.RelationalModel.extend();
+
+			var Locatable = Backbone.RelationalModel.extend({
+				relations: [
+					{
+						key: 'locations',
+						type: 'HasMany',
+						relatedModel: Location,
+						reverseRelation: {
+							key: 'locatable'
+						}
+					}
+				]
+			});
+
+			var FirstLocatable = Locatable.extend();
+			var SecondLocatable = Locatable.extend();
+
+			var firstLocatable = new FirstLocatable();
+			var secondLocatable = new SecondLocatable();
+
+			var firstLocation = new Location( { id: 1, locatable: firstLocatable } );
+			var secondLocation = new Location( { id: 2, locatable: secondLocatable } );
+
+			ok( firstLocatable.get( 'locations' ).at( 0 ) === firstLocation );
+			ok( firstLocatable.get( 'locations' ).at( 0 ).get( 'locatable' ) === firstLocatable );
+
+			ok( secondLocatable.get( 'locations' ).at( 0 ) === secondLocation );
+			ok( secondLocatable.get( 'locations' ).at( 0 ).get( 'locatable' ) === secondLocatable );
 		});
 		
 		

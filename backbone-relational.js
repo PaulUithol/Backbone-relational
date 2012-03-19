@@ -679,8 +679,7 @@
 					.unbind( 'relational:remove', this.handleRemoval )
 					.unbind( 'relational:reset', this.handleReset )
 			}
-			
-			collection.reset( [], { silent: true } );
+
 			collection.model = this.relatedModel;
 			
 			if ( this.options.collectionKey ) {
