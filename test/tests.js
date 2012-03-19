@@ -1219,6 +1219,8 @@ $(document).ready(function() {
 				count++;
 			};
 
+			AnimalCollection.prototype.comparator = $.noop;
+
 			var zoo = new Zoo({
 				animals: [
 					{ id: 1, species: 'Lion' },
@@ -1229,6 +1231,7 @@ $(document).ready(function() {
 			equal( count, 1, "Sort is called only once" );
 
 			Backbone.Collection.prototype.sort = sort;
+			delete AnimalCollection.prototype.comparator;
 		});
 		
 		test( "The 'collectionKey' options is used to create references on generated Collections back to its RelationalModel", function() {
