@@ -171,6 +171,12 @@ By default, the relation's `key` attribute will be used to create a reference to
 If you set `collectionKey` to a string, it will use that string as the reference to the RelationalModel, rather than the relation's `key` attribute.
 If you don't want this behavior at all, set `collectionKey` to false (or any falsy value) and this reference will not be created.
 
+### collectionOptionCallback
+
+Value: a function that accepts an instance of a `Backbone.RelationalModed` and returns an option hash
+
+If supplied, this function should return an option hash that will be used when initializing the collection at the other end of a ToMany-relation. The function will be called with the initialized instance from the first end of the relation as the only argument
+
 ### includeInJSON
 
 Value: a boolean, or a string referencing one of the model's attributes. Default: `true`.

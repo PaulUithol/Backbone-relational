@@ -652,7 +652,8 @@
 		options: {
 			reverseRelation: { type: 'HasOne' },
 			collectionType: Backbone.Collection,
-			collectionKey: true
+			collectionKey: true,
+			collectionOptionsCallback: function( instance ){ return {} }
 		},
 		
 		initialize: function() {
@@ -668,7 +669,7 @@
 				throw new Error( 'collectionType must inherit from Backbone.Collection' );
 			}
 			
-			this.setRelated( this.prepareCollection( new this.collectionType() ) );
+			this.setRelated( this.prepareCollection( new this.collectionType( [], this.options.collectionOptionsCallback( this.instance ) ) ) );
 			this.findRelated( { silent: true } );
 		},
 		
