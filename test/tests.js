@@ -46,7 +46,7 @@ $(document).ready(function() {
 				key: 'animals',
 				relatedModel: 'Animal',
 				collectionType: 'AnimalCollection',
-				collectionOptionsCallback: function( instance ) { return { 'url':  'zoo/' + instance.cid + '/animal/' } },
+				collectionOptions: function( instance ) { return { 'url':  'zoo/' + instance.cid + '/animal/' } },
 				reverseRelation: {
 					key: 'livesIn',
 					includeInJSON: 'id'
