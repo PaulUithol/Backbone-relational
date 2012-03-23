@@ -1148,9 +1148,9 @@
 		 * and 'previousAttributes' will be available when the event is fired.
 		 */
 		change: function( options ) {
-			var dit = this;
+            var dit = this, args = arguments;
 			Backbone.Relational.eventQueue.add( function() {
-					Backbone.Model.prototype.change.apply( dit, arguments );
+					Backbone.Model.prototype.change.apply( dit, args );
 				});
 		},
 
