@@ -690,7 +690,7 @@
 						console.warn( 'Relation=%o; collectionKey=%s already exists on collection=%o', this, key, this.options.collectionKey );
 					}
 				}
-				else {
+				else if (key) {
 					collection[ key ] = this.instance;
 				}
 			}
