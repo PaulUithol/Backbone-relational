@@ -755,10 +755,20 @@
 				this.related = attr;
 			}
 			// Otherwise, 'attr' should be an array of related object ids.
-			// Re-use the current 'this.related' if it is a Backbone.Collection.
+			// Re-use the current 'this.related' if it is a Backbone.Collection, and remove any current entries.
+			// Otherwise, create a new collection.
 			else {
-				var coll = this.related instanceof Backbone.Collection ? this.related : new this.collectionType();
-				this.setRelated( this.prepareCollection( coll ) );
+				var coll;
+
+				if ( this.related instanceof Backbone.Collection ) {
+					coll = this.related;
+					coll.reset( [], { silent: true } );
+				}
+				else {
+					coll = this.prepareCollection( new this.collectionType() );
+				}
+
+				this.setRelated( coll );
 				this.findRelated( options );
 			}
 			
