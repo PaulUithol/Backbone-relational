@@ -7,6 +7,8 @@
  * Depends on (as in, compeletely useless without) Backbone: https://github.com/documentcloud/backbone.
  */
 ( function( undefined ) {
+	"use strict";
+	
 	/**
 	 * CommonJS shim
 	 **/
