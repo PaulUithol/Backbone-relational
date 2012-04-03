@@ -7,6 +7,8 @@
  * Depends on (as in, compeletely useless without) Backbone: https://github.com/documentcloud/backbone.
  */
 ( function( undefined ) {
+	"use strict";
+	
 	/**
 	 * CommonJS shim
 	 **/
@@ -694,7 +696,7 @@
 						console.warn( 'Relation=%o; collectionKey=%s already exists on collection=%o', this, key, this.options.collectionKey );
 					}
 				}
-				else {
+				else if (key) {
 					collection[ key ] = this.instance;
 				}
 			}
@@ -757,10 +759,20 @@
 				this.related = attr;
 			}
 			// Otherwise, 'attr' should be an array of related object ids.
-			// Re-use the current 'this.related' if it is a Backbone.Collection.
+			// Re-use the current 'this.related' if it is a Backbone.Collection, and remove any current entries.
+			// Otherwise, create a new collection.
 			else {
-				var coll = this.related instanceof Backbone.Collection ? this.related : new this.collectionType();
-				this.setRelated( this.prepareCollection( coll ) );
+				var coll;
+
+				if ( this.related instanceof Backbone.Collection ) {
+					coll = this.related;
+					coll.reset( [], { silent: true } );
+				}
+				else {
+					coll = this.prepareCollection( new this.collectionType() );
+				}
+
+				this.setRelated( coll );
 				this.findRelated( options );
 			}
 			
@@ -1152,9 +1164,9 @@
 		 * and 'previousAttributes' will be available when the event is fired.
 		 */
 		change: function( options ) {
-			var dit = this;
+			var dit = this, args = arguments;
 			Backbone.Relational.eventQueue.add( function() {
-					Backbone.Model.prototype.change.apply( dit, arguments );
+					Backbone.Model.prototype.change.apply( dit, args );
 				});
 		},
 
