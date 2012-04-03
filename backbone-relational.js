@@ -671,11 +671,14 @@
 				throw new Error( 'collectionType must inherit from Backbone.Collection' );
 			}
 
-			var collectionOptions = _.isFunction( this.options.collectionOptions ) ?
-					this.options.collectionOptions( this.instance ) :
-					this.options.collectionOptions;
-			this.setRelated( this.prepareCollection( new this.collectionType( [], collectionOptions ) ) );
+			this.setRelated( this.prepareCollection( new this.collectionType( [], this._getCollectionOptions() ) ) );
 			this.findRelated( { silent: true } );
+		},
+		
+		_getCollectionOptions = function(){
+		    return _.isFunction( this.options.collectionOptions ) ?
+				this.options.collectionOptions( this.instance ) :
+				this.options.collectionOptions;
 		},
 		
 		prepareCollection: function( collection ) {
@@ -769,7 +772,7 @@
 					coll.reset( [], { silent: true } );
 				}
 				else {
-					coll = this.prepareCollection( new this.collectionType() );
+					coll = this.prepareCollection( new this.collectionType( this._getCollectionOptions() ) );
 				}
 
 				this.setRelated( coll );
