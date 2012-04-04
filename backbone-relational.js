@@ -7,6 +7,8 @@
  * Depends on (as in, compeletely useless without) Backbone: https://github.com/documentcloud/backbone.
  */
 ( function( undefined ) {
+	"use strict";
+	
 	/**
 	 * CommonJS shim
 	 **/
@@ -193,7 +195,7 @@
 		/**
 		 * Find a type on the global object by name. Splits name on dots.
 		 * @param {String} name
-		 * @return {object}
+		 * @return {Object}
 		 */
 		getObjectByName: function( name ) {
 			var type = _.reduce( name.split( '.' ), function( memo, val ) {
@@ -512,6 +514,7 @@
 		 * Determine if a relation (on a different RelationalModel) is the reverse
 		 * relation of the current one.
 		 * @param {Backbone.Relation} relation
+		 * @return {Boolean}
 		 */
 		_isReverseRelation: function( relation ) {
 			if ( relation.instance instanceof this.relatedModel && this.reverseRelation.key === relation.key &&
@@ -525,6 +528,7 @@
 		 * Get the reverse relations (pointing back to 'this.key' on 'this.instance') for the currently related model(s).
 		 * @param {Backbone.RelationalModel} [model] Get the reverse relations for a specific model.
 		 *    If not specified, 'this.related' is used.
+		 * @return {Backbone.Relation[]}
 		 */
 		getReverseRelations: function( model ) {
 			var reverseRelations = [];
@@ -542,15 +546,31 @@
 		},
 		
 		/**
-		 * Rename options.silent, so add/remove events propagate properly.
+		 * Rename options.silent to options.silentChange, so events propagate properly.
 		 * (for example in HasMany, from 'addRelated'->'handleAddition')
 		 * @param {Object} [options]
+		 * @return {Object}
 		 */
 		sanitizeOptions: function( options ) {
-			options || ( options = {} );
+			options = options ? _.clone( options ) : {};
 			if ( options.silent ) {
 				options = _.extend( {}, options, { silentChange: true } );
 				delete options.silent;
+			}
+			return options;
+		},
+
+		/**
+		 * Rename options.silentChange to options.silent, so events are silenced as intended in Backbone's
+		 * original functions.
+		 * @param {Object} [options]
+		 * @return {Object}
+		 */
+		unsanitizeOptions: function( options ) {
+			options = options ? _.clone( options ) : {};
+			if ( options.silentChange ) {
+				options = _.extend( {}, options, { silent: true } );
+				delete options.silentChange;
 			}
 			return options;
 		},
@@ -751,8 +771,6 @@
 					.unbind( 'relational:reset', this.handleReset )
 			}
 			
-			collection.reset();
-			
 			// If we have a modelBuilder, make sure this is used to build models
 			// from objects passed directly to the collection as well.
 			if ( this.modelBuilder && typeof this.modelBuilder === "function" ) {
@@ -773,7 +791,7 @@
 						console.warn( 'Relation=%o; collectionKey=%s already exists on collection=%o', this, key, this.options.collectionKey );
 					}
 				}
-				else {
+				else if (key) {
 					collection[ key ] = this.instance;
 				}
 			}
@@ -791,6 +809,8 @@
 				// Handle cases the an API/user supplies just an Object/id instead of an Array
 				this.keyContents = _.isArray( this.keyContents ) ? this.keyContents : [ this.keyContents ];
 
+				var models = [];
+
 				// Try to find instances of the appropriate 'relatedModel' in the store
 				_.each( this.keyContents, function( item ) {
 					var id = _.isString( item ) || _.isNumber( item ) ? item : item[ this.relatedModel.prototype.idAttribute ];
@@ -804,9 +824,15 @@
 					}
 					
 					if ( model && !this.related.getByCid( model ) && !this.related.get( model ) ) {
-						this.related.add( model );
+						models.push( model );
 					}
-				}, this);
+				}, this );
+
+				// Add all found 'models' in on go, so 'add' will only be called once (and thus 'sort', etc.)
+				if ( models.length ) {
+					options = this.unsanitizeOptions( options );
+					this.related.add( models, options );
+				}
 			}
 		},
 		
@@ -828,10 +854,20 @@
 				this.related = attr;
 			}
 			// Otherwise, 'attr' should be an array of related object ids.
-			// Re-use the current 'this.related' if it is a Backbone.Collection.
+			// Re-use the current 'this.related' if it is a Backbone.Collection, and remove any current entries.
+			// Otherwise, create a new collection.
 			else {
-				var coll = this.related instanceof Backbone.Collection ? this.related : new this.collectionType();
-				this.setRelated( this.prepareCollection( coll ) );
+				var coll;
+
+				if ( this.related instanceof Backbone.Collection ) {
+					coll = this.related;
+					coll.reset( [], { silent: true } );
+				}
+				else {
+					coll = this.prepareCollection( new this.collectionType() );
+				}
+
+				this.setRelated( coll );
 				this.findRelated( options );
 			}
 			
@@ -919,6 +955,7 @@
 		
 		addRelated: function( model, options ) {
 			var dit = this;
+			options = this.unsanitizeOptions( options );
 			model.queue( function() { // Queued to avoid errors for adding 'model' to the 'this.related' set twice
 				if ( dit.related && !dit.related.getByCid( model ) && !dit.related.get( model ) ) {
 					dit.related.add( model, options );
@@ -927,6 +964,7 @@
 		},
 		
 		removeRelated: function( model, options ) {
+			options = this.unsanitizeOptions( options );
 			if ( this.related.getByCid( model ) || this.related.get( model ) ) {
 				this.related.remove( model, options );
 			}
@@ -1223,9 +1261,9 @@
 		 * and 'previousAttributes' will be available when the event is fired.
 		 */
 		change: function( options ) {
-			var dit = this;
+			var dit = this, args = arguments;
 			Backbone.Relational.eventQueue.add( function() {
-					Backbone.Model.prototype.change.apply( dit, arguments );
+					Backbone.Model.prototype.change.apply( dit, args );
 				});
 		},
 
@@ -1290,9 +1328,11 @@
 	var add = Backbone.Collection.prototype.__add = Backbone.Collection.prototype.add;
 	Backbone.Collection.prototype.add = function( models, options ) {
 		options || (options = {});
-		if (!_.isArray( models ) ) {
+		if ( !_.isArray( models ) ) {
 			models = [ models ];
 		}
+
+		var modelsToAdd = [];
 
 		//console.debug( 'calling add on coll=%o; model=%o, options=%o', this, models, options );
 		_.each( models, function( model ) {
@@ -1309,10 +1349,19 @@
 			}
 
 			if ( model instanceof Backbone.Model && !this.get( model ) && !this.getByCid( model ) ) {
-				add.call( this, model, options );
-				this.trigger('relational:add', model, this, options);
+				modelsToAdd.push( model );
 			}
 		}, this );
+
+
+		// Add 'models' in a single batch, so the original add will only be called once (and thus 'sort', etc).
+		if ( modelsToAdd.length ) {
+			add.call( this, modelsToAdd, options );
+
+			_.each( modelsToAdd, function( model ) {
+				this.trigger('relational:add', model, this, options);
+			}, this );
+		}
 		
 		return this;
 	};

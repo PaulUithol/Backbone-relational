@@ -38,10 +38,15 @@ $(document).ready(function() {
 		
 		return url;
 	};
-	
-	
+
+
+	/**
+	 * 'Zoo'
+	 */
+
 	window.Zoo = Backbone.RelationalModel.extend({
-		relations: [{
+		relations: [
+			{
 				type: Backbone.HasMany,
 				key: 'animals',
 				relatedModel: 'Animal',
@@ -50,7 +55,13 @@ $(document).ready(function() {
 					key: 'livesIn',
 					includeInJSON: 'id'
 				}
-			}]
+			},
+			{ // A simple HasMany without recursive relation
+				type: Backbone.HasMany,
+				key: 'visitors',
+				relatedModel: 'Visitor'
+			}
+		]
 	});
 
 	window.Animal = Backbone.RelationalModel.extend({
@@ -68,6 +79,12 @@ $(document).ready(function() {
 		model: Animal
 	});
 
+	window.Visitor = Backbone.RelationalModel.extend();
+
+
+	/**
+	 * House/Person/Job/Company
+	 */
 
 	window.House = Backbone.RelationalModel.extend({
 		relations: [{
@@ -86,7 +103,8 @@ $(document).ready(function() {
 	});
 
 	window.Person = Backbone.RelationalModel.extend({
-		relations: [{
+		relations: [
+			{
 				// Create a cozy, recursive, one-to-one relationship
 				type: Backbone.HasOne,
 				key: 'likesALot',
@@ -149,6 +167,7 @@ $(document).ready(function() {
 			}
 		]
 	});
+
 
 
 	window.Node = Backbone.RelationalModel.extend({
@@ -1325,7 +1344,7 @@ $(document).ready(function() {
 				});
 			
 			// Add job1 and job2 to the 'Person' side of the relation
-			var jobs = person1.get('jobs');
+			var jobs = person1.get( 'jobs' );
 			
 			jobs.add( job1 );
 			ok( jobs.length === 1, "jobs.length is 1" );
@@ -1380,7 +1399,24 @@ $(document).ready(function() {
 			ok( ourHouse.get( 'occupants' ).id === undefined );
 		});
 
-		test( "Setting a custom collection in 'relatedCollection' uses that collection for instantiation", function() {
+
+		test( "Setting a new collection or array of ids updates the relation", function() {
+			var zoo = new Zoo();
+
+			var visitors =  [
+				{ name: 'Paul' }
+			];
+
+			zoo.set( 'visitors', visitors );
+
+			equal( zoo.get( 'visitors' ).length, 1 );
+
+			zoo.set( 'visitors', [] );
+
+			equal( zoo.get( 'visitors' ).length, 0 );
+		});
+
+		test( "Setting a custom collection in 'collectionType' uses that collection for instantiation", function() {
 			var zoo = new Zoo();
 			
 			// Set values so that the relation gets filled
@@ -1397,6 +1433,52 @@ $(document).ready(function() {
 			
 			// Check that the generated collection is of the correct kind
 			ok( zoo.get( 'animals' ) instanceof AnimalCollection );
+		});
+
+		test( "Setting a new collection maintains that collection's current 'models'", function() {
+			var zoo = new Zoo();
+
+			var animals = new AnimalCollection([
+				{ id: 1, species: 'Lion' },
+				{ id: 2 ,species: 'Zebra' }
+			]);
+
+			zoo.set( 'animals', animals );
+
+			equal( zoo.get( 'animals' ).length, 2 );
+
+			var newAnimals = new AnimalCollection([
+				{ id: 2, species: 'Zebra' },
+				{ id: 3, species: 'Elephant' },
+				{ id: 4, species: 'Tiger' }
+			]);
+
+			zoo.set( 'animals', newAnimals );
+
+			equal( zoo.get( 'animals' ).length, 3 );
+		});
+
+		test( "Models found in 'findRelated' are all added in one go (so 'sort' will only be called once)", function() {
+			var count = 0,
+				sort = Backbone.Collection.prototype.sort;
+
+			Backbone.Collection.prototype.sort = function() {
+				count++;
+			};
+
+			AnimalCollection.prototype.comparator = $.noop;
+
+			var zoo = new Zoo({
+				animals: [
+					{ id: 1, species: 'Lion' },
+					{ id: 2 ,species: 'Zebra' }
+				]
+			});
+
+			equal( count, 1, "Sort is called only once" );
+
+			Backbone.Collection.prototype.sort = sort;
+			delete AnimalCollection.prototype.comparator;
 		});
 		
 		test( "Uses the collection's model method for building models", function() {
@@ -1507,6 +1589,38 @@ $(document).ready(function() {
 			zoo.set( 'animals', { id: 'lion-2' } );
 
 			equal( zoo.get( 'animals' ).length, 1, "There is 1 animal in the zoo" );
+		});
+
+		test( "Polymorhpic relations", function() {
+			var Location = Backbone.RelationalModel.extend();
+
+			var Locatable = Backbone.RelationalModel.extend({
+				relations: [
+					{
+						key: 'locations',
+						type: 'HasMany',
+						relatedModel: Location,
+						reverseRelation: {
+							key: 'locatable'
+						}
+					}
+				]
+			});
+
+			var FirstLocatable = Locatable.extend();
+			var SecondLocatable = Locatable.extend();
+
+			var firstLocatable = new FirstLocatable();
+			var secondLocatable = new SecondLocatable();
+
+			var firstLocation = new Location( { id: 1, locatable: firstLocatable } );
+			var secondLocation = new Location( { id: 2, locatable: secondLocatable } );
+
+			ok( firstLocatable.get( 'locations' ).at( 0 ) === firstLocation );
+			ok( firstLocatable.get( 'locations' ).at( 0 ).get( 'locatable' ) === firstLocatable );
+
+			ok( secondLocatable.get( 'locations' ).at( 0 ) === secondLocation );
+			ok( secondLocatable.get( 'locations' ).at( 0 ).get( 'locatable' ) === secondLocatable );
 		});
 		
 		
