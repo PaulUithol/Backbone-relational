@@ -177,6 +177,7 @@
 				model = model.constructor
 			}
 			
+			var partOfModel;
 			while( (partOfModel = model.prototype.partOfModel) && (model.prototype instanceof partOfModel) ) {
 				model = partOfModel
 			}
