@@ -146,12 +146,26 @@ For example, a Rails backend may provide the keys suffixed with `_id` or `_ids`.
 
 1. When a relation is instantiated, the contents of the `keySource` are used as it's initial data.
 2. The application uses the regular `key` attribute to interface with the relation and the models in it; the `keySource` is not available as an attribute for the model.
-3. When calling `toJSON` on a model (either via `Backbone.sync`, or directly), the data in the `key` attribute is tranformed and assigned to the `keySource`.
 
 So you may be provided with data containing `animal_ids`, while you want to access this relation as `zoo.get( 'animals' );`.
-When saving `zoo`, the `animals` attribute will be serialized back into the `animal_ids` key.
+
+**NOTE**: for backward compatibility reasons, setting `keySource` will set `keyDestination` as well. 
+This means that when saving `zoo`, the `animals` attribute will be serialized back into the `animal_ids` key.
 
 **WARNING**: when using a `keySource`, you should refrain from using that attribute name for other purposes.
+
+### keyDestination
+
+Value: a string. References an attribute to serialize `relatedModel` into.
+
+Used to override `key` (and `keySource`) when determining what attribute to be written into when serializing a relation, since the server backing your relations may use different naming conventions.
+For example, a Rails backend may expect the keys to be suffixed with `_attributes` for nested attributes.
+
+When calling `toJSON` on a model (either via `Backbone.sync`, or directly), the data in the `key` attribute is transformed and assigned to the `keyDestination`.
+
+So you may want a relation to be serialized into the `animals_attributes` key, while you want to access this relation as `zoo.get( 'animals' );`.
+
+**WARNING**: when using a `keyDestination`, you should refrain from using that attribute name for other purposes.
 
 ### collectionType
 
