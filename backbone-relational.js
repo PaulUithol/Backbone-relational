@@ -225,6 +225,7 @@
 		
 		find: function( type, id ) {
 			var coll = this.getCollection( type );
+			var obj;
 			if( coll && (obj = coll.get( id )) && (obj instanceof type) ) {
 				return obj;
 			}
@@ -299,9 +300,9 @@
 		
 		this.modelBuilder = this.options.modelBuilder;
 		if ( this.modelBuilder && !_.isFunction( this.modelBuilder ) ) {
-			modelBuildingMap = this.modelBuilder;
+			var modelBuildingMap = this.modelBuilder;
 			if ( _.isArray( modelBuildingMap ) ) {
-				newModelBuildingMap = {};
+				var newModelBuildingMap = {};
 				
 				_.each( modelBuildingMap, function( model ) {
 					if ( _.isString( model ) ) {
@@ -314,8 +315,9 @@
 				modelBuildingMap = newModelBuildingMap;
 			}
 						
-			dit = this
+			var dit = this
 			this.modelBuilder = function( attrs, options ) {
+			  var model;
 				if ( model = modelBuildingMap[ attrs.type ] ) {
 					if ( _.isString( model ) ) {
 						model = Backbone.Relational.store.getObjectByName( model );
@@ -480,13 +482,14 @@
 				return null;
 			}
 			
-			builtModel = this.modelBuilder( item )
+			var builtModel = this.modelBuilder( item )
 			
 			if ( !builtModel ) {
 				return null;
 			}
 			
-			partOfRelatedModel = false;
+			var partOfRelatedModel = false;
+			var m;
 			for( m = builtModel.constructor; !!m; m = m.prototype.partOfModel ) {
 				if ( m === this.relatedModel ) {
 					partOfRelatedModel = true;
@@ -503,7 +506,7 @@
 		
 		buildModel: function( item ) {	
 			// If we have a modelBuilder, use it.
-			model = this.buildModelUsingBuilder( item )
+			var model = this.buildModelUsingBuilder( item )
 			// If not: Use this.relatedModel
 			model || (model = new this.relatedModel( item ));
 			
@@ -756,7 +759,7 @@
 		
 		buildModel: function( item ) {		
 			// If we have a modelBuilder, use it.
-			model = this.buildModelUsingBuilder( item )
+			var model = this.buildModelUsingBuilder( item )
 			// If not: Respect the collection's custom #model implementation.
 			model || (model = new this.related.model( item ));
 			
