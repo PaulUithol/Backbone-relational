@@ -51,6 +51,7 @@ $(document).ready(function() {
 				key: 'animals',
 				relatedModel: 'Animal',
 				collectionType: 'AnimalCollection',
+				collectionOptions: function( instance ) { return { 'url':  'zoo/' + instance.cid + '/animal/' } },
 				reverseRelation: {
 					key: 'livesIn',
 					includeInJSON: 'id'
@@ -76,7 +77,12 @@ $(document).ready(function() {
 	});
 
 	window.AnimalCollection = Backbone.Collection.extend({
-		model: Animal
+		model: Animal,
+		
+		initialize: function( models, options ) {
+		    options || (options = {});
+	        this.url = options.url;
+		}
 	});
 
 	window.Visitor = Backbone.RelationalModel.extend();
@@ -691,6 +697,11 @@ $(document).ready(function() {
 			console.log( view, viewJSON, property1, property2 );
 		});
 		
+		test( "'collectionOptionsCallback' sets the options on the created HasMany Collections", function() {
+		    var zoo = new Zoo();
+		    ok( zoo.get("animals").url === "zoo/" + zoo.cid + "/animal/");
+		});
+		
 		
 	module( "Backbone.Relation preconditions" );
 		
@@ -1067,7 +1078,7 @@ $(document).ready(function() {
 		
 		
 	module( "Backbone.HasMany", { setup: initObjects } );
-		
+	
 		
 		test( "Listeners on 'add'/'remove'", function() {
 			expect( 7 );

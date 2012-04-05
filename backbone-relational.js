@@ -654,7 +654,8 @@
 		options: {
 			reverseRelation: { type: 'HasOne' },
 			collectionType: Backbone.Collection,
-			collectionKey: true
+			collectionKey: true,
+			collectionOptions: {}
 		},
 		
 		initialize: function() {
@@ -669,9 +670,15 @@
 			if ( !this.collectionType.prototype instanceof Backbone.Collection.prototype.constructor ){
 				throw new Error( 'collectionType must inherit from Backbone.Collection' );
 			}
-			
-			this.setRelated( this.prepareCollection( new this.collectionType() ) );
+
+			this.setRelated( this.prepareCollection( new this.collectionType( [], this._getCollectionOptions() ) ) );
 			this.findRelated( { silent: true } );
+		},
+		
+		_getCollectionOptions = function(){
+		    return _.isFunction( this.options.collectionOptions ) ?
+				this.options.collectionOptions( this.instance ) :
+				this.options.collectionOptions;
 		},
 		
 		prepareCollection: function( collection ) {
@@ -765,7 +772,7 @@
 					coll.reset( [], { silent: true } );
 				}
 				else {
-					coll = this.prepareCollection( new this.collectionType() );
+					coll = this.prepareCollection( new this.collectionType( this._getCollectionOptions() ) );
 				}
 
 				this.setRelated( coll );
