@@ -276,6 +276,7 @@
 		
 		this.key = this.options.key;
 		this.keySource = this.options.keySource || this.key;
+		this.keyDestination = this.options.keyDestination || this.options.keySource || this.key;
 
 		// 'exports' should be the global object where 'relatedModel' can be found on if given as a string.
 		this.relatedModel = this.options.relatedModel;
@@ -1202,21 +1203,21 @@
 				var value = json[ rel.key ];
 
 				if ( rel.options.includeInJSON === true && value && _.isFunction( value.toJSON ) ) {
-					json[ rel.keySource ] = value.toJSON();
+					json[ rel.keyDestination ] = value.toJSON();
 				}
 				else if ( _.isString( rel.options.includeInJSON ) ) {
 					if ( value instanceof Backbone.Collection ) {
-						json[ rel.keySource ] = value.pluck( rel.options.includeInJSON );
+						json[ rel.keyDestination ] = value.pluck( rel.options.includeInJSON );
 					}
 					else if ( value instanceof Backbone.Model ) {
-						json[ rel.keySource ] = value.get( rel.options.includeInJSON );
+						json[ rel.keyDestination ] = value.get( rel.options.includeInJSON );
 					}
 				}
 				else {
 					delete json[ rel.key ];
 				}
 
-				if ( rel.keySource !== rel.key ) {
+				if ( rel.keyDestination !== rel.key ) {
 					delete json[ rel.key ];
 				}
 			}, this );
