@@ -26,8 +26,7 @@ Backbone-relational provides one-to-one, one-to-many and many-to-one relations b
 
 Resources to get you started with Backbone-relational:
 
-* [A great tutorial by antoviaque](http://antoviaque.org/docs/tutorials/backbone-relational-tutorial/)
-** [And the accompanying git repository](https://github.com/antoviaque/backbone-relational-tutorial)
+* [A great tutorial by antoviaque](http://antoviaque.org/docs/tutorials/backbone-relational-tutorial/) ([and the accompanying git repository](https://github.com/antoviaque/backbone-relational-tutorial))
 
 
 ### <a name="installation"/>Installation
@@ -162,7 +161,7 @@ So you may be provided with data containing `animal_ids`, while you want to acce
 **NOTE**: for backward compatibility reasons, setting `keySource` will set `keyDestination` as well. 
 This means that when saving `zoo`, the `animals` attribute will be serialized back into the `animal_ids` key.
 
-**WARNING**: when using a `keySource`, you should refrain from using that attribute name for other purposes.
+**WARNING**: when using a `keySource`, you should not use that attribute name for other purposes.
 
 ### keyDestination
 
@@ -175,7 +174,7 @@ When calling `toJSON` on a model (either via `Backbone.sync`, or directly), the 
 
 So you may want a relation to be serialized into the `animals_attributes` key, while you want to access this relation as `zoo.get( 'animals' );`.
 
-**WARNING**: when using a `keyDestination`, you should refrain from using that attribute name for other purposes.
+**WARNING**: when using a `keyDestination`, you should not use that attribute name for other purposes.
 
 ### collectionType
 
