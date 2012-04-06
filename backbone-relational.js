@@ -672,22 +672,30 @@
 				throw new Error( 'collectionType must inherit from Backbone.Collection' );
 			}
 
-			this.setRelated( this.prepareCollection( new this.collectionType( [], this._getCollectionOptions() ) ) );
+			this.setRelated( this._prepareCollection() );
 			this.findRelated( { silent: true } );
 		},
 		
-		_getCollectionOptions = function(){
+		_getCollectionOptions: function() {
 		    return _.isFunction( this.options.collectionOptions ) ?
 				this.options.collectionOptions( this.instance ) :
 				this.options.collectionOptions;
 		},
-		
-		prepareCollection: function( collection ) {
+
+		/**
+		 * Bind events and setup collectionKeys for a collection that is to be used as the backing store for a HasMany.
+		 * @param {Backbone.Collection} [collection]
+		 */
+		_prepareCollection: function( collection ) {
 			if ( this.related ) {
 				this.related
 					.unbind( 'relational:add', this.handleAddition )
 					.unbind( 'relational:remove', this.handleRemoval )
 					.unbind( 'relational:reset', this.handleReset )
+			}
+
+			if ( !collection || !( collection instanceof Backbone.Collection ) ) {
+				collection = new this.collectionType( [], this._getCollectionOptions() );
 			}
 
 			collection.model = this.relatedModel;
@@ -759,7 +767,7 @@
 			
 			// Replace 'this.related' by 'attr' if it is a Backbone.Collection
 			if ( attr instanceof Backbone.Collection ) {
-				this.prepareCollection( attr );
+				this._prepareCollection( attr );
 				this.related = attr;
 			}
 			// Otherwise, 'attr' should be an array of related object ids.
@@ -773,7 +781,7 @@
 					coll.reset( [], { silent: true } );
 				}
 				else {
-					coll = this.prepareCollection( new this.collectionType( this._getCollectionOptions() ) );
+					coll = this._prepareCollection();
 				}
 
 				this.setRelated( coll );
