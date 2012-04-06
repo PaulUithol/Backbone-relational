@@ -14,14 +14,23 @@ Backbone-relational provides one-to-one, one-to-many and many-to-one relations b
 
 ## Contents
 
-* [Installation](#installation)
+* [Getting started](#getting-started)
 * [Backbone.Relation options](#backbone-relation)
 * [Backbone.RelationalModel](#backbone-relationalmodel)
 * [Example](#example)
 * [Known problems and solutions](#q-and-a)
 * [Under the hood](#under-the-hood)
 
-## <a name="installation"/>Installation
+
+## <a name="getting-started"/>Getting started
+
+Resources to get you started with Backbone-relational:
+
+* [A great tutorial by antoviaque](http://antoviaque.org/docs/tutorials/backbone-relational-tutorial/)
+** [And the accompanying git repository](https://github.com/antoviaque/backbone-relational-tutorial)
+
+
+### <a name="installation"/>Installation
 
 Backbone-relational depends on [backbone](https://github.com/documentcloud/backbone) (and thus on  [underscore](https://github.com/documentcloud/underscore)). Include Backbone-relational right after Backbone and Underscore:
 
@@ -32,6 +41,7 @@ Backbone-relational depends on [backbone](https://github.com/documentcloud/backb
 ```
 
 Backbone-relational has been tested with Backbone 0.9.0 (or newer) and Underscore 1.3.1 (or newer).
+
 
 ## <a name="backbone-relation"/>Backbone.Relation options
 
@@ -377,9 +387,29 @@ User = Backbone.RelationalModel.extend();
 
 ## <a name="q-and-a"/>Known problems and solutions
 
-> **Q:** After a fetch, `add:<key>` events don't occur for nested relations.
+> **Q:** (Reverse) relations don't seem to be initialized properly (and I'm using Coffeescript!)
 
-**A:** This is due to the `{silent: true}` in `Backbone.Collection.reset`. Pass `fetch( {add: true} )` to bypass this problem.
+**A:** You're probably using the syntax `class MyModel extends Backbone.RelationalModel` instead of `MyModel = Backbone.RelationalModel.extend`.
+This has advantages in CoffeeScript, but it also means that `Backbone.Model.extend` will not get called.
+Instead, CoffeeScript generates piece of code that would normally achieve roughly the same.
+However, `extend` is also the method that Backbone-relational overrides to set up relations as soon as your code gets parsed by the JavaScript engine.
+
+A possible solution is to initialize a blank placeholder model right after defining a model that contains reverseRelations; this will also bootstrap the relations. For example:
+
+```javascript
+class MyModel extends Backbone.RelationalModel
+	relations: [
+		// etc
+	]
+
+new MyModel
+```
+
+See [issue #91](https://github.com/PaulUithol/Backbone-relational/issues/91) for more information and workarounds.
+
+> **Q:** After a fetch, I don't get `add:<key>` events for nested relations.
+
+**A:** This is due to `Backbone.Collection.reset` silencing add events. Pass `fetch( {add: true} )` to bypass this problem.
 You may want to override `Backbone.Collection.fetch` for this, and also trigger an event when the fetch has finished while you're at it.
 Example:
 
