@@ -51,6 +51,7 @@ $(document).ready(function() {
 				key: 'animals',
 				relatedModel: 'Animal',
 				collectionType: 'AnimalCollection',
+				collectionOptions: function( instance ) { return { 'url':  'zoo/' + instance.cid + '/animal/' } },
 				reverseRelation: {
 					key: 'livesIn',
 					includeInJSON: 'id'
@@ -76,7 +77,12 @@ $(document).ready(function() {
 	});
 
 	window.AnimalCollection = Backbone.Collection.extend({
-		model: Animal
+		model: Animal,
+		
+		initialize: function( models, options ) {
+		    options || (options = {});
+	        this.url = options.url;
+		}
 	});
 
 	window.Visitor = Backbone.RelationalModel.extend();
@@ -677,7 +683,7 @@ $(document).ready(function() {
 			ok( person.get( 'user' ).get( 'resource_uri' ) == null );
 		});
 
-		test( "'keySource' loads from & saves to 'key'", function() {
+		test( "'keySource' loads from 'key", function() {
 			var Property = Backbone.RelationalModel.extend({
 				idAttribute: 'property_id'
 			});
@@ -717,12 +723,54 @@ $(document).ready(function() {
 			// The values from view.property_ids should be loaded into view.properties
 			ok( view.get( 'properties' ) && view.get( 'properties' ).length === 2, "'view' has two 'properties'" );
 			ok( typeof view.get( 'property_ids' ) === 'undefined', "'view' does not have 'property_ids'" );
+		});
+
+		test( "'keyDestination' saves to 'key'", function() {
+			var Property = Backbone.RelationalModel.extend({
+				idAttribute: 'property_id'
+			});
+			var View = Backbone.RelationalModel.extend({
+				idAttribute: 'id',
+
+				relations: [{
+					type: Backbone.HasMany,
+					key: 'properties',
+					keyDestination: 'properties_attributes',
+					relatedModel: Property,
+					reverseRelation: {
+						key: 'view',
+						keyDestination: 'view_attributes',
+						includeInJSON: true
+					}
+				}]
+			});
+
+			var property1 = new Property({
+				property_id: 1,
+				key: 'width',
+				value: 500,
+				view: 5
+			});
+
+			var view = new View({
+				id: 5,
+				properties: [ 2 ]
+			});
+
+			var property2 = new Property({
+				property_id: 2,
+				key: 'height',
+				value: 400
+			});
 
 			var viewJSON = view.toJSON();
-			ok( viewJSON.property_ids && viewJSON.property_ids.length === 2, "'viewJSON' has two 'property_ids'" );
+			ok( viewJSON.properties_attributes && viewJSON.properties_attributes.length === 2, "'viewJSON' has two 'properties_attributes'" );
 			ok( typeof viewJSON.properties === 'undefined', "'viewJSON' does not have 'properties'" );
-
-			console.log( view, viewJSON, property1, property2 );
+		});
+		
+		test( "'collectionOptionsCallback' sets the options on the created HasMany Collections", function() {
+		    var zoo = new Zoo();
+		    ok( zoo.get("animals").url === "zoo/" + zoo.cid + "/animal/");
 		});
 		
 		test( "Uses 'modelBuilder' function to build models for HasOne relations", function() {
@@ -1278,7 +1326,7 @@ $(document).ready(function() {
 		
 		
 	module( "Backbone.HasMany", { setup: initObjects } );
-		
+	
 		
 		test( "Listeners on 'add'/'remove'", function() {
 			expect( 7 );

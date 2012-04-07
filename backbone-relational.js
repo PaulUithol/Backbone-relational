@@ -292,6 +292,7 @@
 		
 		this.key = this.options.key;
 		this.keySource = this.options.keySource || this.key;
+		this.keyDestination = this.options.keyDestination || this.options.keySource || this.key;
 
 		// 'exports' should be the global object where 'relatedModel' can be found on if given as a string.
 		this.relatedModel = this.options.relatedModel;
@@ -738,7 +739,8 @@
 		options: {
 			reverseRelation: { type: 'HasOne' },
 			collectionType: Backbone.Collection,
-			collectionKey: true
+			collectionKey: true,
+			collectionOptions: {}
 		},
 		
 		initialize: function() {
@@ -753,8 +755,8 @@
 			if ( !this.collectionType.prototype instanceof Backbone.Collection.prototype.constructor ){
 				throw new Error( 'collectionType must inherit from Backbone.Collection' );
 			}
-			
-			this.setRelated( this.prepareCollection( new this.collectionType() ) );
+
+			this.setRelated( this._prepareCollection() );
 			this.findRelated( { silent: true } );
 		},
 		
@@ -767,12 +769,26 @@
 			return model;
 		},
 		
-		prepareCollection: function( collection ) {
+		_getCollectionOptions: function() {
+		    return _.isFunction( this.options.collectionOptions ) ?
+				this.options.collectionOptions( this.instance ) :
+				this.options.collectionOptions;
+		},
+
+		/**
+		 * Bind events and setup collectionKeys for a collection that is to be used as the backing store for a HasMany.
+		 * @param {Backbone.Collection} [collection]
+		 */
+		_prepareCollection: function( collection ) {
 			if ( this.related ) {
 				this.related
 					.unbind( 'relational:add', this.handleAddition )
 					.unbind( 'relational:remove', this.handleRemoval )
 					.unbind( 'relational:reset', this.handleReset )
+			}
+			
+			if ( !collection || !( collection instanceof Backbone.Collection ) ) {
+				collection = new this.collectionType( [], this._getCollectionOptions() );
 			}
 			
 			// If we have a modelBuilder, make sure this is used to build models
@@ -854,7 +870,7 @@
 			
 			// Replace 'this.related' by 'attr' if it is a Backbone.Collection
 			if ( attr instanceof Backbone.Collection ) {
-				this.prepareCollection( attr );
+				this._prepareCollection( attr );
 				this.related = attr;
 			}
 			// Otherwise, 'attr' should be an array of related object ids.
@@ -868,7 +884,7 @@
 					coll.reset( [], { silent: true } );
 				}
 				else {
-					coll = this.prepareCollection( new this.collectionType() );
+					coll = this._prepareCollection();
 				}
 
 				this.setRelated( coll );
@@ -1300,21 +1316,21 @@
 				var value = json[ rel.key ];
 
 				if ( rel.options.includeInJSON === true && value && _.isFunction( value.toJSON ) ) {
-					json[ rel.keySource ] = value.toJSON();
+					json[ rel.keyDestination ] = value.toJSON();
 				}
 				else if ( _.isString( rel.options.includeInJSON ) ) {
 					if ( value instanceof Backbone.Collection ) {
-						json[ rel.keySource ] = value.pluck( rel.options.includeInJSON );
+						json[ rel.keyDestination ] = value.pluck( rel.options.includeInJSON );
 					}
 					else if ( value instanceof Backbone.Model ) {
-						json[ rel.keySource ] = value.get( rel.options.includeInJSON );
+						json[ rel.keyDestination ] = value.get( rel.options.includeInJSON );
 					}
 				}
 				else {
 					delete json[ rel.key ];
 				}
 
-				if ( rel.keySource !== rel.key ) {
+				if ( rel.keyDestination !== rel.key ) {
 					delete json[ rel.key ];
 				}
 			}, this );

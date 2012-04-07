@@ -14,14 +14,22 @@ Backbone-relational provides one-to-one, one-to-many and many-to-one relations b
 
 ## Contents
 
-* [Installation](#installation)
+* [Getting started](#getting-started)
 * [Backbone.Relation options](#backbone-relation)
 * [Backbone.RelationalModel](#backbone-relationalmodel)
 * [Example](#example)
 * [Known problems and solutions](#q-and-a)
 * [Under the hood](#under-the-hood)
 
-## <a name="installation"/>Installation
+
+## <a name="getting-started"/>Getting started
+
+Resources to get you started with Backbone-relational:
+
+* [A great tutorial by antoviaque](http://antoviaque.org/docs/tutorials/backbone-relational-tutorial/) ([and the accompanying git repository](https://github.com/antoviaque/backbone-relational-tutorial))
+
+
+### <a name="installation"/>Installation
 
 Backbone-relational depends on [backbone](https://github.com/documentcloud/backbone) (and thus on  [underscore](https://github.com/documentcloud/underscore)). Include Backbone-relational right after Backbone and Underscore:
 
@@ -32,6 +40,7 @@ Backbone-relational depends on [backbone](https://github.com/documentcloud/backb
 ```
 
 Backbone-relational has been tested with Backbone 0.9.0 (or newer) and Underscore 1.3.1 (or newer).
+
 
 ## <a name="backbone-relation"/>Backbone.Relation options
 
@@ -146,12 +155,26 @@ For example, a Rails backend may provide the keys suffixed with `_id` or `_ids`.
 
 1. When a relation is instantiated, the contents of the `keySource` are used as it's initial data.
 2. The application uses the regular `key` attribute to interface with the relation and the models in it; the `keySource` is not available as an attribute for the model.
-3. When calling `toJSON` on a model (either via `Backbone.sync`, or directly), the data in the `key` attribute is tranformed and assigned to the `keySource`.
 
 So you may be provided with data containing `animal_ids`, while you want to access this relation as `zoo.get( 'animals' );`.
-When saving `zoo`, the `animals` attribute will be serialized back into the `animal_ids` key.
 
-**WARNING**: when using a `keySource`, you should refrain from using that attribute name for other purposes.
+**NOTE**: for backward compatibility reasons, setting `keySource` will set `keyDestination` as well. 
+This means that when saving `zoo`, the `animals` attribute will be serialized back into the `animal_ids` key.
+
+**WARNING**: when using a `keySource`, you should not use that attribute name for other purposes.
+
+### keyDestination
+
+Value: a string. References an attribute to serialize `relatedModel` into.
+
+Used to override `key` (and `keySource`) when determining what attribute to be written into when serializing a relation, since the server backing your relations may use different naming conventions.
+For example, a Rails backend may expect the keys to be suffixed with `_attributes` for nested attributes.
+
+When calling `toJSON` on a model (either via `Backbone.sync`, or directly), the data in the `key` attribute is transformed and assigned to the `keyDestination`.
+
+So you may want a relation to be serialized into the `animals_attributes` key, while you want to access this relation as `zoo.get( 'animals' );`.
+
+**WARNING**: when using a `keyDestination`, you should not use that attribute name for other purposes.
 
 ### collectionType
 
@@ -170,6 +193,13 @@ Used to create a back reference from the `Backbone.Collection` used for a `HasMa
 By default, the relation's `key` attribute will be used to create a reference to the RelationalModel instance from the generated collection.
 If you set `collectionKey` to a string, it will use that string as the reference to the RelationalModel, rather than the relation's `key` attribute.
 If you don't want this behavior at all, set `collectionKey` to false (or any falsy value) and this reference will not be created.
+
+### collectionOptions
+
+Value: an options hash or a function that accepts an instance of a `Backbone.RelationalModed` and returns an option hash
+
+Used to provide options for the initialization of the collection in the "Many"-end of a `HasMany` relation. Can be an options hash or
+a function that should take the instance in the "One"-end of the "HasMany" relation and return an options hash
 
 ### includeInJSON
 
@@ -404,9 +434,29 @@ User = Backbone.RelationalModel.extend();
 
 ## <a name="q-and-a"/>Known problems and solutions
 
-> **Q:** After a fetch, `add:<key>` events don't occur for nested relations.
+> **Q:** (Reverse) relations don't seem to be initialized properly (and I'm using Coffeescript!)
 
-**A:** This is due to the `{silent: true}` in `Backbone.Collection.reset`. Pass `fetch( {add: true} )` to bypass this problem.
+**A:** You're probably using the syntax `class MyModel extends Backbone.RelationalModel` instead of `MyModel = Backbone.RelationalModel.extend`.
+This has advantages in CoffeeScript, but it also means that `Backbone.Model.extend` will not get called.
+Instead, CoffeeScript generates piece of code that would normally achieve roughly the same.
+However, `extend` is also the method that Backbone-relational overrides to set up relations as soon as your code gets parsed by the JavaScript engine.
+
+A possible solution is to initialize a blank placeholder model right after defining a model that contains reverseRelations; this will also bootstrap the relations. For example:
+
+```javascript
+class MyModel extends Backbone.RelationalModel
+	relations: [
+		// etc
+	]
+
+new MyModel
+```
+
+See [issue #91](https://github.com/PaulUithol/Backbone-relational/issues/91) for more information and workarounds.
+
+> **Q:** After a fetch, I don't get `add:<key>` events for nested relations.
+
+**A:** This is due to `Backbone.Collection.reset` silencing add events. Pass `fetch( {add: true} )` to bypass this problem.
 You may want to override `Backbone.Collection.fetch` for this, and also trigger an event when the fetch has finished while you're at it.
 Example:
 
