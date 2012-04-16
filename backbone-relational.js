@@ -159,6 +159,9 @@
 		retroFitRelation: function( relation ) {
 			var coll = this.getCollection( relation.model );
 			coll.each( function( model ) {
+				if( !(model instanceof relation.model) ) {
+					return;
+				}
 				new relation.type( model, relation );
 			}, this);
 		},
@@ -169,9 +172,18 @@
 		 * @return {Backbone.Collection} A collection if found (or applicable for 'model'), or null
 		 */
 		getCollection: function( model ) {
-			var coll =  _.detect( this._collections, function( c ) {
-					// Check if model is the type itself (a ref to the constructor), or is of type c.model
-					return model === c.model || model.constructor === c.model;
+			// If 'model' is an instance, take its constructor
+			if ( model instanceof Backbone.RelationalModel ) {
+				model = model.constructor
+			}
+			
+			var partOfModel;
+			while( (partOfModel = model.prototype.partOfModel) && (model.prototype instanceof partOfModel) ) {
+				model = partOfModel
+			}
+			
+			var coll =	_.detect( this._collections, function( c ) {
+					return model === c.model
 				});
 			
 			if ( !coll ) {
@@ -196,7 +208,7 @@
 		_createCollection: function( type ) {
 			var coll;
 			
-			// If 'type' is an instance, take it's constructor
+			// If 'type' is an instance, take its constructor
 			if ( type instanceof Backbone.RelationalModel ) {
 				type = type.constructor;
 			}
@@ -240,7 +252,11 @@
 		find: function( type, item ) {
 			var id = this.resolveIdForItem( type, item );
 			var coll = this.getCollection( type );
-			return coll && coll.get( id );
+			var obj;
+			if( coll && (obj = coll.get( id )) && (obj instanceof type) ) {
+				return obj;
+			}
+			return null
 		},
 		
 		/**
@@ -309,6 +325,38 @@
 		if ( _.isString( this.relatedModel ) ) {
 			this.relatedModel = Backbone.Relational.store.getObjectByName( this.relatedModel );
 		}
+		
+		this.modelBuilder = this.options.modelBuilder;
+		if ( this.modelBuilder && !_.isFunction( this.modelBuilder ) ) {
+			var modelBuildingMap = this.modelBuilder;
+			if ( _.isArray( modelBuildingMap ) ) {
+				var newModelBuildingMap = {};
+				
+				_.each( modelBuildingMap, function( model ) {
+					if ( _.isString( model ) ) {
+						model = Backbone.Relational.store.getObjectByName( model );
+					}
+					
+					newModelBuildingMap[ model.prototype.type ] = model;
+				});
+				
+				modelBuildingMap = newModelBuildingMap;
+			}
+						
+			var dit = this
+			this.modelBuilder = function( attrs, options ) {
+			  var model;
+				if ( model = modelBuildingMap[ attrs.type ] ) {
+					if ( _.isString( model ) ) {
+						model = Backbone.Relational.store.getObjectByName( model );
+					}
+					
+					return new model( attrs, options);
+				}
+				
+				return new dit.relatedModel( attrs, options )
+			}
+		}
 
 		if ( !this.checkPreconditions() ) {
 			return false;
@@ -353,7 +401,7 @@
 				.bind( 'relational:remove', this._relatedModelRemoved );
 		}
 	};
-	// Fix inheritance :\
+
 	Backbone.Relation.extend = Backbone.Model.extend;
 	// Set up all inheritable **Backbone.Relation** properties and methods.
 	_.extend( Backbone.Relation.prototype, Backbone.Events, Backbone.Semaphore, {
@@ -453,8 +501,44 @@
 		
 		createModel: function( item ) {
 			if ( this.options.createModels && typeof( item ) === 'object' ) {
-				return new this.relatedModel( item );
+				return this.buildModel( item );
 			}
+		},
+		
+		buildModelUsingBuilder: function( item ) {
+			if ( !this.modelBuilder || !_.isFunction( this.modelBuilder ) ) {
+				return null;
+			}
+			
+			var builtModel = this.modelBuilder( item )
+			
+			if ( !builtModel ) {
+				return null;
+			}
+			
+			var partOfRelatedModel = false;
+			var m;
+			for( m = builtModel.constructor; !!m; m = m.prototype.partOfModel ) {
+				if ( m === this.relatedModel ) {
+					partOfRelatedModel = true;
+					break;
+				}
+			}
+			
+			if ( !partOfRelatedModel || !(builtModel instanceof this.relatedModel)) {
+				return null;
+			}
+			
+			return builtModel;
+		},
+		
+		buildModel: function( item ) {	
+			// If we have a modelBuilder, use it.
+			var model = this.buildModelUsingBuilder( item )
+			// If not: Use this.relatedModel
+			model || (model = new this.relatedModel( item ));
+			
+			return model;
 		},
 		
 		/**
@@ -709,6 +793,15 @@
 			this.findRelated( { silent: true } );
 		},
 		
+		buildModel: function( item ) {		
+			// If we have a modelBuilder, use it.
+			var model = this.buildModelUsingBuilder( item )
+			// If not: Respect the collection's custom #model implementation.
+			model || (model = new this.related.model( item ));
+			
+			return model;
+		},
+		
 		_getCollectionOptions: function() {
 		    return _.isFunction( this.options.collectionOptions ) ?
 				this.options.collectionOptions( this.instance ) :
@@ -727,12 +820,22 @@
 					.unbind( 'relational:remove', this.handleRemoval )
 					.unbind( 'relational:reset', this.handleReset )
 			}
-
+			
 			if ( !collection || !( collection instanceof Backbone.Collection ) ) {
 				collection = new this.collectionType( [], this._getCollectionOptions() );
 			}
-
-			collection.model = this.relatedModel;
+			
+			// If we have a modelBuilder, make sure this is used to build models
+			// from objects passed directly to the collection as well.
+			if ( this.modelBuilder && typeof this.modelBuilder === "function" ) {
+				collection.model = this.modelBuilder
+			}
+			// If the collection doesn't have a model specified, make sure it 
+			// casts objects passed directly to the collection as relatedModel.
+			else if( collection.model === Backbone.Model ) {
+				collection.model = this.relatedModel;
+			}
+			// Else: Respect the collection's custom #model implementation.
 			
 			if ( this.options.collectionKey ) {
 				var key = this.options.collectionKey === true ? this.options.reverseRelation.key : this.options.collectionKey;
@@ -940,7 +1043,9 @@
 		_deferProcessing: false,
 		_queue: null,
 		
-		constructor: function( attributes, options ) {
+		partOfModel: null,
+		
+		constructor: function( attributes, options ) {			
 			// Nasty hack, for cases like 'model.get( <HasMany key> ).add( item )'.
 			// Defer 'processQueue', so that when 'Relation.createModels' is used we:
 			// a) Survive 'Backbone.Collection.add'; this takes care we won't error on "can't add model to a set twice"
@@ -1092,12 +1197,12 @@
 					var model;
 
 					if ( typeof( item ) === 'object' ) {
-						model = new rel.relatedModel( item );
+						model = rel.buildModel( item );
 					}
 					else {
 						var attrs = {};
 						attrs[ rel.relatedModel.prototype.idAttribute ] = item;
-						model = new rel.relatedModel( attrs );
+						model = rel.buildModel( attrs );
 					}
 
 					return model;

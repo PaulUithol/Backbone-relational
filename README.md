@@ -216,6 +216,37 @@ Value: a boolean. Default: `true`.
 
 Should models be created from nested objects, or not?
 
+### modelBuilder 
+
+Value: an array of strings (which can be resolved to an object type on the global scope);
+an array of references to `Backbone.RelationalModel` types;
+an object mapping type strings to strings (which can be resolved to an object type on the global scope);
+an object mapping type strings to references to `Backbone.RelationalModel` types;
+a function returning a new `Backbone.RelationalModel` instance. 
+Default: `null`.
+
+Used to build a model based on the attributes provided. 
+
+Note that this option will only have effect if the built model is an
+instance of `relatedModel` itself or of a type that extends `relatedModel`,
+and if that type is defined to be regarded a part of `relatedModel` using the
+[`partOfModel`](#property-part-of-model) property.
+
+###### **If an array (`modelBuilder: [ ModelA, ModelB ]`)**
+Build a model based on the `type` attribute of the object for which a model
+should be built, which should equal the `type` property on one of the model 
+types in the array.
+
+###### **If an object (`modelBuilder: { "a": ModelA, "b": ModelB }`)**
+Build a model based on the `type` attribute of the object for which a model
+should be built, which should equal the key for one of the model types in this
+object.
+
+###### **If a function (`modelBuilder(attrs<object>, options<object>)`)**
+Build a model by calling this method with the attributes of the object for
+which a model should be built. Be sure to pass the specified `attrs` and 
+`options` to the constructor for the new `Backbone.RelationalModel` instance.
+
 ### reverseRelation
 
 If the relation should be bidirectional, specify the details for the reverse relation here.
@@ -225,7 +256,7 @@ It's only mandatory to supply a `key`; `relatedModel` is automatically set. The 
 
 ## <a name="backbone-relationalmodel"/>Backbone.RelationalModel
 
-`Backbone.RelationalModel` introduces a couple of new methods and events.
+`Backbone.RelationalModel` introduces a couple of new methods, events and properties.
 
 ### Methods
 
@@ -253,6 +284,23 @@ See the example at the top of [Backbone.Relation options](#backbone-relation) or
   Bind to `remove:<key>`; arguments: `(removedModel<Backbone.Model>, related<Backbone.Collection>)`.
 * `update`: triggered on changes to the key itself on `HasMany` and `HasOne` relations.  
   Bind to `update:<key>`; arguments: `(model<Backbone.Model>, related<Backbone.Model|Backbone.Collection>)`.
+    
+### Properties
+
+###### **<a name="property-part-of-model"/>partOfModel**
+
+Value: a reference to a `Backbone.RelationalModel` type. Default: `null`.
+
+Should this model be considered a part of the specified model? Suppose `Cow` 
+extends `Animal` and has `partOfModel` set to `Animal`. Relations on other
+objects with type `Animal` will now also look for `Cow` objects. 
+
+Note that this means that there cannot be any overlap in ids between objects 
+of types `Animal` and `Cow`, as `Cow` objects are regarded specific kinds of 
+`Animal` objects.
+
+Note that this property will only have effect if its value is equal to the 
+model that the model in question extends.
 
 ## <a name="example"/>Example
 
