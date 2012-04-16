@@ -1223,7 +1223,36 @@ $(document).ready(function() {
 
 			equal( zoo.get( 'animals' ).length, 1, "Still just 1 elephant in the zoo" );
 		});
-	
+
+		test( "collections can also be passed as attributes on creation", function() {
+			var animals = new AnimalCollection([
+				{ id: 1, species: 'Lion' },
+				{ id: 2 ,species: 'Zebra' }
+			]);
+
+			var zoo = new Zoo( { animals: animals } );
+			console.log( zoo.get( 'animals' ), zoo.get( 'animals' ).models );
+
+			equal( zoo.get( 'animals' ), animals, "The 'animals' collection has been set as the zoo's animals" );
+			equal( zoo.get( 'animals' ).length, 2, "Two animals in 'zoo'" );
+
+			zoo.destroy();
+
+			var newZoo = new Zoo( { animals: animals.models } );
+
+			ok( newZoo.get( 'animals' ).length === 2, "Two animals in the 'newZoo'" );
+		});
+
+		test( "models can also be passed as attributes on creation", function() {
+			var artis = new Zoo( { name: 'Artis' } );
+
+			var animal = new Animal( { species: 'Hippo', livesIn: artis });
+
+			equal( artis.get( 'animals' ).at( 0 ), animal, "Artis has a Hippo" );
+			equal( animal.get( 'livesIn' ), artis, "The Hippo is in Artis" );
+		});
+
+
 	module( "Backbone.HasOne", { setup: initObjects } );
 		
 		

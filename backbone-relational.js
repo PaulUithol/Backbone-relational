@@ -4,7 +4,7 @@
  * 
  * Backbone-relational may be freely distributed under the MIT license.
  * For details and documentation: https://github.com/PaulUithol/Backbone-relational.
- * Depends on (as in, compeletely useless without) Backbone: https://github.com/documentcloud/backbone.
+ * Depends on Backbone: https://github.com/documentcloud/backbone.
  */
 ( function( undefined ) {
 	"use strict";
@@ -223,8 +223,34 @@
 			
 			return coll;
 		},
-		
-		find: function( type, id ) {
+
+		/**
+		 * Find an id
+		 * @param type
+		 * @param {String|Number|Object|Backbone.RelationalModel} item
+		 */
+		resolveIdForItem: function( type, item ) {
+			var id = _.isString( item ) || _.isNumber( item ) ? item : null;
+
+			if ( id == null ) {
+				if ( item instanceof Backbone.RelationalModel ) {
+					id = item.id;
+				}
+				else if ( _.isObject( item ) ) {
+					id = item[ type.prototype.idAttribute ];
+				}
+			}
+
+			return id;
+		},
+
+		/**
+		 *
+		 * @param type
+		 * @param {String|Number|Object|Backbone.RelationalModel} item
+		 */
+		find: function( type, item ) {
+			var id = this.resolveIdForItem( type, item );
 			var coll = this.getCollection( type );
 			var obj;
 			if( coll && (obj = coll.get( id )) && (obj instanceof type) ) {
@@ -622,10 +648,10 @@
 			if ( item instanceof this.relatedModel ) {
 				model = item;
 			}
-			else if ( item && ( _.isString( item ) || _.isNumber( item ) || typeof( item ) === 'object' ) ) {
+			else if ( item ) {
 				// Try to find an instance of the appropriate 'relatedModel' in the store, or create it
-				var id = _.isString( item ) || _.isNumber( item ) ? item : item[ this.relatedModel.prototype.idAttribute ];
-				model = Backbone.Relational.store.find( this.relatedModel, id );
+				model = Backbone.Relational.store.find( this.relatedModel, item );
+
 				if ( model && _.isObject( item ) ) {
 					model.set( item, options );
 				}
@@ -704,8 +730,8 @@
 			options = this.sanitizeOptions( options );
 			
 			var item = this.keyContents;
-			if ( item && ( _.isString( item ) || _.isNumber( item ) || typeof( item ) === 'object' ) ) {
-				var id = _.isString( item ) || _.isNumber( item ) ? item : item[ this.relatedModel.prototype.idAttribute ];
+			if ( item ) {
+				var id = Backbone.Relational.store.resolveIdForItem( this.relatedModel, item );
 				if ( model.id === id ) {
 					this.addRelated( model, options );
 				}
@@ -756,7 +782,14 @@
 				throw new Error( 'collectionType must inherit from Backbone.Collection' );
 			}
 
-			this.setRelated( this._prepareCollection() );
+			// Handle cases where a model/relation is created with a collection passed straight into 'attributes'
+			if ( this.keyContents instanceof Backbone.Collection ) {
+				this.setRelated( this._prepareCollection( this.keyContents ) );
+			}
+			else {
+				this.setRelated( this._prepareCollection() );
+			}
+
 			this.findRelated( { silent: true } );
 		},
 		
@@ -777,6 +810,7 @@
 
 		/**
 		 * Bind events and setup collectionKeys for a collection that is to be used as the backing store for a HasMany.
+		 * If no 'collection' is supplied, a new collection will be created of the specified 'collectionType' option.
 		 * @param {Backbone.Collection} [collection]
 		 */
 		_prepareCollection: function( collection ) {
@@ -826,27 +860,31 @@
 		
 		findRelated: function( options ) {
 			if ( this.keyContents ) {
-				// Handle cases the an API/user supplies just an Object/id instead of an Array
-				this.keyContents = _.isArray( this.keyContents ) ? this.keyContents : [ this.keyContents ];
-
 				var models = [];
 
-				// Try to find instances of the appropriate 'relatedModel' in the store
-				_.each( this.keyContents, function( item ) {
-					var id = _.isString( item ) || _.isNumber( item ) ? item : item[ this.relatedModel.prototype.idAttribute ];
-					
-					var model = Backbone.Relational.store.find( this.relatedModel, id );
-					if ( model && _.isObject( item ) ) {
-						model.set( item, options );
-					}
-					else if ( !model ) {
-						model = this.createModel( item );
-					}
-					
-					if ( model && !this.related.getByCid( model ) && !this.related.get( model ) ) {
-						models.push( model );
-					}
-				}, this );
+				if ( this.keyContents instanceof Backbone.Collection ) {
+					models = this.keyContents.models;
+				}
+				else {
+					// Handle cases the an API/user supplies just an Object/id instead of an Array
+					this.keyContents = _.isArray( this.keyContents ) ? this.keyContents : [ this.keyContents ];
+
+					// Try to find instances of the appropriate 'relatedModel' in the store
+					_.each( this.keyContents, function( item ) {
+						var model = Backbone.Relational.store.find( this.relatedModel, item );
+
+						if ( model && _.isObject( item ) ) {
+							model.set( item, options );
+						}
+						else if ( !model ) {
+							model = this.createModel( item );
+						}
+
+						if ( model && !this.related.getByCid( model ) && !this.related.get( model ) ) {
+							models.push( model );
+						}
+					}, this );
+				}
 
 				// Add all found 'models' in on go, so 'add' will only be called once (and thus 'sort', etc.)
 				if ( models.length ) {
@@ -907,7 +945,7 @@
 			if ( !this.related.getByCid( model ) && !this.related.get( model ) ) {
 				// Check if this new model was specified in 'this.keyContents'
 				var item = _.any( this.keyContents, function( item ) {
-					var id = _.isString( item ) || _.isNumber( item ) ? item : item[ this.relatedModel.prototype.idAttribute ];
+					var id = Backbone.Relational.store.resolveIdForItem( this.relatedModel, item );
 					return id && id === model.id;
 				}, this );
 				
@@ -1149,7 +1187,7 @@
 				rel = this.getRelation( key ),
 				keyContents = rel && rel.keyContents,
 				toFetch = keyContents && _.select( _.isArray( keyContents ) ? keyContents : [ keyContents ], function( item ) {
-					var id = _.isString( item ) || _.isNumber( item ) ? item : item[ rel.relatedModel.prototype.idAttribute ];
+					var id = Backbone.Relational.store.resolveIdForItem( rel.relatedModel, item );
 					return id && !Backbone.Relational.store.find( rel.relatedModel, id );
 				}, this );
 			
