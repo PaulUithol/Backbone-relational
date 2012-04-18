@@ -816,7 +816,7 @@
 
 				if ( this.related instanceof Backbone.Collection ) {
 					coll = this.related;
-					coll.reset( [], { silent: true } );
+					coll.remove( coll.models );
 				}
 				else {
 					coll = this._prepareCollection();
