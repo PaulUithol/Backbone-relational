@@ -116,7 +116,7 @@
 	 * Backbone.Store keeps track of all created (and destruction of) Backbone.RelationalModel.
 	 * Handles lookup for relations.
 	 */
-	Backbone.Store =  function() {
+	Backbone.Store = function() {
 		this._collections = [];
 		this._reverseRelations = [];
 	};
@@ -143,10 +143,18 @@
 			if ( !exists && relation.model && relation.type ) {
 				this._reverseRelations.push( relation );
 				
-				if ( !relation.model.prototype.relations ) {
-					relation.model.prototype.relations = [];
+				var addRelation = function( model, relation ) {
+					if ( !model.prototype.relations ) {
+						model.prototype.relations = [];
+					}
+					model.prototype.relations.push( relation );
+					
+					_.each( model._submodels, function( submodel ) {
+							addRelation( submodel, relation );
+						}, this );
 				}
-				relation.model.prototype.relations.push( relation );
+				
+				addRelation( relation.model, relation );
 				
 				this.retroFitRelation( relation );
 			}
@@ -159,6 +167,9 @@
 		retroFitRelation: function( relation ) {
 			var coll = this.getCollection( relation.model );
 			coll.each( function( model ) {
+				if ( !(model instanceof relation.model) ) {
+					return;
+				}
 				new relation.type( model, relation );
 			}, this);
 		},
@@ -168,10 +179,18 @@
 		 * @param {Backbone.RelationalModel} model
 		 * @return {Backbone.Collection} A collection if found (or applicable for 'model'), or null
 		 */
-		getCollection: function( model ) {
-			var coll =  _.detect( this._collections, function( c ) {
-					// Check if model is the type itself (a ref to the constructor), or is of type c.model
-					return model === c.model || model.constructor === c.model;
+		getCollection: function( model ) { 
+			if ( model instanceof Backbone.RelationalModel ) {
+				model = model.constructor;
+			}
+			
+			var rootModel = model;
+			while ( rootModel._supermodel ) {
+				rootModel = rootModel._supermodel;
+			}
+			
+			var coll = _.detect( this._collections, function( c ) {
+					return c.model === rootModel;
 				});
 			
 			if ( !coll ) {
@@ -196,7 +215,7 @@
 		_createCollection: function( type ) {
 			var coll;
 			
-			// If 'type' is an instance, take it's constructor
+			// If 'type' is an instance, take its constructor
 			if ( type instanceof Backbone.RelationalModel ) {
 				type = type.constructor;
 			}
@@ -240,7 +259,14 @@
 		find: function( type, item ) {
 			var id = this.resolveIdForItem( type, item );
 			var coll = this.getCollection( type );
-			return coll && coll.get( id );
+			
+			// Because the found object could be of any of the type's supermodel
+			// types, only return it if it's actually of the type asked for.
+			var obj;
+			if ( coll && (obj = coll.get( id )) && (obj instanceof type) ) {
+				return obj;
+			}
+			return null;
 		},
 		
 		/**
@@ -284,7 +310,7 @@
 	 * @param {object} options
 	 * @param {string} options.key
 	 * @param {Backbone.RelationalModel.constructor} options.relatedModel
-	 * @param {Boolean|String} [options.includeInJSON=true] Serialize the given attribute for related model(s)' in toJSON,  or just their ids.
+	 * @param {Boolean|String} [options.includeInJSON=true] Serialize the given attribute for related model(s)' in toJSON, or just their ids.
 	 * @param {Boolean} [options.createModels=true] Create objects from the contents of keys if the object is not found in Backbone.store.
 	 * @param {object} [options.reverseRelation] Specify a bi-directional relation. If provided, Relation will reciprocate
 	 *    the relation to the 'relatedModel'. Required and optional properties match 'options', except that it also needs
@@ -453,7 +479,7 @@
 		
 		createModel: function( item ) {
 			if ( this.options.createModels && typeof( item ) === 'object' ) {
-				return new this.relatedModel( item );
+				return this.relatedModel.build( item );
 			}
 		},
 		
@@ -710,7 +736,7 @@
 		},
 		
 		_getCollectionOptions: function() {
-		    return _.isFunction( this.options.collectionOptions ) ?
+			return _.isFunction( this.options.collectionOptions ) ?
 				this.options.collectionOptions( this.instance ) :
 				this.options.collectionOptions;
 		},
@@ -768,13 +794,19 @@
 
 					// Try to find instances of the appropriate 'relatedModel' in the store
 					_.each( this.keyContents, function( item ) {
-						var model = Backbone.Relational.store.find( this.relatedModel, item );
-
-						if ( model && _.isObject( item ) ) {
-							model.set( item, options );
+						var model = null;
+						if ( item instanceof this.relatedModel ) {
+							model = item;
 						}
-						else if ( !model ) {
-							model = this.createModel( item );
+						else {
+							model = Backbone.Relational.store.find( this.relatedModel, item );
+
+							if ( model && _.isObject( item ) ) {
+								model.set( item, options );
+							}
+							else if ( !model ) {
+								model = this.createModel( item );
+							}
 						}
 
 						if ( model && !this.related.getByCid( model ) && !this.related.get( model ) ) {
@@ -940,6 +972,9 @@
 		_deferProcessing: false,
 		_queue: null,
 		
+		submodelTypeAttribute: 'type',
+		submodelType: null,
+		
 		constructor: function( attributes, options ) {
 			// Nasty hack, for cases like 'model.get( <HasMany key> ).add( item )'.
 			// Defer 'processQueue', so that when 'Relation.createModels' is used we:
@@ -1092,12 +1127,12 @@
 					var model;
 
 					if ( typeof( item ) === 'object' ) {
-						model = new rel.relatedModel( item );
+						model = rel.relatedModel.build( item );
 					}
 					else {
 						var attrs = {};
 						attrs[ rel.relatedModel.prototype.idAttribute ] = item;
-						model = new rel.relatedModel( attrs );
+						model = rel.relatedModel.build( attrs );
 					}
 
 					return model;
@@ -1245,6 +1280,10 @@
 			this.acquire();
 			var json = Backbone.Model.prototype.toJSON.call( this );
 			
+			if ( this.submodelType && !( this.submodelTypeAttribute in json ) ) {
+				json[ this.submodelTypeAttribute ] = this.submodelType;
+			}
+			
 			_.each( this._relations, function( rel ) {
 				var value = json[ rel.key ];
 
@@ -1271,8 +1310,53 @@
 			this.release();
 			return json;
 		}
+	}, {
+		build: function( attributes, options ) {
+			var model = this;
+			
+			if ( this._submodels && this.prototype.submodelTypeAttribute in attributes ) {
+				var submodelType = attributes[ this.prototype.submodelTypeAttribute ];
+				var submodel = _.detect( this._submodels, function( model ) {
+						return model.prototype.submodelType && model.prototype.submodelType == submodelType;
+					}, this);
+				if ( submodel ) {
+					model = submodel;
+				}
+			}
+			
+			return new model( attributes, options );
+		}
 	});
 	_.extend( Backbone.RelationalModel.prototype, Backbone.Semaphore );
+	
+	/**
+	 * Override Backbone.Collection._prepareModel, so objects will be built using the correct type
+	 * if the collection.model has submodels.
+	 */
+	var _prepareModel = Backbone.Collection.prototype.___prepareModel = Backbone.Collection.prototype._prepareModel;
+	Backbone.Collection.prototype._prepareModel = function (model, options) {
+		options || (options = {});
+		if ( !(model instanceof Backbone.Model) ) {
+			var attrs = model;
+			options.collection = this;
+			
+			if ( typeof this.model.build !== 'undefined' ) {
+				model = this.model.build( attrs, options );
+			}
+			else {
+				model = new this.model( attrs, options );
+			}
+			
+			if ( !model._validate( model.attributes, options ) ) {
+				model = false;
+			}
+		}
+		else if ( !model.collection ) {
+			model.collection = this;
+		}
+		
+		return model;
+	}
 	
 	/**
 	 * Override Backbone.Collection.add, so objects fetched from the server multiple times will
@@ -1374,13 +1458,47 @@
 
 	// Override .extend() to check for reverseRelations to initialize.
 	Backbone.RelationalModel.extend = function( protoProps, classProps ) {
+		var partOfSupermodel = ( protoProps && protoProps.partOfSupermodel );
+		
 		var child = Backbone.Model.extend.apply( this, arguments );
-
-		var relations = ( protoProps && protoProps.relations ) || [];
-		_.each( relations, function( rel ) {
-			if( rel.reverseRelation ) {
+		
+		// We don't want to share a relations array with a parent, as this will cause problems with
+		// reverse relations.
+		child.prototype.relations = (child.prototype.relations || []).slice(0);
+		
+		child._submodels = [];
+		
+		// If this new model is part of a supermodel, make the connection and copy 
+		// over all of the supermodel's relations if this hasn't been done already.
+		if ( partOfSupermodel ) {
+			var supermodel = this;
+			
+			var rootSupermodel = supermodel;
+			while ( rootSupermodel._supermodel ) {
+				rootSupermodel = rootSupermodel._supermodel
+			}
+			
+			child._supermodel = rootSupermodel;
+			rootSupermodel._submodels.push( child );
+			
+			if ( supermodel.prototype.relations ) {
+				var relations = ( protoProps && protoProps.relations ) || [];
+				var supermodelRelationsExist = _.any( relations, function( rel ) {
+						return rel.model && rel.model != child;
+					});
+				if ( !supermodelRelationsExist ) {
+					child.prototype.relations = supermodel.prototype.relations.concat( child.prototype.relations );
+				}
+			}
+		}
+		
+		// Initialize all reverseRelations that belong to this new model.
+		_.each( child.prototype.relations, function( rel ) {
+			if ( !rel.model ) {
 				rel.model = child;
-
+			}
+			
+			if ( rel.reverseRelation && rel.model == child ) {				
 				var preInitialize = true;
 				if ( _.isString( rel.relatedModel ) ) {
 					/**

@@ -51,7 +51,7 @@ $(document).ready(function() {
 				key: 'animals',
 				relatedModel: 'Animal',
 				collectionType: 'AnimalCollection',
-				collectionOptions: function( instance ) { return { 'url':  'zoo/' + instance.cid + '/animal/' } },
+				collectionOptions: function( instance ) { return { 'url': 'zoo/' + instance.cid + '/animal/' } },
 				reverseRelation: {
 					key: 'livesIn',
 					includeInJSON: 'id'
@@ -80,8 +80,8 @@ $(document).ready(function() {
 		model: Animal,
 		
 		initialize: function( models, options ) {
-		    options || (options = {});
-	        this.url = options.url;
+			options || (options = {});
+			this.url = options.url;
 		}
 	});
 
@@ -432,7 +432,7 @@ $(document).ready(function() {
 			ok( Backbone.Relational.store.find( Node, 4 ) instanceof Node, "Node 4 can be found" );
 		});
 		
-		test( "Inheritance creates and uses a separate relation", function() {
+		test( "Inheritance creates and uses a separate collection", function() {
 			var whale = new Animal( { id: 1, species: 'whale' } );
 			ok( Backbone.Relational.store.find( Animal, 1 ) === whale );
 			
@@ -458,6 +458,39 @@ $(document).ready(function() {
 			
 			equal( Backbone.Relational.store._collections.length, numCollections + 2 );
 			ok( Backbone.Relational.store.find( Primate, 1 ) === gorilla );
+		});
+		
+		test( "Inheritance with partOfSupermodel set to true uses the same collection as the model's superclass", function() {
+			var whale = new Animal( { id: 1, species: 'whale' } );
+			ok( Backbone.Relational.store.find( Animal, 1 ) === whale );
+
+			var numCollections = Backbone.Relational.store._collections.length;
+
+			var Mammal = Animal.extend({
+				partOfSupermodel: true
+			});
+
+			var lion = new Mammal( { id: 2, species: 'lion' } );
+			var donkey = new Mammal( { id: 3, species: 'donkey' } );
+
+			equal( Backbone.Relational.store._collections.length, numCollections );
+			ok( Backbone.Relational.store.find( Animal, 1 ) === whale );
+			ok( Backbone.Relational.store.find( Animal, 2 ) === lion );
+			ok( Backbone.Relational.store.find( Animal, 3 ) === donkey );
+			ok( Backbone.Relational.store.find( Mammal, 1 ) !== whale );
+			ok( Backbone.Relational.store.find( Mammal, 2 ) === lion );
+			ok( Backbone.Relational.store.find( Mammal, 3 ) === donkey );
+
+			var Primate = Mammal.extend({
+				partOfModel: Mammal
+			});
+
+			var gorilla = new Primate( { id: 4, species: 'gorilla' } );
+
+			equal( Backbone.Relational.store._collections.length, numCollections );
+			ok( Backbone.Relational.store.find( Animal, 4 ) === gorilla );
+			ok( Backbone.Relational.store.find( Mammal, 4 ) === gorilla );
+			ok( Backbone.Relational.store.find( Primate, 4 ) === gorilla );
 		});
 		
 	
@@ -604,6 +637,118 @@ $(document).ready(function() {
 			//console.debug( json );
 			ok( json.children.length === 1 );
 		});
+	
+	
+	module( "Backbone.RelationalModel Inheritance (`Backbone.RelationalModel.extend( { partOfSupermodel: true, ... } );`)" );
+				
+		test( "Object building based on type" , function() {
+			var PetAnimal = Backbone.RelationalModel.extend({
+			});
+			var Dog = PetAnimal.extend({
+				partOfSupermodel: true,
+				submodelType:     'dog'
+			});
+			var Cat = PetAnimal.extend({
+				partOfSupermodel: true,
+				submodelType:     'cat'
+			});
+
+			var PetPerson = Backbone.RelationalModel.extend({
+				relations: [{
+					type: Backbone.HasMany,
+					key: 'pets',
+					relatedModel: PetAnimal,
+					reverseRelation: {
+						key: 'owner'
+					}
+				}]
+			});
+
+			var person = new PetPerson({
+				pets: [{
+					type: 'dog',
+					name: 'Spot'
+				},
+				{
+					type: 'cat',
+					name: 'Whiskers'
+				}]
+			});
+
+			ok( person.get('pets').at(0) instanceof Dog );
+			ok( person.get('pets').at(1) instanceof Cat );
+			
+			person.get('pets').add({ 
+				type: 'dog',
+				name: 'Spot II'
+			});
+			
+			ok( person.get('pets').at(2) instanceof Dog )
+		});
+		
+		test( "Automatic sharing of supermodel relations" , function() {
+
+			var PetPerson = Backbone.RelationalModel.extend({});
+			var PetAnimal = Backbone.RelationalModel.extend({
+				relations: [{
+					type: Backbone.HasOne,
+					key:  'owner',
+					relatedModel: PetPerson,
+					reverseRelation: {
+						type: Backbone.HasMany,
+						key: 'pets'
+					}
+				}]
+			});
+			
+			var Flea = Backbone.RelationalModel.extend({});
+			var Dog = PetAnimal.extend({
+				partOfSupermodel: true,
+				submodelType:     'dog',
+				
+				relations: [{
+					type: Backbone.HasMany,
+					key:	'fleas',
+					relatedModel: Flea,
+					reverseRelation: {
+						key: 'host'
+					}
+				}]
+			});
+			
+			var dog = new Dog({
+				name: "Spot"
+			});
+			
+			var person = new PetPerson({
+				pets: [dog]
+			});
+
+			equal( dog.get("owner"), person, "Dog has a working owner relation." );
+
+			var flea = new Flea({
+				host: dog
+			});
+			
+			equal( dog.get("fleas").at(0), flea, "Dog has a working fleas relation." );
+		});
+	
+		test( "toJSON includes the type", function() {
+			var PetAnimal = Backbone.RelationalModel.extend({
+			});
+			var Dog = PetAnimal.extend({
+				partOfSupermodel: true,
+				submodelType:     'dog'
+			});
+			
+			dog = new Dog({
+				name: "Spot"
+			});
+			
+			json = dog.toJSON();
+			
+			equal( json.type, 'dog', "The value of 'type' is the pet animal's type.")
+		});
 		
 	
 	module( "Backbone.Relation options", { setup: initObjects } );
@@ -613,7 +758,7 @@ $(document).ready(function() {
 			var json = person1.toJSON();
 			equal( json.user, 'user-1', "The value 'user' is the user's id (not an object, since 'includeInJSON' is set to the idAttribute)" );
 			ok ( json.likesALot instanceof Object, "The value of 'likesALot' is an object ('includeInJSON' is 'true')" );
-			equal(  json.likesALot.likesALot, 'person-1', "Person is serialized only once" );
+			equal( json.likesALot.likesALot, 'person-1', "Person is serialized only once" );
 			
 			json = person1.get( 'user' ).toJSON();
 			equal( json.person, 'boy', "The value of 'person' is the person's name ('includeInJSON is set to 'name')" );
@@ -734,9 +879,9 @@ $(document).ready(function() {
 			ok( typeof viewJSON.properties === 'undefined', "'viewJSON' does not have 'properties'" );
 		});
 		
-		test( "'collectionOptionsCallback' sets the options on the created HasMany Collections", function() {
-		    var zoo = new Zoo();
-		    ok( zoo.get("animals").url === "zoo/" + zoo.cid + "/animal/");
+		test( "'collectionOptions' sets the options on the created HasMany Collections", function() {
+			var zoo = new Zoo();
+			ok( zoo.get("animals").url === "zoo/" + zoo.cid + "/animal/");
 		});
 		
 		
@@ -1269,7 +1414,7 @@ $(document).ready(function() {
 		test( "Setting a new collection or array of ids updates the relation", function() {
 			var zoo = new Zoo();
 
-			var visitors =  [
+			var visitors = [
 				{ name: 'Paul' }
 			];
 
