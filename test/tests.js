@@ -683,7 +683,7 @@ $(document).ready(function() {
 				name: 'Spot II'
 			});
 			
-			ok( person.get('pets').at(2) instanceof Dog )
+			ok( person.get('pets').at(2) instanceof Dog );
 		});
 		
 		test( "Automatic sharing of supermodel relations" , function() {
