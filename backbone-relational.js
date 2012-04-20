@@ -1496,7 +1496,18 @@
 	var reset = Backbone.Collection.prototype.__reset = Backbone.Collection.prototype.reset;
 	Backbone.Collection.prototype.reset = function( models, options ) {
 		reset.call( this, models, options );
-		this.trigger( 'relational:reset', models, options );
+		this.trigger( 'relational:reset', this, options );
+
+		return this;
+	};
+
+	/**
+	 * Override 'Backbone.Collection.sort' to trigger 'relational:reset'.
+	 */
+	var sort = Backbone.Collection.prototype.__sort = Backbone.Collection.prototype.sort;
+	Backbone.Collection.prototype.sort = function( options ) {
+		sort.call( this, options );
+		this.trigger( 'relational:reset', this, options );
 
 		return this;
 	};
