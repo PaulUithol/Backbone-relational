@@ -1285,8 +1285,13 @@
 			_.each( this._relations, function( rel ) {
 					var value = json[ rel.key ];
 
-					if ( rel.options.includeInJSON === true && value && _.isFunction( value.toJSON ) ) {
-						json[ rel.keyDestination ] = value.toJSON();
+					if ( rel.options.includeInJSON === true) {
+						if ( value && _.isFunction( value.toJSON ) ) {
+							json[ rel.keyDestination ] = value.toJSON();
+						}
+						else {
+							json[ rel.keyDestination ] = null;
+						}
 					}
 					else if ( _.isString( rel.options.includeInJSON ) ) {
 						if ( value instanceof Backbone.Collection ) {
@@ -1294,6 +1299,9 @@
 						}
 						else if ( value instanceof Backbone.Model ) {
 							json[ rel.keyDestination ] = value.get( rel.options.includeInJSON );
+						}	
+						else {
+							json[ rel.keyDestination ] = null;
 						}
 					}
 					else {
