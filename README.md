@@ -436,14 +436,14 @@ User = Backbone.RelationalModel.extend();
 
 ## <a name="q-and-a"/>Known problems and solutions
 
-> **Q:** (Reverse) relations don't seem to be initialized properly (and I'm using Coffeescript!)
+> **Q:** (Reverse) relations or submodels don't seem to be initialized properly (and I'm using CoffeeScript!)
 
 **A:** You're probably using the syntax `class MyModel extends Backbone.RelationalModel` instead of `MyModel = Backbone.RelationalModel.extend`.
 This has advantages in CoffeeScript, but it also means that `Backbone.Model.extend` will not get called.
 Instead, CoffeeScript generates piece of code that would normally achieve roughly the same.
-However, `extend` is also the method that Backbone-relational overrides to set up relations as soon as your code gets parsed by the JavaScript engine.
+However, `extend` is also the method that Backbone-relational overrides to set up relations and other things as you're defining your `Backbone.RelationalModel` subclass.
 
-A possible solution is to initialize a blank placeholder model right after defining a model that contains reverseRelations; this will also bootstrap the relations. For example:
+For exactly this scenario where you're not using `.extend`, `Backbone.RelationalModel` has the `.setup` method, that you can call manually after defining your subclass CoffeeScript-style. For example:
 
 ```javascript
 class MyModel extends Backbone.RelationalModel
@@ -451,10 +451,10 @@ class MyModel extends Backbone.RelationalModel
 		// etc
 	]
 
-new MyModel
+MyModel.setup()
 ```
 
-See [issue #91](https://github.com/PaulUithol/Backbone-relational/issues/91) for more information and workarounds.
+See [issue #91](https://github.com/PaulUithol/Backbone-relational/issues/91) for more information.
 
 > **Q:** After a fetch, I don't get `add:<key>` events for nested relations.
 
