@@ -225,7 +225,7 @@ It's only mandatory to supply a `key`; `relatedModel` is automatically set. The 
 
 ## <a name="backbone-relationalmodel"/>Backbone.RelationalModel
 
-`Backbone.RelationalModel` introduces a couple of new methods and events.
+`Backbone.RelationalModel` introduces a couple of new methods, events and properties.
 
 ### Methods
 
