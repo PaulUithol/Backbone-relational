@@ -1801,7 +1801,7 @@ $(document).ready(function() {
 			ok( view.get( 'properties' ).include( props ) );
 		});
 		
-		test( "Reverse relations are found for models that have not been instantiated", function() {
+		test( "Reverse relations are found for models that have not been instantiated and use .extend()", function() {
 			var View = Backbone.RelationalModel.extend({ });
 			var Property = Backbone.RelationalModel.extend({
 				relations: [{
@@ -1814,6 +1814,80 @@ $(document).ready(function() {
 					}
 				}]
 			});
+
+			var view = new View({
+				id: 1,
+				properties: [ { id: 1, key: 'width', value: '300px' } ]
+			});
+
+			ok( view.get( 'properties' ) instanceof Backbone.Collection );
+		});
+		
+		test( "Reverse relations found for models that have not been instantiated and run .setup() manually", function() {
+			// Generated from CoffeeScript code:
+			// 	 class View extends Backbone.RelationalModel
+			// 	 
+			// 	 View.setup()
+			// 	 
+			// 	 class Property extends Backbone.RelationalModel
+			// 	   relations: [
+			// 	     type: Backbone.HasOne
+			// 	     key: 'view'
+			// 	     relatedModel: View
+			// 	     reverseRelation:
+			// 	       type: Backbone.HasMany
+			// 	       key: 'properties'
+			// 	   ]
+			// 	 
+			// 	 Property.setup()
+			
+			var Property, View,
+			  __hasProp = {}.hasOwnProperty,
+			  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor; child.__super__ = parent.prototype; return child; };
+
+			View = (function(_super) {
+
+			  __extends(View, _super);
+
+			  View.name = 'View';
+
+			  function View() {
+			    return View.__super__.constructor.apply(this, arguments);
+			  }
+
+			  return View;
+
+			})(Backbone.RelationalModel);
+			
+			View.setup();
+
+			Property = (function(_super) {
+
+			  __extends(Property, _super);
+
+			  Property.name = 'Property';
+
+			  function Property() {
+			    return Property.__super__.constructor.apply(this, arguments);
+			  }
+
+			  Property.prototype.relations = [
+			    {
+			      type: Backbone.HasOne,
+			      key: 'view',
+			      relatedModel: View,
+			      reverseRelation: {
+			        type: Backbone.HasMany,
+			        key: 'properties'
+			      }
+			    }
+			  ];
+
+			  return Property;
+
+			})(Backbone.RelationalModel);
+			
+			Property.setup();
 
 			var view = new View({
 				id: 1,
