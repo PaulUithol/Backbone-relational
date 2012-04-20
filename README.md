@@ -254,6 +254,56 @@ See the example at the top of [Backbone.Relation options](#backbone-relation) or
 * `update`: triggered on changes to the key itself on `HasMany` and `HasOne` relations.  
   Bind to `update:<key>`; arguments: `(model<Backbone.Model>, related<Backbone.Model|Backbone.Collection>)`.
 
+### Properties
+
+Properties can be defined along with the subclass prototype when extending `Backbone.RelationalModel` or a subclass thereof.
+
+###### <a name="property-part-of-supermodel" />**partOfSupermodel**
+
+Value: a boolean. Default: `false`.
+
+Determines whether this model should be considered a proper submodel of its
+superclass (the model type you're extending), with a shared id pool. 
+
+This means that when looking for an object of the supermodel's type, objects
+of this submodel's type could be returned as well, as long as the id matches.
+In effect, any relations pointing to the supermodel will look for objects
+of the supermodel's submodel's types as well.
+
+Suppose that we have an `Animal` model and a `Dog` model extending `Animal`
+with `partOfSupermodel` set to `true`. If we have a `Dog` object with id `3`,
+this object will be returned when we have a relation pointing to an `Animal` 
+with id `3`, as `Dog` is regarded a specific kind of `Animal`: it's just an 
+`Animal` with possibly some dog-specific properties or methods.
+
+Note that this means that there cannot be any overlap in ids between instances
+of classes `Animal` and `Dog`, as the `Dog` with id `3` will *be* the `Animal`
+with id `3`.
+
+###### <a name="property-submodel-type" />**submodelType**
+
+Value: a string.
+
+When building a model instance for a relation with a `relatedModel` that has
+one or more submodels (i.e. models that have 
+[`partOfSupermodel`](#property-part-of-supermodel) set to true), we need to 
+determine what kind of object we're dealing with and an instance of what 
+submodel should be built. This is done by finding the `relatedModel`'s 
+submodel for which the `submodelType` is equal to the value of the 
+[`submodelTypeAttribute`](#property-submodel-type-attribute) attribute on the 
+newly passed in data object. 
+
+###### <a name="property-submodel-type-attribute" />**submodelTypeAttribute**
+
+Value: a string. References an attribute on the data used to instantiate 
+`relatedModel`. Default: `"type"`.
+
+The attribute that will be checked to determine the type of model that
+should be built when a raw object of attributes is set as the related value,
+and if the `relatedModel` has one or more submodels.
+
+See [`submodelType`](#property-submodel-type) for more information.
+
 ## <a name="example"/>Example
 
 ```javascript
