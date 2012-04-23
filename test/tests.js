@@ -80,8 +80,8 @@ $(document).ready(function() {
 		model: Animal,
 		
 		initialize: function( models, options ) {
-		    options || (options = {});
-	        this.url = options.url;
+			options || (options = {});
+			this.url = options.url;
 		}
 	});
 
@@ -123,6 +123,7 @@ $(document).ready(function() {
 			{
 				type: Backbone.HasOne,
 				key: 'user',
+				keyDestination: 'user_id',
 				relatedModel: 'User',
 				includeInJSON: Backbone.Model.prototype.idAttribute,
 				reverseRelation: {
@@ -611,7 +612,7 @@ $(document).ready(function() {
 		
 		test( "'includeInJSON' (Person to JSON)", function() {
 			var json = person1.toJSON();
-			equal( json.user, 'user-1', "The value 'user' is the user's id (not an object, since 'includeInJSON' is set to the idAttribute)" );
+			equal( json.user_id, 'user-1', "The value of 'user_id' is the user's id (not an object, since 'includeInJSON' is set to the idAttribute)" );
 			ok ( json.likesALot instanceof Object, "The value of 'likesALot' is an object ('includeInJSON' is 'true')" );
 			equal(  json.likesALot.likesALot, 'person-1', "Person is serialized only once" );
 			
@@ -621,6 +622,10 @@ $(document).ready(function() {
 			json = person2.toJSON();
 			ok( person2.get('livesIn') instanceof House, "'person2' has a 'livesIn' relation" );
 			equal( json.livesIn, undefined , "The value of 'livesIn' is not serialized ('includeInJSON is 'false')" );
+			
+			json = person3.toJSON();
+			ok( json.user_id === null, "The value of 'user_id' is null");
+			ok( json.likesALot === null, "The value of 'likesALot' is null");
 		});
 		
 		test( "'createModels' is false", function() {
@@ -734,9 +739,9 @@ $(document).ready(function() {
 			ok( typeof viewJSON.properties === 'undefined', "'viewJSON' does not have 'properties'" );
 		});
 		
-		test( "'collectionOptionsCallback' sets the options on the created HasMany Collections", function() {
-		    var zoo = new Zoo();
-		    ok( zoo.get("animals").url === "zoo/" + zoo.cid + "/animal/");
+		test( "'collectionOptions' sets the options on the created HasMany Collections", function() {
+			var zoo = new Zoo();
+			ok( zoo.get("animals").url === "zoo/" + zoo.cid + "/animal/");
 		});
 		
 		
