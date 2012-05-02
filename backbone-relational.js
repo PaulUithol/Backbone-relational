@@ -1128,9 +1128,10 @@
 		 * Retrieve related objects.
 		 * @param key {string} The relation key to fetch models for.
 		 * @param options {Object} Options for 'Backbone.Model.fetch' and 'Backbone.sync'.
+		 * @param replace {boolean} Whether to fetch from the server, replacing the store if present
 		 * @return {jQuery.when[]} An array of request objects
 		 */
-		fetchRelated: function( key, options ) {
+		fetchRelated: function( key, options, replace ) {
 			options || ( options = {} );
 			var setUrl,
 				requests = [],
@@ -1138,7 +1139,7 @@
 				keyContents = rel && rel.keyContents,
 				toFetch = keyContents && _.select( _.isArray( keyContents ) ? keyContents : [ keyContents ], function( item ) {
 					var id = Backbone.Relational.store.resolveIdForItem( rel.relatedModel, item );
-					return id && !Backbone.Relational.store.find( rel.relatedModel, id );
+					return id && (replace || !Backbone.Relational.store.find( rel.relatedModel, id ));
 				}, this );
 			
 			if ( toFetch && toFetch.length ) {

@@ -233,10 +233,11 @@ It's only mandatory to supply a `key`; `relatedModel` is automatically set. The 
 
 Returns the set of initialized relations on the model.
 
-###### **fetchRelated `relationalModel.fetchRelated(key<string>, [options<object>])`**
+###### **fetchRelated `relationalModel.fetchRelated(key<string>, [options<object>], [replace<boolean>])`**
 
 Fetch models from the server that were referenced in the model's attributes, but have not been found/created yet.
-This can be used specifically for lazy-loading scenarios.
+This can be used specifically for lazy-loading scenarios.  Setting `replace` to true guarantees that the model
+will be fetched from the server and any model in the store will be replaced with the new version.
 
 By default, a separate request will be fired for each additional model that is to be fetched from the server.
 However, if your server/API supports it, you can fetch the set of models in one request by specifying a `collectionType`
