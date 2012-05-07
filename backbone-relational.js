@@ -6,23 +6,23 @@
  * For details and documentation: https://github.com/PaulUithol/Backbone-relational.
  * Depends on Backbone: https://github.com/documentcloud/backbone.
  */
-( function( undefined ) {
+(function (root, factory) {
+    if (typeof exports === 'object') {
+        // Node. Does not work with strict CommonJS, but
+        // only CommonJS-like enviroments that support module.exports,
+        // like Node.
+        module.exports = factory(require('underscore')._, require('backbone'));
+    } else if (typeof define === 'function' && define.amd) {
+        // AMD. Register as an anonymous module.
+        define(['underscore', 'backbone'], factory);
+    } else {
+        // Browser globals
+        root.returnExports = factory(root._, root.Backbone);
+    }
+}(this, function (_, Backbone) {
 	"use strict";
-	
-	/**
-	 * CommonJS shim
-	 **/
-	var _, Backbone, exports;
-	if ( typeof window === 'undefined' ) {
-		_ = require( 'underscore' );
-		Backbone = require( 'backbone' );
-		exports = module.exports = Backbone;
-	}
-	else {
-		var _ = window._;
-		Backbone = window.Backbone;
-		exports = window;
-	}
+    
+    var global = typeof window !== 'undefined' ? window : exports;
 	
 	Backbone.Relational = {
 		showWarnings: true
@@ -189,8 +189,8 @@
 		getObjectByName: function( name ) {
 			var type = _.reduce( name.split( '.' ), function( memo, val ) {
 				return memo[ val ];
-			}, exports);
-			return type !== exports ? type: null;
+			}, global);
+			return type !== global ? type: null;
 		},
 		
 		_createCollection: function( type ) {
@@ -1422,4 +1422,5 @@
 		return child;
 	};
 
-})();
+    return Backbone;
+}));
