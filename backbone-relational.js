@@ -1335,6 +1335,8 @@
 		options || (options = {});
 		if (!_.isArray( models ) ) {
 			models = [ models ];
+		} else {
+			models = models.slice(0);
 		}
 
 		//console.debug('calling remove on coll=%o; models=%o, options=%o', this, models, options );
