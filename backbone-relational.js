@@ -1328,6 +1328,29 @@
 							json[ rel.keyDestination ] = null;
 						}
 					}
+					else if (_.isArray( rel.options.includeInJSON ) ) {
+						if ( value instanceof Backbone.Collection ) {
+							var valueSub = [];
+							value.each(function(model) {
+								var curJson = {};
+								_.each(rel.options.includeInJSON, function(key) {
+									curJson[key] = model.get(key);
+								});
+								valueSub.push(curJson);
+							});
+							json[ rel.keyDestination ] = valueSub;
+						}
+						else if ( value instanceof Backbone.Model ) {
+							var valueSub = {};
+							_.each(rel.options.includeInJSON, function(key) {
+								valueSub[key] = value.get(key);
+							});
+							json[ rel.keyDestination ] = valueSub;
+						}
+						else {
+							json[ rel.keyDestination ] = null;
+						}
+					}
 					else {
 						delete json[ rel.key ];
 					}
