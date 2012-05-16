@@ -122,10 +122,6 @@
 		this._subModels = [];
 	};
 	_.extend( Backbone.Store.prototype, Backbone.Events, {
-		_collections: null,
-		_reverseRelations: null,
-		_subModels: null,
-
 		/**
 		 * Add a set of subModelTypes to the store, that can be used to resolve the '_superModel'
 		 * for a model later in 'setupSuperModel'.
@@ -1016,9 +1012,6 @@
 		_isInitialized: false,
 		_deferProcessing: false,
 		_queue: null,
-
-		_subModels: null,
-		_superModel: null,
 		
 		subModelTypeAttribute: 'type',
 		subModelTypes: null,
