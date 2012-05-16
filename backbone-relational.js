@@ -119,10 +119,51 @@
 	Backbone.Store = function() {
 		this._collections = [];
 		this._reverseRelations = [];
+		this._subModels = [];
 	};
 	_.extend( Backbone.Store.prototype, Backbone.Events, {
 		_collections: null,
 		_reverseRelations: null,
+		_subModels: null,
+
+		/**
+		 * Add a set of subModelTypes to the store, that can be used to resolve the '_superModel'
+		 * for a model later in 'setupSuperModel'.
+		 *
+		 * @param {Backbone.RelationalModel} subModelTypes
+		 * @param {Backbone.RelationalModel} superModelType
+		 */
+		addSubModels: function( subModelTypes, superModelType ) {
+			this._subModels.push({
+				'superModelType': superModelType,
+				'subModels': subModelTypes
+			});
+		},
+
+		/**
+		 * Check if the given modelType is registered as another model's subModel. If so, add it to the super model's
+		 * '_subModels', and set the modelType's '_superModel', '_subModelTypeName', and '_subModelTypeAttribute'.
+		 *
+		 * @param {Backbone.RelationalModel} modelType
+		 */
+		setupSuperModel: function( modelType ) {
+			_.find( this._subModels, function( subModelDef ) {
+				return _.find( subModelDef.subModels, function( subModelTypeName, typeValue ) {
+					var subModelType = this.getObjectByName( subModelTypeName );
+
+					if ( modelType === subModelType ) {
+						// Set 'modelType' as a child of the found superModel
+						subModelDef.superModelType._subModels[ typeValue ] = modelType;
+
+						// Set '_superModel', '_subModelTypeValue', and '_subModelTypeAttribute' on 'modelType'.
+						modelType._superModel = subModelDef.superModelType;
+						modelType._subModelTypeValue = typeValue;
+						modelType._subModelTypeAttribute = subModelDef.superModelType.prototype.subModelTypeAttribute;
+						return true;
+					}
+				}, this );
+			}, this );
+		},
 		
 		/**
 		 * Add a reverse relation. Is added to the 'relations' property on model's prototype, and to
@@ -149,10 +190,10 @@
 					}
 					model.prototype.relations.push( relation );
 					
-					_.each( model._submodels, function( submodel ) {
-							addRelation( submodel, relation );
+					_.each( model._subModels, function( subModel ) {
+							addRelation( subModel, relation );
 						}, this );
-				}
+				};
 				
 				addRelation( relation.model, relation );
 				
@@ -170,6 +211,7 @@
 				if ( !( model instanceof relation.model ) ) {
 					return;
 				}
+
 				new relation.type( model, relation );
 			}, this);
 		},
@@ -185,8 +227,8 @@
 			}
 			
 			var rootModel = model;
-			while ( rootModel._supermodel ) {
-				rootModel = rootModel._supermodel;
+			while ( rootModel._superModel ) {
+				rootModel = rootModel._superModel;
 			}
 			
 			var coll = _.detect( this._collections, function( c ) {
@@ -232,7 +274,7 @@
 		},
 
 		/**
-		 * Find an id
+		 * Find the attribute that is to be used as the `id` on a given object
 		 * @param type
 		 * @param {String|Number|Object|Backbone.RelationalModel} item
 		 */
@@ -260,12 +302,16 @@
 			var id = this.resolveIdForItem( type, item );
 			var coll = this.getCollection( type );
 			
-			// Because the found object could be of any of the type's supermodel
+			// Because the found object could be of any of the type's superModel
 			// types, only return it if it's actually of the type asked for.
-			var obj;
-			if ( coll && ( obj = coll.get( id ) ) && ( obj instanceof type ) ) {
-				return obj;
+			if ( coll ) {
+				var obj = coll.get( id );
+
+				if ( obj instanceof type ) {
+					return obj;
+				}
 			}
+
 			return null;
 		},
 		
@@ -970,9 +1016,12 @@
 		_isInitialized: false,
 		_deferProcessing: false,
 		_queue: null,
+
+		_subModels: null,
+		_superModel: null,
 		
-		submodelTypeAttribute: 'type',
-		submodelType: null,
+		subModelTypeAttribute: 'type',
+		subModelTypes: null,
 		
 		constructor: function( attributes, options ) {
 			// Nasty hack, for cases like 'model.get( <HasMany key> ).add( item )'.
@@ -1050,7 +1099,7 @@
 			this.release();
 			this.processQueue();
 		},
-		
+
 		/**
 		 * When new values are set, notify this model's relations (also if options.silent is set).
 		 * (Relation.setRelated locks this model before calling 'set' on it to prevent loops)
@@ -1200,7 +1249,10 @@
 			
 			// Ideal place to set up relations :)
 			if ( !this._isInitialized && !this.isLocked() ) {
+				this.constructor.initializeModelHierarchy();
+
 				Backbone.Relational.store.register( this );
+
 				this.initializeRelations();
 			}
 			// Update the 'idAttribute' in Backbone.store if; we don't want it to miss an 'id' update due to {silent:true}
@@ -1278,8 +1330,8 @@
 			this.acquire();
 			var json = Backbone.Model.prototype.toJSON.call( this );
 			
-			if ( this.submodelType && !( this.submodelTypeAttribute in json ) ) {
-				json[ this.submodelTypeAttribute ] = this.submodelType;
+			if ( this.constructor._superModel && !( this.constructor._subModelTypeAttribute in json ) ) {
+				json[ this.constructor._subModelTypeAttribute ] = this.constructor._subModelTypeValue;
 			}
 			
 			_.each( this._relations, function( rel ) {
@@ -1316,37 +1368,23 @@
 			this.release();
 			return json;
 		}
-	}, {	
-		setup: function( supermodel ) {
+	},
+	{
+		setup: function( superModel ) {
 			// We don't want to share a relations array with a parent, as this will cause problems with
 			// reverse relations.
-			this.prototype.relations = (this.prototype.relations || []).slice( 0 );
+			this.prototype.relations = ( this.prototype.relations || [] ).slice( 0 );
 
-			this._submodels = [];
+			this._subModels = {};
+			this._superModel = null;
 
-			// If this new model is part of a supermodel, make the connection and copy 
-			// over all of the supermodel's relations if this hasn't been done already.
-			if ( this.prototype.partOfSupermodel ) {
-				if ( !supermodel ) {
-					throw new Error( "Backbone.RelationalModel.setup() supermodel attribute is required when `partOfSupermodel` property is true." );
-				}
-				
-				var rootSupermodel = supermodel;
-				while ( rootSupermodel._supermodel ) {
-					rootSupermodel = rootSupermodel._supermodel
-				}
-
-				this._supermodel = rootSupermodel;
-				rootSupermodel._submodels.push( this );
-
-				if ( supermodel.prototype.relations ) {
-					var supermodelRelationsExist = _.any( this.prototype.relations, function( rel ) {
-							return rel.model && rel.model !== this;
-						}, this );
-					if ( !supermodelRelationsExist ) {
-						this.prototype.relations = supermodel.prototype.relations.concat( this.prototype.relations );
-					}
-				}
+			// If this model has 'subModelTypes' itself, remember them in the store
+			if ( this.prototype.hasOwnProperty( 'subModelTypes' ) ) {
+				Backbone.Relational.store.addSubModels( this.prototype.subModelTypes, this );
+			}
+			// The 'subModelTypes' property should not be inherited, so reset it.
+			else {
+				this.prototype.subModelTypes = null;
 			}
 
 			// Initialize all reverseRelations that belong to this new model.
@@ -1375,29 +1413,74 @@
 					}
 				}, this );
 		},
+
+		/**
+		 * Create a 'Backbone.Model' instance based on 'attributes'.
+		 * @param {Object} attributes
+		 * @param {Object} [options]
+		 * @return {Backbone.Model}
+		 */
 		build: function( attributes, options ) {
 			var model = this;
-			
-			if ( this._submodels && this.prototype.submodelTypeAttribute in attributes ) {
-				var submodelType = attributes[ this.prototype.submodelTypeAttribute ];
-				var submodel = _.detect( this._submodels, function( model ) {
-						return model.prototype.submodelType && model.prototype.submodelType == submodelType;
-					}, this);
-				if ( submodel ) {
-					model = submodel;
+
+			// 'build' is a possible entrypoint; it's possible no model hierarchy has been determined yet.
+			this.initializeModelHierarchy();
+
+			// Determine what type of (sub)model should be built if applicable.
+			// Lookup the proper subModelType in 'this._subModels'.
+			if ( this._subModels && this.prototype.subModelTypeAttribute in attributes ) {
+				var subModelTypeAttribute = attributes[ this.prototype.subModelTypeAttribute ];
+				var subModelType = this._subModels[ subModelTypeAttribute ];
+				if ( subModelType ) {
+					model = subModelType;
 				}
 			}
 			
 			return new model( attributes, options );
+		},
+
+		initializeModelHierarchy: function() {
+			// If we're here for the first time, try to determine if this modelType has a 'superModel'.
+			if ( _.isUndefined( this._superModel ) || _.isNull( this._superModel ) ) {
+				Backbone.Relational.store.setupSuperModel( this );
+
+				// If a superModel has been found, copy relations from the _superModel if they haven't been
+				// inherited automatically (due to a redefinition of 'relations').
+				// Otherwise, make sure we don't get here again for this type by making '_superModel' false so we fail
+				// the isUndefined/isNull check next time.
+				if ( this._superModel ) {
+					//
+					if ( this._superModel.prototype.relations ) {
+						var supermodelRelationsExist = _.any( this.prototype.relations, function( rel ) {
+							return rel.model && rel.model !== this;
+						}, this );
+
+						if ( !supermodelRelationsExist ) {
+							this.prototype.relations = this._superModel.prototype.relations.concat( this.prototype.relations );
+						}
+					}
+				}
+				else {
+					this._superModel = false;
+				}
+			}
+
+			// If we came here through 'build' for a model that has 'subModelTypes', and not all of them have been resolved yet, try to resolve each.
+			if ( this.prototype.subModelTypes && _.keys( this.prototype.subModelTypes ).length !== _.keys( this._subModels ).length ) {
+				_.each( this.prototype.subModelTypes, function( subModelTypeName ) {
+					var subModelType = Backbone.Relational.store.getObjectByName( subModelTypeName );
+					subModelType && subModelType.initializeModelHierarchy();
+				});
+			}
 		}
 	});
 	_.extend( Backbone.RelationalModel.prototype, Backbone.Semaphore );
 	
 	/**
 	 * Override Backbone.Collection._prepareModel, so objects will be built using the correct type
-	 * if the collection.model has submodels.
+	 * if the collection.model has subModels.
 	 */
-	var _prepareModel = Backbone.Collection.prototype.___prepareModel = Backbone.Collection.prototype._prepareModel;
+	Backbone.Collection.prototype.__prepareModel = Backbone.Collection.prototype._prepareModel;
 	Backbone.Collection.prototype._prepareModel = function ( model, options ) {
 		options || (options = {});
 		if ( !( model instanceof Backbone.Model ) ) {
@@ -1539,5 +1622,4 @@
 
 		return child;
 	};
-
 })();

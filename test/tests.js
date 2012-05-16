@@ -461,37 +461,43 @@ $(document).ready(function() {
 			ok( Backbone.Relational.store.find( Primate, 1 ) === gorilla );
 		});
 		
-		test( "Inheritance with partOfSupermodel set to true uses the same collection as the model's superclass", function() {
-			var whale = new Animal( { id: 1, species: 'whale' } );
-			ok( Backbone.Relational.store.find( Animal, 1 ) === whale );
+		test( "Inheritance with `subModelTypes` uses the same collection as the model's super", function() {
+			var Mammal = Animal.extend({
+				subModelTypes: {
+					'primate': 'Primate',
+					'carnivore': 'Carnivore'
+				}
+			});
+
+			var whale = new Mammal( { id: 1, species: 'whale' } );
 
 			var numCollections = Backbone.Relational.store._collections.length;
 
-			var Mammal = Animal.extend({
-				partOfSupermodel: true
-			});
+			window.Primate = Mammal.extend();
+			window.Carnivore = Mammal.extend();
 
-			var lion = new Mammal( { id: 2, species: 'lion' } );
-			var donkey = new Mammal( { id: 3, species: 'donkey' } );
+			var lion = new Carnivore( { id: 2, species: 'lion' } );
+			var wolf = new Carnivore( { id: 3, species: 'wolf' } );
 
-			equal( Backbone.Relational.store._collections.length, numCollections );
-			ok( Backbone.Relational.store.find( Animal, 1 ) === whale );
-			ok( Backbone.Relational.store.find( Animal, 2 ) === lion );
-			ok( Backbone.Relational.store.find( Animal, 3 ) === donkey );
-			ok( Backbone.Relational.store.find( Mammal, 1 ) !== whale );
+			equal( Backbone.Relational.store._collections.length, numCollections, "`_collections` should have remained the same" );
+
+			ok( Backbone.Relational.store.find( Mammal, 1 ) === whale );
 			ok( Backbone.Relational.store.find( Mammal, 2 ) === lion );
-			ok( Backbone.Relational.store.find( Mammal, 3 ) === donkey );
-
-			var Primate = Mammal.extend({
-				partOfModel: Mammal
-			});
+			ok( Backbone.Relational.store.find( Mammal, 3 ) === wolf );
+			ok( Backbone.Relational.store.find( Carnivore, 1 ) !== whale );
+			ok( Backbone.Relational.store.find( Carnivore, 2 ) === lion );
+			ok( Backbone.Relational.store.find( Carnivore, 3 ) === wolf );
 
 			var gorilla = new Primate( { id: 4, species: 'gorilla' } );
 
-			equal( Backbone.Relational.store._collections.length, numCollections );
-			ok( Backbone.Relational.store.find( Animal, 4 ) === gorilla );
+			equal( Backbone.Relational.store._collections.length, numCollections, "`_collections` should have remained the same" );
+
+			ok( Backbone.Relational.store.find( Animal, 4 ) !== gorilla );
 			ok( Backbone.Relational.store.find( Mammal, 4 ) === gorilla );
 			ok( Backbone.Relational.store.find( Primate, 4 ) === gorilla );
+
+			delete window.Primate;
+			delete window.Carnivore;
 		});
 		
 	
@@ -640,19 +646,44 @@ $(document).ready(function() {
 		});
 	
 	
-	module( "Backbone.RelationalModel Inheritance (`Backbone.RelationalModel.extend( { partOfSupermodel: true, ... } );`)" );
-				
-		test( "Object building based on type" , function() {
+	module( "Backbone.RelationalModel inheritance (`subModelTypes`)", {} );
+
+
+		test( "Object building based on type, when using explicit collections" , function() {
+			var Mammal = Animal.extend({
+				subModelTypes: {
+					'primate': 'Primate',
+					'carnivore': 'Carnivore'
+				}
+			});
+			window.Primate = Mammal.extend();
+			window.Carnivore = Mammal.extend();
+
+			var MammalCollection = AnimalCollection.extend({
+				model: Mammal
+			});
+
+			var mammals = new MammalCollection( [
+				{ id: 5, species: 'chimp', type: 'primate' },
+				{ id: 6, species: 'panther', type: 'carnivore' }
+			]);
+
+			ok( mammals.at( 0 ) instanceof Primate );
+			ok( mammals.at( 1 ) instanceof Carnivore );
+
+			delete window.Carnivore;
+			delete window.Primate;
+		});
+
+		test( "Object building based on type, when used in relations" , function() {
 			var PetAnimal = Backbone.RelationalModel.extend({
+				subModelTypes: {
+					'cat': 'Cat',
+					'dog': 'Dog'
+				}
 			});
-			var Dog = PetAnimal.extend({
-				partOfSupermodel: true,
-				submodelType:     'dog'
-			});
-			var Cat = PetAnimal.extend({
-				partOfSupermodel: true,
-				submodelType:     'cat'
-			});
+			window.Dog = PetAnimal.extend();
+			window.Cat = PetAnimal.extend();
 
 			var PetPerson = Backbone.RelationalModel.extend({
 				relations: [{
@@ -665,32 +696,40 @@ $(document).ready(function() {
 				}]
 			});
 
-			var person = new PetPerson({
-				pets: [{
-					type: 'dog',
-					name: 'Spot'
-				},
-				{
-					type: 'cat',
-					name: 'Whiskers'
-				}]
+			var petPerson = new PetPerson({
+				pets: [
+					{
+						type: 'dog',
+						name: 'Spot'
+					},
+					{
+						type: 'cat',
+						name: 'Whiskers'
+					}
+				]
 			});
 
-			ok( person.get('pets').at(0) instanceof Dog );
-			ok( person.get('pets').at(1) instanceof Cat );
-			
-			person.get('pets').add({ 
+			ok( petPerson.get( 'pets' ).at( 0 ) instanceof Dog );
+			ok( petPerson.get( 'pets' ).at( 1 ) instanceof Cat );
+
+			petPerson.get( 'pets' ).add({
 				type: 'dog',
 				name: 'Spot II'
 			});
 			
-			ok( person.get('pets').at(2) instanceof Dog );
+			ok( petPerson.get( 'pets' ).at( 2 ) instanceof Dog );
+
+			delete window.Dog;
+			delete window.Cat;
 		});
 		
-		test( "Automatic sharing of supermodel relations" , function() {
+		test( "Automatic sharing of 'superModel' relations" , function() {
+			window.PetPerson = Backbone.RelationalModel.extend({});
+			window.PetAnimal = Backbone.RelationalModel.extend({
+				subModelTypes: {
+					'dog': 'Dog'
+				},
 
-			var PetPerson = Backbone.RelationalModel.extend({});
-			var PetAnimal = Backbone.RelationalModel.extend({
 				relations: [{
 					type: Backbone.HasOne,
 					key:  'owner',
@@ -702,11 +741,8 @@ $(document).ready(function() {
 				}]
 			});
 			
-			var Flea = Backbone.RelationalModel.extend({});
-			var Dog = PetAnimal.extend({
-				partOfSupermodel: true,
-				submodelType:     'dog',
-				
+			window.Flea = Backbone.RelationalModel.extend({});
+			window.Dog = PetAnimal.extend({
 				relations: [{
 					type: Backbone.HasMany,
 					key:	'fleas',
@@ -718,37 +754,46 @@ $(document).ready(function() {
 			});
 			
 			var dog = new Dog({
-				name: "Spot"
+				name: 'Spot'
 			});
 			
 			var person = new PetPerson({
-				pets: [dog]
+				pets: [ dog ]
 			});
 
-			equal( dog.get("owner"), person, "Dog has a working owner relation." );
+			equal( dog.get( 'owner' ), person, "Dog has a working owner relation." );
 
 			var flea = new Flea({
 				host: dog
 			});
 			
-			equal( dog.get("fleas").at(0), flea, "Dog has a working fleas relation." );
+			equal( dog.get( 'fleas' ).at( 0 ), flea, "Dog has a working fleas relation." );
+
+			delete window.PetPerson;
+			delete window.PetAnimal;
+			delete window.Flea;
+			delete window.Dog;
 		});
 	
 		test( "toJSON includes the type", function() {
-			var PetAnimal = Backbone.RelationalModel.extend({
+			window.PetAnimal = Backbone.RelationalModel.extend({
+				subModelTypes: {
+					'dog': 'Dog'
+				}
 			});
-			var Dog = PetAnimal.extend({
-				partOfSupermodel: true,
-				submodelType:     'dog'
+
+			window.Dog = PetAnimal.extend();
+			
+			var dog = new Dog({
+				name: 'Spot'
 			});
 			
-			dog = new Dog({
-				name: "Spot"
-			});
+			var json = dog.toJSON();
 			
-			json = dog.toJSON();
-			
-			equal( json.type, 'dog', "The value of 'type' is the pet animal's type.")
+			equal( json.type, 'dog', "The value of 'type' is the pet animal's type." );
+
+			delete window.PetAnimal;
+			delete window.Dog;
 		});
 		
 	
@@ -1170,7 +1215,6 @@ $(document).ready(function() {
 			]);
 
 			var zoo = new Zoo( { animals: animals } );
-			console.log( zoo.get( 'animals' ), zoo.get( 'animals' ).models );
 
 			equal( zoo.get( 'animals' ), animals, "The 'animals' collection has been set as the zoo's animals" );
 			equal( zoo.get( 'animals' ).length, 2, "Two animals in 'zoo'" );

@@ -51,16 +51,16 @@ A relation could look like the following:
 ```javascript
 Zoo = Backbone.RelationalModel.extend({
 	relations: [{
-			type: Backbone.HasMany,
-			key: 'animals',
-			relatedModel: 'Animal',
-			collectionType: 'AnimalCollection',
-			reverseRelation: {
-				key: 'livesIn',
-				includeInJSON: 'id'
-				// 'relatedModel' is automatically set to 'Zoo'; the 'relationType' to 'HasOne'.
-			}
-		}]
+		type: Backbone.HasMany,
+		key: 'animals',
+		relatedModel: 'Animal',
+		collectionType: 'AnimalCollection',
+		reverseRelation: {
+			key: 'livesIn',
+			includeInJSON: 'id'
+			// 'relatedModel' is automatically set to 'Zoo'; the 'relationType' to 'HasOne'.
+		}
+	}]
 });
 
 Animal = Backbone.RelationalModel.extend({
@@ -143,7 +143,7 @@ niceCompany.bind( 'add:employees', function( model, coll ) {
 		// Will see a Job with attributes { person: paul, company: niceCompany } being added here
 	});
 
-paul.get('jobs').add( { company: niceCompany } );
+paul.get( 'jobs' ).add( { company: niceCompany } );
 ```
 
 ### keySource
@@ -254,55 +254,68 @@ See the example at the top of [Backbone.Relation options](#backbone-relation) or
 * `update`: triggered on changes to the key itself on `HasMany` and `HasOne` relations.  
   Bind to `update:<key>`; arguments: `(model<Backbone.Model>, related<Backbone.Model|Backbone.Collection>)`.
 
+
 ### Properties
 
 Properties can be defined along with the subclass prototype when extending `Backbone.RelationalModel` or a subclass thereof.
 
-###### <a name="property-part-of-supermodel" />**partOfSupermodel**
+###### <a name="property-submodel-types" />**subModelTypes**
 
-Value: a boolean. Default: `false`.
+Value: an object. Default: `{}`.
 
-Determines whether this model should be considered a proper submodel of its
-superclass (the model type you're extending), with a shared id pool. 
+A mapping that defines what submodels exist for the model (the `superModel`) on which `subModelTypes` is defined.
+The keys are used to match the [`subModelTypeAttribute`](#property-submodel-type-attribute) when deserializing,
+and the values determine what type of submodel should be created for a key. When building model instances from data,
+we need to determine what kind of object we're dealing with in order to create instances of the right `subModel` type.
+This is done by finding the model for which the key is equal to the value of the
+[`submodelTypeAttribute`](#property-submodel-type-attribute) attribute on the passed in data.
 
-This means that when looking for an object of the supermodel's type, objects
-of this submodel's type could be returned as well, as long as the id matches.
-In effect, any relations pointing to the supermodel will look for objects
-of the supermodel's submodel's types as well.
+Each `subModel` is considered to be a proper submodel of its superclass (the model type you're extending),
+with a shared id pool. This means that when looking for an object of the supermodel's type, objects
+of a submodel's type can be returned as well, as long as the id matches. In effect, any relations pointing to
+the supermodel will look for instances of it's submodels as well.
 
-Suppose that we have an `Animal` model and a `Dog` model extending `Animal`
-with `partOfSupermodel` set to `true`. If we have a `Dog` object with id `3`,
-this object will be returned when we have a relation pointing to an `Animal` 
-with id `3`, as `Dog` is regarded a specific kind of `Animal`: it's just an 
-`Animal` with possibly some dog-specific properties or methods.
+Example:
 
-Note that this means that there cannot be any overlap in ids between instances
-of classes `Animal` and `Dog`, as the `Dog` with id `3` will *be* the `Animal`
-with id `3`.
+```javascript
+Mammal = Animal.extend({
+	subModelTypes: {
+		'primate': 'Primate',
+		'carnivore': 'Carnivore'
+	}
+});
+var Primate = Mammal.extend();
+var Carnivore = Mammal.extend();
 
-###### <a name="property-submodel-type" />**submodelType**
+var MammalCollection = AnimalCollection.extend({
+	model: Mammal
+});
 
-Value: a string.
+// Create a collection that contains a 'Primate' and a 'Carnivore'.
+var mammals = new MammalCollection([
+	{ id: 3, species: 'chimp', type: 'primate' },
+	{ id: 5, species: 'panther', type: 'carnivore' }
+]);
+```
 
-When building a model instance for a relation with a `relatedModel` that has
-one or more submodels (i.e. models that have 
-[`partOfSupermodel`](#property-part-of-supermodel) set to true), we need to 
-determine what kind of object we're dealing with and an instance of what 
-submodel should be built. This is done by finding the `relatedModel`'s 
-submodel for which the `submodelType` is equal to the value of the 
-[`submodelTypeAttribute`](#property-submodel-type-attribute) attribute on the 
-newly passed in data object. 
+Suppose that we have an `Mammal` model and a `Primate` model extending `Mammal`. If we have a `Primate` object with
+id `3`, this object will be returned when we have a relation pointing to a `Mammal` with id `3`, as `Primate` is
+regarded a specific kind of `Mammal`; it's just a `Mammal` with possibly some primate-specific properties or methods.
 
-###### <a name="property-submodel-type-attribute" />**submodelTypeAttribute**
+Note that this means that there cannot be any overlap in ids between instances of `Mammal` and `Primate`, as the
+`Primate` with id `3` will *be* the `Mammal` with id `3`.
 
-Value: a string. References an attribute on the data used to instantiate 
-`relatedModel`. Default: `"type"`.
+###### <a name="property-submodel-type-attribute" />**subModelTypeAttribute**
 
+Value: a string. Default: `"type"`.
+
+The `subModelTypeAttribute` is a references an attribute on the data used to instantiate `relatedModel`.
 The attribute that will be checked to determine the type of model that
 should be built when a raw object of attributes is set as the related value,
 and if the `relatedModel` has one or more submodels.
 
-See [`submodelType`](#property-submodel-type) for more information.
+See [`subModelTypes`](#property-submodel-types) for more information.
+
 
 ## <a name="example"/>Example
 
