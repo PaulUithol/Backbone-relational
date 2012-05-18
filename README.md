@@ -245,6 +245,27 @@ method that allows it to construct a url for an array of models.
 See the example at the top of [Backbone.Relation options](#backbone-relation) or
 [Backbone-tastypie](https://github.com/PaulUithol/backbone-tastypie/blob/master/backbone_tastypie/static/js/backbone-tastypie.js#L92) for an example.
 
+### Methods on the type itself
+
+Several methods don't operate on model instances, but are defined on the type itself.
+
+###### **setup `ModelType.setup()`**
+
+Initialize the relations and submodels for the model type. See the [`Q and A`](#q-and-a) for a possible scenario where
+it's useful to call this method manually.
+
+###### **build `ModelType.build(attributes<object>, [options<object>])`**
+
+Create an instance of a model, taking into account what submodels have been defined.
+
+###### **findOrCreate `ModelType.findOrCreate(attributes<string|number|object>, [options<object>])`**
+
+Search for a model instance in the `Backbone.Relational.store`.
+
+* If `attributes` is a string or a number, `findOrCreate` will just query the `store` and return a model if found.
+* If `attributes` is an object, the model will be updated with `attributes` if found.
+  Otherwise, a new model is created with `attributes` (unless `options.create` is explicitly set to `false`).
+
 ### Events
 
 * `add`: triggered on addition to a `HasMany` relation.  

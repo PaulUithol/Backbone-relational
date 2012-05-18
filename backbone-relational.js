@@ -164,11 +164,11 @@
 		/**
 		 * Add a reverse relation. Is added to the 'relations' property on model's prototype, and to
 		 * existing instances of 'model' in the store as well.
-		 * @param {object} relation
+		 * @param {Object} relation
 		 * @param {Backbone.RelationalModel} relation.model
 		 * @param {String} relation.type
 		 * @param {String} relation.key
-		 * @param {String|object} relation.relatedModel
+		 * @param {String|Object} relation.relatedModel
 		 */
 		addReverseRelation: function( relation ) {
 			var exists = _.any( this._reverseRelations, function( rel ) {
@@ -199,7 +199,7 @@
 		
 		/**
 		 * Add a 'relation' to all existing instances of 'relation.model' in the store
-		 * @param {object} relation
+		 * @param {Object} relation
 		 */
 		retroFitRelation: function( relation ) {
 			var coll = this.getCollection( relation.model );
@@ -217,7 +217,7 @@
 		 * @param {Backbone.RelationalModel} model
 		 * @return {Backbone.Collection} A collection if found (or applicable for 'model'), or null
 		 */
-		getCollection: function( model ) { 
+		getCollection: function( model ) {
 			if ( model instanceof Backbone.RelationalModel ) {
 				model = model.constructor;
 			}
@@ -349,19 +349,19 @@
 	 * are used to regulate addition and removal of models from relations.
 	 *
 	 * @param {Backbone.RelationalModel} instance
-	 * @param {object} options
+	 * @param {Object} options
 	 * @param {string} options.key
 	 * @param {Backbone.RelationalModel.constructor} options.relatedModel
 	 * @param {Boolean|String} [options.includeInJSON=true] Serialize the given attribute for related model(s)' in toJSON, or just their ids.
 	 * @param {Boolean} [options.createModels=true] Create objects from the contents of keys if the object is not found in Backbone.store.
-	 * @param {object} [options.reverseRelation] Specify a bi-directional relation. If provided, Relation will reciprocate
+	 * @param {Object} [options.reverseRelation] Specify a bi-directional relation. If provided, Relation will reciprocate
 	 *    the relation to the 'relatedModel'. Required and optional properties match 'options', except that it also needs
 	 *    {Backbone.Relation|String} type ('HasOne' or 'HasMany').
 	 */
 	Backbone.Relation = function( instance, options ) {
 		this.instance = instance;
 		// Make sure 'options' is sane, and fill with defaults from subclasses and this object's prototype
-		options = ( typeof options === 'object' && options ) || {};
+		options = _.isObject( options ) ? options : {};
 		this.reverseRelation = _.defaults( options.reverseRelation || {}, this.options.reverseRelation );
 		this.reverseRelation.type = !_.isString( this.reverseRelation.type ) ? this.reverseRelation.type :
 			Backbone[ this.reverseRelation.type ] || Backbone.Relational.store.getObjectByName( this.reverseRelation.type );
@@ -519,12 +519,6 @@
 			this.instance.release();
 		},
 		
-		createModel: function( item ) {
-			if ( this.options.createModels && typeof( item ) === 'object' ) {
-				return this.relatedModel.build( item );
-			}
-		},
-		
 		/**
 		 * Determine if a relation (on a different RelationalModel) is the reverse
 		 * relation of the current one.
@@ -632,15 +626,7 @@
 				model = item;
 			}
 			else if ( item ) {
-				// Try to find an instance of the appropriate 'relatedModel' in the store, or create it
-				model = Backbone.Relational.store.find( this.relatedModel, item );
-
-				if ( model && _.isObject( item ) ) {
-					model.set( item, options );
-				}
-				else if ( !model ) {
-					model = this.createModel( item );
-				}
+				model = this.relatedModel.findOrCreate( item, { create: this.options.createModels } );
 			}
 			
 			return model;
@@ -650,7 +636,7 @@
 		 * If the key is changed, notify old & new reverse relations and initialize the new relation
 		 */
 		onChange: function( model, attr, options ) {
-			// Don't accept recursive calls to onChange (like onChange->findRelated->createModel->initializeRelations->addRelated->onChange)
+			// Don't accept recursive calls to onChange (like onChange->findRelated->findOrCreate->initializeRelations->addRelated->onChange)
 			if ( this.isLocked() ) {
 				return;
 			}
@@ -840,14 +826,7 @@
 								model = item;
 							}
 							else {
-								model = Backbone.Relational.store.find( this.relatedModel, item );
-
-								if ( model && _.isObject( item ) ) {
-									model.set( item, options );
-								}
-								else if ( !model ) {
-									model = this.createModel( item );
-								}
+								model = this.relatedModel.findOrCreate( item, { create: this.options.createModels } );
 							}
 
 							if ( model && !this.related.getByCid( model ) && !this.related.get( model ) ) {
@@ -1148,7 +1127,7 @@
 		/**
 		 * Retrieve related objects.
 		 * @param key {string} The relation key to fetch models for.
-		 * @param options {object} Options for 'Backbone.Model.fetch' and 'Backbone.sync'.
+		 * @param options {Object} Options for 'Backbone.Model.fetch' and 'Backbone.sync'.
 		 * @return {jQuery.when[]} An array of request objects
 		 */
 		fetchRelated: function( key, options ) {
@@ -1167,7 +1146,7 @@
 				var models = _.map( toFetch, function( item ) {
 					var model;
 
-					if ( typeof( item ) === 'object' ) {
+					if ( _.isObject( item ) ) {
 						model = rel.relatedModel.build( item );
 					}
 					else {
@@ -1465,6 +1444,34 @@
 					subModelType && subModelType.initializeModelHierarchy();
 				});
 			}
+		},
+
+		/**
+		 * Find an instance of `this` type in 'Backbone.Relational.store'.
+		 * - If `attributes` is a string or a number, `findOrCreate` will just query the `store` and return a model if found.
+		 * - If `attributes` is an object, the model will be updated with `attributes` if found.
+		 *   Otherwise, a new model is created with `attributes` (unless `options.create` is explicitly set to `false`).
+		 * @param {Object|String|Number} attributes Either a model's id, or the attributes used to create or update a model.
+		 * @param {Object} [options]
+		 * @param {Boolean} [options.create=true]
+		 * @return {Backbone.RelationalModel}
+		 */
+		findOrCreate: function( attributes, options ) {
+			// Try to find an instance of 'this' model type in the store
+			var model = Backbone.Relational.store.find( this, attributes );
+
+			// If we found an instance, update it with the data in 'item'; if not, create an instance
+			// (unless 'options.create' is false).
+			if ( _.isObject( attributes ) ) {
+				if ( model ) {
+					model.set( attributes, options );
+				}
+				else if ( !options || ( options && options.create !== false ) ) {
+					model = this.build( attributes, options );
+				}
+			}
+
+			return model;
 		}
 	});
 	_.extend( Backbone.RelationalModel.prototype, Backbone.Semaphore );

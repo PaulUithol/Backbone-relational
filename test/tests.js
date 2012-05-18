@@ -256,10 +256,10 @@ $(document).ready(function() {
 	}
 	
 	
-	module("Backbone.Semaphore");
+	module( "Backbone.Semaphore", {} );
 	
 	
-		test("Unbounded", function() {
+		test( "Unbounded", function() {
 			expect( 10 );
 			
 			var semaphore = _.extend( {}, Backbone.Semaphore );
@@ -301,7 +301,7 @@ $(document).ready(function() {
 		});
 	
 	
-	module( "Backbone.BlockingQueue" );
+	module( "Backbone.BlockingQueue", {} );
 	
 	
 		test( "Block", function() {
@@ -644,7 +644,38 @@ $(document).ready(function() {
 			//console.debug( json );
 			ok( json.children.length === 1 );
 		});
-	
+
+		test( "constructor.findOrCreate", function() {
+			var personColl = Backbone.Relational.store.getCollection( person1 ),
+				origPersonCollSize = personColl.length;
+
+			// Just find an existing model
+			var person = Person.findOrCreate( person1.id );
+
+			ok( person === person1 );
+			ok( origPersonCollSize === personColl.length, "Existing person was found (none created)" );
+
+			// Update an existing model
+			person = Person.findOrCreate( { id: person1.id, name: 'dude' } );
+
+			equal( person.get( 'name' ), 'dude' );
+			equal( person1.get( 'name' ), 'dude' );
+
+			ok( origPersonCollSize === personColl.length, "Existing person was updated (none created)" );
+
+			// Look for a non-existent person; 'options.create' is false
+			person = Person.findOrCreate( { id: 5001 }, { create: false } );
+
+			ok( !person );
+			ok( origPersonCollSize === personColl.length, "No person was found (none created)" );
+
+			// Create a new model
+			person = Person.findOrCreate( { id: 5001 } );
+
+			ok( person instanceof Person );
+			ok( origPersonCollSize + 1 === personColl.length, "No person was found (1 created)" );
+		});
+
 	
 	module( "Backbone.RelationalModel inheritance (`subModelTypes`)", {} );
 
