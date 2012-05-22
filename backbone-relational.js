@@ -563,7 +563,7 @@
 		sanitizeOptions: function( options ) {
 			options = options ? _.clone( options ) : {};
 			if ( options.silent ) {
-				options = _.extend( {}, options, { silentChange: true } );
+				options.silentChange = true;
 				delete options.silent;
 			}
 			return options;
@@ -578,7 +578,7 @@
 		unsanitizeOptions: function( options ) {
 			options = options ? _.clone( options ) : {};
 			if ( options.silentChange ) {
-				options = _.extend( {}, options, { silent: true } );
+				options.silent = true;
 				delete options.silentChange;
 			}
 			return options;
