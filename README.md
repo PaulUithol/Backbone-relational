@@ -4,7 +4,7 @@ Backbone-relational provides one-to-one, one-to-many and many-to-one relations b
 * Bidirectional relations, which notify related models of changes through events.
 * Control how relations are serialized using the `includeInJSON` option.
 * Automatically convert nested objects in a model's attributes into Model instances using the `createModels` option.
-* Retrieve (a set of) related models through the `fetchRelated(key<string>, [options<object>])` method.
+* Lazily retrieve (a set of) related models through the `fetchRelated(key<string>, [options<object>], update<bool>)` method.
 * Determine the type of `HasMany` collections with `collectionType`.
 * Bind new events to a `Backbone.RelationalModel` for:
 	* addition to a `HasMany` relation (bind to `add:<key>`; arguments: `(addedModel, relatedCollection)`),
@@ -203,12 +203,17 @@ a function that should take the instance in the "One"-end of the "HasMany" relat
 
 ### includeInJSON
 
-Value: a boolean, or a string referencing one of the model's attributes. Default: `true`.
+Value: a boolean, a string referencing one of the model's attributes, or an array of strings referencing model attributes. Default: `true`.
 
-Determines how a relation will be serialized following a call to the `toJSON` method. A value of `true` serializes the full set of attributes
-on the related model(s), in which case the relations of this object are serialized as well. Set to `false` to exclude the relation completely.
-You can also choose to include a single attribute from the related model by using a string.
-For example, `'name'`, or `Backbone.Model.prototype.idAttribute` to include ids.
+Determines how the contents of a relation will be serialized following a call to the `toJSON` method. If you specify a:
+
+* Boolean: a value of `true` serializes the full set of attributes on the related model(s).
+  Set to `false` to exclude the relation completely.
+* String: include a single attribute from the related model(s). For example, `'name'`,
+  or `Backbone.Model.prototype.idAttribute` to include ids.
+* String[]: includes the specified attributes from the related model(s).
+
+Only specifying `true` is cascading, meaning the relations of the model will get serialized as well!
 
 ### createModels
 
@@ -233,11 +238,11 @@ It's only mandatory to supply a `key`; `relatedModel` is automatically set. The 
 
 Returns the set of initialized relations on the model.
 
-###### **fetchRelated `relationalModel.fetchRelated(key<string>, [options<object>], [replace<boolean>])`**
+###### **fetchRelated `relationalModel.fetchRelated(key<string>, [options<object>], [update<boolean>])`**
 
 Fetch models from the server that were referenced in the model's attributes, but have not been found/created yet.
-This can be used specifically for lazy-loading scenarios.  Setting `replace` to true guarantees that the model
-will be fetched from the server and any model in the store will be replaced with the new version.
+This can be used specifically for lazy-loading scenarios.  Setting `update` to true guarantees that the model
+will be fetched from the server and any model that already exists in the store will be updated with the retrieved data.
 
 By default, a separate request will be fired for each additional model that is to be fetched from the server.
 However, if your server/API supports it, you can fetch the set of models in one request by specifying a `collectionType`

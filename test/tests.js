@@ -50,6 +50,7 @@ $(document).ready(function() {
 				type: Backbone.HasMany,
 				key: 'animals',
 				relatedModel: 'Animal',
+				includeInJSON: [ 'id', 'species' ],
 				collectionType: 'AnimalCollection',
 				collectionOptions: function( instance ) { return { 'url': 'zoo/' + instance.cid + '/animal/' } },
 				reverseRelation: {
@@ -847,6 +848,25 @@ $(document).ready(function() {
 			json = person3.toJSON();
 			ok( json.user_id === null, "The value of 'user_id' is null");
 			ok( json.likesALot === null, "The value of 'likesALot' is null");
+		});
+
+		test( "'includeInJSON' (Zoo to JSON)", function() {
+			var zoo = new Zoo({
+				name: 'Artis',
+				animals: [
+					new Animal( { id: 1, species: 'bear', name: 'Baloo' } ),
+					new Animal( { id: 2, species: 'tiger', name: 'Shere Khan' } )
+				]
+			});
+
+			var json = zoo.toJSON();
+
+			equal( json.animals.length, 2 );
+
+			var bear = json.animals[ 0 ];
+
+			equal( bear.species, 'bear', "animal's species has been included in the JSON" );
+			equal( bear.name, undefined, "animal's name has not been included in the JSON" );
 		});
 		
 		test( "'createModels' is false", function() {
