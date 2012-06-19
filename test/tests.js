@@ -366,6 +366,30 @@ $(document).ready(function() {
 			
 			ok( coll.length === length, "Collection size decreased by 1" );
 		});
+
+		test( "addModelScope", function() {
+			var models = {};
+			Backbone.Relational.store.addModelScope( models );
+
+			models.Book = Backbone.RelationalModel.extend({
+				relations: [{
+					type: Backbone.HasMany,
+					key: 'pages',
+					relatedModel: 'Page',
+					createModels: false,
+					reverseRelation: {
+						key: 'book'
+					}
+				}]
+			});
+			models.Page = Backbone.RelationalModel.extend();
+
+			var book = new models.Book();
+			var page = new models.Page({ book: book });
+
+			ok( book.relations.length === 1 );
+			ok( book.get( 'pages' ).length === 1 );
+		});
 		
 		test( "Models are created from objects, can then be found, destroyed, cannot be found anymore", function() {
 			var houseId = 'house-10';
