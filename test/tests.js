@@ -194,6 +194,18 @@ $(document).ready(function() {
 		model: Node
 	});
 	
+
+	window.Category = Backbone.RelationalModel.extend({
+		relations: [{
+			type: Backbone.HasOne,
+			key: 'subcategory',
+			relatedModel: 'self',
+			reverseRelation: {
+				key: 'parent'
+			}
+		}]
+	});
+
 	function initObjects() {
 		// Reset last ajax requests
 		window.requests = [];
@@ -253,6 +265,17 @@ $(document).ready(function() {
 			location: 'outside of town',
 			occupants: [],
 			resource_uri: 'house-2'
+		});
+
+		window.subcategory = new Category({
+			id: 'subcatA',
+			name: 'Subcategory A'
+		});
+
+		window.categoryWithSubcategory = new Category({
+			id: 'mainCategory',
+			name: 'misc',
+			subcategory: 'subcatA'
 		});
 	}
 	
@@ -340,7 +363,7 @@ $(document).ready(function() {
 	
 	
 		test( "Initialized", function() {
-			equal( Backbone.Relational.store._collections.length, 5, "Store contains 5 collections" );
+			equal( Backbone.Relational.store._collections.length, 6, "Store contains 6 collections" );
 		});
 		
 		test( "getObjectByName", function() {
@@ -2113,5 +2136,9 @@ $(document).ready(function() {
 
 			equal( zoo.get( 'name' ), 'Zoo Station' );
 			equal( lion.get( 'name' ), 'Simba' );
+		});
+
+		test( "Self referential relatedModels", function() {
+			ok( categoryWithSubcategory.get("subcategory") instanceof Category );
 		});
 });

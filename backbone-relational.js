@@ -390,7 +390,14 @@
 		// 'exports' should be the global object where 'relatedModel' can be found on if given as a string.
 		this.relatedModel = this.options.relatedModel;
 		if ( _.isString( this.relatedModel ) ) {
-			this.relatedModel = Backbone.Relational.store.getObjectByName( this.relatedModel );
+			if (this.relatedModel == "self")
+			{
+				this.relatedModel = this.model;
+			}
+			else
+			{
+				this.relatedModel = Backbone.Relational.store.getObjectByName( this.relatedModel );
+			}
 		}
 
 		if ( !this.checkPreconditions() ) {
