@@ -1608,17 +1608,12 @@
 			var dit = this, args = arguments;
 			
 			if (eventName === 'add') {
-				var toBeCloned = args;
-				args = [];
-				_.each(toBeCloned, function(arg, index) {
-					if (index === 3) {
-						// these are the options containing the index a model element was added at.
-						var clonedArg = _.clone(arg);
-						args.push(clonedArg);
-					} else {
-						args.push(arg);
-					}
-				});
+				args = _.toArray(args);
+				// the fourth argument in case of a regular add is the option object.
+				// we need to clone it, as it could be modified while we wait on the eventQueue to be unblocked
+				if (_.isObject(args[3])) {
+					args[3] = _.clone(args[3]);
+				}
 			}
 			
 			Backbone.Relational.eventQueue.add( function() {

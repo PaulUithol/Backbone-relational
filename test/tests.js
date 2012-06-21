@@ -1571,7 +1571,43 @@ $(document).ready(function() {
 			Backbone.Collection.prototype.sort = sort;
 			delete AnimalCollection.prototype.comparator;
 		});
+
+		test( "Raw-models set to a hasMany relation do trigger an add event in the underlying Collection with a correct index", function() {
+			var zoo = new Zoo();
+
+			var indexes = [];
+
+			zoo.get("animals").on("add", function(collection, model, options) {
+				indexes.push(options.index);
+			});
+
+			zoo.set("animals", [
+					{ id : 1, species : 'Lion' },
+					{ id : 2, species : 'Zebra'}
+			]);
+
+			equal( indexes[0], 0, "First item has index 0" );
+			equal( indexes[1], 1, "Second item has index 1" );
+		});
 		
+		test( "Models set to a hasMany relation do trigger an add event in the underlying Collection with a correct index", function() {
+			var zoo = new Zoo();
+
+			var indexes = [];
+
+			zoo.get("animals").on("add", function(collection, model, options) {
+				indexes.push(options.index);
+			});
+
+			zoo.set("animals", [
+					new Animal({ id : 1, species : 'Lion' }),
+					new Animal({ id : 2, species : 'Zebra'})
+			]);
+
+			equal( indexes[0], 0, "First item has index 0" );
+			equal( indexes[1], 1, "Second item has index 1" );
+		});
+
 		test( "The 'collectionKey' options is used to create references on generated Collections back to its RelationalModel", function() {
 			var zoo = new Zoo({
 				animals: [ 'lion-1', 'zebra-1' ]
