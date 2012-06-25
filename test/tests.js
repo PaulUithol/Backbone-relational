@@ -666,8 +666,9 @@ $(document).ready(function() {
 			new Node({ id: '3', parent: '2', name: 'Third node' });
 			
 			var json = node.toJSON();
-			//console.debug( json );
+
 			ok( json.children.length === 1 );
+
 		});
 
 		test( "constructor.findOrCreate", function() {
@@ -919,7 +920,7 @@ $(document).ready(function() {
 			ok( person.get( 'user' ).get( 'resource_uri' ) == null );
 		});
 
-		test( "'keySource' loads from 'key", function() {
+		test( "Relations load from both `keySource` and `key`", function() {
 			var Property = Backbone.RelationalModel.extend({
 				idAttribute: 'property_id'
 			});
@@ -959,6 +960,12 @@ $(document).ready(function() {
 			// The values from view.property_ids should be loaded into view.properties
 			ok( view.get( 'properties' ) && view.get( 'properties' ).length === 2, "'view' has two 'properties'" );
 			ok( typeof view.get( 'property_ids' ) === 'undefined', "'view' does not have 'property_ids'" );
+
+			view.set( 'properties', [ property1, property2 ] );
+			ok( view.get( 'properties' ) && view.get( 'properties' ).length === 2, "'view' has two 'properties'" );
+
+			view.set( 'property_ids', [ 1, 2 ] );
+			ok( view.get( 'properties' ) && view.get( 'properties' ).length === 2, "'view' has two 'properties'" );
 		});
 
 		test( "'keyDestination' saves to 'key'", function() {
@@ -2050,7 +2057,7 @@ $(document).ready(function() {
 	module( "Model loading", { setup: initObjects } );
 	
 	
-		test( "Loading (fetching) multiple times updates the model", function() {
+		test( "Loading (fetching) multiple times updates the model, and relations's `keyContents`", function() {
 			var collA = new Backbone.Collection();
 			collA.model = User;
 			var collB = new Backbone.Collection();
@@ -2082,7 +2089,7 @@ $(document).ready(function() {
 			ok( collB.get( '/user/1/' ) === user );
 		});
 		
-		test( "Loading (fetching) multiple times updates related models as well (HasOne)", function() {
+		test( "Loading (fetching) a collection multiple times updates related models as well (HasOne)", function() {
 			var coll = new PersonCollection();
 			coll.add( { id: 'person-10', name: 'Person', user: { id: 'user-10', login: 'User' } } );
 
@@ -2097,7 +2104,7 @@ $(document).ready(function() {
 			equal( user.get( 'login' ), 'New user' );
 		});
 		
-		test( "Loading (fetching) multiple times updates related models as well (HasMany)", function() {
+		test( "Loading (fetching) a collection multiple times updates related models as well (HasMany)", function() {
 			var coll = new Backbone.Collection();
 			coll.model = Zoo;
 
@@ -2115,3 +2122,4 @@ $(document).ready(function() {
 			equal( lion.get( 'name' ), 'Simba' );
 		});
 });
+

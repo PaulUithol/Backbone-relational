@@ -1,4 +1,4 @@
-/**	
+/**
  * Backbone-relational.js 0.5.0
  * (c) 2011 Paul Uithol
  * 
@@ -27,7 +27,7 @@
 	Backbone.Relational = {
 		showWarnings: true
 	};
-	
+
 	/**
 	 * Semaphore mixin; can be used as both binary and counting.
 	 **/
@@ -385,7 +385,7 @@
 		
 		this.key = this.options.key;
 		this.keySource = this.options.keySource || this.key;
-		this.keyDestination = this.options.keyDestination || this.options.keySource || this.key;
+		this.keyDestination = this.options.keyDestination || this.keySource || this.key;
 
 		// 'exports' should be the global object where 'relatedModel' can be found on if given as a string.
 		this.relatedModel = this.options.relatedModel;
@@ -1094,11 +1094,12 @@
 		updateRelations: function( options ) {
 			if ( this._isInitialized && !this.isLocked() ) {
 				_.each( this._relations, function( rel ) {
-						var val = this.attributes[ rel.key ];
-						if ( rel.related !== val ) {
-							this.trigger( 'relational:change:' + rel.key, this, val, options || {} );
-						}
-					}, this );
+					// Update from data in `rel.keySource` if set, or `rel.key` otherwise
+					var val = this.attributes[ rel.keySource ] || this.attributes[ rel.key ];
+					if ( rel.related !== val ) {
+						this.trigger( 'relational:change:' + rel.key, this, val, options || {} );
+					}
+				}, this );
 			}
 		},
 		
