@@ -1096,7 +1096,7 @@
 				_.each( this._relations, function( rel ) {
 					// Update from data in `rel.keySource` if set, or `rel.key` otherwise
 					var val = this.attributes[ rel.keySource ] || this.attributes[ rel.key ];
-					if ( rel.related !== val ) {
+					if ( rel.related !== val && !options.silent) {
 						this.trigger( 'relational:change:' + rel.key, this, val, options || {} );
 					}
 				}, this );
@@ -1582,9 +1582,11 @@
 		if ( modelsToAdd.length ) {
 			add.call( this, modelsToAdd, options );
 
-			_.each( modelsToAdd, function( model ) {
+			if (!options.silent) {
+				_.each( modelsToAdd, function( model ) {
 					this.trigger( 'relational:add', model, this, options );
-				}, this );
+					}, this );
+			}
 		}
 		
 		return this;
@@ -1609,7 +1611,9 @@
 
 				if ( model instanceof Backbone.Model ) {
 					remove.call( this, model, options );
-					this.trigger('relational:remove', model, this, options);
+					if (!options.silent) {
+						this.trigger('relational:remove', model, this, options);
+					}
 				}
 			}, this );
 		
@@ -1622,7 +1626,9 @@
 	var reset = Backbone.Collection.prototype.__reset = Backbone.Collection.prototype.reset;
 	Backbone.Collection.prototype.reset = function( models, options ) {
 		reset.call( this, models, options );
-		this.trigger( 'relational:reset', this, options );
+		if (!options.silent) {
+			this.trigger( 'relational:reset', this, options );
+		}
 
 		return this;
 	};
@@ -1633,7 +1639,9 @@
 	var sort = Backbone.Collection.prototype.__sort = Backbone.Collection.prototype.sort;
 	Backbone.Collection.prototype.sort = function( options ) {
 		sort.call( this, options );
-		this.trigger( 'relational:reset', this, options );
+		if (!options.silent) {
+			this.trigger( 'relational:reset', this, options );
+		}
 
 		return this;
 	};
