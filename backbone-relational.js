@@ -1096,7 +1096,7 @@
 				_.each( this._relations, function( rel ) {
 					// Update from data in `rel.keySource` if set, or `rel.key` otherwise
 					var val = this.attributes[ rel.keySource ] || this.attributes[ rel.key ];
-					if ( rel.related !== val && !options.silent) {
+					if ( rel.related !== val && (!options || !options.silent) ) {
 						this.trigger( 'relational:change:' + rel.key, this, val, options || {} );
 					}
 				}, this );
@@ -1626,7 +1626,7 @@
 	var reset = Backbone.Collection.prototype.__reset = Backbone.Collection.prototype.reset;
 	Backbone.Collection.prototype.reset = function( models, options ) {
 		reset.call( this, models, options );
-		if (!options.silent) {
+		if ( !options || !options.silent ) {
 			this.trigger( 'relational:reset', this, options );
 		}
 
@@ -1639,7 +1639,7 @@
 	var sort = Backbone.Collection.prototype.__sort = Backbone.Collection.prototype.sort;
 	Backbone.Collection.prototype.sort = function( options ) {
 		sort.call( this, options );
-		if (!options.silent) {
+		if ( !options || !options.silent ) {
 			this.trigger( 'relational:reset', this, options );
 		}
 
