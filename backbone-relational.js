@@ -487,7 +487,7 @@
 				warn && console.warn( 'Relation=%o; no model, key or relatedModel (%o, %o, %o)', this, m, k, rm );
 				return false;
 			}
-			// Check if the type in 'relatedModel' inherits from Backbone.RelationalModel
+			// Check if the type in 'model' inherits from Backbone.RelationalModel
 			if ( !( m.prototype instanceof Backbone.RelationalModel ) ) {
 				warn && console.warn( 'Relation=%o; model does not inherit from Backbone.RelationalModel (%o)', this, i );
 				return false;
