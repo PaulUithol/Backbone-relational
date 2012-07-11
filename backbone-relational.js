@@ -1424,6 +1424,7 @@
 						}
 					}
 				}, this );
+      return this;
 		},
 
 		/**
