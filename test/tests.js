@@ -494,24 +494,24 @@ $(document).ready(function() {
 				}
 			});
 
-			var whale = new Mammal( { id: 1, species: 'whale' } );
-
-			var numCollections = Backbone.Relational.store._collections.length;
-
 			window.Primate = Mammal.extend();
 			window.Carnivore = Mammal.extend();
 
-			var lion = new Carnivore( { id: 2, species: 'lion' } );
-			var wolf = new Carnivore( { id: 3, species: 'wolf' } );
+			var lion = new Carnivore( { id: 1, species: 'lion' } );
+			var wolf = new Carnivore( { id: 2, species: 'wolf' } );
+
+			var numCollections = Backbone.Relational.store._collections.length;
+
+			var whale = new Mammal( { id: 3, species: 'whale' } );
 
 			equal( Backbone.Relational.store._collections.length, numCollections, "`_collections` should have remained the same" );
 
-			ok( Backbone.Relational.store.find( Mammal, 1 ) === whale );
-			ok( Backbone.Relational.store.find( Mammal, 2 ) === lion );
-			ok( Backbone.Relational.store.find( Mammal, 3 ) === wolf );
-			ok( Backbone.Relational.store.find( Carnivore, 1 ) !== whale );
-			ok( Backbone.Relational.store.find( Carnivore, 2 ) === lion );
-			ok( Backbone.Relational.store.find( Carnivore, 3 ) === wolf );
+			ok( Backbone.Relational.store.find( Mammal, 1 ) === lion );
+			ok( Backbone.Relational.store.find( Mammal, 2 ) === wolf );
+			ok( Backbone.Relational.store.find( Mammal, 3 ) === whale );
+			ok( Backbone.Relational.store.find( Carnivore, 1 ) === lion );
+			ok( Backbone.Relational.store.find( Carnivore, 2 ) === wolf );
+			ok( Backbone.Relational.store.find( Carnivore, 3 ) !== whale );
 
 			var gorilla = new Primate( { id: 4, species: 'gorilla' } );
 

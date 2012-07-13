@@ -237,7 +237,7 @@
 				});
 			
 			if ( !coll ) {
-				coll = this._createCollection( model );
+				coll = this._createCollection( rootModel );
 			}
 			
 			return coll;
