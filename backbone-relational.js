@@ -369,6 +369,7 @@
 	 * @param {Backbone.RelationalModel.constructor} options.relatedModel
 	 * @param {Boolean|String} [options.includeInJSON=true] Serialize the given attribute for related model(s)' in toJSON, or just their ids.
 	 * @param {Boolean} [options.createModels=true] Create objects from the contents of keys if the object is not found in Backbone.store.
+	 * @param {Boolean} [options.parseModels=false] If creating a new model, call parse() before creating it.
 	 * @param {Object} [options.reverseRelation] Specify a bi-directional relation. If provided, Relation will reciprocate
 	 *    the relation to the 'relatedModel'. Required and optional properties match 'options', except that it also needs
 	 *    {Backbone.Relation|String} type ('HasOne' or 'HasMany').
@@ -443,7 +444,8 @@
 		options: {
 			createModels: true,
 			includeInJSON: true,
-			isAutoRelation: false
+			isAutoRelation: false,
+			parseModels: false,
 		},
 		
 		instance: null,
@@ -641,7 +643,7 @@
 				model = item;
 			}
 			else if ( item ) {
-				model = this.relatedModel.findOrCreate( item, { create: this.options.createModels } );
+				model = this.relatedModel.findOrCreate( item, { create: this.options.createModels, parse: this.options.parseModels } );
 			}
 			
 			return model;
@@ -841,7 +843,7 @@
 								model = item;
 							}
 							else {
-								model = this.relatedModel.findOrCreate( item, { create: this.options.createModels } );
+								model = this.relatedModel.findOrCreate( item, { create: this.options.createModels, parse: this.options.parseModels } );
 							}
 
 							if ( model && !this.related.getByCid( model ) && !this.related.get( model ) ) {
