@@ -1524,7 +1524,7 @@
 	Backbone.Collection.prototype._prepareModel = function ( model, options ) {
 		options || (options = {});
 		if ( !( model instanceof Backbone.Model ) ) {
-			var attrs = model;
+			var attrs = this.model && this.model.prototype.parse ? this.model.prototype.parse(model) : model;
 			options.collection = this;
 			
 			if ( typeof this.model.build !== 'undefined' ) {
