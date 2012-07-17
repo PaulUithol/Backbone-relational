@@ -353,8 +353,10 @@
 		 */
 		unregister: function( model ) {
 			model.unbind( 'destroy', this.unregister );
+			var modelColl = model.collection;
 			var coll = this.getCollection( model );
 			coll && coll.remove( model );
+			model.collection = modelColl;
 		}
 	});
 	Backbone.Relational.store = new Backbone.Store();
