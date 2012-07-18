@@ -893,8 +893,10 @@
 				if ( coll instanceof Backbone.Collection ) {
 					// Make sure to operate on a copy since we're removing while iterating
 					_.each( coll.models.slice(0) , function( model ) {
-						oldIds[ model.id ] = true;
-						coll.remove( model, { silent: (model.id in newIds) } );
+						if ( !model.isNew() ) {
+							oldIds[ model.id ] = true;
+							coll.remove( model, { silent: (model.id in newIds) } );
+						}
 					});
 				} else {
 					coll = this._prepareCollection();
