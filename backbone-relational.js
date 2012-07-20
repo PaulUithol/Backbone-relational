@@ -893,7 +893,9 @@
 				if ( coll instanceof Backbone.Collection ) {
 					// Make sure to operate on a copy since we're removing while iterating
 					_.each( coll.models.slice(0) , function( model ) {
-						if ( !model.isNew() ) {
+						// When fetch is called with the 'keepNewModels' option, we don't want to remove
+						// client-created new models when the fetch is completed.
+						if ( !options.keepNewModels || !model.isNew() ) {
 							oldIds[ model.id ] = true;
 							coll.remove( model, { silent: (model.id in newIds) } );
 						}
