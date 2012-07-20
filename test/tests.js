@@ -2159,64 +2159,64 @@ $(document).ready(function() {
 		});
 
 
-        test( "Does not trigger add / remove events for existing models on bulk assignment", function() {
-          var house = new House({
-            id: 'house-100',
-            location: 'in the middle of the street',
-            occupants: [ { id : 'person-5' }, { id : 'person-6' } ]
-          });
+		test( "Does not trigger add / remove events for existing models on bulk assignment", function() {
+			var house = new House({
+				id: 'house-100',
+				location: 'in the middle of the street',
+				occupants: [ { id : 'person-5' }, { id : 'person-6' } ]
+			});
 
-          var eventsTriggered = 0;
-          house
-            .bind( 'add:occupants', function(model) {
-                ok( false, model.id + " should not be added" );
-                eventsTriggered++;
-              })
-            .bind( 'remove:occupants', function(model) {
-                ok( false, model.id + " should not be removed" );
-                eventsTriggered++;
-              });
+			var eventsTriggered = 0;
+			house
+				.bind( 'add:occupants', function(model) {
+					ok( false, model.id + " should not be added" );
+					eventsTriggered++;
+				})
+				.bind( 'remove:occupants', function(model) {
+					ok( false, model.id + " should not be removed" );
+					eventsTriggered++;
+				});
 
-          house.set( house.toJSON() );
-          ok( eventsTriggered === 0, "No add / remove events were triggered" )
-        });
+			house.set( house.toJSON() );
+			ok( eventsTriggered === 0, "No add / remove events were triggered" )
+		});
 
-        test( "triggers appropriate add / remove / change events on bulk assignment", function() {
-          var house = new House({
-            id: 'house-100',
-            location: 'in the middle of the street',
-            occupants: [ { id : 'person-5', nickname : 'Jane' }, { id : 'person-6' }, { id : 'person-8', nickname : 'Jon' } ]
-          });
+		test( "triggers appropriate add / remove / change events on bulk assignment", function() {
+			var house = new House({
+				id: 'house-100',
+				location: 'in the middle of the street',
+				occupants: [ { id : 'person-5', nickname : 'Jane' }, { id : 'person-6' }, { id : 'person-8', nickname : 'Jon' } ]
+			});
 
-          var addEventsTriggered = 0;
-          var removeEventsTriggered = 0;
-          var changeEventsTriggered = 0;
+			var addEventsTriggered = 0;
+			var removeEventsTriggered = 0;
+			var changeEventsTriggered = 0;
 
-          house
-            /*.bind( 'all', function(ev, model) {
-                console.log('all', ev, model);
-            })*/
-            .bind( 'add:occupants', function(model) {
-                ok( model.id === 'person-7', "Only person-7 should be added: " + model.id + " being added" );
-                addEventsTriggered++;
-              })
-            .bind( 'remove:occupants', function(model) {
-                ok( model.id === 'person-6', "Only person-6 should be removed: " + model.id + " being removed" );
-                removeEventsTriggered++;
-              });
+		  house
+			/*.bind( 'all', function(ev, model) {
+				console.log('all', ev, model);
+			})*/
+			.bind( 'add:occupants', function(model) {
+				ok( model.id === 'person-7', "Only person-7 should be added: " + model.id + " being added" );
+				addEventsTriggered++;
+			})
+			.bind( 'remove:occupants', function(model) {
+				ok( model.id === 'person-6', "Only person-6 should be removed: " + model.id + " being removed" );
+				removeEventsTriggered++;
+			});
 
-          var nicknameUpdated = false
-          house.get('occupants').bind( 'change:nickname', function(model) {
-            ok( model.id === 'person-8', "Only person-8 should have it's nickname updated: " + model.id + " nickname updated" );
-            changeEventsTriggered++;
-          });
+			var nicknameUpdated = false;
+			house.get('occupants').bind( 'change:nickname', function(model) {
+				ok( model.id === 'person-8', "Only person-8 should have it's nickname updated: " + model.id + " nickname updated" );
+				changeEventsTriggered++;
+			});
 
-          house.set( { occupants : [ { id : 'person-5', nickname : 'Jane'}, { id : 'person-7' }, { id : 'person-8', nickname : 'Phil' } ] } );
+			house.set( { occupants : [ { id : 'person-5', nickname : 'Jane'}, { id : 'person-7' }, { id : 'person-8', nickname : 'Phil' } ] } );
 
-          ok(addEventsTriggered == 1, "Exactly one add event was triggered (triggered "+addEventsTriggered+" events)");
-          ok(removeEventsTriggered == 1, "Exactly one remove event was triggered (triggered "+removeEventsTriggered+" events)");
-          ok(changeEventsTriggered == 1, "Exactly one change event was triggered (triggered "+changeEventsTriggered+" events)");
-        });
+			ok(addEventsTriggered == 1, "Exactly one add event was triggered (triggered "+addEventsTriggered+" events)");
+			ok(removeEventsTriggered == 1, "Exactly one remove event was triggered (triggered "+removeEventsTriggered+" events)");
+			ok(changeEventsTriggered == 1, "Exactly one change event was triggered (triggered "+changeEventsTriggered+" events)");
+		});
 
 });
 
