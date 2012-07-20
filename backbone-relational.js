@@ -865,11 +865,6 @@
 			options = this.sanitizeOptions( options );
 			this.keyContents = attr;
 			
-			// Notify old 'related' object of the terminated relation
-			/*_.each( this.getReverseRelations(), function( relation ) {
-					relation.removeRelated( this.instance, options );
-				}, this );*/
-			
 			// Replace 'this.related' by 'attr' if it is a Backbone.Collection
 			if ( attr instanceof Backbone.Collection ) {
 				this._prepareCollection( attr );
@@ -914,11 +909,6 @@
 				this.setRelated( coll );
 
 			}
-			
-			// Notify new 'related' object of the new relation
-			/*_.each( this.getReverseRelations(), function( relation ) {
-					relation.addRelated( this.instance, options );
-				}, this );*/
 			
 			var dit = this;
 			Backbone.Relational.eventQueue.add( function() {
