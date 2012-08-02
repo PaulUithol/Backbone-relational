@@ -288,17 +288,23 @@
 		 * Find the attribute that is to be used as the `id` on a given object
 		 * @param type
 		 * @param {String|Number|Object|Backbone.RelationalModel} item
+		 * @return {String|Number}
 		 */
 		resolveIdForItem: function( type, item ) {
 			var id = _.isString( item ) || _.isNumber( item ) ? item : null;
 
-			if ( id == null ) {
+			if ( id === null ) {
 				if ( item instanceof Backbone.RelationalModel ) {
 					id = item.id;
 				}
 				else if ( _.isObject( item ) ) {
 					id = item[ type.prototype.idAttribute ];
 				}
+			}
+
+			// Make all falsy values `null` (except for 0, which could be an id.. see '/issues/179')
+			if ( !id && id !== 0 ) {
+				id = null;
 			}
 
 			return id;
@@ -640,7 +646,7 @@
 			if ( item instanceof this.relatedModel ) {
 				model = item;
 			}
-			else if ( item ) {
+			else if ( item || item === 0 ) { // since 0 can be a valid `id` as well
 				model = this.relatedModel.findOrCreate( item, { create: this.options.createModels } );
 			}
 			
@@ -714,9 +720,9 @@
 			options = this.sanitizeOptions( options );
 			
 			var item = this.keyContents;
-			if ( item ) {
+			if ( item || item === 0 ) { // since 0 can be a valid `id` as well
 				var id = Backbone.Relational.store.resolveIdForItem( this.relatedModel, item );
-				if ( model.id === id ) {
+				if ( !_.isNull( id ) && model.id === id ) {
 					this.addRelated( model, options );
 				}
 			}
@@ -840,7 +846,7 @@
 							if ( item instanceof this.relatedModel ) {
 								model = item;
 							}
-							else {
+							else if ( item || item === 0 ) { // since 0 can be a valid `id` as well
 								model = this.relatedModel.findOrCreate( item, { create: this.options.createModels } );
 							}
 
@@ -910,7 +916,7 @@
 				// Check if this new model was specified in 'this.keyContents'
 				var item = _.any( this.keyContents, function( item ) {
 						var id = Backbone.Relational.store.resolveIdForItem( this.relatedModel, item );
-						return id && id === model.id;
+						return !_.isNull( id ) && id === model.id;
 					}, this );
 				
 				if ( item ) {
@@ -1155,7 +1161,7 @@
 				keyContents = rel && rel.keyContents,
 				toFetch = keyContents && _.select( _.isArray( keyContents ) ? keyContents : [ keyContents ], function( item ) {
 					var id = Backbone.Relational.store.resolveIdForItem( rel.relatedModel, item );
-					return id && ( update || !Backbone.Relational.store.find( rel.relatedModel, id ) );
+					return !_.isNull( id ) && ( update || !Backbone.Relational.store.find( rel.relatedModel, id ) );
 				}, this );
 			
 			if ( toFetch && toFetch.length ) {
