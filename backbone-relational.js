@@ -1,5 +1,5 @@
 /**
- * Backbone-relational.js 0.5.0
+ * Backbone-relational.js 0.6.0
  * (c) 2011 Paul Uithol
  * 
  * Backbone-relational may be freely distributed under the MIT license; see the accompanying LICENSE.txt.
