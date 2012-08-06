@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link href='https://fonts.googleapis.com/css?family=Architects+Daughter' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen" />
+    <link rel="stylesheet" type="text/css" href="stylesheets/pygment_trac.css" media="screen" />
+    <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print" />
+
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+
+    <title>Backbone-relational by PaulUithol</title>
+  </head>
+
+  <body>
+    <header>
+      <div class="inner">
+        <h1>Backbone-relational</h1>
+        <h2>Get and set relations (one-to-one, one-to-many, many-to-one) for Backbone models</h2>
+        <a href="https://github.com/PaulUithol/Backbone-relational" class="button"><small>View project on</small>GitHub</a>
+      </div>
+    </header>
+
+    <div id="content-wrapper">
+      <div class="inner clearfix">
+        <section id="main-content">
+          <h1>Backbone-relational</h1>
+
+<p>Backbone-relational provides one-to-one, one-to-many and many-to-one relations between models for <a href="https://github.com/documentcloud/backbone">Backbone</a>. To use relations, extend <code>Backbone.RelationalModel</code> (instead of the regular <code>Backbone.Model</code>) and define a property <code>relations</code>, containing an array of option objects. Each relation must define (as a minimum) the <code>type</code>, <code>key</code> and <code>relatedModel</code>. Available relation types are <code>Backbone.HasOne</code> and <code>Backbone.HasMany</code>. Backbone-relational features:</p>
+
+<ul>
+<li>Bidirectional relations, which notify related models of changes through events.</li>
+<li>Control how relations are serialized using the <code>includeInJSON</code> option.</li>
+<li>Automatically convert nested objects in a model's attributes into Model instances using the <code>createModels</code> option.</li>
+<li>Lazily retrieve (a set of) related models through the <code>fetchRelated(key&lt;string&gt;, [options&lt;object&gt;], update&lt;bool&gt;)</code> method.</li>
+<li>Determine the type of <code>HasMany</code> collections with <code>collectionType</code>.</li>
+<li>Bind new events to a <code>Backbone.RelationalModel</code> for:
+
+<ul>
+<li>addition to a <code>HasMany</code> relation (bind to <code>add:&lt;key&gt;</code>; arguments: <code>(addedModel, relatedCollection)</code>),</li>
+<li>removal from a <code>HasMany</code> relation (bind to <code>remove:&lt;key&gt;</code>; arguments: <code>(removedModel, relatedCollection)</code>),</li>
+<li>reset of a <code>HasMany</code> relation (bind to <code>reset:&lt;key&gt;</code>; arguments: <code>(relatedCollection)</code>),</li>
+<li>changes to the key itself on <code>HasMany</code> and <code>HasOne</code> relations (bind to <code>update:&lt;key&gt;</code>; arguments=<code>(model, relatedModel/relatedCollection)</code>).</li>
+</ul>
+</li>
+</ul><h2>Contents</h2>
+
+<ul>
+<li><a href="#getting-started">Getting started</a></li>
+<li><a href="#backbone-relation">Backbone.Relation options</a></li>
+<li><a href="#backbone-relationalmodel">Backbone.RelationalModel</a></li>
+<li><a href="#example">Example</a></li>
+<li><a href="#q-and-a">Known problems and solutions</a></li>
+<li><a href="#under-the-hood">Under the hood</a></li>
+</ul><h2>
+<a name="getting-started"></a>Getting started</h2>
+
+<p>Resources to get you started with Backbone-relational:</p>
+
+<ul>
+<li>
+<a href="http://antoviaque.org/docs/tutorials/backbone-relational-tutorial/">A great tutorial by antoviaque</a> (<a href="https://github.com/antoviaque/backbone-relational-tutorial">and the accompanying git repository</a>)</li>
+</ul><h3>
+<a name="installation"></a>Installation</h3>
+
+<p>Backbone-relational depends on <a href="https://github.com/documentcloud/backbone">backbone</a> (and thus on  <a href="https://github.com/documentcloud/underscore">underscore</a>). Include Backbone-relational right after Backbone and Underscore:</p>
+
+<div class="highlight"><pre><span class="nt">&lt;script </span><span class="na">type=</span><span class="s">"text/javascript"</span> <span class="na">src=</span><span class="s">"./js/underscore.js"</span><span class="nt">&gt;&lt;/script&gt;</span>
+<span class="nt">&lt;script </span><span class="na">type=</span><span class="s">"text/javascript"</span> <span class="na">src=</span><span class="s">"./js/backbone.js"</span><span class="nt">&gt;&lt;/script&gt;</span>
+<span class="nt">&lt;script </span><span class="na">type=</span><span class="s">"text/javascript"</span> <span class="na">src=</span><span class="s">"./js/backbone-relational.js"</span><span class="nt">&gt;&lt;/script&gt;</span>
+</pre></div>
+
+<p>Backbone-relational has been tested with Backbone 0.9.2 (or newer) and Underscore 1.3.1 (or newer).</p>
+
+<h2>
+<a name="backbone-relation"></a>Backbone.Relation options</h2>
+
+<p>Each <code>Backbone.RelationalModel</code> can contain an array of <code>relations</code>.
+Each relation supports a number of options, of which <code>relatedModel</code>, <code>key</code> and <code>type</code> are mandatory.
+A relation could look like the following:</p>
+
+<div class="highlight"><pre><span class="nx">Zoo</span> <span class="o">=</span> <span class="nx">Backbone</span><span class="p">.</span><span class="nx">RelationalModel</span><span class="p">.</span><span class="nx">extend</span><span class="p">({</span>
+    <span class="nx">relations</span><span class="o">:</span> <span class="p">[{</span>
+        <span class="nx">type</span><span class="o">:</span> <span class="nx">Backbone</span><span class="p">.</span><span class="nx">HasMany</span><span class="p">,</span>
+        <span class="nx">key</span><span class="o">:</span> <span class="s1">'animals'</span><span class="p">,</span>
+        <span class="nx">relatedModel</span><span class="o">:</span> <span class="s1">'Animal'</span><span class="p">,</span>
+        <span class="nx">collectionType</span><span class="o">:</span> <span class="s1">'AnimalCollection'</span><span class="p">,</span>
+        <span class="nx">reverseRelation</span><span class="o">:</span> <span class="p">{</span>
+            <span class="nx">key</span><span class="o">:</span> <span class="s1">'livesIn'</span><span class="p">,</span>
+            <span class="nx">includeInJSON</span><span class="o">:</span> <span class="s1">'id'</span>
+            <span class="c1">// 'relatedModel' is automatically set to 'Zoo'; the 'relationType' to 'HasOne'.</span>
+        <span class="p">}</span>
+    <span class="p">}]</span>
+<span class="p">});</span>
+
+<span class="nx">Animal</span> <span class="o">=</span> <span class="nx">Backbone</span><span class="p">.</span><span class="nx">RelationalModel</span><span class="p">.</span><span class="nx">extend</span><span class="p">({</span>
+    <span class="nx">urlRoot</span><span class="o">:</span> <span class="s1">'/animal/'</span>
+<span class="p">});</span>
+
+<span class="nx">AnimalCollection</span> <span class="o">=</span> <span class="nx">Backbone</span><span class="p">.</span><span class="nx">Collection</span><span class="p">.</span><span class="nx">extend</span><span class="p">({</span>
+    <span class="nx">model</span><span class="o">:</span> <span class="nx">Animal</span><span class="p">,</span>
+
+    <span class="nx">url</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span> <span class="nx">models</span> <span class="p">)</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="s1">'/animal/'</span> <span class="o">+</span> <span class="p">(</span> <span class="nx">models</span> <span class="o">?</span> <span class="s1">'set/'</span> <span class="o">+</span> <span class="nx">_</span><span class="p">.</span><span class="nx">pluck</span><span class="p">(</span> <span class="nx">models</span><span class="p">,</span> <span class="s1">'id'</span> <span class="p">).</span><span class="nx">join</span><span class="p">(</span><span class="s1">';'</span><span class="p">)</span> <span class="o">+</span> <span class="s1">'/'</span> <span class="o">:</span> <span class="s1">''</span> <span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">});</span>
+</pre></div>
+
+<h3>relatedModel</h3>
+
+<p>Value: a string (which can be resolved to an object type on the global scope), or a reference to a <code>Backbone.RelationalModel</code> type.</p>
+
+<h3>key</h3>
+
+<p>Value: a string. References an attribute name on <code>relatedModel</code>.</p>
+
+<h3>type</h3>
+
+<p>Value: a string, or a reference to a <code>Backbone.Relation</code> type</p>
+
+<p>Example: <code>Backbone.HasOne</code> or <code>'HasMany'</code>.</p>
+
+<h6><strong>HasOne relations (<code>Backbone.HasOne</code>)</strong></h6>
+
+<p>The key for a <code>HasOne</code> relation consists of a single <code>Backbone.RelationalModel</code>. The default <code>reverseRelation.type</code> for a HasOne relation is HasMany.
+This can be set to <code>HasOne</code> instead, to create a one-to-one relation.</p>
+
+<h6><strong>HasMany relations (<code>Backbone.HasMany</code>)</strong></h6>
+
+<p>The key for a <code>HasMany</code> relation consists of a <code>Backbone.Collection</code>, containing zero or more <code>Backbone.RelationalModel</code>s.
+The default <code>reverseRelation.type</code> for a HasMany relation is HasOne; this is the only option here, since many-to-many is not supported directly.</p>
+
+<h6><strong><a name="many-to-many"></a>Many-to-many relations</strong></h6>
+
+<p>A many-to-many relation can be modeled using two <code>Backbone.HasMany</code> relations, with a link model in between:</p>
+
+<div class="highlight"><pre><span class="nx">Person</span> <span class="o">=</span> <span class="nx">Backbone</span><span class="p">.</span><span class="nx">RelationalModel</span><span class="p">.</span><span class="nx">extend</span><span class="p">({</span>
+    <span class="nx">relations</span><span class="o">:</span> <span class="p">[</span>
+        <span class="p">{</span>
+            <span class="nx">type</span><span class="o">:</span> <span class="s1">'HasMany'</span><span class="p">,</span>
+            <span class="nx">key</span><span class="o">:</span> <span class="s1">'jobs'</span><span class="p">,</span>
+            <span class="nx">relatedModel</span><span class="o">:</span> <span class="s1">'Job'</span><span class="p">,</span>
+            <span class="nx">reverseRelation</span><span class="o">:</span> <span class="p">{</span>
+                <span class="nx">key</span><span class="o">:</span> <span class="s1">'person'</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+    <span class="p">]</span>
+<span class="p">});</span>
+
+<span class="c1">// A link object between 'Person' and 'Company', to achieve many-to-many relations.</span>
+<span class="nx">Job</span> <span class="o">=</span> <span class="nx">Backbone</span><span class="p">.</span><span class="nx">RelationalModel</span><span class="p">.</span><span class="nx">extend</span><span class="p">({</span>
+    <span class="nx">defaults</span><span class="o">:</span> <span class="p">{</span>
+        <span class="s1">'startDate'</span><span class="o">:</span> <span class="kc">null</span><span class="p">,</span>
+        <span class="s1">'endDate'</span><span class="o">:</span> <span class="kc">null</span>
+    <span class="p">}</span>
+<span class="p">})</span>
+
+<span class="nx">Company</span> <span class="o">=</span> <span class="nx">Backbone</span><span class="p">.</span><span class="nx">RelationalModel</span><span class="p">.</span><span class="nx">extend</span><span class="p">({</span>
+    <span class="nx">relations</span><span class="o">:</span> <span class="p">[</span>
+        <span class="p">{</span>
+            <span class="nx">type</span><span class="o">:</span> <span class="s1">'HasMany'</span><span class="p">,</span>
+            <span class="nx">key</span><span class="o">:</span> <span class="s1">'employees'</span><span class="p">,</span>
+            <span class="nx">relatedModel</span><span class="o">:</span> <span class="s1">'Job'</span><span class="p">,</span>
+            <span class="nx">reverseRelation</span><span class="o">:</span> <span class="p">{</span>
+                <span class="nx">key</span><span class="o">:</span> <span class="s1">'company'</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+    <span class="p">]</span>
+<span class="p">});</span>
+
+<span class="nx">niceCompany</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Company</span><span class="p">(</span> <span class="p">{</span> <span class="nx">name</span><span class="o">:</span> <span class="s1">'niceCompany'</span> <span class="p">}</span> <span class="p">);</span>
+<span class="nx">niceCompany</span><span class="p">.</span><span class="nx">bind</span><span class="p">(</span> <span class="s1">'add:employees'</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span> <span class="nx">model</span><span class="p">,</span> <span class="nx">coll</span> <span class="p">)</span> <span class="p">{</span>
+        <span class="c1">// Will see a Job with attributes { person: paul, company: niceCompany } being added here</span>
+    <span class="p">});</span>
+
+<span class="nx">paul</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span> <span class="s1">'jobs'</span> <span class="p">).</span><span class="nx">add</span><span class="p">(</span> <span class="p">{</span> <span class="nx">company</span><span class="o">:</span> <span class="nx">niceCompany</span> <span class="p">}</span> <span class="p">);</span>
+</pre></div>
+
+<h3>keySource</h3>
+
+<p>Value: a string. References an attribute on the data used to instantiate <code>relatedModel</code>.</p>
+
+<p>Used to override <code>key</code> when determining what data to use when (de)serializing a relation, since the data backing your relations may use different naming conventions.
+For example, a Rails backend may provide the keys suffixed with <code>_id</code> or <code>_ids</code>. The behavior for <code>keySource</code> corresponds to the following rules:</p>
+
+<ol>
+<li>When a relation is instantiated, the contents of the <code>keySource</code> are used as it's initial data.</li>
+<li>The application uses the regular <code>key</code> attribute to interface with the relation and the models in it; the <code>keySource</code> is not available as an attribute for the model.</li>
+</ol><p>So you may be provided with data containing <code>animal_ids</code>, while you want to access this relation as <code>zoo.get( 'animals' );</code>.</p>
+
+<p><strong>NOTE</strong>: for backward compatibility reasons, setting <code>keySource</code> will set <code>keyDestination</code> as well. 
+This means that when saving <code>zoo</code>, the <code>animals</code> attribute will be serialized back into the <code>animal_ids</code> key.</p>
+
+<p><strong>WARNING</strong>: when using a <code>keySource</code>, you should not use that attribute name for other purposes.</p>
+
+<h3>keyDestination</h3>
+
+<p>Value: a string. References an attribute to serialize <code>relatedModel</code> into.</p>
+
+<p>Used to override <code>key</code> (and <code>keySource</code>) when determining what attribute to be written into when serializing a relation, since the server backing your relations may use different naming conventions.
+For example, a Rails backend may expect the keys to be suffixed with <code>_attributes</code> for nested attributes.</p>
+
+<p>When calling <code>toJSON</code> on a model (either via <code>Backbone.sync</code>, or directly), the data in the <code>key</code> attribute is transformed and assigned to the <code>keyDestination</code>.</p>
+
+<p>So you may want a relation to be serialized into the <code>animals_attributes</code> key, while you want to access this relation as <code>zoo.get( 'animals' );</code>.</p>
+
+<p><strong>WARNING</strong>: when using a <code>keyDestination</code>, you should not use that attribute name for other purposes.</p>
+
+<h3>collectionType</h3>
+
+<p>Value: a string (which can be resolved to an object type on the global scope), or a reference to a <code>Backbone.Collection</code> type.</p>
+
+<p>Determine the type of collections used for a <code>HasMany</code> relation. If you define a <code>url(models&lt;Backbone.Model[]&gt;)</code> function on
+the specified collection, this enables <code>fetchRelated</code> to fetch all missing models in one request, instead of firing a separate request for each.
+See <a href="https://github.com/PaulUithol/backbone-tastypie/blob/master/backbone_tastypie/static/js/backbone-tastypie.js#L92">Backbone-tastypie</a> for an example
+of a <code>url</code> function that can build a url for the collection (or a subset of models).</p>
+
+<h3>collectionKey</h3>
+
+<p>Value: a string or a boolean</p>
+
+<p>Used to create a back reference from the <code>Backbone.Collection</code> used for a <code>HasMany</code> relation to the model on the other side of this relation.
+By default, the relation's <code>key</code> attribute will be used to create a reference to the RelationalModel instance from the generated collection.
+If you set <code>collectionKey</code> to a string, it will use that string as the reference to the RelationalModel, rather than the relation's <code>key</code> attribute.
+If you don't want this behavior at all, set <code>collectionKey</code> to false (or any falsy value) and this reference will not be created.</p>
+
+<h3>collectionOptions</h3>
+
+<p>Value: an options hash or a function that accepts an instance of a <code>Backbone.RelationalModed</code> and returns an option hash</p>
+
+<p>Used to provide options for the initialization of the collection in the "Many"-end of a <code>HasMany</code> relation. Can be an options hash or
+a function that should take the instance in the "One"-end of the "HasMany" relation and return an options hash</p>
+
+<h3>includeInJSON</h3>
+
+<p>Value: a boolean, a string referencing one of the model's attributes, or an array of strings referencing model attributes. Default: <code>true</code>.</p>
+
+<p>Determines how the contents of a relation will be serialized following a call to the <code>toJSON</code> method. If you specify a:</p>
+
+<ul>
+<li>Boolean: a value of <code>true</code> serializes the full set of attributes on the related model(s).
+Set to <code>false</code> to exclude the relation completely.</li>
+<li>String: include a single attribute from the related model(s). For example, <code>'name'</code>,
+or <code>Backbone.Model.prototype.idAttribute</code> to include ids.</li>
+<li>String[]: includes the specified attributes from the related model(s).</li>
+</ul><p>Only specifying <code>true</code> is cascading, meaning the relations of the model will get serialized as well!</p>
+
+<h3>createModels</h3>
+
+<p>Value: a boolean. Default: <code>true</code>.</p>
+
+<p>Should models be created from nested objects, or not?</p>
+
+<h3>reverseRelation</h3>
+
+<p>If the relation should be bidirectional, specify the details for the reverse relation here.
+It's only mandatory to supply a <code>key</code>; <code>relatedModel</code> is automatically set. The default <code>type</code> for a <code>reverseRelation</code> is <code>HasMany</code> for a <code>HasOne</code> relation (which can be overridden to <code>HasOne</code> in order to create a one-to-one relation), and <code>HasOne</code> for a <code>HasMany</code> relation. In this case, you cannot create a reverseRelation with type <code>HasMany</code> as well; please see <a href="#many-to-many">Many-to-many relations</a> on how to model these type of relations.</p>
+
+<p><strong>Please note</strong>: if you define a relation (plus a <code>reverseRelation</code>) on a model, but never actually create an instance of that model, the model's <code>constructor</code> will never run, which means it's <code>initializeRelations</code> will never get called, and the reverseRelation will not be initialized either. In that case, you could either define the relation on the opposite model, or define two single relations. See <a href="https://github.com/PaulUithol/Backbone-relational/issues/20">issue 20</a> for a discussion.</p>
+
+<h2>
+<a name="backbone-relationalmodel"></a>Backbone.RelationalModel</h2>
+
+<p><code>Backbone.RelationalModel</code> introduces a couple of new methods, events and properties.</p>
+
+<h3>Methods</h3>
+
+<h6><strong>getRelations <code>relationalModel.getRelations()</code></strong></h6>
+
+<p>Returns the set of initialized relations on the model.</p>
+
+<h6><strong>fetchRelated <code>relationalModel.fetchRelated(key&lt;string&gt;, [options&lt;object&gt;], [update&lt;boolean&gt;])</code></strong></h6>
+
+<p>Fetch models from the server that were referenced in the model's attributes, but have not been found/created yet.
+This can be used specifically for lazy-loading scenarios.  Setting <code>update</code> to true guarantees that the model
+will be fetched from the server and any model that already exists in the store will be updated with the retrieved data.</p>
+
+<p>By default, a separate request will be fired for each additional model that is to be fetched from the server.
+However, if your server/API supports it, you can fetch the set of models in one request by specifying a <code>collectionType</code>
+for the relation you call <code>fetchRelated</code> on. The <code>collectionType</code> should have an overridden <code>url(models&lt;Backbone.Model[]&gt;)</code>
+method that allows it to construct a url for an array of models.
+See the example at the top of <a href="#backbone-relation">Backbone.Relation options</a> or
+<a href="https://github.com/PaulUithol/backbone-tastypie/blob/master/backbone_tastypie/static/js/backbone-tastypie.js#L92">Backbone-tastypie</a> for an example.</p>
+
+<h3>Methods on the type itself</h3>
+
+<p>Several methods don't operate on model instances, but are defined on the type itself.</p>
+
+<h6><strong>setup <code>ModelType.setup()</code></strong></h6>
+
+<p>Initialize the relations and submodels for the model type. See the <a href="#q-and-a"><code>Q and A</code></a> for a possible scenario where
+it's useful to call this method manually.</p>
+
+<h6><strong>build <code>ModelType.build(attributes&lt;object&gt;, [options&lt;object&gt;])</code></strong></h6>
+
+<p>Create an instance of a model, taking into account what submodels have been defined.</p>
+
+<h6><strong>findOrCreate <code>ModelType.findOrCreate(attributes&lt;string|number|object&gt;, [options&lt;object&gt;])</code></strong></h6>
+
+<p>Search for a model instance in the <code>Backbone.Relational.store</code>.</p>
+
+<ul>
+<li>If <code>attributes</code> is a string or a number, <code>findOrCreate</code> will just query the <code>store</code> and return a model if found.</li>
+<li>If <code>attributes</code> is an object, the model will be updated with <code>attributes</code> if found.
+Otherwise, a new model is created with <code>attributes</code> (unless <code>options.create</code> is explicitly set to <code>false</code>).</li>
+</ul><h3>Events</h3>
+
+<ul>
+<li>
+<code>add</code>: triggered on addition to a <code>HasMany</code> relation.<br>
+Bind to <code>add:&lt;key&gt;</code>; arguments: <code>(addedModel&lt;Backbone.Model&gt;, related&lt;Backbone.Collection&gt;)</code>.</li>
+<li>
+<code>remove</code>: triggered on removal from a <code>HasMany</code> relation.<br>
+Bind to <code>remove:&lt;key&gt;</code>; arguments: <code>(removedModel&lt;Backbone.Model&gt;, related&lt;Backbone.Collection&gt;)</code>.</li>
+<li>
+<code>update</code>: triggered on changes to the key itself on <code>HasMany</code> and <code>HasOne</code> relations.<br>
+Bind to <code>update:&lt;key&gt;</code>; arguments: <code>(model&lt;Backbone.Model&gt;, related&lt;Backbone.Model|Backbone.Collection&gt;)</code>.</li>
+</ul><h3>Properties</h3>
+
+<p>Properties can be defined along with the subclass prototype when extending <code>Backbone.RelationalModel</code> or a subclass thereof.</p>
+
+<h6>
+<a name="property-submodel-types"></a><strong>subModelTypes</strong>
+</h6>
+
+<p>Value: an object. Default: <code>{}</code>.</p>
+
+<p>A mapping that defines what submodels exist for the model (the <code>superModel</code>) on which <code>subModelTypes</code> is defined.
+The keys are used to match the <a href="#property-submodel-type-attribute"><code>subModelTypeAttribute</code></a> when deserializing,
+and the values determine what type of submodel should be created for a key. When building model instances from data,
+we need to determine what kind of object we're dealing with in order to create instances of the right <code>subModel</code> type.
+This is done by finding the model for which the key is equal to the value of the
+<a href="#property-submodel-type-attribute"><code>submodelTypeAttribute</code></a> attribute on the passed in data.</p>
+
+<p>Each <code>subModel</code> is considered to be a proper submodel of its superclass (the model type you're extending),
+with a shared id pool. This means that when looking for an object of the supermodel's type, objects
+of a submodel's type can be returned as well, as long as the id matches. In effect, any relations pointing to
+the supermodel will look for instances of it's submodels as well.</p>
+
+<p>Example:</p>
+
+<div class="highlight"><pre><span class="nx">Mammal</span> <span class="o">=</span> <span class="nx">Animal</span><span class="p">.</span><span class="nx">extend</span><span class="p">({</span>
+    <span class="nx">subModelTypes</span><span class="o">:</span> <span class="p">{</span>
+        <span class="s1">'primate'</span><span class="o">:</span> <span class="s1">'Primate'</span><span class="p">,</span>
+        <span class="s1">'carnivore'</span><span class="o">:</span> <span class="s1">'Carnivore'</span>
+    <span class="p">}</span>
+<span class="p">});</span>
+<span class="kd">var</span> <span class="nx">Primate</span> <span class="o">=</span> <span class="nx">Mammal</span><span class="p">.</span><span class="nx">extend</span><span class="p">();</span>
+<span class="kd">var</span> <span class="nx">Carnivore</span> <span class="o">=</span> <span class="nx">Mammal</span><span class="p">.</span><span class="nx">extend</span><span class="p">();</span>
+
+<span class="kd">var</span> <span class="nx">MammalCollection</span> <span class="o">=</span> <span class="nx">AnimalCollection</span><span class="p">.</span><span class="nx">extend</span><span class="p">({</span>
+    <span class="nx">model</span><span class="o">:</span> <span class="nx">Mammal</span>
+<span class="p">});</span>
+
+<span class="c1">// Create a collection that contains a 'Primate' and a 'Carnivore'.</span>
+<span class="kd">var</span> <span class="nx">mammals</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">MammalCollection</span><span class="p">([</span>
+    <span class="p">{</span> <span class="nx">id</span><span class="o">:</span> <span class="mi">3</span><span class="p">,</span> <span class="nx">species</span><span class="o">:</span> <span class="s1">'chimp'</span><span class="p">,</span> <span class="nx">type</span><span class="o">:</span> <span class="s1">'primate'</span> <span class="p">},</span>
+    <span class="p">{</span> <span class="nx">id</span><span class="o">:</span> <span class="mi">5</span><span class="p">,</span> <span class="nx">species</span><span class="o">:</span> <span class="s1">'panther'</span><span class="p">,</span> <span class="nx">type</span><span class="o">:</span> <span class="s1">'carnivore'</span> <span class="p">}</span>
+<span class="p">]);</span>
+</pre></div>
+
+<p>Suppose that we have an <code>Mammal</code> model and a <code>Primate</code> model extending <code>Mammal</code>. If we have a <code>Primate</code> object with
+id <code>3</code>, this object will be returned when we have a relation pointing to a <code>Mammal</code> with id <code>3</code>, as <code>Primate</code> is
+regarded a specific kind of <code>Mammal</code>; it's just a <code>Mammal</code> with possibly some primate-specific properties or methods.</p>
+
+<p>Note that this means that there cannot be any overlap in ids between instances of <code>Mammal</code> and <code>Primate</code>, as the
+<code>Primate</code> with id <code>3</code> will <em>be</em> the <code>Mammal</code> with id <code>3</code>.</p>
+
+<h6>
+<a name="property-submodel-type-attribute"></a><strong>subModelTypeAttribute</strong>
+</h6>
+
+<p>Value: a string. Default: <code>"type"</code>.</p>
+
+<p>The <code>subModelTypeAttribute</code> is a references an attribute on the data used to instantiate <code>relatedModel</code>.
+The attribute that will be checked to determine the type of model that
+should be built when a raw object of attributes is set as the related value,
+and if the <code>relatedModel</code> has one or more submodels.</p>
+
+<p>See <a href="#property-submodel-types"><code>subModelTypes</code></a> for more information.</p>
+
+<h2>
+<a name="example"></a>Example</h2>
+
+<div class="highlight"><pre><span class="nx">paul</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Person</span><span class="p">({</span>
+    <span class="nx">id</span><span class="o">:</span> <span class="s1">'person-1'</span><span class="p">,</span>
+    <span class="nx">name</span><span class="o">:</span> <span class="s1">'Paul'</span><span class="p">,</span>
+    <span class="nx">user</span><span class="o">:</span> <span class="p">{</span> <span class="nx">id</span><span class="o">:</span> <span class="s1">'user-1'</span><span class="p">,</span> <span class="nx">login</span><span class="o">:</span> <span class="s1">'dude'</span><span class="p">,</span> <span class="nx">email</span><span class="o">:</span> <span class="s1">'me@gmail.com'</span> <span class="p">}</span>
+<span class="p">});</span>
+
+<span class="c1">// A User object is automatically created from the JSON; so 'login' returns 'dude'.</span>
+<span class="nx">paul</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">'user'</span><span class="p">).</span><span class="nx">get</span><span class="p">(</span><span class="s1">'login'</span><span class="p">);</span>
+
+<span class="nx">ourHouse</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">House</span><span class="p">({</span>
+    <span class="nx">id</span><span class="o">:</span> <span class="s1">'house-1'</span><span class="p">,</span>
+    <span class="nx">location</span><span class="o">:</span> <span class="s1">'in the middle of the street'</span><span class="p">,</span>
+    <span class="nx">occupants</span><span class="o">:</span> <span class="p">[</span><span class="s1">'person-1'</span><span class="p">,</span> <span class="s1">'person-2'</span><span class="p">,</span> <span class="s1">'person-5'</span><span class="p">]</span>
+<span class="p">});</span>
+
+<span class="c1">// 'ourHouse.occupants' is turned into a Backbone.Collection of Persons.</span>
+<span class="c1">// The first person in 'ourHouse.occupants' will point to 'paul'.</span>
+<span class="nx">ourHouse</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">'occupants'</span><span class="p">).</span><span class="nx">at</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span> <span class="c1">// === paul</span>
+
+<span class="c1">// If a collection is created from a HasMany relation, it contains a reference</span>
+<span class="c1">// back to the originator of the relation</span>
+<span class="nx">ourHouse</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">'occupants'</span><span class="p">).</span><span class="nx">livesIn</span><span class="p">;</span> <span class="c1">// === ourHouse</span>
+
+<span class="c1">// the relation from 'House.occupants' to 'Person' has been defined as a bi-directional HasMany relation,</span>
+<span class="c1">// with a reverse relation to 'Person.livesIn'. So, 'paul.livesIn' will automatically point back to 'ourHouse'.</span>
+<span class="nx">paul</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">'livesIn'</span><span class="p">);</span> <span class="c1">// === ourHouse</span>
+
+<span class="c1">// You can control which relations get serialized to JSON (when saving), using the 'includeInJSON'</span>
+<span class="c1">// property on a Relation. Also, each object will only get serialized once to prevent loops.</span>
+<span class="nx">paul</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">'user'</span><span class="p">).</span><span class="nx">toJSON</span><span class="p">();</span>
+    <span class="cm">/* result:</span>
+<span class="cm">        {</span>
+<span class="cm">            email: "me@gmail.com",</span>
+<span class="cm">            id: "user-1",</span>
+<span class="cm">            login: "dude",</span>
+<span class="cm">            person: {</span>
+<span class="cm">                id: "person-1",</span>
+<span class="cm">                name: "Paul",</span>
+<span class="cm">                livesIn: {</span>
+<span class="cm">                    id: "house-1",  </span>
+<span class="cm">                    location: "in the middle of the street",</span>
+<span class="cm">                    occupants: ["person-1"] // just the id, since 'includeInJSON' references the 'idAttribute'</span>
+<span class="cm">                },</span>
+<span class="cm">                user: "user-1" // not serialized because it is already in the JSON, so we won't create a loop</span>
+<span class="cm">            }</span>
+<span class="cm">        }</span>
+<span class="cm">    */</span>
+
+<span class="c1">// Load occupants 'person-2' and 'person-5', which don't exist yet, from the server</span>
+<span class="nx">ourHouse</span><span class="p">.</span><span class="nx">fetchRelated</span><span class="p">(</span> <span class="s1">'occupants'</span> <span class="p">);</span>
+
+<span class="c1">// Use the 'add' and 'remove' events to listen for additions/removals on HasMany relations (like 'House.occupants').</span>
+<span class="nx">ourHouse</span><span class="p">.</span><span class="nx">bind</span><span class="p">(</span> <span class="s1">'add:occupants'</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span> <span class="nx">model</span><span class="p">,</span> <span class="nx">coll</span> <span class="p">)</span> <span class="p">{</span>
+        <span class="c1">// create a View?</span>
+        <span class="nx">console</span><span class="p">.</span><span class="nx">debug</span><span class="p">(</span> <span class="s1">'add %o'</span><span class="p">,</span> <span class="nx">model</span> <span class="p">);</span>
+    <span class="p">});</span>
+<span class="nx">ourHouse</span><span class="p">.</span><span class="nx">bind</span><span class="p">(</span> <span class="s1">'remove:occupants'</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span> <span class="nx">model</span><span class="p">,</span> <span class="nx">coll</span> <span class="p">)</span> <span class="p">{</span>
+        <span class="c1">// destroy a View?</span>
+        <span class="nx">console</span><span class="p">.</span><span class="nx">debug</span><span class="p">(</span> <span class="s1">'remove %o'</span><span class="p">,</span> <span class="nx">model</span> <span class="p">);</span>
+    <span class="p">});</span>
+
+<span class="c1">// Use the 'update' event to listen for changes on a HasOne relation (like 'Person.livesIn').</span>
+<span class="nx">paul</span><span class="p">.</span><span class="nx">bind</span><span class="p">(</span> <span class="s1">'update:livesIn'</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span> <span class="nx">model</span><span class="p">,</span> <span class="nx">attr</span> <span class="p">)</span> <span class="p">{</span>
+        <span class="nx">console</span><span class="p">.</span><span class="nx">debug</span><span class="p">(</span> <span class="s1">'update to %o'</span><span class="p">,</span> <span class="nx">attr</span> <span class="p">);</span>
+    <span class="p">});</span>
+
+
+<span class="c1">// Modifying either side of a bi-directional relation updates the other side automatically.</span>
+<span class="c1">// Make paul homeless; triggers 'remove:occupants' on ourHouse, and 'update:livesIn' on paul</span>
+<span class="nx">ourHouse</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">'occupants'</span><span class="p">).</span><span class="nx">remove</span><span class="p">(</span> <span class="nx">paul</span><span class="p">.</span><span class="nx">id</span> <span class="p">);</span> 
+
+<span class="nx">paul</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">'livesIn'</span><span class="p">);</span> <span class="c1">// yup; nothing.</span>
+
+<span class="c1">// Move back in; triggers 'add:occupants' on ourHouse, and 'update:livesIn' on paul</span>
+<span class="nx">paul</span><span class="p">.</span><span class="nx">set</span><span class="p">(</span> <span class="p">{</span> <span class="s1">'livesIn'</span><span class="o">:</span> <span class="s1">'house-1'</span> <span class="p">}</span> <span class="p">);</span>
+</pre></div>
+
+<p>This is achieved using the following relations and models:</p>
+
+<div class="highlight"><pre><span class="nx">House</span> <span class="o">=</span> <span class="nx">Backbone</span><span class="p">.</span><span class="nx">RelationalModel</span><span class="p">.</span><span class="nx">extend</span><span class="p">({</span>
+    <span class="c1">// The 'relations' property, on the House's prototype. Initialized separately for each instance of House.</span>
+    <span class="c1">// Each relation must define (as a minimum) the 'type', 'key' and 'relatedModel'. Options are</span>
+    <span class="c1">// 'includeInJSON', 'createModels' and 'reverseRelation', which takes the same options as the relation itself.</span>
+    <span class="nx">relations</span><span class="o">:</span> <span class="p">[</span>
+        <span class="p">{</span>
+            <span class="nx">type</span><span class="o">:</span> <span class="nx">Backbone</span><span class="p">.</span><span class="nx">HasMany</span><span class="p">,</span> <span class="c1">// Use the type, or the string 'HasOne' or 'HasMany'.</span>
+            <span class="nx">key</span><span class="o">:</span> <span class="s1">'occupants'</span><span class="p">,</span>
+            <span class="nx">relatedModel</span><span class="o">:</span> <span class="s1">'Person'</span><span class="p">,</span>
+            <span class="nx">includeInJSON</span><span class="o">:</span> <span class="nx">Backbone</span><span class="p">.</span><span class="nx">Model</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">idAttribute</span><span class="p">,</span>
+            <span class="nx">collectionType</span><span class="o">:</span> <span class="s1">'PersonCollection'</span><span class="p">,</span>
+            <span class="nx">reverseRelation</span><span class="o">:</span> <span class="p">{</span>
+                <span class="nx">key</span><span class="o">:</span> <span class="s1">'livesIn'</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+    <span class="p">]</span>
+<span class="p">});</span>
+
+<span class="nx">Person</span> <span class="o">=</span> <span class="nx">Backbone</span><span class="p">.</span><span class="nx">RelationalModel</span><span class="p">.</span><span class="nx">extend</span><span class="p">({</span>
+    <span class="nx">relations</span><span class="o">:</span> <span class="p">[</span>
+        <span class="p">{</span> <span class="c1">// Create a (recursive) one-to-one relationship</span>
+            <span class="nx">type</span><span class="o">:</span> <span class="nx">Backbone</span><span class="p">.</span><span class="nx">HasOne</span><span class="p">,</span>
+            <span class="nx">key</span><span class="o">:</span> <span class="s1">'user'</span><span class="p">,</span>
+            <span class="nx">relatedModel</span><span class="o">:</span> <span class="s1">'User'</span><span class="p">,</span>
+            <span class="nx">reverseRelation</span><span class="o">:</span> <span class="p">{</span>
+                <span class="nx">type</span><span class="o">:</span> <span class="nx">Backbone</span><span class="p">.</span><span class="nx">HasOne</span><span class="p">,</span>
+                <span class="nx">key</span><span class="o">:</span> <span class="s1">'person'</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+    <span class="p">],</span>
+
+    <span class="nx">initialize</span><span class="o">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+        <span class="c1">// do whatever you want :)</span>
+    <span class="p">}</span>
+<span class="p">});</span>
+
+<span class="nx">PersonCollection</span> <span class="o">=</span> <span class="nx">Backbone</span><span class="p">.</span><span class="nx">Collection</span><span class="p">.</span><span class="nx">extend</span><span class="p">({</span>
+    <span class="nx">url</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span> <span class="nx">models</span> <span class="p">)</span> <span class="p">{</span>
+        <span class="c1">// Logic to create a url for the whole collection, or a set of models.</span>
+        <span class="c1">// See the tests, or Backbone-tastypie, for an example.</span>
+        <span class="k">return</span> <span class="s1">'/person/'</span> <span class="o">+</span> <span class="p">(</span> <span class="nx">models</span> <span class="o">?</span> <span class="s1">'set/'</span> <span class="o">+</span> <span class="nx">_</span><span class="p">.</span><span class="nx">pluck</span><span class="p">(</span> <span class="nx">models</span><span class="p">,</span> <span class="s1">'id'</span> <span class="p">).</span><span class="nx">join</span><span class="p">(</span><span class="s1">';'</span><span class="p">)</span> <span class="o">+</span> <span class="s1">'/'</span> <span class="o">:</span> <span class="s1">''</span> <span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">});</span>
+
+<span class="nx">User</span> <span class="o">=</span> <span class="nx">Backbone</span><span class="p">.</span><span class="nx">RelationalModel</span><span class="p">.</span><span class="nx">extend</span><span class="p">();</span>
+</pre></div>
+
+<h2>
+<a name="q-and-a"></a>Known problems and solutions</h2>
+
+<blockquote>
+<p><strong>Q:</strong> (Reverse) relations or submodels don't seem to be initialized properly (and I'm using CoffeeScript!)</p>
+</blockquote>
+
+<p><strong>A:</strong> You're probably using the syntax <code>class MyModel extends Backbone.RelationalModel</code> instead of <code>MyModel = Backbone.RelationalModel.extend</code>.
+This has advantages in CoffeeScript, but it also means that <code>Backbone.Model.extend</code> will not get called.
+Instead, CoffeeScript generates piece of code that would normally achieve roughly the same.
+However, <code>extend</code> is also the method that Backbone-relational overrides to set up relations and other things as you're defining your <code>Backbone.RelationalModel</code> subclass.</p>
+
+<p>For exactly this scenario where you're not using <code>.extend</code>, <code>Backbone.RelationalModel</code> has the <code>.setup</code> method, that you can call manually after defining your subclass CoffeeScript-style. For example:</p>
+
+<div class="highlight"><pre><span class="kr">class</span> <span class="nx">MyModel</span> <span class="kr">extends</span> <span class="nx">Backbone</span><span class="p">.</span><span class="nx">RelationalModel</span>
+    <span class="nx">relations</span><span class="o">:</span> <span class="p">[</span>
+        <span class="c1">// etc</span>
+    <span class="p">]</span>
+
+<span class="nx">MyModel</span><span class="p">.</span><span class="nx">setup</span><span class="p">()</span>
+</pre></div>
+
+<p>See <a href="https://github.com/PaulUithol/Backbone-relational/issues/91">issue #91</a> for more information.</p>
+
+<blockquote>
+<p><strong>Q:</strong> After a fetch, I don't get <code>add:&lt;key&gt;</code> events for nested relations.</p>
+</blockquote>
+
+<p><strong>A:</strong> This is due to <code>Backbone.Collection.reset</code> silencing add events. Pass <code>fetch( {add: true} )</code> to bypass this problem.
+You may want to override <code>Backbone.Collection.fetch</code> for this, and also trigger an event when the fetch has finished while you're at it.
+Example:</p>
+
+<div class="highlight"><pre><span class="kd">var</span> <span class="nx">_fetch</span> <span class="o">=</span> <span class="nx">Backbone</span><span class="p">.</span><span class="nx">Collection</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">fetch</span><span class="p">;</span>
+<span class="nx">Backbone</span><span class="p">.</span><span class="nx">Collection</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">fetch</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span> <span class="nx">options</span> <span class="p">)</span> <span class="p">{</span>
+    <span class="nx">options</span> <span class="o">||</span> <span class="p">(</span> <span class="nx">options</span> <span class="o">=</span> <span class="p">{}</span> <span class="p">);</span>
+    <span class="nx">_</span><span class="p">.</span><span class="nx">defaults</span><span class="p">(</span> <span class="nx">options</span><span class="p">,</span> <span class="p">{</span> <span class="nx">add</span><span class="o">:</span> <span class="kc">true</span> <span class="p">}</span> <span class="p">);</span>
+
+    <span class="c1">// Remove old models</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">reset</span><span class="p">();</span>
+
+    <span class="c1">// Call 'fetch', and trigger an event when done.</span>
+    <span class="kd">var</span> <span class="nx">dit</span> <span class="o">=</span> <span class="k">this</span><span class="p">,</span>
+        <span class="nx">request</span> <span class="o">=</span> <span class="nx">_fetch</span><span class="p">.</span><span class="nx">call</span><span class="p">(</span> <span class="k">this</span><span class="p">,</span> <span class="nx">options</span> <span class="p">);</span>
+    <span class="nx">request</span><span class="p">.</span><span class="nx">done</span><span class="p">(</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(</span> <span class="o">!</span><span class="nx">options</span><span class="p">.</span><span class="nx">silent</span> <span class="p">)</span> <span class="p">{</span>
+                <span class="nx">dit</span><span class="p">.</span><span class="nx">trigger</span><span class="p">(</span> <span class="s1">'fetch'</span><span class="p">,</span> <span class="nx">dit</span><span class="p">,</span> <span class="nx">options</span> <span class="p">);</span>
+            <span class="p">}</span>
+        <span class="p">});</span>
+
+    <span class="k">return</span> <span class="nx">request</span><span class="p">;</span>
+<span class="p">};</span>
+</pre></div>
+
+<h2>
+<a name="under-the-hood"></a>Under the hood</h2>
+
+<p>Each <code>Backbone.RelationalModel</code> registers itself with <code>Backbone.Store</code> upon creation (and is removed from the <code>Store</code> when destroyed).
+When creating or updating an attribute that is a key in a relation, removed related objects are notified of their removal,
+and new related objects are looked up in the <code>Store</code>.</p>
+        </section>
+
+        <aside id="sidebar">
+          <a href="https://github.com/PaulUithol/Backbone-relational/zipball/master" class="button">
+            <small>Download</small>
+            .zip file
+          </a>
+          <a href="https://github.com/PaulUithol/Backbone-relational/tarball/master" class="button">
+            <small>Download</small>
+            .tar.gz file
+          </a>
+
+          <p class="repo-owner"><a href="https://github.com/PaulUithol/Backbone-relational"></a> is maintained by <a href="https://github.com/PaulUithol">PaulUithol</a>.</p>
+
+          <p>This page was generated by <a href="pages.github.com">GitHub Pages</a> using the Architect theme by <a href="http://twitter.com/jasonlong">Jason Long</a>.</p>
+        </aside>
+      </div>
+    </div>
+
+  
+  </body>
+</html>
