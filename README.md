@@ -196,7 +196,7 @@ If you don't want this behavior at all, set `collectionKey` to false (or any fal
 
 ### collectionOptions
 
-Value: an options hash or a function that accepts an instance of a `Backbone.RelationalModed` and returns an option hash
+Value: an options hash or a function that accepts an instance of a `Backbone.RelationalModel` and returns an option hash
 
 Used to provide options for the initialization of the collection in the "Many"-end of a `HasMany` relation. Can be an options hash or
 a function that should take the instance in the "One"-end of the "HasMany" relation and return an options hash
