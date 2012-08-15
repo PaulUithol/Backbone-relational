@@ -1347,6 +1347,7 @@
 		 * Convert relations to JSON, omits them when required
 		 */
 		toJSON: function(options) {
+			options = options || {};
 			// If this Model has already been fully serialized in this branch once, return to avoid loops
 			if ( this.isLocked() ) {
 				return this.id;
@@ -1362,7 +1363,7 @@
 			_.each( this._relations || [], function( rel ) {
 					var value = json[ rel.key ];
 
-					if ( rel.options.includeInJSON === true) {
+					if ( options.full || rel.options.includeInJSON === true) {
 						if ( value && _.isFunction( value.toJSON ) ) {
 							json[ rel.keyDestination ] = value.toJSON( options );
 						}
