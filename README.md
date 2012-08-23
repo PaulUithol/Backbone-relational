@@ -1,3 +1,4 @@
+[![build status](https://secure.travis-ci.org/PaulUithol/Backbone-relational.png)](http://travis-ci.org/PaulUithol/Backbone-relational)
 # Backbone-relational
 Backbone-relational provides one-to-one, one-to-many and many-to-one relations between models for [Backbone](https://github.com/documentcloud/backbone). To use relations, extend `Backbone.RelationalModel` (instead of the regular `Backbone.Model`) and define a property `relations`, containing an array of option objects. Each relation must define (as a minimum) the `type`, `key` and `relatedModel`. Available relation types are `Backbone.HasOne` and `Backbone.HasMany`. Backbone-relational features:
 
