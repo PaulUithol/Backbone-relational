@@ -878,11 +878,6 @@
 			options = this.sanitizeOptions( options );
 			this.keyContents = attr;
 			
-			// Notify old 'related' object of the terminated relation
-			_.each( this.getReverseRelations(), function( relation ) {
-					relation.removeRelated( this.instance, options );
-				}, this );
-			
 			// Replace 'this.related' by 'attr' if it is a Backbone.Collection
 			if ( attr instanceof Backbone.Collection ) {
 				this._prepareCollection( attr );
@@ -892,24 +887,41 @@
 			// Re-use the current 'this.related' if it is a Backbone.Collection, and remove any current entries.
 			// Otherwise, create a new collection.
 			else {
-				var coll;
+				var oldIds = {}, newIds = {};
 
-				if ( this.related instanceof Backbone.Collection ) {
-					coll = this.related;
-					coll.remove( coll.models );
+				if (!_.isArray( attr ) && attr !== undefined) {
+					attr = [ attr ];
 				}
-				else {
+				var oldIds;
+				_.each( attr, function( attributes ) {
+					newIds[ attributes.id ] = true;
+				});
+
+				var coll = this.related;
+				if ( coll instanceof Backbone.Collection ) {
+					// Make sure to operate on a copy since we're removing while iterating
+					_.each( coll.models.slice(0) , function( model ) {
+						// When fetch is called with the 'keepNewModels' option, we don't want to remove
+						// client-created new models when the fetch is completed.
+						if ( !options.keepNewModels || !model.isNew() ) {
+							oldIds[ model.id ] = true;
+							coll.remove( model, { silent: (model.id in newIds) } );
+						}
+					});
+				} else {
 					coll = this._prepareCollection();
 				}
 
+				_.each( attr, function( attributes ) {
+					var model = this.relatedModel.findOrCreate( attributes, { create: this.options.createModels } );
+					if (model) {
+						coll.add( model, { silent: (attributes.id in oldIds)} );
+					}
+				}, this);
+
 				this.setRelated( coll );
-				this.findRelated( options );
+
 			}
-			
-			// Notify new 'related' object of the new relation
-			_.each( this.getReverseRelations(), function( relation ) {
-					relation.addRelated( this.instance, options );
-				}, this );
 			
 			var dit = this;
 			Backbone.Relational.eventQueue.add( function() {
