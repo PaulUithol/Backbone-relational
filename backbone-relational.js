@@ -1512,14 +1512,15 @@
 		 * @return {Backbone.RelationalModel}
 		 */
 		findOrCreate: function( attributes, options ) {
+			var parsedAttributes = (_.isObject( attributes ) && this.prototype.parse) ? this.prototype.parse( attributes ) : attributes;
 			// Try to find an instance of 'this' model type in the store
-			var model = Backbone.Relational.store.find( this, attributes );
+			var model = Backbone.Relational.store.find( this, parsedAttributes );
 
 			// If we found an instance, update it with the data in 'item'; if not, create an instance
 			// (unless 'options.create' is false).
 			if ( _.isObject( attributes ) ) {
 				if ( model ) {
-					model.set( model.parse ? model.parse( attributes ) : attributes, options );
+					model.set( parsedAttributes, options );
 				}
 				else if ( !options || ( options && options.create !== false ) ) {
 					model = this.build( attributes, options );
@@ -1585,7 +1586,6 @@
 				modelsToAdd.push( model );
 			}
 		}, this );
-
 
 		// Add 'models' in a single batch, so the original add will only be called once (and thus 'sort', etc).
 		if ( modelsToAdd.length ) {
