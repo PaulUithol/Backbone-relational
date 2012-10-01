@@ -571,7 +571,7 @@
 			var reverseRelations = [];
 			// Iterate over 'model', 'this.related.models' (if this.related is a Backbone.Collection), or wrap 'this.related' in an array.
 			var models = !_.isUndefined( model ) ? [ model ] : this.related && ( this.related.models || [ this.related ] );
-			_.each( models, function( related ) {
+			_.each( models || [], function( related ) {
 					_.each( related.getRelations() || [], function( relation ) {
 							if ( this._isReverseRelation( relation ) ) {
 								reverseRelations.push( relation );
