@@ -458,7 +458,7 @@
 			createModels: true,
 			includeInJSON: true,
 			isAutoRelation: false,
-			parseModels: false,
+			parseModels: false
 		},
 		
 		instance: null,
