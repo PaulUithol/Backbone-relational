@@ -2231,5 +2231,84 @@ $(document).ready(function() {
 			equal( zoo.get( 'name' ), 'Zoo Station' );
 			equal( lion.get( 'name' ), 'Simba' );
 		});
+
+	module( "Parse models", {} );
+
+		test( "Create a collection that requires parsing data before creating submodels", function() {
+			window.Fruit = Backbone.RelationalModel.extend({
+				// Move subkey.color to the top-level in the model attributes
+				parse: function(resp, xhr) {
+					return {
+						type: resp.type,
+						color: resp.subkey.color
+					};
+				}
+			});
+
+			window.FruitCollection = Backbone.Collection.extend( {
+				model: Fruit
+			} );
+
+			window.FruitBowl = Backbone.RelationalModel.extend( {
+				relations: [ {
+						type: Backbone.HasMany,
+						key: 'fruit',
+						relatedModel: 'Fruit',
+						parseModels: true,
+						collectionType: 'FruitCollection',
+						reverseRelation: {
+							key: 'bowl'
+						}
+					}
+				]
+			} );
+
+			// Check that the JSON parsing happens when parseModels is enabled
+			var fruitBowl = new FruitBowl( {
+				fruit: [
+					{ type: 'banana', subkey: { color: 'yellow' } },
+					{ type: 'apple',  subkey: { color: 'red' } }
+				]
+			} );
+
+			var fruitCollection = fruitBowl.get( 'fruit' );
+
+			var banana = fruitCollection.at( 0 );
+			equal( banana.get( 'type' ), 'banana' )
+			equal( banana.get( 'color' ), 'yellow' );
+
+			var apple = fruitCollection.at( 1 );
+			equal( apple.get( 'type' ), 'apple' )
+			equal( apple.get( 'color' ), 'red' );
+
+			// Check that the JSON parsing does not happen when parseModels is disabled
+			window.FruitBowl.prototype.relations[0].parseModels = false;
+
+			fruitBowl = new FruitBowl( {
+				fruit: [
+					{ type: 'banana', subkey: { color: 'yellow' } },
+					{ type: 'apple',  subkey: { color: 'red' } }
+				]
+			} );
+
+			fruitCollection = fruitBowl.get( 'fruit' );
+
+			banana = fruitCollection.at( 0 );
+			equal( banana.get( 'type' ), 'banana' )
+			equal( banana.get( 'color' ), undefined );
+			var subkey = banana.get( 'subkey' );
+			equal( subkey.color, 'yellow' );
+
+			apple = fruitCollection.at( 1 );
+			equal( apple.get( 'type' ), 'apple' )
+			equal( apple.get( 'color' ), undefined );
+			subkey = apple.get( 'subkey' );
+			equal( subkey.color, 'red' );
+
+			delete Window.Fruit;
+			delete Window.FruitCollection;
+			delete Window.FruitBowl;
+		});
+
 });
 
