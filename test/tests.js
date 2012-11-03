@@ -1381,6 +1381,38 @@ $(document).ready(function() {
 			equal( companyA.get('employees').length, 2, 'with elements' );
 		});
 
+		test("If keySource is used don't remove a model that is present in the key attribute", function() {
+			var ForumPost = Backbone.RelationalModel.extend({
+				// Normally would set something here, not needed for test
+			});
+			var ForumPostCollection = Backbone.Collection.extend({
+			    model: ForumPost
+			});
+			var Forum = Backbone.RelationalModel.extend({
+				relations: [{
+					type: Backbone.HasMany,
+					key: 'posts',
+					relatedModel: ForumPost,
+					collectionType: ForumPostCollection,
+					reverseRelation: {
+						key: 'forum',
+						keySource: 'forum_id'
+					}
+				}]
+			});
+			var TestPost = new ForumPost({
+				id: 1, 
+				title: "Hello World",
+				forum: {id: 1, title: "Cupcakes"}
+			});
+
+			var TestForum = Forum.findOrCreate(1);
+
+			notEqual( TestPost.get('forum'), null, "The post's forum is not null" );
+			equal( TestPost.get('forum').get('title'), "Cupcakes", "The post's forum title is Cupcakes" );
+			equal( TestForum.get('title'), "Cupcakes", "A forum of id 1 has the title cupcakes" );
+		});
+
 
 	module( "Backbone.HasOne", { setup: initObjects } );
 		
