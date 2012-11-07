@@ -395,6 +395,31 @@ $(document).ready(function() {
 			ok( book.relations.length === 1 );
 			ok( book.get( 'pages' ).length === 1 );
 		});
+
+		test( "addModelScope with submodels and namespaces", function() {
+			var ns = {};
+			ns.People = {};
+			Backbone.Relational.store.addModelScope( ns );
+
+			ns.People.Person = Backbone.RelationalModel.extend({
+				subModelTypes: {
+					'Student': 'People.Student'
+				},
+				iam: function() { return "I am an abstract person"; }
+			});
+
+			ns.People.Student = ns.People.Person.extend({
+				iam: function() { return "I am a student"; }
+			});
+
+			ns.People.PersonCollection = Backbone.Collection.extend({
+				model: ns.People.Person
+			})
+
+			var people = new ns.People.PersonCollection([{name: "Bob", type: "Student"}]);
+
+			ok( people.at(0).iam() == "I am a student" );
+		});
 		
 		test( "Models are created from objects, can then be found, destroyed, cannot be found anymore", function() {
 			var houseId = 'house-10';

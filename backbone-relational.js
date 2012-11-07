@@ -254,7 +254,7 @@
 
 			_.find( this._modelScopes || [], function( scope ) {
 				type = _.reduce( parts || [], function( memo, val ) {
-					return memo[ val ];
+					return memo ? memo[ val ] : undefined;
 				}, scope );
 
 				if ( type && type !== scope ) {
