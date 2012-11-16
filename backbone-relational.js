@@ -411,15 +411,20 @@
 		}
 
 		if ( instance ) {
-			this.keyContents = this.instance.get( this.keySource );
+		    var contentKey = this.keySource;
+		    if ( contentKey !== this.key && typeof this.instance.get( this.key ) === 'object' ) {
+		        contentKey = this.key;
+		    }
 
-			// Explicitly clear 'keySource', to prevent a leaky abstraction if 'keySource' differs from 'key'.
-			if ( this.key !== this.keySource ) {
-				this.instance.unset( this.keySource, { silent: true } );
-			}
+		    this.keyContents = this.instance.get( contentKey );
 
-			// Add this Relation to instance._relations
-			this.instance._relations.push( this );
+		    // Explicitly clear 'keySource', to prevent a leaky abstraction if 'keySource' differs from 'key'.
+		    if ( this.keySource !== this.key ) {
+		        this.instance.unset( this.keySource, { silent: true } );
+		    }
+
+		    // Add this Relation to instance._relations
+		    this.instance._relations.push( this );
 		}
 
 		// Add the reverse relation on 'relatedModel' to the store's reverseRelations
