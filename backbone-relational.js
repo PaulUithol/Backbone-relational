@@ -1340,14 +1340,14 @@
 		/**
 		 * Convert relations to JSON, omits them when required
 		 */
-		toJSON: function() {
+		toJSON: function(options) {
 			// If this Model has already been fully serialized in this branch once, return to avoid loops
 			if ( this.isLocked() ) {
 				return this.id;
 			}
 			
 			this.acquire();
-			var json = Backbone.Model.prototype.toJSON.call( this );
+			var json = Backbone.Model.prototype.toJSON.call( this, options );
 			
 			if ( this.constructor._superModel && !( this.constructor._subModelTypeAttribute in json ) ) {
 				json[ this.constructor._subModelTypeAttribute ] = this.constructor._subModelTypeValue;
@@ -1358,7 +1358,7 @@
 
 					if ( rel.options.includeInJSON === true) {
 						if ( value && _.isFunction( value.toJSON ) ) {
-							json[ rel.keyDestination ] = value.toJSON();
+							json[ rel.keyDestination ] = value.toJSON( options );
 						}
 						else {
 							json[ rel.keyDestination ] = null;
