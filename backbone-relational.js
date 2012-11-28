@@ -1194,12 +1194,12 @@
 					var model;
 
 					if ( _.isObject( item ) ) {
-						model = rel.relatedModel.build( item );
+						model = rel.relatedModel.findOrCreate( item );
 					}
 					else {
 						var attrs = {};
 						attrs[ rel.relatedModel.prototype.idAttribute ] = item;
-						model = rel.relatedModel.build( attrs );
+						model = rel.relatedModel.findOrCreate( attrs );
 					}
 
 					return model;
