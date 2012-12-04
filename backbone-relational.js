@@ -13,9 +13,7 @@
 	 * CommonJS shim
 	 **/
 	var _, Backbone, exports;
-	// Support loading requirements using `require` compatible implementations.
-	// In server environments, `window` is not defined; in browser environments, check for the presence of `require`.
-	if ( typeof window === 'undefined' || typeof require !== 'undefined' ) {
+	if ( typeof window === 'undefined' ) {
 		_ = require( 'underscore' );
 		Backbone = require( 'backbone' );
 		exports = module.exports = Backbone;
