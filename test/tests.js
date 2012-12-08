@@ -676,6 +676,16 @@ $(document).ready(function() {
 
 		});
 
+		test( "toJSON relational", function() {
+			var person1JSON = person1.toJSON();
+			equal( person1JSON.user_id, person1.get('user').get('id'), "The serialized person has a key 'user_id' which value is 'user.id' following specified relational model");
+			ok(person1JSON.user === undefined, "The serialized person has no 'user' key following specified relational model");
+
+			var person1FullJSON = person1.toJSON({full:true});
+			equal(person1FullJSON.user.login, 'dude', "The full serialization of person has a dict with key 'user'");
+			ok(person1FullJSON.user_id === undefined, "The full serialization of person has no key 'user_id'");
+		});
+
 		test( "constructor.findOrCreate", function() {
 			var personColl = Backbone.Relational.store.getCollection( person1 ),
 				origPersonCollSize = personColl.length;
@@ -853,6 +863,10 @@ $(document).ready(function() {
 			var json = dog.toJSON();
 			
 			equal( json.type, 'dog', "The value of 'type' is the pet animal's type." );
+
+			var fullJSON = dog.toJSON( {full:true} );
+
+			equal( json.type, 'dog', "The value of 'type' is the pet animal's type.");
 
 			delete window.PetAnimal;
 			delete window.Dog;
