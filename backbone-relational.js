@@ -844,7 +844,7 @@
 								model = this.relatedModel.findOrCreate( item, { create: this.options.createModels } );
 							}
 
-							if ( model && !this.related.getByCid( model ) && !this.related.get( model ) ) {
+							if ( model && !this.related.get( model ) ) {
 								models.push( model );
 							}
 						}, this );
@@ -906,7 +906,7 @@
 		
 		tryAddRelated: function( model, options ) {
 			options = this.sanitizeOptions( options );
-			if ( !this.related.getByCid( model ) && !this.related.get( model ) ) {
+			if ( !this.related.get( model ) ) {
 				// Check if this new model was specified in 'this.keyContents'
 				var item = _.any( this.keyContents, function( item ) {
 						var id = Backbone.Relational.store.resolveIdForItem( this.relatedModel, item );
@@ -979,7 +979,7 @@
 			var dit = this;
 			options = this.unsanitizeOptions( options );
 			model.queue( function() { // Queued to avoid errors for adding 'model' to the 'this.related' set twice
-				if ( dit.related && !dit.related.getByCid( model ) && !dit.related.get( model ) ) {
+				if ( dit.related && !dit.related.get( model ) ) {
 					dit.related.add( model, options );
 				}
 			});
@@ -987,7 +987,7 @@
 		
 		removeRelated: function( model, options ) {
 			options = this.unsanitizeOptions( options );
-			if ( this.related.getByCid( model ) || this.related.get( model ) ) {
+			if ( this.related.get( model ) ) {
 				this.related.remove( model, options );
 			}
 		}
@@ -1572,7 +1572,7 @@
 					}
 				}
 
-				if ( model instanceof Backbone.Model && !this.get( model ) && !this.getByCid( model ) ) {
+				if ( model instanceof Backbone.Model && !this.get( model ) ) {
 					modelsToAdd.push( model );
 				}
 			}, this );
@@ -1605,7 +1605,7 @@
 
 		//console.debug('calling remove on coll=%o; models=%o, options=%o', this, models, options );
 		_.each( models, function( model ) {
-				model = this.getByCid( model ) || this.get( model );
+				model = this.get( model );
 
 				if ( model instanceof Backbone.Model ) {
 					remove.call( this, model, options );
