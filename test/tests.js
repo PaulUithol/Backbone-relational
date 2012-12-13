@@ -1773,8 +1773,9 @@ $(document).ready(function() {
 
 			var indexes = [];
 
-			zoo.get("animals").on("add", function(collection, model, options) {
-				indexes.push(options.index);
+			zoo.get("animals").on("add", function(model, collection, options) {
+                var index = collection.indexOf(model);
+				indexes.push(index);
 			});
 
 			zoo.set("animals", [
@@ -1791,8 +1792,9 @@ $(document).ready(function() {
 
 			var indexes = [];
 
-			zoo.get("animals").on("add", function(collection, model, options) {
-				indexes.push(options.index);
+			zoo.get("animals").on("add", function(model, collection, options) {
+                var index = collection.indexOf(model);
+				indexes.push(index);
 			});
 
 			zoo.set("animals", [
