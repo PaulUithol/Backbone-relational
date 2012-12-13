@@ -1554,29 +1554,23 @@
 	 * if the collection.model has subModels.
 	 */
 	Backbone.Collection.prototype.__prepareModel = Backbone.Collection.prototype._prepareModel;
-	Backbone.Collection.prototype._prepareModel = function ( model, options ) {
-		options || (options = {});
-		if ( !( model instanceof Backbone.Model ) ) {
-			var attrs = model;
-			options.collection = this;
+	Backbone.Collection.prototype._prepareModel = function ( attrs, options ) {
+        if (attrs instanceof Backbone.Model) {
+        if (!attrs.collection) attrs.collection = this;
+            return attrs;
+        }
+        options || (options = {});
+        options.collection = this;
+        if ( typeof this.model.build !== 'undefined' ) {
+            var model = this.model.build( attrs, options );
+        }
+        else {
+            var model = new this.model(attrs, options);
+        }
+        if (!model._validate(attrs, options)) return false;
+        return model;
+	};
 
-			if ( typeof this.model.findOrCreate !== 'undefined' ) {
-				model = this.model.findOrCreate( attrs, options );
-			}
-			else {
-				model = new this.model( attrs, options );
-			}
-			
-			if ( !model._validate( model.attributes, options ) ) {
-				model = false;
-			}
-		}
-		else if ( !model.collection ) {
-			model.collection = this;
-		}
-		
-		return model;
-	}
 	
 	/**
 	 * Override Backbone.Collection.add, so objects fetched from the server multiple times will
