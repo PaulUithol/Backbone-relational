@@ -407,7 +407,7 @@
 		}
 
 		if ( !this.checkPreconditions() ) {
-			return false;
+			return;
 		}
 
 		if ( instance ) {
@@ -541,7 +541,7 @@
 
 		/**
 		 * Set the related model(s) for this relation
-		 * @param {Backbone.Mode|Backbone.Collection} related
+		 * @param {Backbone.Model|Backbone.Collection} related
 		 * @param {Object} [options]
 		 */
 		setRelated: function( related, options ) {
@@ -897,7 +897,7 @@
 				if (!_.isArray( attr ) && attr !== undefined) {
 					attr = [ attr ];
 				}
-				var oldIds;
+
 				_.each( attr, function( attributes ) {
 					newIds[ attributes.id ] = true;
 				});
@@ -1674,11 +1674,11 @@
 			var dit = this, args = arguments;
 			
 			if (eventName === 'add') {
-				args = _.toArray(args);
+				args = _.toArray( args );
 				// the fourth argument in case of a regular add is the option object.
 				// we need to clone it, as it could be modified while we wait on the eventQueue to be unblocked
-				if (_.isObject(args[3])) {
-					args[3] = _.clone(args[3]);
+				if (_.isObject( args[3] ) ) {
+					args[3] = _.clone( args[3] );
 				}
 			}
 			
