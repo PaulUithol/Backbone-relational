@@ -1,3 +1,4 @@
+/* vim: set tabstop=4:softtabstop=4:shiftwidth=4:noexpandtab */
 // documentation on writing tests here: http://docs.jquery.com/QUnit
 // example tests: https://github.com/jquery/qunit/blob/master/test/same.js
 // more examples: https://github.com/jquery/jquery/tree/master/test/unit
@@ -1774,7 +1775,7 @@ $(document).ready(function() {
 			var indexes = [];
 
 			zoo.get("animals").on("add", function(model, collection, options) {
-                var index = collection.indexOf(model);
+				var index = collection.indexOf(model);
 				indexes.push(index);
 			});
 
@@ -1793,7 +1794,7 @@ $(document).ready(function() {
 			var indexes = [];
 
 			zoo.get("animals").on("add", function(model, collection, options) {
-                var index = collection.indexOf(model);
+				var index = collection.indexOf(model);
 				indexes.push(index);
 			});
 
@@ -2176,7 +2177,7 @@ $(document).ready(function() {
 			  View.name = 'View';
 
 			  function View() {
-			    return View.__super__.constructor.apply(this, arguments);
+				return View.__super__.constructor.apply(this, arguments);
 			  }
 
 			  return View;
@@ -2192,19 +2193,19 @@ $(document).ready(function() {
 			  Property.name = 'Property';
 
 			  function Property() {
-			    return Property.__super__.constructor.apply(this, arguments);
+				return Property.__super__.constructor.apply(this, arguments);
 			  }
 
 			  Property.prototype.relations = [
-			    {
-			      type: Backbone.HasOne,
-			      key: 'view',
-			      relatedModel: View,
-			      reverseRelation: {
-			        type: Backbone.HasMany,
-			        key: 'properties'
-			      }
-			    }
+				{
+				  type: Backbone.HasOne,
+				  key: 'view',
+				  relatedModel: View,
+				  reverseRelation: {
+					type: Backbone.HasMany,
+					key: 'properties'
+				  }
+				}
 			  ];
 
 			  return Property;
