@@ -1,3 +1,4 @@
+/* vim: set tabstop=4:softtabstop=4:shiftwidth=4:noexpandtab */
 /**
  * Backbone-relational.js 0.5.0
  * (c) 2011 Paul Uithol
@@ -1522,20 +1523,20 @@
 	 */
 	Backbone.Collection.prototype.__prepareModel = Backbone.Collection.prototype._prepareModel;
 	Backbone.Collection.prototype._prepareModel = function ( attrs, options ) {
-        if (attrs instanceof Backbone.Model) {
-        if (!attrs.collection) attrs.collection = this;
-            return attrs;
-        }
-        options || (options = {});
-        options.collection = this;
-        if ( typeof this.model.build !== 'undefined' ) {
-            var model = this.model.build( attrs, options );
-        }
-        else {
-            var model = new this.model(attrs, options);
-        }
-        if (!model._validate(attrs, options)) return false;
-        return model;
+		if (attrs instanceof Backbone.Model) {
+			if (!attrs.collection) attrs.collection = this;
+			return attrs;
+		}
+		options || (options = {});
+		options.collection = this;
+		if ( typeof this.model.build !== 'undefined' ) {
+			var model = this.model.build( attrs, options );
+		}
+		else {
+			var model = new this.model(attrs, options);
+		}
+		if (!model._validate(attrs, options)) return false;
+		return model;
 	};
 
 	
