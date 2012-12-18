@@ -1556,19 +1556,30 @@
 	 */
 	Backbone.Collection.prototype.__prepareModel = Backbone.Collection.prototype._prepareModel;
 	Backbone.Collection.prototype._prepareModel = function ( attrs, options ) {
-		if (attrs instanceof Backbone.Model) {
-			if (!attrs.collection) attrs.collection = this;
-			return attrs;
-		}
-		options || (options = {});
-		options.collection = this;
-		if ( typeof this.model.build !== 'undefined' ) {
-			var model = this.model.build( attrs, options );
+		var model;
+		
+		if ( attrs instanceof Backbone.Model ) {
+			if ( !attrs.collection ) {
+				attrs.collection = this;
+			}
+			model = attrs;
 		}
 		else {
-			var model = new this.model(attrs, options);
+			options || (options = {});
+			options.collection = this;
+			
+			if ( typeof this.model.findOrCreate !== 'undefined' ) {
+				model = this.model.findOrCreate( attrs, options );
+			}
+			else {
+				model = new this.model( attrs, options );
+			}
+			
+			if ( !model._validate( attrs, options ) ) {
+				model = false;
+			}
 		}
-		if (!model._validate(attrs, options)) return false;
+		
 		return model;
 	};
 
@@ -1626,7 +1637,7 @@
 
 		//console.debug('calling remove on coll=%o; models=%o, options=%o', this, models, options );
 		_.each( models || [], function( model ) {
-				model = this.getByCid( model ) || this.get( model );
+				model = this.get( model );
 
 				if ( model instanceof Backbone.Model ) {
 					remove.call( this, model, options );
