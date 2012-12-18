@@ -39,7 +39,7 @@ Backbone-relational depends on [backbone](https://github.com/documentcloud/backb
 <script type="text/javascript" src="./js/backbone-relational.js"></script>
 ```
 
-Backbone-relational has been tested with Backbone 0.9.9 (or newer) and Underscore 1.4.2 (or newer).
+Backbone-relational has been tested with Backbone 0.9.9 (or newer) and Underscore 1.4.3 (or newer).
 
 
 ## <a name="backbone-relation"/>Backbone.Relation options
