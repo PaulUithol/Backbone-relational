@@ -228,6 +228,36 @@ It's only mandatory to supply a `key`; `relatedModel` is automatically set. The 
 
 **Please note**: if you define a relation (plus a `reverseRelation`) on a model, but never actually create an instance of that model, the model's `constructor` will never run, which means it's `initializeRelations` will never get called, and the reverseRelation will not be initialized either. In that case, you could either define the relation on the opposite model, or define two single relations. See [issue 20](https://github.com/PaulUithol/Backbone-relational/issues/20) for a discussion.
 
+### autoFetch
+Value: a boolean or an Object (see below). Default: `false`.
+
+If this property is set to `true`, when a model is instantiated the related model is automatically fetched using [fetchRelated](#fetchRelated).
+The value of the property can also be an object. In that case the related model is automatically fetched and the object is passed
+to [fetchRelated](#fetchRelated) as the options parameter.
+
+```javascript
+var Shop = Backbone.RelationalModel.extend({
+	relations: [{
+			type: Backbone.HasMany,
+			key: 'customers',
+			relatedModel: 'Customer',
+			autoFetch: true
+		},{
+			type: Backbone.HasOne,
+			key: 'address',
+			relatedModel: 'Address',
+			autoFetch: {
+				success: function(model, response){
+					//...
+				},
+				error: function(model, response){
+					//...
+				}
+			}
+		}
+	]
+```
+
 ## <a name="backbone-relationalmodel"/>Backbone.RelationalModel
 
 `Backbone.RelationalModel` introduces a couple of new methods, events and properties.
