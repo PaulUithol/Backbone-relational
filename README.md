@@ -238,11 +238,12 @@ It's only mandatory to supply a `key`; `relatedModel` is automatically set. The 
 
 Returns the set of initialized relations on the model.
 
-###### **fetchRelated `relationalModel.fetchRelated(key<string>, [options<object>], [update<boolean>])`**
+###### <a name="fetchRelated"/>**fetchRelated `relationalModel.fetchRelated(key<string>, [options<object>], [update<boolean>])`**
 
 Fetch models from the server that were referenced in the model's attributes, but have not been found/created yet.
 This can be used specifically for lazy-loading scenarios.  Setting `update` to true guarantees that the model
 will be fetched from the server and any model that already exists in the store will be updated with the retrieved data.
+The options object specifies options to be passed to [Backbone.sync](http://backbonejs.org/#Sync).
 
 By default, a separate request will be fired for each additional model that is to be fetched from the server.
 However, if your server/API supports it, you can fetch the set of models in one request by specifying a `collectionType`
