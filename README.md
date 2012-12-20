@@ -228,6 +228,36 @@ It's only mandatory to supply a `key`; `relatedModel` is automatically set. The 
 
 **Please note**: if you define a relation (plus a `reverseRelation`) on a model, but never actually create an instance of that model, the model's `constructor` will never run, which means it's `initializeRelations` will never get called, and the reverseRelation will not be initialized either. In that case, you could either define the relation on the opposite model, or define two single relations. See [issue 20](https://github.com/PaulUithol/Backbone-relational/issues/20) for a discussion.
 
+### autoFetch
+Value: a boolean or an Object (see below). Default: `false`.
+
+If this property is set to `true`, when a model is instantiated the related model is automatically fetched using [fetchRelated](#fetchRelated).
+The value of the property can also be an object. In that case the related model is automatically fetched and the object is passed
+to [fetchRelated](#fetchRelated) as the options parameter.
+
+```javascript
+var Shop = Backbone.RelationalModel.extend({
+	relations: [{
+			type: Backbone.HasMany,
+			key: 'customers',
+			relatedModel: 'Customer',
+			autoFetch: true
+		},{
+			type: Backbone.HasOne,
+			key: 'address',
+			relatedModel: 'Address',
+			autoFetch: {
+				success: function(model, response){
+					//...
+				},
+				error: function(model, response){
+					//...
+				}
+			}
+		}
+	]
+```
+
 ## <a name="backbone-relationalmodel"/>Backbone.RelationalModel
 
 `Backbone.RelationalModel` introduces a couple of new methods, events and properties.
@@ -238,11 +268,12 @@ It's only mandatory to supply a `key`; `relatedModel` is automatically set. The 
 
 Returns the set of initialized relations on the model.
 
-###### **fetchRelated `relationalModel.fetchRelated(key<string>, [options<object>], [update<boolean>])`**
+###### <a name="fetchRelated"/>**fetchRelated `relationalModel.fetchRelated(key<string>, [options<object>], [update<boolean>])`**
 
 Fetch models from the server that were referenced in the model's attributes, but have not been found/created yet.
 This can be used specifically for lazy-loading scenarios.  Setting `update` to true guarantees that the model
 will be fetched from the server and any model that already exists in the store will be updated with the retrieved data.
+The options object specifies options to be passed to [Backbone.sync](http://backbonejs.org/#Sync).
 
 By default, a separate request will be fired for each additional model that is to be fetched from the server.
 However, if your server/API supports it, you can fetch the set of models in one request by specifying a `collectionType`

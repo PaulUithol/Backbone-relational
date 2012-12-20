@@ -199,6 +199,51 @@ $(document).ready(function() {
 	window.NodeList = Backbone.Collection.extend({
 		model: Node
 	});
+
+	window.Customer = Backbone.RelationalModel.extend({
+		urlRoot: '/customer/'
+	});
+
+	window.Address = Backbone.RelationalModel.extend({
+		urlRoot: '/address/'
+	});
+
+	window.Shop = Backbone.RelationalModel.extend({
+		relations: [{
+				type: Backbone.HasMany,
+				key: 'customers',
+				relatedModel: 'Customer',
+				autoFetch: true
+			},{
+				type: Backbone.HasOne,
+				key: 'address',
+				relatedModel: 'Address',
+				autoFetch: {
+					success: function(model, response){
+						response.successOK = true;
+					},
+					error: function(model, response){
+						response.errorOK = true;
+					}
+				}
+			}
+		]
+	});
+
+	window.Agent = Backbone.RelationalModel.extend({
+		relations: [{
+				type: Backbone.HasMany,
+				key: 'customers',
+				relatedModel: 'Customer'
+			},{
+				type: Backbone.HasOne,
+				key: 'address',
+				relatedModel: 'Address',
+				autoFetch: false
+			}
+		]
+	});
+
 	
 	function initObjects() {
 		// Reset last ajax requests
@@ -678,6 +723,63 @@ $(document).ready(function() {
 			ok( _.isArray( requests ) );
 			equal( requests.length, 0 );
 			equal( zoo.get( 'animals' ).length, 2 );
+		});
+
+		test( "autoFetch a HasMany relation", function() {
+			var shopOne = new Shop({
+				id: 'shop-1',
+				customers: ['customer-1', 'customer-2']
+			});
+
+			equal( requests.length, 2, "Two requests to fetch the users has been made" );
+			requests.length = 0;
+
+			var shopTwo = new Shop({
+				id: 'shop-2',
+				customers: ['customer-1', 'customer-3']
+			});
+
+			equal( requests.length, 1, "A request to fetch a user has been made" ); //as customer-1 has already been fetched
+		});
+
+		test( "autoFetch on a HasOne relation (with callbacks)", function() {
+			var shopThree = new Shop({
+				id: 'shop-3',
+				address: 'address-3'
+			});
+
+			equal( requests.length, 1, "A request to fetch the address has been made" );
+			
+			var res = { successOK: false, errorOK: false };
+			
+			requests[0].success( res );
+			equal( res.successOK, true, "The success() callback has been called" );
+			requests.length = 0;
+
+			var shopFour = new Shop({
+				id: 'shop-4',
+				address: 'address-4'
+			});
+
+			equal( requests.length, 1, "A request to fetch the address has been made" );
+			requests[0].error( res );
+			equal( res.errorOK, true, "The error() callback has been called" );
+		});
+
+		test( "autoFetch false by default", function() {
+			var agentOne = new Agent({
+				id: 'agent-1',
+				customers: ['customer-4', 'customer-5']
+			});
+
+			equal( requests.length, 0, "No requests to fetch the customers has been made as autoFetch was not defined" );
+
+			var agentOne = new Agent({
+				id: 'agent-2',
+				address: 'address-5'
+			});
+
+			equal( requests.length, 0, "No requests to fetch the customers has been made as autoFetch was set to false" );
 		});
 
 		test( "clone", function() {

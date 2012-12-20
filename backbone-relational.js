@@ -445,6 +445,10 @@
 		if ( instance ) {
 			this.initialize();
 
+			if ( options.autoFetch ) {
+				this.instance.fetchRelated( options.key, _.isObject( options.autoFetch ) ? options.autoFetch : {} );
+			}
+
 			// When a model in the store is destroyed, check if it is 'this.instance'.
 			Backbone.Relational.store.getCollection( this.instance )
 				.bind( 'relational:remove', this._modelRemovedFromCollection );
@@ -462,7 +466,8 @@
 		options: {
 			createModels: true,
 			includeInJSON: true,
-			isAutoRelation: false
+			isAutoRelation: false,
+			autoFetch: false
 		},
 		
 		instance: null,
