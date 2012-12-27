@@ -1540,8 +1540,8 @@
 			// Try to find an instance of 'this' model type in the store
 			var model = Backbone.Relational.store.find( this, parsedAttributes );
 
-			// If we found an instance, update it with the data in 'item'; if not, create an instance
-			// (unless 'options.create' is false).
+			// If we found an instance, update it with the data in 'item' (unless 'options.update' is false).
+			// If not, create an instance (unless 'options.create' is false).
 			if ( _.isObject( attributes ) ) {
 				if ( model && options.update !== false ) {
 					model.set( parsedAttributes, options );
