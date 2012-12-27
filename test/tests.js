@@ -832,6 +832,13 @@ $(document).ready(function() {
 
 			ok( person instanceof Person );
 			ok( origPersonCollSize + 1 === personColl.length, "No person was found (1 created)" );
+
+			// Find when options.update is false
+			person = Person.findOrCreate( { id: person1.id, name: 'phil' }, { update: false } );
+
+			equal( person.get( 'name' ), 'dude' );
+			equal( person1.get( 'name' ), 'dude' );
+
 		});
 
 	
