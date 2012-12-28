@@ -1,4 +1,4 @@
-/* vim: set tabstop=4:softtabstop=4:shiftwidth=4:noexpandtab */
+/* vim: set tabstop=4 softtabstop=4 shiftwidth=4 noexpandtab: */
 /**
  * Backbone-relational.js 0.7.0
  * (c) 2011-2013 Paul Uithol

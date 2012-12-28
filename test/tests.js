@@ -1,4 +1,4 @@
-/* vim: set tabstop=4:softtabstop=4:shiftwidth=4:noexpandtab */
+/* vim: set tabstop=4 softtabstop=4 shiftwidth=4 noexpandtab: */
 // documentation on writing tests here: http://docs.jquery.com/QUnit
 // example tests: https://github.com/jquery/qunit/blob/master/test/same.js
 // more examples: https://github.com/jquery/jquery/tree/master/test/unit
