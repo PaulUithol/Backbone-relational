@@ -1,4 +1,4 @@
-/* vim: set tabstop=4:softtabstop=4:shiftwidth=4:noexpandtab */
+/* vim: set tabstop=4 softtabstop=4 shiftwidth=4 noexpandtab: */
 // documentation on writing tests here: http://docs.jquery.com/QUnit
 // example tests: https://github.com/jquery/qunit/blob/master/test/same.js
 // more examples: https://github.com/jquery/jquery/tree/master/test/unit
@@ -832,6 +832,13 @@ $(document).ready(function() {
 
 			ok( person instanceof Person );
 			ok( origPersonCollSize + 1 === personColl.length, "No person was found (1 created)" );
+
+			// Find when options.update is false
+			person = Person.findOrCreate( { id: person1.id, name: 'phil' }, { update: false } );
+
+			equal( person.get( 'name' ), 'dude' );
+			equal( person1.get( 'name' ), 'dude' );
+
 		});
 
 	
