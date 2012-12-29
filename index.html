@@ -4,16 +4,15 @@
   <meta http-equiv="content-type" content="text/html;charset=UTF-8" />
   <meta http-equiv="X-UA-Compatible" content="chrome=1" />
   <meta name="viewport" content="width=device-width">
-  <link rel="canonical" href="http://backbonejs.org" />
-  <link rel="icon" href="docs/images/favicon.ico" />
-  <link rel="stylesheet" type="text/css" href="static/css/prism.css" />
+  <link rel="icon" href="docs/static/images/favicon.ico" />
+  <link rel="stylesheet" type="text/css" href="docs/static/css/prism.css" />
   <title>Backbone-relational.js</title>
   <style>
     body {
       font-size: 14px;
       line-height: 22px;
       font-family: Helvetica Neue, Helvetica, Arial;
-      background: #f4f4f4 url(docs/images/background.png);
+      background: #f4f4f4 url('docs/static/images/background.png');
     }
     .interface {
       font-family: "Lucida Grande", "Lucida Sans Unicode", Helvetica, Arial, sans-serif !important;
@@ -858,24 +857,6 @@ var mammals = new MammalCollection([
 
   </div>
 
-  <script src="test/vendor/underscore.js"></script>
-  <script src="test/vendor/jquery-1.7.1.js"></script>
-  <script src="static/js/prism.js"></script>
-  <script src="backbone.js"></script>
-
-  <script>
-    // Set up the "play" buttons for each runnable code example.
-    $(function() {
-      $('.runnable').each(function() {
-        var code = this;
-        var button = '<div class="run" title="Run"></div>';
-        $(button).insertBefore(code).bind('click', function(){
-          eval($(code).text());
-        });
-      });
-      $('[data-original]').lazyload();
-    });
-  </script>
-
+  <script src="docs/static/js/prism.js"></script>
 </body>
 </html>
