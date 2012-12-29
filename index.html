@@ -713,6 +713,7 @@ Company = Backbone.RelationalModel.extend({
       Fetch models from the server that were referenced in the model's attributes, but have not been found/created yet.
       This can be used specifically for lazy-loading scenarios. Setting update to true guarantees that the model will
       be fetched from the server and any model that already exists in the store will be updated with the retrieved data.
+      The options object specifies options to be passed to <a href="http://backbonejs.org/#Sync">Backbone.Sync</a>.
     </p>
 
     <p>
