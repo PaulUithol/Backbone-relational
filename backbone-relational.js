@@ -1320,7 +1320,7 @@
 		},
 		
 		/**
-		 * Override 'change', so the change will only execute after 'set' has finised (relations are updated),
+		 * Override 'change', so the change will only execute after 'set' has finished (relations are updated),
 		 * and 'previousAttributes' will be available when the event is fired.
 		 */
 		change: function( options ) {
