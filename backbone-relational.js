@@ -1,4 +1,4 @@
-/* vim: set tabstop=4:softtabstop=4:shiftwidth=4:noexpandtab */
+/* vim: set tabstop=4 softtabstop=4 shiftwidth=4 noexpandtab: */
 /**
  * Backbone-relational.js 0.7.0
  * (c) 2011-2013 Paul Uithol
@@ -1527,25 +1527,25 @@
 		/**
 		 * Find an instance of `this` type in 'Backbone.Relational.store'.
 		 * - If `attributes` is a string or a number, `findOrCreate` will just query the `store` and return a model if found.
-		 * - If `attributes` is an object, the model will be updated with `attributes` if found.
+		 * - If `attributes` is an object and is found in the store, the model will be updated with `attributes` unless `options.update` is `false`. 
 		 *   Otherwise, a new model is created with `attributes` (unless `options.create` is explicitly set to `false`).
 		 * @param {Object|String|Number} attributes Either a model's id, or the attributes used to create or update a model.
-		 * @param {Object} [options]
-		 * @param {Boolean} [options.create=true]
+		 * @param {Object} [options.create=true, options.update=true]
 		 * @return {Backbone.RelationalModel}
 		 */
 		findOrCreate: function( attributes, options ) {
+			options || ( options = {} );
 			var parsedAttributes = (_.isObject( attributes ) && this.prototype.parse) ? this.prototype.parse( attributes ) : attributes;
 			// Try to find an instance of 'this' model type in the store
 			var model = Backbone.Relational.store.find( this, parsedAttributes );
 
-			// If we found an instance, update it with the data in 'item'; if not, create an instance
-			// (unless 'options.create' is false).
+			// If we found an instance, update it with the data in 'item' (unless 'options.update' is false).
+			// If not, create an instance (unless 'options.create' is false).
 			if ( _.isObject( attributes ) ) {
-				if ( model ) {
+				if ( model && options.update !== false ) {
 					model.set( parsedAttributes, options );
 				}
-				else if ( !options || ( options && options.create !== false ) ) {
+				else if ( !model && options.create !== false ) {
 					model = this.build( attributes, options );
 				}
 			}
