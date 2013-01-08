@@ -841,9 +841,52 @@ $(document).ready(function() {
 
 		});
 
+		test( "change events in relation can use changedAttributes properly", function() {
+			var PetAnimal = Backbone.RelationalModel.extend({
+				subModelTypes: {
+					'cat': 'Cat',
+					'dog': 'Dog'
+				}
+			});
+			window.Dog = PetAnimal.extend();
+			window.Cat = PetAnimal.extend();
+
+			var PetOwner = Backbone.RelationalModel.extend({
+				relations: [{
+					type: Backbone.HasMany,
+					key: 'pets',
+					relatedModel: PetAnimal,
+					reverseRelation: {
+						key: 'owner'
+					}
+				}]
+			});
+
+			var owner = new PetOwner( { id: 'owner-2354' } );
+			var animal = new Dog( { type: 'dog', id: '238902', color: 'blue' } );
+			equal( animal.get('color'), 'blue', 'animal starts out blue' );
+
+			var changes = 0, changedAttrs;
+			animal.on('change', function(model, options) {
+				changes++;
+				changedAttrs = model.changedAttributes();
+			});
+
+			animal.set( { color: 'green' } );
+			equal( changes, 1, 'change event gets called after animal.set' );
+			equal( changedAttrs.color, 'green', '... with correct properties in "changedAttributes"' );
+
+			owner.set(owner.parse({
+				id: 'owner-2354',
+				pets: [ { id: '238902', type: 'dog', color: 'red' } ]
+			}));
+			equal( animal.get('color'), 'red', 'color gets updated properly' );
+			equal( changes, 2, 'change event gets called after owner.set' );
+			equal( changedAttrs.color, 'red', '... with correct properties in "changedAttributes"' );
+		});
+
 	
 	module( "Backbone.RelationalModel inheritance (`subModelTypes`)", {} );
-
 
 		test( "Object building based on type, when using explicit collections" , function() {
 			var Mammal = Animal.extend({
