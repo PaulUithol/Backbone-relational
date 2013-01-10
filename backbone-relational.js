@@ -1343,10 +1343,54 @@
 			return new this.constructor( attributes );
 		},
 		
+		//
+		//  Returns the data-structure of the relational model.
+		//  Calling toJSON with options full=true redirects the call
+		//  to this method.
+		//  Useful for template rendering
+		//
+		recursiveAttributes: function(options) {
+			options = options || {};
+
+			if ( this.isLocked() ) {
+				return this.id;
+			}
+
+			this.acquire();
+			var json = Backbone.Model.prototype.toJSON.call( this, options );
+
+			if ( this.constructor._superModel && !( this.constructor._subModelTypeAttribute in json ) ) {
+				json[ this.constructor._subModelTypeAttribute ] = this.constructor._subModelTypeValue;
+			}
+
+			_.each( this._relations || [], function( rel ) {
+				var value = json[ rel.key ];
+
+				if ( value && _.isFunction( value.recursiveAttributes ) ) {
+					json[ rel.key ] = value.recursiveAttributes( options );
+				} else {
+					json[ rel.key ] = null;
+				}
+			});
+
+			this.release();
+			return json;
+
+		},
+
 		/**
 		 * Convert relations to JSON, omits them when required
+		 *
+		 * IMPORTANT NOTE: the use of option `full=true` is very bad for performance. Do not use this in a loops!!
+		 *
 		 */
 		toJSON: function(options) {
+			options = options || {};
+
+			if ( options.full ) {
+				return this.recursiveAttributes(options);
+			}
+
 			// If this Model has already been fully serialized in this branch once, return to avoid loops
 			if ( this.isLocked() ) {
 				return this.id;
@@ -1360,58 +1404,58 @@
 			}
 			
 			_.each( this._relations || [], function( rel ) {
-					var value = json[ rel.key ];
+				var value = json[ rel.key ];
 
-					if ( rel.options.includeInJSON === true) {
-						if ( value && _.isFunction( value.toJSON ) ) {
-							json[ rel.keyDestination ] = value.toJSON( options );
-						}
-						else {
-							json[ rel.keyDestination ] = null;
-						}
-					}
-					else if ( _.isString( rel.options.includeInJSON ) ) {
-						if ( value instanceof Backbone.Collection ) {
-							json[ rel.keyDestination ] = value.pluck( rel.options.includeInJSON );
-						}
-						else if ( value instanceof Backbone.Model ) {
-							json[ rel.keyDestination ] = value.get( rel.options.includeInJSON );
-						}	
-						else {
-							json[ rel.keyDestination ] = null;
-						}
-					}
-					else if ( _.isArray( rel.options.includeInJSON ) ) {
-						if ( value instanceof Backbone.Collection ) {
-							var valueSub = [];
-							value.each( function( model ) {
-								var curJson = {};
-								_.each( rel.options.includeInJSON, function( key ) {
-									curJson[ key ] = model.get( key );
-								});
-								valueSub.push( curJson );
-							});
-							json[ rel.keyDestination ] = valueSub;
-						}
-						else if ( value instanceof Backbone.Model ) {
-							var valueSub = {};
-							_.each( rel.options.includeInJSON, function( key ) {
-								valueSub[ key ] = value.get( key );
-							});
-							json[ rel.keyDestination ] = valueSub;
-						}
-						else {
-							json[ rel.keyDestination ] = null;
-						}
+				if ( rel.options.includeInJSON === true) {
+					if ( value && _.isFunction( value.toJSON ) ) {
+						json[ rel.keyDestination ] = value.toJSON( options );
 					}
 					else {
-						delete json[ rel.key ];
+						json[ rel.keyDestination ] = null;
 					}
+				}
+				else if ( _.isString( rel.options.includeInJSON ) ) {
+					if ( value instanceof Backbone.Collection ) {
+						json[ rel.keyDestination ] = value.pluck( rel.options.includeInJSON );
+					}
+					else if ( value instanceof Backbone.Model ) {
+						json[ rel.keyDestination ] = value.get( rel.options.includeInJSON );
+					}
+					else {
+						json[ rel.keyDestination ] = null;
+					}
+				}
+				else if ( _.isArray( rel.options.includeInJSON ) ) {
+					if ( value instanceof Backbone.Collection ) {
+						var valueSub = [];
+						value.each( function( model ) {
+							var curJson = {};
+							_.each( rel.options.includeInJSON, function( key ) {
+								curJson[ key ] = model.get( key );
+							});
+							valueSub.push( curJson );
+						});
+						json[ rel.keyDestination ] = valueSub;
+					}
+					else if ( value instanceof Backbone.Model ) {
+						var valueSub = {};
+						_.each( rel.options.includeInJSON, function( key ) {
+							valueSub[ key ] = value.get( key );
+						});
+						json[ rel.keyDestination ] = valueSub;
+					}
+					else {
+						json[ rel.keyDestination ] = null;
+					}
+				}
+				else {
+					delete json[ rel.key ];
+				}
 
-					if ( rel.keyDestination !== rel.key ) {
-						delete json[ rel.key ];
-					}
-				});
+				if ( rel.keyDestination !== rel.key ) {
+					delete json[ rel.key ];
+				}
+			});
 			
 			this.release();
 			return json;
