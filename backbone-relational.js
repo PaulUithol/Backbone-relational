@@ -1363,11 +1363,11 @@
 				json[ this.constructor._subModelTypeAttribute ] = this.constructor._subModelTypeValue;
 			}
 
-			_.each( this._relations, function( rel ) {
+			_.each( this._relations || [], function( rel ) {
 				var value = json[ rel.key ];
 
 				if ( value && _.isFunction( value.recursiveAttributes ) ) {
-					json[ rel.key ] = value.recursiveAttributes(options);
+					json[ rel.key ] = value.recursiveAttributes( options );
 				} else {
 					json[ rel.key ] = null;
 				}
@@ -1408,7 +1408,7 @@
 
 				if ( rel.options.includeInJSON === true) {
 					if ( value && _.isFunction( value.toJSON ) ) {
-						json[ rel.keyDestination ] = value.toJSON(options);
+						json[ rel.keyDestination ] = value.toJSON( options );
 					}
 					else {
 						json[ rel.keyDestination ] = null;
