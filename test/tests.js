@@ -1462,12 +1462,8 @@ $(document).ready(function() {
 			var smallElephant = new Animal( { name: 'Jumbo', species: 'elephant', weight: 2000, livesIn: zoo } );
 			equal( zoo.get( 'animals' ).length, 1, "Just 1 elephant in the zoo" );
 			
-			try {
-				zoo.get( 'animals' ).add( { name: 'Big guy', species: 'elephant', weight: 13000 } );
-			}
-			catch ( e ) {
-				// Throws an error in new verions of backbone after failing validation.
-			}
+			// should fail validation, so it shouldn't be added
+			zoo.get( 'animals' ).add( { name: 'Big guy', species: 'elephant', weight: 13000 }, { validate: true } );
 
 			equal( zoo.get( 'animals' ).length, 1, "Still just 1 elephant in the zoo" );
 		});
@@ -1648,17 +1644,17 @@ $(document).ready(function() {
 			var password = new Password( { plaintext: 'asdf' } );
 			
 			person1.bind( 'change', function( model, options ) {
-					ok( model.get( 'user' ) instanceof User, "model.user is an instance of User" );
+					ok( model.get( 'user' ) instanceof User, "In 'change', model.user is an instance of User" );
 					equal( model.previous( 'user' ).get( 'login' ), oldLogin, "previousAttributes is available on 'change'" );
 				});
 			
 			person1.bind( 'change:user', function( model, options ) {
-					ok( model.get( 'user' ) instanceof User, "model.user is an instance of User" );
+					ok( model.get( 'user' ) instanceof User, "In 'change:user', model.user is an instance of User" );
 					equal( model.previous( 'user' ).get( 'login' ), oldLogin, "previousAttributes is available on 'change'" );
 				});
 			
 			person1.bind( 'update:user', function( model, attr, options ) {
-					ok( model.get( 'user' ) instanceof User, "model.user is an instance of User" );
+					ok( model.get( 'user' ) instanceof User, "In 'update:user', model.user is an instance of User" );
 					ok( attr.get( 'person' ) === person1, "The user's 'person' is 'person1'" );
 					ok( attr.get( 'password' ) instanceof Password, "The user's password attribute is a model of type Password");
 					equal( attr.get( 'password' ).get( 'plaintext' ), 'qwerty', "The user's password is ''qwerty'" );
