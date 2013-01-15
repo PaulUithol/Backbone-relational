@@ -7,7 +7,7 @@
   "contributors"  : "Listed at <https://github.com/PaulUithol/Backbone-relational/contributors>",
   "dependencies"  : {
     "underscore": ">=1.4.3",
-    "backbone":   ">=0.9.9"
+    "backbone":   ">=0.9.10"
   },
   "lib"           : ".",
   "main"          : "backbone-relational.js",
