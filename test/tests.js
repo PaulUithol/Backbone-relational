@@ -1462,12 +1462,8 @@ $(document).ready(function() {
 			var smallElephant = new Animal( { name: 'Jumbo', species: 'elephant', weight: 2000, livesIn: zoo } );
 			equal( zoo.get( 'animals' ).length, 1, "Just 1 elephant in the zoo" );
 			
-			try {
-				zoo.get( 'animals' ).add( { name: 'Big guy', species: 'elephant', weight: 13000 } );
-			}
-			catch ( e ) {
-				// Throws an error in new verions of backbone after failing validation.
-			}
+			// should fail validation, so it shouldn't be added
+			zoo.get( 'animals' ).add( { name: 'Big guy', species: 'elephant', weight: 13000 }, { validate: true } );
 
 			equal( zoo.get( 'animals' ).length, 1, "Still just 1 elephant in the zoo" );
 		});
