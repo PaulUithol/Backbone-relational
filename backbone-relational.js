@@ -1318,17 +1318,6 @@
 			
 			return result;
 		},
-		
-		/**
-		 * Override 'change', so the change will only execute after 'set' has finished (relations are updated),
-		 * and 'previousAttributes' will be available when the event is fired.
-		 */
-		change: function( options ) {
-			var dit = this, args = arguments;
-			Backbone.Relational.eventQueue.add( function() {
-					Backbone.Model.prototype.change.apply( dit, args );
-				});
-		},
 
 		clone: function() {
 			var attributes = _.clone( this.attributes );
@@ -1530,7 +1519,9 @@
 		 * - If `attributes` is an object and is found in the store, the model will be updated with `attributes` unless `options.update` is `false`. 
 		 *   Otherwise, a new model is created with `attributes` (unless `options.create` is explicitly set to `false`).
 		 * @param {Object|String|Number} attributes Either a model's id, or the attributes used to create or update a model.
-		 * @param {Object} [options.create=true, options.update=true]
+		 * @param {Object} [options]
+		 * @param {Boolean} [options.create=true]
+		 * @param {Boolean} [options.update=true]
 		 * @return {Backbone.RelationalModel}
 		 */
 		findOrCreate: function( attributes, options ) {
