@@ -64,7 +64,11 @@ $(document).ready(function() {
 				key: 'visitors',
 				relatedModel: 'Visitor'
 			}
-		]
+		],
+
+		toString: function() {
+			return 'Zoo (' + this.id + ')';
+		}
 	});
 
 	window.Animal = Backbone.RelationalModel.extend({
@@ -75,6 +79,10 @@ $(document).ready(function() {
 			if ( attrs.species === 'elephant' && attrs.weight && attrs.weight > 12000 ) {
 				return "Too heavy.";
 			}
+		},
+
+		toString: function() {
+			return 'Animal (' + this.id + ')';
 		}
 	});
 
@@ -96,18 +104,26 @@ $(document).ready(function() {
 
 	window.House = Backbone.RelationalModel.extend({
 		relations: [{
-				type: Backbone.HasMany,
-				key: 'occupants',
-				relatedModel: 'Person',
-				reverseRelation: {
-					key: 'livesIn',
-					includeInJSON: false
-				}
-			}]
+			type: Backbone.HasMany,
+			key: 'occupants',
+			relatedModel: 'Person',
+			reverseRelation: {
+				key: 'livesIn',
+				includeInJSON: false
+			}
+		}],
+
+		toString: function() {
+			return 'House (' + this.id + ')';
+		}
 	});
 
 	window.User = Backbone.RelationalModel.extend({
-		urlRoot: '/user/'
+		urlRoot: '/user/',
+
+		toString: function() {
+			return 'User (' + this.id + ')';
+		}
 	});
 
 	window.Person = Backbone.RelationalModel.extend({
@@ -142,11 +158,27 @@ $(document).ready(function() {
 					key: 'person'
 				}
 			}
-		]
+		],
+
+		toString: function() {
+			return 'Person (' + this.id + ')';
+		}
 	});
 
 	window.PersonCollection = Backbone.Collection.extend({
 		model: Person
+	});
+
+	window.Password = Backbone.RelationalModel.extend({
+		relations: [{
+			type: Backbone.HasOne,
+			key: 'user',
+			relatedModel: 'User',
+			reverseRelation: {
+				type: Backbone.HasOne,
+				key: 'password'
+			}
+		}]
 	});
 	
 	// A link table between 'Person' and 'Company', to achieve many-to-many relations
@@ -154,6 +186,10 @@ $(document).ready(function() {
 		defaults: {
 			'startDate': null,
 			'endDate': null
+		},
+
+		toString: function() {
+			return 'Job (' + this.id + ')';
 		}
 	});
 
@@ -174,7 +210,11 @@ $(document).ready(function() {
 					key: 'runs'
 				}
 			}
-		]
+		],
+
+		toString: function() {
+			return 'Company (' + this.id + ')';
+		}
 	});
 
 	window.CompanyCollection = Backbone.Collection.extend({
@@ -193,7 +233,11 @@ $(document).ready(function() {
 					key: 'children'
 				}
 			}
-		]
+		],
+
+		toString: function() {
+			return 'Node (' + this.id + ')';
+		}
 	});
 
 	window.NodeList = Backbone.Collection.extend({
@@ -201,20 +245,30 @@ $(document).ready(function() {
 	});
 
 	window.Customer = Backbone.RelationalModel.extend({
-		urlRoot: '/customer/'
+		urlRoot: '/customer/',
+
+		toString: function() {
+			return 'Customer (' + this.id + ')';
+		}
 	});
 
 	window.Address = Backbone.RelationalModel.extend({
-		urlRoot: '/address/'
+		urlRoot: '/address/',
+
+		toString: function() {
+			return 'Address (' + this.id + ')';
+		}
 	});
 
 	window.Shop = Backbone.RelationalModel.extend({
-		relations: [{
+		relations: [
+			{
 				type: Backbone.HasMany,
 				key: 'customers',
 				relatedModel: 'Customer',
 				autoFetch: true
-			},{
+			},
+			{
 				type: Backbone.HasOne,
 				key: 'address',
 				relatedModel: 'Address',
@@ -227,21 +281,31 @@ $(document).ready(function() {
 					}
 				}
 			}
-		]
+		],
+
+		toString: function() {
+			return 'Shop (' + this.id + ')';
+		}
 	});
 
 	window.Agent = Backbone.RelationalModel.extend({
-		relations: [{
+		relations: [
+			{
 				type: Backbone.HasMany,
 				key: 'customers',
 				relatedModel: 'Customer'
-			},{
+			},
+			{
 				type: Backbone.HasOne,
 				key: 'address',
 				relatedModel: 'Address',
 				autoFetch: false
 			}
-		]
+		],
+
+		toString: function() {
+			return 'Agent (' + this.id + ')';
+		}
 	});
 
 	
@@ -391,7 +455,8 @@ $(document).ready(function() {
 	
 	
 		test( "Initialized", function() {
-			equal( Backbone.Relational.store._collections.length, 5, "Store contains 5 collections" );
+			// `initObjects` instantiates models of the following types: `Person`, `Job`, `Company`, `User`, `House` and `Password`
+			equal( Backbone.Relational.store._collections.length, 6, "Store contains 6 collections" );
 		});
 		
 		test( "getObjectByName", function() {
@@ -1313,11 +1378,12 @@ $(document).ready(function() {
 		});
 		
 		test( "HasMany with a reverseRelation HasMany is not allowed", function() {
+			var User = Backbone.RelationalModel.extend({});
 			var Password = Backbone.RelationalModel.extend({
 				relations: [{
 					type: 'HasMany',
 					key: 'users',
-					relatedModel: 'User',
+					relatedModel: User,
 					reverseRelation: {
 						type: 'HasMany',
 						key: 'passwords'
@@ -1628,18 +1694,7 @@ $(document).ready(function() {
 		
 		test( "'set' triggers 'change' and 'update', on a HasOne relation, for a Model with multiple relations", function() {
 			expect( 9 );
-			
-			var Password = Backbone.RelationalModel.extend({
-				relations: [{
-					type: Backbone.HasOne,
-					key: 'user',
-					relatedModel: 'User',
-					reverseRelation: {
-						type: Backbone.HasOne,
-						key: 'password'
-					}
-				}]
-			});
+
 			// triggers initialization of the reverse relation from User to Password
 			var password = new Password( { plaintext: 'asdf' } );
 			
@@ -1661,15 +1716,16 @@ $(document).ready(function() {
 				});
 			
 			var user = { login: 'me@hotmail.com', password: { plaintext: 'qwerty' } };
-			var oldLogin = person1.get('user').get( 'login' );
-			// Triggers first # assertions
+			var oldLogin = person1.get( 'user' ).get( 'login' );
+
+			// Triggers assertions for 'change' and 'change:user'
 			person1.set( { user: user } );
 			
 			user = person1.get( 'user' ).bind( 'update:password', function( model, attr, options ) {
-					equal( attr.get( 'plaintext' ), 'asdf', "The user's password is ''qwerty'" );
-				});
+				equal( attr.get( 'plaintext' ), 'asdf', "The user's password is ''qwerty'" );
+			});
 			
-			// Triggers last assertion
+			// Triggers assertions for 'update:user'
 			user.set( { password: password } );
 		});
 		

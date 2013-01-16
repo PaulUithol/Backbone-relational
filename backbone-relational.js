@@ -234,8 +234,8 @@
 			}
 			
 			var coll = _.detect( this._collections, function( c ) {
-					return c.model === rootModel;
-				});
+				return c.model === rootModel;
+			});
 			
 			if ( !coll ) {
 				coll = this._createCollection( rootModel );
