@@ -554,7 +554,7 @@
 			this.related = related;
 
 			this.instance.acquire();
-			this.instance.set( this.key, related, _.defaults( options || {}, { silent: true } ) );
+			this.instance.attributes[ this.key ] = related;
 			this.instance.release();
 		},
 		
