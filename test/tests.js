@@ -308,16 +308,26 @@ $(document).ready(function() {
 		}
 	});
 
-	
-	function initObjects() {
+	/**
+	 * Reset variables that are persistent across tests, specifically `window.requests` and the state of
+	 * `Backbone.Relational.store`.
+	 */
+	function reset() {
 		// Reset last ajax requests
 		window.requests = [];
-		
+
 		// save _reverseRelations, otherwise we'll get a lot of warnings about existing relations
 		var oldReverseRelations = Backbone.Relational.store._reverseRelations;
 		Backbone.Relational.store = new Backbone.Store();
 		Backbone.Relational.store._reverseRelations = oldReverseRelations;
 		Backbone.Relational.eventQueue = new Backbone.BlockingQueue();
+	}
+
+	/**
+	 * Initialize a few models that are used in a large number of tests
+	 */
+	function initObjects() {
+		reset();
 
 		window.person1 = new Person({
 			id: 'person-1',
@@ -372,7 +382,7 @@ $(document).ready(function() {
 	}
 	
 	
-	module( "Backbone.Semaphore", {} );
+	module( "Backbone.Semaphore", { setup: reset } );
 	
 	
 		test( "Unbounded", function() {
@@ -417,7 +427,7 @@ $(document).ready(function() {
 		});
 	
 	
-	module( "Backbone.BlockingQueue", {} );
+	module( "Backbone.BlockingQueue", { setup: reset } );
 	
 	
 		test( "Block", function() {
@@ -524,7 +534,7 @@ $(document).ready(function() {
 
 			ns.People.PersonCollection = Backbone.Collection.extend({
 				model: ns.People.Person
-			})
+			});
 
 			var people = new ns.People.PersonCollection([{name: "Bob", type: "Student"}]);
 
@@ -907,28 +917,31 @@ $(document).ready(function() {
 		});
 
 		test( "change events in relation can use changedAttributes properly", function() {
-			var PetAnimal = Backbone.RelationalModel.extend({
+			var scope = {};
+			Backbone.Relational.store.addModelScope( scope );
+
+			scope.PetAnimal = Backbone.RelationalModel.extend({
 				subModelTypes: {
 					'cat': 'Cat',
 					'dog': 'Dog'
 				}
 			});
-			window.Dog = PetAnimal.extend();
-			window.Cat = PetAnimal.extend();
+			scope.Dog = scope.PetAnimal.extend();
+			scope.Cat = scope.PetAnimal.extend();
 
-			var PetOwner = Backbone.RelationalModel.extend({
+			scope.PetOwner = Backbone.RelationalModel.extend({
 				relations: [{
 					type: Backbone.HasMany,
 					key: 'pets',
-					relatedModel: PetAnimal,
+					relatedModel: scope.PetAnimal,
 					reverseRelation: {
 						key: 'owner'
 					}
 				}]
 			});
 
-			var owner = new PetOwner( { id: 'owner-2354' } );
-			var animal = new Dog( { type: 'dog', id: '238902', color: 'blue' } );
+			var owner = new scope.PetOwner( { id: 'owner-2354' } );
+			var animal = new scope.Dog( { type: 'dog', id: '238902', color: 'blue' } );
 			equal( animal.get('color'), 'blue', 'animal starts out blue' );
 
 			var changes = 0, changedAttrs;
@@ -952,20 +965,23 @@ $(document).ready(function() {
 		});
 
 	
-	module( "Backbone.RelationalModel inheritance (`subModelTypes`)", {} );
+	module( "Backbone.RelationalModel inheritance (`subModelTypes`)", { setup: reset } );
 
 		test( "Object building based on type, when using explicit collections" , function() {
-			var Mammal = Animal.extend({
+			var scope = {};
+			Backbone.Relational.store.addModelScope( scope );
+
+			scope.Mammal = Animal.extend({
 				subModelTypes: {
 					'primate': 'Primate',
 					'carnivore': 'Carnivore'
 				}
 			});
-			window.Primate = Mammal.extend();
-			window.Carnivore = Mammal.extend();
+			scope.Primate = scope.Mammal.extend();
+			scope.Carnivore = scope.Mammal.extend();
 
 			var MammalCollection = AnimalCollection.extend({
-				model: Mammal
+				model: scope.Mammal
 			});
 
 			var mammals = new MammalCollection( [
@@ -973,24 +989,24 @@ $(document).ready(function() {
 				{ id: 6, species: 'panther', type: 'carnivore' }
 			]);
 
-			ok( mammals.at( 0 ) instanceof Primate );
-			ok( mammals.at( 1 ) instanceof Carnivore );
-
-			delete window.Carnivore;
-			delete window.Primate;
+			ok( mammals.at( 0 ) instanceof scope.Primate );
+			ok( mammals.at( 1 ) instanceof scope.Carnivore );
 		});
 
 		test( "Object building based on type, when used in relations" , function() {
-			var PetAnimal = Backbone.RelationalModel.extend({
+			var scope = {};
+			Backbone.Relational.store.addModelScope( scope );
+
+			var PetAnimal = scope.PetAnimal = Backbone.RelationalModel.extend({
 				subModelTypes: {
 					'cat': 'Cat',
 					'dog': 'Dog'
 				}
 			});
-			window.Dog = PetAnimal.extend();
-			window.Cat = PetAnimal.extend();
+			var Dog = scope.Dog = PetAnimal.extend();
+			var Cat = scope.Cat = PetAnimal.extend();
 
-			var PetPerson = Backbone.RelationalModel.extend({
+			var PetPerson = scope.PetPerson = Backbone.RelationalModel.extend({
 				relations: [{
 					type: Backbone.HasMany,
 					key: 'pets',
@@ -1001,7 +1017,7 @@ $(document).ready(function() {
 				}]
 			});
 
-			var petPerson = new PetPerson({
+			var petPerson = new scope.PetPerson({
 				pets: [
 					{
 						type: 'dog',
@@ -1023,14 +1039,14 @@ $(document).ready(function() {
 			});
 			
 			ok( petPerson.get( 'pets' ).at( 2 ) instanceof Dog );
-
-			delete window.Dog;
-			delete window.Cat;
 		});
 		
 		test( "Automatic sharing of 'superModel' relations" , function() {
-			window.PetPerson = Backbone.RelationalModel.extend({});
-			window.PetAnimal = Backbone.RelationalModel.extend({
+			var scope = {};
+			Backbone.Relational.store.addModelScope( scope );
+
+			scope.PetPerson = Backbone.RelationalModel.extend({});
+			scope.PetAnimal = Backbone.RelationalModel.extend({
 				subModelTypes: {
 					'dog': 'Dog'
 				},
@@ -1038,67 +1054,63 @@ $(document).ready(function() {
 				relations: [{
 					type: Backbone.HasOne,
 					key:  'owner',
-					relatedModel: PetPerson,
+					relatedModel: scope.PetPerson,
 					reverseRelation: {
 						type: Backbone.HasMany,
 						key: 'pets'
 					}
 				}]
 			});
-			
-			window.Flea = Backbone.RelationalModel.extend({});
-			window.Dog = PetAnimal.extend({
+
+			scope.Flea = Backbone.RelationalModel.extend({});
+
+			scope.Dog = scope.PetAnimal.extend({
 				relations: [{
 					type: Backbone.HasMany,
 					key:	'fleas',
-					relatedModel: Flea,
+					relatedModel: scope.Flea,
 					reverseRelation: {
 						key: 'host'
 					}
 				}]
 			});
 			
-			var dog = new Dog({
+			var dog = new scope.Dog({
 				name: 'Spot'
 			});
 			
-			var person = new PetPerson({
+			var person = new scope.PetPerson({
 				pets: [ dog ]
 			});
 
 			equal( dog.get( 'owner' ), person, "Dog has a working owner relation." );
 
-			var flea = new Flea({
+			var flea = new scope.Flea({
 				host: dog
 			});
 			
 			equal( dog.get( 'fleas' ).at( 0 ), flea, "Dog has a working fleas relation." );
-
-			delete window.PetPerson;
-			delete window.PetAnimal;
-			delete window.Flea;
-			delete window.Dog;
 		});
 	
 		test( "toJSON includes the type", function() {
-			window.PetAnimal = Backbone.RelationalModel.extend({
+			var scope = {};
+			Backbone.Relational.store.addModelScope( scope );
+
+			scope.PetAnimal = Backbone.RelationalModel.extend({
 				subModelTypes: {
 					'dog': 'Dog'
 				}
 			});
 
-			window.Dog = PetAnimal.extend();
+			scope.Dog = scope.PetAnimal.extend();
 			
-			var dog = new Dog({
+			var dog = new scope.Dog({
 				name: 'Spot'
 			});
 			
 			var json = dog.toJSON();
 			
 			equal( json.type, 'dog', "The value of 'type' is the pet animal's type." );
-
-			delete window.PetAnimal;
-			delete window.Dog;
 		});
 		
 	
@@ -1265,7 +1277,7 @@ $(document).ready(function() {
 		});
 		
 		
-	module( "Backbone.Relation preconditions" );
+	module( "Backbone.Relation preconditions", { setup: reset } );
 		
 		
 		test( "'type', 'key', 'relatedModel' are required properties", function() {
@@ -1516,7 +1528,7 @@ $(document).ready(function() {
 		});
 		
 	
-	module( "Backbone.Relation general" );
+	module( "Backbone.Relation general", { setup: reset } );
 		
 		
 		test( "Only valid models (no validation failure) should be added to a relation", function() {
