@@ -945,6 +945,7 @@ $(document).ready(function() {
 				id: 'owner-2354',
 				pets: [ { id: '238902', type: 'dog', color: 'red' } ]
 			}));
+
 			equal( animal.get('color'), 'red', 'color gets updated properly' );
 			equal( changes, 2, 'change event gets called after owner.set' );
 			equal( changedAttrs.color, 'red', '... with correct properties in "changedAttributes"' );
@@ -1727,6 +1728,29 @@ $(document).ready(function() {
 			
 			// Triggers assertions for 'update:user'
 			user.set( { password: password } );
+		});
+
+		test( "'set' doesn't triggers 'change' and 'update:' when passed `silent: true`", function() {
+			expect( 2 );
+
+			person1.bind( 'change', function( model, options ) {
+				ok( false, "'change' should not get triggered" );
+			});
+
+			person1.bind( 'update:user', function( model, attr, options ) {
+				ok( false, "'update:user' should not get triggered" );
+			});
+
+			person1.bind( 'change:user', function( model, attr, options ) {
+				ok( false, "'change:user' should not get triggered" );
+			});
+
+			ok( person1.get( 'user' ) instanceof User, "person1 has a 'user'" );
+
+			var user = new User({ login: 'me@hotmail.com', password: { plaintext: 'qwerty' } });
+			person1.set( 'user', user, { silent: true } );
+
+			equal( person1.get( 'user' ), user );
 		});
 		
 		test( "'unset' triggers 'change' and 'update:'", function() {
