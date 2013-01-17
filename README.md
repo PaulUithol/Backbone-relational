@@ -31,7 +31,7 @@ Resources to get you started with Backbone-relational:
 
 ### <a name="installation"/>Installation
 
-Backbone-relational depends on [backbone](https://github.com/documentcloud/backbone) (and thus on  [underscore](https://github.com/documentcloud/underscore)). Include Backbone-relational right after Backbone and Underscore:
+Backbone-relational depends on [Backbone](https://github.com/documentcloud/backbone) (and thus on [Underscore](https://github.com/documentcloud/underscore)). Include Backbone-relational right after Backbone and Underscore:
 
 ```html
 <script type="text/javascript" src="./js/underscore.js"></script>
