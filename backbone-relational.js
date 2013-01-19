@@ -342,10 +342,7 @@
 
 			if ( coll ) {
 				if ( coll.get( model ) ) {
-					if ( Backbone.Relational.showWarnings && typeof console !== 'undefined' ) {
-						console.warn( 'Duplicate id! Old RelationalModel:%o, New RelationalModel:%o', coll.get( model ), model );
-					}
-					throw new Error( "Cannot instantiate more than one Backbone.RelationalModel with the same id per type!" );
+					coll.remove(coll.where({id: model.id})[0]);
 				}
 
 				var modelColl = model.collection;
