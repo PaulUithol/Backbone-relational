@@ -929,7 +929,7 @@
 				_.each( attr, function( attributes ) {
 					var model = this.relatedModel.findOrCreate( attributes, { create: this.options.createModels } );
 					if (model) {
-						coll.add( model, { silent: (attributes.id in oldIds)} );
+						coll.add( model, { silent: (model.id in oldIds)} );
 					}
 				}, this);
 
