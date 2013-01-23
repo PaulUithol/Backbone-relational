@@ -2,8 +2,9 @@ var BR = require('./backbone-relational');
 console.log(BR);
 
 require('http').createServer(function(req, res) {
-	if (req.url === '/') req.url = '/index.html';
-	require('fs').readFile(__dirname + req.url, function(err, data) {
+	if (/^\/(\?|$)/.test(req.url)) req.url = req.url.replace(/^\//, '/index.html');
+	var basename = req.url.split("?")[0];
+	require('fs').readFile(__dirname + basename, function(err, data) {
 		if (err) {
 			res.writeHead(404); res.end();
 		} else {
