@@ -1180,6 +1180,31 @@ $(document).ready(function() {
 			ok( person.get( 'user' ).get( 'resource_uri' ) == null );
 		});
 
+		test("'dotNotation' is true", function(){
+			var NewUser = Backbone.RelationalModel.extend({});
+			var NewPerson = Backbone.RelationalModel.extend({
+				dotNotation: true,
+				relations: [{
+					type: Backbone.HasOne,
+					key: 'user',
+					relatedModel: NewUser
+				}]
+			});
+			
+			var person = new NewPerson({
+				"normal": true,
+				"user.over": 2,
+				user: {name: "John", "over" : 1}
+			});
+			
+			ok(person.get("normal") === true, "getting normal attributes works as usual");
+			ok(person.get("user.name") === "John", "attributes of nested models can be get via dot notation: nested.attribute");
+			ok(oldCompany.get("ceo.name") === undefined, "no dotNotation when not enabled");
+			raises(function(){
+				person.get("user.over");
+			}, "getting ambiguous nested attributes raises an exception");
+		});
+
 		test( "Relations load from both `keySource` and `key`", function() {
 			var Property = Backbone.RelationalModel.extend({
 				idAttribute: 'property_id'

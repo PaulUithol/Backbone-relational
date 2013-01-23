@@ -1258,6 +1258,34 @@
 			
 			return requests;
 		},
+
+
+		get: function(attr){
+			var get = Backbone.Model.prototype.get;
+			var originalResult = get.call( this, attr );
+			var splits = attr.split(".");
+
+			// use default get if dotNotation not enabled or not required because no dot is in the argument
+			if( !this.dotNotation || splits.length === 1 ) {
+				return originalResult;
+			}
+
+			// go throw all splits and return the final result
+			var result = _.reduce(splits, function(model, split){
+					if( !(model instanceof Backbone.Model) ) {
+						throw new Error( "attribute must be instanceof Backbone.Model. Is: " + model + ", currentSplit: " + split );
+					}
+
+					return get.call(model, split);
+				}, this);
+			
+			if( originalResult !== undefined && result !== undefined ){
+				throw new Error( "ambiguous result for '" + attr + "'. direct result: " + originalResult + ", dotNotation: " + result );
+			}
+
+			return originalResult || result;
+		},
+
 		
 		set: function( key, value, options ) {
 			Backbone.Relational.eventQueue.block();
