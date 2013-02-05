@@ -334,7 +334,7 @@
 		},
 		
 		/**
-		 * Add a 'model' to it's appropriate collection. Retain the original contents of 'model.collection'.
+		 * Add a 'model' to its appropriate collection. Retain the original contents of 'model.collection'.
 		 * @param {Backbone.RelationalModel} model
 		 */
 		register: function( model ) {
@@ -356,7 +356,7 @@
 		},
 		
 		/**
-		 * Explicitly update a model's id in it's store collection
+		 * Explicitly update a model's id in its store collection
 		 * @param {Backbone.RelationalModel} model
 		 */
 		update: function( model ) {
@@ -437,7 +437,7 @@
 					isAutoRelation: true,
 					model: this.relatedModel,
 					relatedModel: this.model,
-					reverseRelation: this.options // current relation is the 'reverseRelation' for it's own reverseRelation
+					reverseRelation: this.options // current relation is the 'reverseRelation' for its own reverseRelation
 				},
 				this.reverseRelation // Take further properties from this.reverseRelation (type, key, etc.)
 			) );
@@ -481,7 +481,7 @@
 		related: null,
 		
 		_relatedModelAdded: function( model, coll, options ) {
-			// Allow 'model' to set up it's relations, before calling 'tryAddRelated'
+			// Allow 'model' to set up its relations, before calling 'tryAddRelated'
 			// (which can result in a call to 'addRelated' on a relation of 'model')
 			var dit = this;
 			model.queue( function() {
@@ -976,7 +976,7 @@
 					relation.addRelated( this.instance, options );
 				}, this );
 
-			// Only trigger 'add' once the newly added model is initialized (so, has it's relations set up)
+			// Only trigger 'add' once the newly added model is initialized (so, has its relations set up)
 			var dit = this;
 			Backbone.Relational.eventQueue.add( function() {
 				!options.silentChange && dit.instance.trigger( 'add:' + dit.key, model, dit.related, options );
@@ -1054,7 +1054,7 @@
 			// Defer 'processQueue', so that when 'Relation.createModels' is used we:
 			// a) Survive 'Backbone.Collection.add'; this takes care we won't error on "can't add model to a set twice"
 			//    (by creating a model from properties, having the model add itself to the collection via one of
-			//    it's relations, then trying to add it to the collection).
+			//    its relations, then trying to add it to the collection).
 			// b) Trigger 'HasMany' collection events only after the model is really fully set up.
 			// Example that triggers both a and b: "p.get('jobs').add( { company: c, person: p } )".
 			var dit = this;
