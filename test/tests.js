@@ -803,7 +803,7 @@ $(document).ready(function() {
 
 		});
 
-		test( "toJSON relational", function() {
+		test( "toJSON full:true", function() {
 			var person1JSON = person1.toJSON();
 			equal( person1JSON.user_id, person1.get('user').get('id'), "The serialized person has a key 'user_id' which value is 'user.id' following specified relational model");
 			ok(person1JSON.user === undefined, "The serialized person has no 'user' key following specified relational model");
@@ -811,6 +811,23 @@ $(document).ready(function() {
 			var person1FullJSON = person1.toJSON({full:true});
 			equal(person1FullJSON.user.login, 'dude', "The full serialization of person has a dict with key 'user'");
 			ok(person1FullJSON.user_id === undefined, "The full serialization of person has no key 'user_id'");
+		});
+
+		test( "toJSON full:true hasMany", function() {
+			var zoo = new Zoo({
+				name: 'Artis',
+				animals: [
+					new Animal( { id: 1, species: 'bear', name: 'Baloo' } ),
+					new Animal( { id: 2, species: 'tiger', name: 'Shere Khan' } )
+				]
+			});
+
+			var fullJSON = zoo.toJSON({full:true});
+
+			equal( fullJSON.animals.length, 2 );
+			var bear = fullJSON.animals[ 0 ];
+			equal( bear.species, 'bear', "animal's species has been included in the JSON" );
+			equal( bear.name, 'Baloo', "animal's name is included in the JSON with `full:true` option" );
 		});
 
 		test( "constructor.findOrCreate", function() {

@@ -1351,6 +1351,7 @@
 		//
 		recursiveAttributes: function(options) {
 			options = options || {};
+			var that = this;
 
 			if ( this.isLocked() ) {
 				return this.id;
@@ -1368,6 +1369,8 @@
 
 				if ( value && _.isFunction( value.recursiveAttributes ) ) {
 					json[ rel.key ] = value.recursiveAttributes( options );
+				} else if ( value instanceof Backbone.Collection ){
+					json[ rel.key ] = value.map(function(model){ return that.recursiveAttributes.call(model, options); });
 				} else {
 					json[ rel.key ] = null;
 				}
