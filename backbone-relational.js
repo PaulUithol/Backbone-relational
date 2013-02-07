@@ -1257,7 +1257,6 @@
 			return requests;
 		},
 
-
 		get: function( attr ) {
 			var originalResult = Backbone.Model.prototype.get.call( this, attr );
 
@@ -1282,7 +1281,6 @@
 
 			return originalResult || result;
 		},
-
 		
 		set: function( key, value, options ) {
 			Backbone.Relational.eventQueue.block();
