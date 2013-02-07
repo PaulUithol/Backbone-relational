@@ -1261,18 +1261,13 @@
 		get: function( attr ) {
 			var originalResult = Backbone.Model.prototype.get.call( this, attr );
 
-			// use default get if dotNotation not enabled or not required because no dot is in the argument
-			if ( !this.dotNotation ) {
+			// Use `originalResult` get if dotNotation not enabled or not required because no dot is in `attr`
+			if ( !this.dotNotation || attr.indexOf( '.' ) === -1 ) {
 				return originalResult;
 			}
 
+			// Go through all splits and return the final result
 			var splits = attr.split( '.' );
-
-			if (  splits.length === 1 ) {
-				return originalResult;
-			}
-
-			// go throw all splits and return the final result
 			var result = _.reduce(splits, function( model, split ) {
 				if ( !( model instanceof Backbone.Model ) ) {
 					throw new Error( 'Attribute must be an instanceof Backbone.Model. Is: ' + model + ', currentSplit: ' + split );
@@ -1280,7 +1275,7 @@
 
 				return Backbone.Model.prototype.get.call( model, split );
 			}, this );
-			
+
 			if ( originalResult !== undefined && result !== undefined ) {
 				throw new Error( "Ambiguous result for '" + attr + "'. direct result: " + originalResult + ", dotNotation: " + result );
 			}

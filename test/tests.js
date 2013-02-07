@@ -1197,11 +1197,11 @@ $(document).ready(function() {
 				user: {name: "John", "over" : 1}
 			});
 			
-			ok(person.get("normal") === true, "getting normal attributes works as usual");
-			ok(person.get("user.name") === "John", "attributes of nested models can be get via dot notation: nested.attribute");
-			ok(oldCompany.get("ceo.name") === undefined, "no dotNotation when not enabled");
-			raises(function(){
-				person.get("user.over");
+			ok( person.get( 'normal' ) === true, "getting normal attributes works as usual" );
+			ok( person.get( 'user.name' ) === "John", "attributes of nested models can be get via dot notation: nested.attribute");
+			ok(oldCompany.get( 'ceo.name' ) === undefined, "no dotNotation when not enabled");
+			raises( function() {
+				person.get( 'user.over' );
 			}, "getting ambiguous nested attributes raises an exception");
 		});
 
