@@ -1235,7 +1235,7 @@
 							url: setUrl
 						},
 						options,
-						{ add: true }
+						{ update: true, remove: false }
 					);
 
 					requests = [ rel.related.fetch( opts ) ];
