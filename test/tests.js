@@ -1560,8 +1560,8 @@ $(document).ready(function() {
 			var zoo = new Zoo();
 			
 			zoo.bind( 'add:animals', function( animal ) {
-					ok( animal instanceof Animal );
-				});
+				ok( animal instanceof Animal );
+			});
 			
 			var smallElephant = new Animal( { name: 'Jumbo', species: 'elephant', weight: 2000, livesIn: zoo } );
 			equal( zoo.get( 'animals' ).length, 1, "Just 1 elephant in the zoo" );
@@ -1570,6 +1570,45 @@ $(document).ready(function() {
 			zoo.get( 'animals' ).add( { name: 'Big guy', species: 'elephant', weight: 13000 }, { validate: true } );
 
 			equal( zoo.get( 'animals' ).length, 1, "Still just 1 elephant in the zoo" );
+		});
+
+		test( "Updating (retrieving) a model doesn't impact relation consistentcy", function() {
+			var zoo = new Zoo();
+
+			var lion = new Animal({
+				species: 'Lion',
+				livesIn: zoo
+			});
+
+			equal( zoo.get( 'animals' ).length, 1 );
+
+			lion.set({
+				id: 5,
+				species: 'Lion',
+				livesIn: zoo
+			});
+
+			equal( zoo.get( 'animals' ).length, 1 );
+		});
+
+		test( "Setting id on objects with reverse relations updates related collection correctly", function() {
+			var zoo = new Zoo({ id: 2 });
+
+			ok( zoo.get( 'animals' ).size() === 0, "zoo has no animals" );
+
+			var animal = new Animal({ livesIn: 2 });
+
+			ok( animal.get('livesIn') === zoo, "zoo connected to animal" );
+			ok( zoo.get('animals').size() === 1, "zoo has one Animal" );
+			ok( zoo.get('animals').at(0) === animal, "animal added to zoo" );
+			ok( zoo.get('animals').get(animal) === animal, "animal can be retrieved from zoo" );
+
+			animal.set({id: 5, livesIn: 2 });
+
+			ok( animal.get('livesIn') === zoo, "zoo connected to animal" );
+			ok( zoo.get('animals').size() === 1, "zoo has one Animal" );
+			ok( zoo.get('animals').at(0) === animal, "animal added to zoo" );
+			ok( zoo.get('animals').get(animal) === animal, "animal can be retrieved from zoo" );
 		});
 
 		test( "collections can also be passed as attributes on creation", function() {

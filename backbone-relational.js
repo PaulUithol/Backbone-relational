@@ -1396,7 +1396,7 @@
 						}
 						else if ( value instanceof Backbone.Model ) {
 							json[ rel.keyDestination ] = value.get( rel.options.includeInJSON );
-						}	
+						}
 						else {
 							json[ rel.keyDestination ] = null;
 						}
@@ -1461,7 +1461,7 @@
 						rel.model = this;
 					}
 
-					if ( rel.reverseRelation && rel.model === this ) {				
+					if ( rel.reverseRelation && rel.model === this ) {
 						var preInitialize = true;
 						if ( _.isString( rel.relatedModel ) ) {
 							/**
@@ -1632,7 +1632,7 @@
 				model = Backbone.Collection.prototype._prepareModel.call( this, model, options );
 			}
 
-				if ( model instanceof Backbone.Model && !this.get( model ) ) {
+				if ( model instanceof Backbone.Model && !this.get( model ) && !this.get( model.cid ) ) {
 					modelsToAdd.push( model );
 				}
 			}, this );
@@ -1664,7 +1664,7 @@
 
 		//console.debug('calling remove on coll=%o; models=%o, options=%o', this, models, options );
 		_.each( models || [], function( model ) {
-				model = this.get( model );
+				model = this.get( model ) || this.get( model.cid );
 
 				if ( model instanceof Backbone.Model ) {
 					remove.call( this, model, options );
