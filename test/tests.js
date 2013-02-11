@@ -1572,7 +1572,7 @@ $(document).ready(function() {
 			equal( zoo.get( 'animals' ).length, 1, "Still just 1 elephant in the zoo" );
 		});
 
-		test( "Updating (retrieving) a model doesn't impact relation consistentcy", function() {
+		test( "Updating (retrieving) a model doesn't impact relation consistency", function() {
 			var zoo = new Zoo();
 
 			var lion = new Animal({
@@ -1589,6 +1589,23 @@ $(document).ready(function() {
 			});
 
 			equal( zoo.get( 'animals' ).length, 1 );
+
+			var elephant = new Animal({
+				species: 'Elephant',
+				livesIn: zoo
+			});
+
+			equal( zoo.get( 'animals' ).length, 2 );
+			ok( elephant.get( 'livesIn' ) === zoo );
+
+			zoo.set({
+				id: 2,
+				name: 'Dierenpark Amersfoort'
+			});
+
+			equal( zoo.get( 'animals' ).length, 2 );
+			ok( lion.get( 'livesIn' ) === zoo );
+			ok( elephant.get( 'livesIn' ) === zoo );
 		});
 
 		test( "Setting id on objects with reverse relations updates related collection correctly", function() {
