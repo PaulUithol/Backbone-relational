@@ -1572,7 +1572,7 @@ $(document).ready(function() {
 			equal( zoo.get( 'animals' ).length, 1, "Still just 1 elephant in the zoo" );
 		});
 
-		test( "Updating (retrieving) a model doesn't impact relation consistency", function() {
+		test( "Updating (retrieving) a model keeps relation consistency intact", function() {
 			var zoo = new Zoo();
 
 			var lion = new Animal({
@@ -1590,6 +1590,15 @@ $(document).ready(function() {
 
 			equal( zoo.get( 'animals' ).length, 1 );
 
+			zoo.set({
+				name: 'Dierenpark Amersfoort',
+				animals: [ 5 ]
+			});
+
+			equal( zoo.get( 'animals' ).length, 1 );
+			ok( zoo.get( 'animals' ).at( 0 ) === lion, "lion is in zoo" );
+			ok( lion.get( 'livesIn' ) === zoo );
+
 			var elephant = new Animal({
 				species: 'Elephant',
 				livesIn: zoo
@@ -1599,8 +1608,7 @@ $(document).ready(function() {
 			ok( elephant.get( 'livesIn' ) === zoo );
 
 			zoo.set({
-				id: 2,
-				name: 'Dierenpark Amersfoort'
+				id: 2
 			});
 
 			equal( zoo.get( 'animals' ).length, 2 );
@@ -1609,23 +1617,39 @@ $(document).ready(function() {
 		});
 
 		test( "Setting id on objects with reverse relations updates related collection correctly", function() {
-			var zoo = new Zoo({ id: 2 });
+			var zoo1 = new Zoo({ id: 2 });
 
-			ok( zoo.get( 'animals' ).size() === 0, "zoo has no animals" );
+			ok( zoo1.get( 'animals' ).size() === 0, "zoo has no animals" );
 
-			var animal = new Animal({ livesIn: 2 });
+			var lion = new Animal({ livesIn: 2 });
 
-			ok( animal.get('livesIn') === zoo, "zoo connected to animal" );
-			ok( zoo.get('animals').size() === 1, "zoo has one Animal" );
-			ok( zoo.get('animals').at(0) === animal, "animal added to zoo" );
-			ok( zoo.get('animals').get(animal) === animal, "animal can be retrieved from zoo" );
+			ok( lion.get( 'livesIn' ) === zoo1, "zoo connected to lion" );
+			ok( zoo1.get( 'animals' ).size() === 1, "zoo has one Animal" );
+			ok( zoo1.get( 'animals' ).at(0) === lion, "lion added to zoo" );
+			ok( zoo1.get( 'animals' ).get( lion ) === lion, "lion can be retrieved from zoo" );
 
-			animal.set({id: 5, livesIn: 2 });
+			lion.set( { id: 5, livesIn: 2 } );
 
-			ok( animal.get('livesIn') === zoo, "zoo connected to animal" );
-			ok( zoo.get('animals').size() === 1, "zoo has one Animal" );
-			ok( zoo.get('animals').at(0) === animal, "animal added to zoo" );
-			ok( zoo.get('animals').get(animal) === animal, "animal can be retrieved from zoo" );
+			ok( lion.get( 'livesIn' ) === zoo1, "zoo connected to lion" );
+			ok( zoo1.get( 'animals' ).size() === 1, "zoo has one Animal" );
+			ok( zoo1.get( 'animals' ).at( 0 ) === lion, "lion added to zoo" );
+			ok( zoo1.get( 'animals' ).get( lion ) === lion, "lion can be retrieved from zoo" );
+
+			// Other way around
+			var elephant = new Animal( { id: 6 } );
+			var zoo2 = new Zoo( { animals: [ 6 ] } );
+
+			ok( elephant.get( 'livesIn' ) === zoo2, "zoo connected to elephant" );
+			ok( zoo2.get( 'animals' ).size() === 1, "zoo has one Animal" );
+			ok( zoo2.get( 'animals' ).at(0) === elephant, "elephant added to zoo" );
+			ok( zoo2.get( 'animals' ).get( elephant ) === elephant, "elephant can be retrieved from zoo" );
+
+			zoo2.set( { id: 5, animals: [ 6 ] } );
+
+			ok( elephant.get( 'livesIn' ) === zoo2, "zoo connected to elephant" );
+			ok( zoo2.get( 'animals' ).size() === 1, "zoo has one Animal" );
+			ok( zoo2.get( 'animals' ).at( 0 ) === elephant, "elephant added to zoo" );
+			ok( zoo2.get( 'animals' ).get( elephant ) === elephant, "elephant can be retrieved from zoo" );
 		});
 
 		test( "collections can also be passed as attributes on creation", function() {
