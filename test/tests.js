@@ -1623,33 +1623,37 @@ $(document).ready(function() {
 
 			var lion = new Animal({ livesIn: 2 });
 
-			ok( lion.get( 'livesIn' ) === zoo1, "zoo connected to lion" );
-			ok( zoo1.get( 'animals' ).size() === 1, "zoo has one Animal" );
-			ok( zoo1.get( 'animals' ).at(0) === lion, "lion added to zoo" );
-			ok( zoo1.get( 'animals' ).get( lion ) === lion, "lion can be retrieved from zoo" );
+			ok( lion.get( 'livesIn' ) === zoo1, "zoo1 connected to lion" );
+			ok( zoo1.get( 'animals' ).size() === 1, "zoo1 has one Animal" );
+			ok( zoo1.get( 'animals' ).at( 0 ) === lion, "lion added to zoo1" );
+			ok( zoo1.get( 'animals' ).get( lion ) === lion, "lion can be retrieved from zoo1" );
 
 			lion.set( { id: 5, livesIn: 2 } );
 
-			ok( lion.get( 'livesIn' ) === zoo1, "zoo connected to lion" );
-			ok( zoo1.get( 'animals' ).size() === 1, "zoo has one Animal" );
-			ok( zoo1.get( 'animals' ).at( 0 ) === lion, "lion added to zoo" );
-			ok( zoo1.get( 'animals' ).get( lion ) === lion, "lion can be retrieved from zoo" );
+			ok( lion.get( 'livesIn' ) === zoo1, "zoo1 connected to lion" );
+			ok( zoo1.get( 'animals' ).size() === 1, "zoo1 has one Animal" );
+			ok( zoo1.get( 'animals' ).at( 0 ) === lion, "lion added to zoo1" );
+			ok( zoo1.get( 'animals' ).get( lion ) === lion, "lion can be retrieved from zoo1" );
 
 			// Other way around
-			var elephant = new Animal( { id: 6 } );
-			var zoo2 = new Zoo( { animals: [ 6 ] } );
+			var elephant = new Animal( { id: 6 } ),
+				tiger = new Animal( { id: 7 } ),
+				zoo2 = new Zoo( { animals: [ 6 ] } );
 
-			ok( elephant.get( 'livesIn' ) === zoo2, "zoo connected to elephant" );
-			ok( zoo2.get( 'animals' ).size() === 1, "zoo has one Animal" );
-			ok( zoo2.get( 'animals' ).at(0) === elephant, "elephant added to zoo" );
-			ok( zoo2.get( 'animals' ).get( elephant ) === elephant, "elephant can be retrieved from zoo" );
+			ok( elephant.get( 'livesIn' ) === zoo2, "zoo2 connected to elephant" );
+			ok( zoo2.get( 'animals' ).size() === 1, "zoo2 has one Animal" );
+			ok( zoo2.get( 'animals' ).at( 0 ) === elephant, "elephant added to zoo2" );
+			ok( zoo2.get( 'animals' ).get( elephant ) === elephant, "elephant can be retrieved from zoo2" );
 
-			zoo2.set( { id: 5, animals: [ 6 ] } );
+			zoo2.set( { id: 5, animals: [ 6, 7 ] } );
 
-			ok( elephant.get( 'livesIn' ) === zoo2, "zoo connected to elephant" );
-			ok( zoo2.get( 'animals' ).size() === 1, "zoo has one Animal" );
-			ok( zoo2.get( 'animals' ).at( 0 ) === elephant, "elephant added to zoo" );
-			ok( zoo2.get( 'animals' ).get( elephant ) === elephant, "elephant can be retrieved from zoo" );
+			ok( elephant.get( 'livesIn' ) === zoo2, "zoo2 connected to elephant" );
+			ok( tiger.get( 'livesIn' ) === zoo2, "zoo2 connected to tiger" );
+			ok( zoo2.get( 'animals' ).size() === 2, "zoo2 has one Animal" );
+			ok( zoo2.get( 'animals' ).at( 0 ) === elephant, "elephant added to zoo2" );
+			ok( zoo2.get( 'animals' ).at( 1 ) === tiger, "tiger added to zoo2" );
+			ok( zoo2.get( 'animals' ).get( elephant ) === elephant, "elephant can be retrieved from zoo2" );
+			ok( zoo2.get( 'animals' ).get( tiger ) === tiger, "tiger can be retrieved from zoo2" );
 		});
 
 		test( "collections can also be passed as attributes on creation", function() {
