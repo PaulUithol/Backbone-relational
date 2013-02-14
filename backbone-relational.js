@@ -686,8 +686,8 @@
 			// 'options._related' is set by 'addRelated'/'removeRelated'. If it is set, the change
 			// is the result of a call from a relation. If it's not, the change is the result of 
 			// a 'set' call on this.instance.
-			var changed = _.isUndefined( options._related );
-			var oldRelated = changed ? this.related : options._related;
+			var changed = _.isUndefined( options._related ),
+				oldRelated = changed ? this.related : options._related;
 			
 			if ( changed ) {	
 				this.keyContents = attr;
@@ -899,15 +899,16 @@
 			// Re-use the current 'this.related' if it is a Backbone.Collection, and remove any current entries.
 			// Otherwise, create a new collection.
 			else {
-				var oldIds = {}, newIds = {};
+				var newIds = {};
 
 				if ( !_.isArray( attr ) && attr !== undefined ) {
 					attr = [ attr ];
 				}
 
 				_.each( attr, function( attributes ) {
-					newIds[ attributes.id ] = true;
-				});
+					var id = Backbone.Relational.store.resolveIdForItem( this.relatedModel, attributes );
+					newIds[ id ] = true;
+				}, this );
 
 				var coll = this.related;
 				if ( coll instanceof Backbone.Collection ) {
@@ -915,19 +916,20 @@
 					_.each( coll.models.slice(0) , function( model ) {
 						// When fetch is called with the 'keepNewModels' option, we don't want to remove
 						// client-created new models when the fetch is completed.
-						if ( !options.keepNewModels || !model.isNew() ) {
-							oldIds[ model.id ] = true;
-							coll.remove( model, { silent: (model.id in newIds) } );
+						// Also, don't remove the model from `coll` if it is in `newIds`, and will stay in the relation
+						if ( !( options.keepNewModels && model.isNew() ) && !( model.id in newIds ) ) {
+							coll.remove( model );
 						}
 					});
-				} else {
+				}
+				else {
 					coll = this._prepareCollection();
 				}
 
 				_.each( attr, function( attributes ) {
 					var model = this.relatedModel.findOrCreate( attributes, { create: this.options.createModels } );
-					if (model) {
-						coll.add( model, { silent: (model.id in oldIds)} );
+					if ( model ) {
+						coll.add( model );
 					}
 				}, this );
 

@@ -380,8 +380,8 @@ $(document).ready(function() {
 			resource_uri: 'house-2'
 		});
 	}
-	
-	
+
+
 	module( "Backbone.Semaphore", { setup: reset } );
 	
 	
@@ -675,7 +675,7 @@ $(document).ready(function() {
 			delete window.Carnivore;
 		});
 		
-	
+
 	module( "Backbone.RelationalModel", { setup: initObjects } );
 		
 		
@@ -849,7 +849,7 @@ $(document).ready(function() {
 
 			equal( requests.length, 0, "No requests to fetch the customers has been made as autoFetch was not defined" );
 
-			var agentOne = new Agent({
+			agentOne = new Agent({
 				id: 'agent-2',
 				address: 'address-5'
 			});
@@ -1800,8 +1800,8 @@ $(document).ready(function() {
 
 
 	module( "Backbone.HasOne", { setup: initObjects } );
-		
-		
+
+
 		test( "HasOne relations on Person are set up properly", function() {
 			ok( person1.get('likesALot') === person2 );
 			equal( person1.get('user').id, 'user-1', "The id of 'person1's user is 'user-1'" );
@@ -1912,10 +1912,10 @@ $(document).ready(function() {
 			equal( user.get( 'person' ), null, "person1 is not set on 'user' anymore" );
 		});
 		
-		
+
 	module( "Backbone.HasMany", { setup: initObjects } );
 	
-		
+
 		test( "Listeners on 'add'/'remove'", function() {
 			expect( 7 );
 			
@@ -2135,7 +2135,7 @@ $(document).ready(function() {
 			equal( indexes[0], 0, "First item has index 0" );
 			equal( indexes[1], 1, "Second item has index 1" );
 		});
-		
+
 		test( "Models set to a hasMany relation do trigger an add event in the underlying Collection with a correct index", function() {
 			var zoo = new Zoo();
 
@@ -2359,20 +2359,18 @@ $(document).ready(function() {
 			ok( user2.get( 'person' ) === person2 );
 		});
 		
-		test( "'Save' objects (performing 'set' multiple times without and with id)", function() {
-			expect( 2 );
-			
+		test( "'Save' objects (performing 'set' multiple times without and with id)", 4, function() {
 			person3
 				.bind( 'add:jobs', function( model, coll ) {
-						var company = model.get('company');
-						ok( company instanceof Company && company.get('ceo').get('name') === 'Lunar boy' && model.get('person') === person3,
-							"Both Person and Company are set on the Job instance" );
-					})
+					var company = model.get('company');
+					ok( company instanceof Company && company.get('ceo').get('name') === 'Lunar boy' && model.get('person') === person3,
+						"add:jobs: Both Person and Company are set on the Job instance once the event gets fired" );
+				})
 				.bind( 'remove:jobs', function( model, coll ) {
-						ok( false, "'person3' should not lose his job" );
-					});
+					ok( false, "remove:jobs: 'person3' should not lose his job" );
+				});
 			
-			// Create Models from an object
+			// Create Models from an object. Should trigger `add:jobs`
 			var company = new Company({
 				name: 'Luna Corp.',
 				ceo: {
@@ -2380,8 +2378,19 @@ $(document).ready(function() {
 				},
 				employees: [ { person: 'person-3' } ]
 			});
+
+			company
+				.bind( 'add:employees', function( model, coll ) {
+					var company = model.get('company');
+					ok( company instanceof Company && company.get('ceo').get('name') === 'Lunar boy' && model.get('person') === person3,
+						"add:employees: Both Person and Company are set on the Company instance once the event gets fired" );
+				})
+				.bind( 'remove:employees', function( model, coll ) {
+					ok( true, "'remove:employees: person3' should lose a job once" );
+				});
 			
 			// Backbone.save executes "model.set(model.parse(resp), options)". Set a full map over object, but now with ids.
+			// Should trigger `remove:employees`, `add:employees`, and `add:jobs`
 			company.set({
 				id: 'company-3',
 				name: 'Big Corp.',
@@ -2392,6 +2401,11 @@ $(document).ready(function() {
 				},
 				employees: [ { id: 'job-1', person: 'person-3', resource_uri: 'job-1' } ],
 				resource_uri: 'company-3'
+			});
+
+			// This should not trigger additional `add`/`remove` events
+			company.set({
+				employees: [ 'job-1' ]
 			});
 		});
 		
@@ -2495,7 +2509,7 @@ $(document).ready(function() {
 
 			ok( view.get( 'properties' ) instanceof Backbone.Collection );
 		});
-		
+
 		test( "Reverse relations found for models that have not been instantiated and run .setup() manually", function() {
 			// Generated from CoffeeScript code:
 			// 	 class View extends Backbone.RelationalModel
@@ -2588,8 +2602,8 @@ $(document).ready(function() {
 			ok( user.get('person') === person );
 			//console.debug( person, user );
 		});
-	
-	
+
+
 	module( "Model loading", { setup: initObjects } );
 	
 	
@@ -2658,6 +2672,72 @@ $(document).ready(function() {
 			equal( lion.get( 'name' ), 'Simba' );
 		});
 
+	module( "Events", { setup: reset } );
+
+		test( "`add:`, `remove:` and `update:` events", function() {
+			var zoo = new Zoo(),
+				animal = new Animal();
+
+			var addEventsTriggered = 0;
+			var removeEventsTriggered = 0;
+			var updateEventsTriggered = 0;
+
+			zoo
+//				.on( 'change:animals', function( model, coll ) {
+//					console.log( 'change:animals; args=%o', arguments );
+//				})
+//				.on( 'update:animals', function( model, coll ) {
+//					console.log( 'update:animals; args=%o', arguments );
+//				})
+				.bind( 'add:animals', function( model, coll ) {
+					console.log( 'add:animals; args=%o', arguments );
+					addEventsTriggered++;
+				})
+				.bind( 'remove:animals', function( model, coll ) {
+					console.log( 'remove:animals; args=%o', arguments );
+					removeEventsTriggered++;
+				});
+
+			animal
+//				.on( 'change:livesIn', function( model, coll ) {
+//					console.log( 'change:livesIn; args=%o', arguments );
+//				})
+				.bind( 'update:livesIn', function( model, coll ) {
+					console.log( 'update:livesIn; args=%o', arguments );
+					updateEventsTriggered++;
+				});
+
+			// Should trigger `change:livesIn` and `add:animals`
+			animal.set( 'livesIn', zoo );
+
+			zoo.set( 'id', 'z1' );
+			animal.set( 'id', 'a1' );
+
+			ok( addEventsTriggered === 1 );
+			ok( removeEventsTriggered === 0 );
+			ok( updateEventsTriggered === 1 );
+
+			// Doing this shouldn't trigger any `add`/`remove`/`update` events
+			zoo.set( 'animals', [ 'a1' ] );
+
+			ok( addEventsTriggered === 1 );
+			ok( removeEventsTriggered === 0 );
+			ok( updateEventsTriggered === 1 );
+
+			// Doesn't cause an actual state change
+			animal.set( 'livesIn', 'z1' );
+
+			ok( addEventsTriggered === 1 );
+			ok( removeEventsTriggered === 0 );
+			ok( updateEventsTriggered === 1 );
+
+			// Should trigger a `remove` on zoo and an `update` on animal
+			animal.set( 'livesIn', { id: 'z2' } );
+
+			ok( addEventsTriggered === 1 );
+			ok( removeEventsTriggered === 1 );
+			ok( updateEventsTriggered === 2 );
+		});
 
 		test( "Does not trigger add / remove events for existing models on bulk assignment", function() {
 			var house = new House({
@@ -2668,11 +2748,11 @@ $(document).ready(function() {
 
 			var eventsTriggered = 0;
 			house
-				.bind( 'add:occupants', function(model) {
+				.on( 'add:occupants', function(model) {
 					ok( false, model.id + " should not be added" );
 					eventsTriggered++;
 				})
-				.bind( 'remove:occupants', function(model) {
+				.on( 'remove:occupants', function(model) {
 					ok( false, model.id + " should not be removed" );
 					eventsTriggered++;
 				});
@@ -2692,31 +2772,29 @@ $(document).ready(function() {
 			var removeEventsTriggered = 0;
 			var changeEventsTriggered = 0;
 
-		  house
-			/*.bind( 'all', function(ev, model) {
-				console.log('all', ev, model);
-			})*/
-			.bind( 'add:occupants', function(model) {
-				ok( model.id === 'person-7', "Only person-7 should be added: " + model.id + " being added" );
-				addEventsTriggered++;
-			})
-			.bind( 'remove:occupants', function(model) {
-				ok( model.id === 'person-6', "Only person-6 should be removed: " + model.id + " being removed" );
-				removeEventsTriggered++;
-			});
+			house
+//				.bind( 'all', function(ev, model) {
+//					console.log('all', ev, model);
+//				})
+				.on( 'add:occupants', function( model ) {
+					ok( model.id === 'person-7', "Only person-7 should be added: " + model.id + " being added" );
+					addEventsTriggered++;
+				})
+				.on( 'remove:occupants', function( model ) {
+					ok( model.id === 'person-6', "Only person-6 should be removed: " + model.id + " being removed" );
+					removeEventsTriggered++;
+				});
 
-			var nicknameUpdated = false;
-			house.get('occupants').bind( 'change:nickname', function(model) {
+			house.get( 'occupants' ).on( 'change:nickname', function( model ) {
 				ok( model.id === 'person-8', "Only person-8 should have it's nickname updated: " + model.id + " nickname updated" );
 				changeEventsTriggered++;
 			});
 
 			house.set( { occupants : [ { id : 'person-5', nickname : 'Jane'}, { id : 'person-7' }, { id : 'person-8', nickname : 'Phil' } ] } );
 
-			ok(addEventsTriggered == 1, "Exactly one add event was triggered (triggered "+addEventsTriggered+" events)");
-			ok(removeEventsTriggered == 1, "Exactly one remove event was triggered (triggered "+removeEventsTriggered+" events)");
-			ok(changeEventsTriggered == 1, "Exactly one change event was triggered (triggered "+changeEventsTriggered+" events)");
+			ok( addEventsTriggered == 1, "Exactly one add event was triggered (triggered " + addEventsTriggered + " events)" );
+			ok( removeEventsTriggered == 1, "Exactly one remove event was triggered (triggered " + removeEventsTriggered + " events)" );
+			ok( changeEventsTriggered == 1, "Exactly one change event was triggered (triggered " + changeEventsTriggered + " events)" );
 		});
-
 });
 
