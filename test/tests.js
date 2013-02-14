@@ -2163,12 +2163,13 @@ $(document).ready(function() {
 			equal( zoo.get( 'animals' ).livesIn, zoo );
 			equal( zoo.get( 'animals' ).zoo, undefined );
 
+
+			var FarmAnimal = Backbone.RelationalModel.extend();
 			var Barn = Backbone.RelationalModel.extend({
 				relations: [{
 						type: Backbone.HasMany,
 						key: 'animals',
-						relatedModel: 'Animal',
-						collectionType: 'AnimalCollection',
+						relatedModel: FarmAnimal,
 						collectionKey: 'barn',
 						reverseRelation: {
 							key: 'livesIn',
@@ -2183,12 +2184,12 @@ $(document).ready(function() {
 			equal( barn.get( 'animals' ).livesIn, undefined );
 			equal( barn.get( 'animals' ).barn, barn );
 
+			FarmAnimal = Backbone.RelationalModel.extend();
 			var BarnNoKey = Backbone.RelationalModel.extend({
 				relations: [{
 						type: Backbone.HasMany,
 						key: 'animals',
-						relatedModel: 'Animal',
-						collectionType: 'AnimalCollection',
+						relatedModel: FarmAnimal,
 						collectionKey: false,
 						reverseRelation: {
 							key: 'livesIn',
