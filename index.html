@@ -4,299 +4,12 @@
 	<meta http-equiv="content-type" content="text/html;charset=UTF-8" />
 	<meta http-equiv="X-UA-Compatible" content="chrome=1" />
 	<meta name="viewport" content="width=device-width">
-	<link rel="icon" href="docs/static/images/favicon.ico" />
+	<link rel="icon" href="static/images/favicon.ico" />
 	
-	<link rel="stylesheet" type="text/css" href="docs/static/css/prism.css" />
+	<link rel="stylesheet" type="text/css" href="static/css/prism.css" />
+	<link rel="stylesheet" type="text/css" href="static/css/style.css" />
 	
 	<title>Backbone-relational.js</title>
-	
-	<style type="text/css">
-	body {
-		font-size: 14px;
-		line-height: 22px;
-		font-family: Helvetica Neue, Helvetica, Arial;
-		background: #f4f4f4 url('docs/static/images/background.png');
-	}
-	.interface {
-		font-family: "Lucida Grande", "Lucida Sans Unicode", Helvetica, Arial, sans-serif !important;
-	}
-	div#sidebar {
-		background: #fff;
-		position: fixed;
-		z-index: 10;
-		top: 0; left: 0; bottom: 0;
-		width: 200px;
-		overflow-y: auto;
-		overflow-x: hidden;
-		-webkit-overflow-scrolling: touch;
-		padding: 15px 15px 30px 30px;
-		border-right: 1px solid #bbb;
-		box-shadow: 0 0 20px #ccc; -webkit-box-shadow: 0 0 20px #ccc; -moz-box-shadow: 0 0 20px #ccc;
-	}
-		a.toc_title, a.toc_title:visited {
-			display: block;
-			color: black;
-			font-weight: bold;
-			margin-top: 15px;
-		}
-		a.toc_title:hover {
-			text-decoration: underline;
-		}
-		#sidebar .version {
-			font-size: 10px;
-			font-weight: normal;
-		}
-		ul.toc_section {
-			font-size: 12px;
-			line-height: 16px;
-			margin: 5px 0 0 0;
-			padding-left: 0px;
-			list-style-type: none;
-			font-family: Lucida Grande;
-		}
-		
-			.toc_section li {
-				cursor: pointer;
-				margin: 0 0 3px 0;
-			}
-				.toc_section li:before {
-					content: "-";
-					position: relative;
-					left: -5px;
-				}
-				.toc_section li.link_out:before {
-					content: "\00BB";
-				}
-				.toc_section li a {
-					text-decoration: none;
-					color: black;
-				}
-				.toc_section li a:hover {
-					text-decoration: underline;
-				}
-	div.container {
-		position: relative;
-		width: 50em;
-		margin: 40px 0 50px 260px;
-	}
-	img#logo {
-		width: 450px;
-		height: 80px;
-	}
-	div.run {
-		position: absolute;
-		right: 15px;
-		width: 26px; height: 18px;
-		background: url('docs/images/arrows.png') no-repeat -26px 0;
-	}
-		div.run:active {
-			background-position: -51px 0;
-		}
-	p, div.container ul {
-		margin-bottom: 1.5em 0;
-	}
-		p.warning {
-			font-size: 12px;
-			line-height: 18px;
-			font-style: italic;
-		}
-		div.container ul {
-			list-style: circle;
-			padding-left: 15px;
-			font-size: 13px;
-			line-height: 18px;
-		}
-			div.container ul li {
-				margin-bottom: 10px;
-			}
-			div.container ul.small {
-				font-size: 12px;
-			}
-	a, a:visited {
-		color: #444;
-	}
-	a:active, a:hover {
-		color: #000;
-	}
-	a.punch {
-		display: inline-block;
-		background: #4162a8;
-		border-top: 1px solid #38538c;
-		border-right: 1px solid #1f2d4d;
-		border-bottom: 1px solid #151e33;
-		border-left: 1px solid #1f2d4d;
-		-webkit-border-radius: 4px;
-		-moz-border-radius: 4px;
-		-ms-border-radius: 4px;
-		-o-border-radius: 4px;
-		border-radius: 4px;
-		-webkit-box-shadow: inset 0 1px 10px 1px #5c8bee, 0px 1px 0 #1d2c4d, 0 6px 0px #1f3053, 0 8px 4px 1px #111111;
-		-moz-box-shadow: inset 0 1px 10px 1px #5c8bee, 0px 1px 0 #1d2c4d, 0 6px 0px #1f3053, 0 8px 4px 1px #111111;
-		-ms-box-shadow: inset 0 1px 10px 1px #5c8bee, 0px 1px 0 #1d2c4d, 0 6px 0px #1f3053, 0 8px 4px 1px #111111;
-		-o-box-shadow: inset 0 1px 10px 1px #5c8bee, 0px 1px 0 #1d2c4d, 0 6px 0px #1f3053, 0 8px 4px 1px #111111;
-		box-shadow: inset 0 1px 10px 1px #5c8bee, 0px 1px 0 #1d2c4d, 0 6px 0px #1f3053, 0 8px 4px 1px #111111;
-		color: #fff;
-		font: bold 14px "helvetica neue", helvetica, arial, sans-serif;
-		line-height: 1;
-		margin-bottom: 15px;
-		padding: 8px 0 10px 0;
-		text-align: center;
-		text-shadow: 0px -1px 1px #1e2d4d;
-		text-decoration: none;
-		width: 225px;
-		-webkit-background-clip: padding-box;
-	}
-		a.punch:hover {
-			-webkit-box-shadow: inset 0 0px 20px 1px #87adff, 0px 1px 0 #1d2c4d, 0 6px 0px #1f3053, 0 8px 4px 1px #111111;
-			-moz-box-shadow: inset 0 0px 20px 1px #87adff, 0px 1px 0 #1d2c4d, 0 6px 0px #1f3053, 0 8px 4px 1px #111111;
-			-ms-box-shadow: inset 0 0px 20px 1px #87adff, 0px 1px 0 #1d2c4d, 0 6px 0px #1f3053, 0 8px 4px 1px #111111;
-			-o-box-shadow: inset 0 0px 20px 1px #87adff, 0px 1px 0 #1d2c4d, 0 6px 0px #1f3053, 0 8px 4px 1px #111111;
-			box-shadow: inset 0 0px 20px 1px #87adff, 0px 1px 0 #1d2c4d, 0 6px 0px #1f3053, 0 8px 4px 1px #111111;
-			cursor: pointer;
-		}
-		a.punch:active {
-			-webkit-box-shadow: inset 0 1px 10px 1px #5c8bee, 0 1px 0 #1d2c4d, 0 2px 0 #1f3053, 0 4px 3px 0 #111111;
-			-moz-box-shadow: inset 0 1px 10px 1px #5c8bee, 0 1px 0 #1d2c4d, 0 2px 0 #1f3053, 0 4px 3px 0 #111111;
-			-ms-box-shadow: inset 0 1px 10px 1px #5c8bee, 0 1px 0 #1d2c4d, 0 2px 0 #1f3053, 0 4px 3px 0 #111111;
-			-o-box-shadow: inset 0 1px 10px 1px #5c8bee, 0 1px 0 #1d2c4d, 0 2px 0 #1f3053, 0 4px 3px 0 #111111;
-			box-shadow: inset 0 1px 10px 1px #5c8bee, 0 1px 0 #1d2c4d, 0 2px 0 #1f3053, 0 4px 3px 0 #111111;
-			margin-top: 5px; margin-bottom: 10px;
-		}
-	a img {
-		border: 0;
-	}
-	h2, h3, h4, h5, h6 {
-		padding-top: 20px;
-	}
-		h2 {
-			font-size: 22px;
-		}
-	strong.header {
-		font-size: 18px;
-		line-height: 35px;
-	}
-	span.alias {
-		font-size: 14px;
-		font-style: italic;
-		margin-left: 20px;
-	}
-	table {
-		margin: 15px 0 0; padding: 0;
-	}
-		tr, td {
-			margin: 0; padding: 0;
-		}
-			td {
-				padding: 0px 15px 5px 0;
-			}
-			table .rule {
-				height: 1px;
-				background: #ccc;
-				margin: 5px 0;
-			}
-	strong, code, pre, tt {
-		font-family: Consolas, Monaco, "Lucida Console", monospace;
-		font-size: 13px;
-		line-height: 18px;
-		font-style: normal;
-	}
-		strong {
-			font-size: 14px;
-			line-heigth: 22px;
-		}
-		tt {
-			padding: 0px 3px;
-			background: #fff;
-			border: 1px solid #ddd;
-			zoom: 1;
-		}
-		code {
-			margin-left: 20px;
-		}
-		pre {
-			font-size: 12px;
-			padding: 2px 0 2px 15px;
-			border: 4px solid #bbb; border-top: 0; border-bottom: 0;
-			margin: 0px 0 25px;
-		}
-		pre code {
-			margin: 0;
-		}
-		img.example_image {
-			margin: 0px auto;
-		}
-			img.example_retina {
-				margin: 20px;
-				box-shadow: 0 8px 15px rgba(0,0,0,0.4);
-			}
-	@media only screen and (-webkit-max-device-pixel-ratio: 1) and (max-width: 600px),
-			only screen and (max--moz-device-pixel-ratio: 1) and (max-width: 600px) {
-		div#sidebar {
-			display: none;
-		}
-		img#logo {
-			max-width: 450px;
-			width: 100%;
-			height: auto;
-		}
-		div.container {
-			width: auto;
-			margin-left: 15px;
-			margin-right: 15px;
-		}
-		p, div.container ul {
-			width: auto;
-		}
-	}
-	@media only screen and (-webkit-min-device-pixel-ratio: 1.5) and (max-width: 640px),
-		only screen and (-o-min-device-pixel-ratio: 3/2) and (max-width: 640px),
-		only screen and (min-device-pixel-ratio: 1.5) and (max-width: 640px) {
-		img {
-			max-width: 100%;
-			height: auto;
-		}
-		div#sidebar {
-			-webkit-overflow-scrolling: initial;
-			position: relative;
-			width: 90%;
-			height: 120px;
-			left: 0;
-			top: -7px;
-			padding: 10px 0 10px 30px;
-			border: 0;
-		}
-		img#logo {
-			width: auto;
-			height: auto;
-		}
-		div.container {
-			margin: 0;
-			width: 100%;
-		}
-		p, div.container ul {
-			max-width: 98%;
-			overflow-x: scroll;
-		}
-		table {
-			position: relative;
-		}
-			tr:first-child td {
-				padding-bottom: 25px;
-			}
-			td.text {
-				padding: 0;
-				position: absolute;
-				left: 0;
-				top: 48px;
-			}
-			tr:last-child td.text {
-				top: 122px;
-			}
-		pre {
-			overflow: scroll;
-		}
-	}
-	</style>
 </head>
 <body>
 	<div id="sidebar" class="interface">
@@ -315,29 +28,27 @@
 		<a class="toc_title" href="#Installation">
 			Installation
 		</a>
-
-		<a class="toc_title" href="#Relation">
-			Backbone.Relation
-		</a>
-
-		<ul class="toc_section">
-			<li><a href="#Relation-relatedModel">relatedModel</a></li>
-			<li><a href="#Relation-key">key</a></li>
-			<li><a href="#Relation-type">type</a></li>
-			<li><a href="#Relation-keySource">keySource</a></li>
-			<li><a href="#Relation-keyDestination">keyDestination</a></li>
-			<li><a href="#Relation-collectionType">collectionType</a></li>
-			<li><a href="#Relation-collectionKey">collectionKey</a></li>
-			<li><a href="#Relation-includeInJSON">includeInJSON</a></li>
-			<li><a href="#Relation-createModels">createModels</a></li>
-			<li><a href="#Relation-reverseRelation">reverseRelation</a></li>
-		</ul>
-
+		
 		<a class="toc_title" href="#RelationalModel">
 			Backbone.RelationalModel
 		</a>
-
+		
 		<ul class="toc_section">
+			<li>
+				<a href="#RelationalModel-relations">relations</a>
+				<ul class="toc_section">
+					<li><a href="#Relation-relatedModel">relatedModel</a></li>
+					<li><a href="#Relation-key">key</a></li>
+					<li><a href="#Relation-type">type</a></li>
+					<li><a href="#Relation-keySource">keySource</a></li>
+					<li><a href="#Relation-keyDestination">keyDestination</a></li>
+					<li><a href="#Relation-collectionType">collectionType</a></li>
+					<li><a href="#Relation-collectionKey">collectionKey</a></li>
+					<li><a href="#Relation-includeInJSON">includeInJSON</a></li>
+					<li><a href="#Relation-createModels">createModels</a></li>
+					<li><a href="#Relation-reverseRelation">reverseRelation</a></li>
+				</ul>
+			</li>
 			<li><a href="#RelationalModel-getRelations">getRelations</a></li>
 			<li><a href="#RelationalModel-fetchRelated">fetchRelated</a></li>
 			<li><a href="#RelationalModel-setup">setup</a></li>
@@ -346,6 +57,18 @@
 			<li><a href="#RelationalModel-subModelTypes">subModelTypes</a></li>
 			<li><a href="#RelationalModel-subModelTypeAttribute">subModelTypeAttribute</a></li>
 			<li><a href="#RelationalModel-events"><strong>Catalog of Events</strong></a></li>
+		</ul>
+		
+		<a class="toc_title" href="#Relation">
+			Backbone.Relation
+		</a>
+		
+		<a class="toc_title" href="#Store">
+			Backbone.Store
+		</a>
+		
+		<ul class="toc_section">
+			<li><a href="#Store-addModelScope">addModelScope</a></li>
 		</ul>
 
 		<a class="toc_title" href="#examples">
@@ -363,14 +86,16 @@
 		</h1>
 
 		<p>
-			When developing any medium to large-scale web application, you often get to a point where
-			an action by a user could potentially cause a number of different models to change on the
-			client or the server.  You could individually call <a href="http://backbonejs.org/#Model-save">save()<a>
-			or <a href="http://backbonejs.org/#Model-fetch">fetch()<a/> on each of the changed models to sync
-			with the server, but that would be kind of a tediuous process and result in multiple requests.
-			Instead, we can configure relationships between our models, and then upon single
+			When developing any medium to large-scale web application, you often get to the point where
+			an action by a user can cause a number of different models to change on the client and the server.
+		</p>
+		<p>
+			You can try to keep updating both sides of a relation manually for every action, and individually call
+			<a href="http://backbonejs.org/#Model-save">save()<a> or <a href="http://backbonejs.org/#Model-fetch">fetch()<a/>
+			on each of the changed models to sync with the server, but that quickly turns into a tediuous process and results in multiple requests.
+			Instead, we can configure relationships between our models, and then with a single
 			<a href="http://backbonejs.org/#Model-save">save()<a> or <a href="http://backbonejs.org/#Model-fetch">
-			fetch()</a>, we could sync the model and all of its related models.
+			fetch()</a>, sync the model and all of its related models.
 		</p>
 
 		<h2 id="Downloads">
@@ -381,19 +106,18 @@
 
 		<table>
 			<tr>
-				<td><a class="punch" href="https://raw.github.com/PaulUithol/Backbone-relational/master/backbone-relational.js">Development Version</a></td>
-				<td class="text"><i>56kb, Full source, lots of comments</i></td>
+				<td><a class="punch" href="https://raw.github.com/PaulUithol/Backbone-relational/0.7.1/backbone-relational.js">Latest Release (0.7.1)</a></td>
+				<td class="text"><i>~56kb, Full source, lots of comments</i></td>
 			</tr>
 			<tr>
-				<td><a class="punch" href="https://raw.github.com/PaulUithol/Backbone-relational/0.7.1/backbone-relational.js">Latest Release (0.7.1)</a></td>
+				<td><a class="punch" href="https://raw.github.com/PaulUithol/Backbone-relational/master/backbone-relational.js">Development Version</a></td>
 			</tr>
 		</table>
 
 		<p>
-			Backbone-relational's only hard dependency is
-			<a href="http://backbonejs.org/">Backbone.js</a> <small>( > 0.9.10 )</small>,
-			which itself requires <a href="http://underscorejs.org">Underscore.js</a> <small>( > 1.4.3 )</small> and
-			<a href="http://jquery.com">jQuery</a> <small>( > 1.4.2)</small> or
+			Backbone-relational depends on <a href="http://backbonejs.org/">Backbone.js</a> <small>(> 0.9.10)</small>,
+			which itself requires <a href="http://underscorejs.org">Underscore.js</a> <small>(> 1.4.3)</small> and
+			<a href="http://jquery.com">jQuery</a> <small>(> 1.4.2)</small> or
 			<a href="http://zeptojs.com/">Zepto</a>.
 		</p>
 
@@ -465,10 +189,58 @@
 <!-- -->&lt;script type="text/javascript" src="./js/backbone-relational.js"&gt;&lt;/script&gt;
 </code></pre>
 
-		<h2 id="Relation">Backbone.Relation</h2>
+		<h2 id="RelationalModel">
+			Backbone.RelationalModel
+		</h2>
 
 		<p>
-			Each <strong>Backbone.RelationalModel</strong> can contain an array of relations. Each relation supports a number of
+			When using Backbone-relational, each model defining (or receiving) <tt>relations</tt> must extend
+			<strong>Backbone.RelationalModel</strong> in order to function. <strong>Backbone.RelationalModel</strong> introduces a couple
+			of new methods, events and properties. It's important to know which attributes are methods of an
+			instance of <strong>Backbone.RelationalModel</strong>, which operate on the type itself, and which are properties.
+			These three subcategories are detailed below.
+		</p>
+
+		<p>
+			<strong class="header">Instance methods</strong>
+			</br>
+			These methods operate on an instance of a type.
+		</p>
+
+		<ul class="small">
+			<li><a href="#RelationalModel-getRelations">getRelations</a></li>
+			<li><a href="#RelationalModel-fetchRelated">fetchRelated</a></li>
+		</ul>
+
+		<p>
+			<strong class="header">Methods on the type itself</strong>
+			</br>
+			Several methods don't operate on model instances, but are defined on the type itself.
+		</p>
+
+		<ul class="small">
+			<li><a href="#RelationalModel-setup">setup</a></li>
+			<li><a href="#RelationalModel-build">build</a></li>
+			<li><a href="#RelationalModel-findOrCreate">findOrCreate</a></li>
+		</ul>
+
+		<p>
+			<strong class="header">Properties</strong>
+			</br>
+			Properties can be defined along with the subclass prototype when extending Backbone.
+			RelationalModel or a subclass thereof.
+		</p>
+
+		<ul class="small">
+			<li><a href="#RelationalModel-relations">relations</a></li>
+			<li><a href="#RelationalModel-subModelTypes">subModelTypes</a></li>
+			<li><a href="#RelationalModel-subModelTypeAttribute">subModelTypeAttribute</a></li>
+		</ul>
+
+		<p id="RelationalModel-relations">
+			<strong class="header">relations</strong><code>relation[]</code>
+			</br>
+			Each <strong>Backbone.RelationalModel</strong> can contain an array of relation definitions. Each relation supports a number of
 			options, of which <a href="#Relation-relatedModel">relatedModel</a>, <a href="#Relation-key">key</a> and
 			<a href="#Relation-type">type</a> are mandatory. A relation could look like the following:
 		</p>
@@ -503,19 +275,22 @@ AnimalCollection = Backbone.Collection.extend({
 
 		<p id="Relation-relatedModel">
 			<strong class="header">relatedModel</strong><code>relation.relatedModel</code>
-			<br />
+		</p>
+		<p>
 			A string that can be resolved to an object on the global scope, or a reference to a <strong>Backbone.RelationalModel</strong>.
 		</p>
 
 		<p id="Relation-key">
 			<strong class="header">key</strong><code>relation.key</code>
-			<br />
+		</p>
+		<p>
 			A string that references an attribute name on <a href="#Relational-relatedModel">relatedModel</a>.
 		</p>
 
 		<p id="Relation-type">
 			<strong class="header">type</strong><code>relation.type</code>
-			<br />
+		</p>
+		<p>
 			A string that references a <strong>Backbone.Relation</strong> type(i.e. 'HasOne') or an actual <strong>Backbone.Relation</strong> type
 			(i.e. <strong>Backbone.HasOne</strong>).
 		</p>
@@ -573,14 +348,15 @@ Company = Backbone.RelationalModel.extend({
 
 		<p id="Relation-keySource">
 			<strong class="header">keySource</strong><code>relation.keySource</code>
-			<br />
+		</p>
+		<p>
 			A string that references an attribute of the <a href="#Relation-relatedModel">relatedModel</a>.
 		</p>
 
 		<p>
 			Used to override key when determining what data to use when (de)serializing a relation, since the data backing
 			your relations may use different naming conventions. For example, a Rails backend may provide the keys suffixed
-			with '_id' or '_ids'. The behavior for <a href="#Relation-keySource">keySource</a> corresponds to the following
+			with <tt>_id</tt> or <tt>_ids</tt>. The behavior for <a href="#Relation-keySource">keySource</a> corresponds to the following
 			rules:
 		</p>
 
@@ -588,14 +364,14 @@ Company = Backbone.RelationalModel.extend({
 			When a relation is instantiated, the contents of the <a href="#Relation-keySource">keySource</a> are used as
 			it's initial data. The application uses the regular key attribute to interface with the relation and the models
 			in it; the <a href="#Relation-keySource">keySource</a> is not available as an attribute for the model. So you
-			may be provided with data containing <tt>animal_ids</tt>, while you want to access this relation as zoo.get(
-			'animals').
+			may be provided with data containing <tt>animal_ids</tt>, while you want to access this relation as <tt>zoo.get(
+			'animals')</tt>.
 		</p>
 
 		<p class="warning">
-			Note for backward compatibility reasons, setting <a href="#Relation-keySource">keySource</a> will set
-			<a href="#Relation-keyDestination">keyDestination</a> as well. This means that when saving zoo, the animals
-			attribute will be serialized back into the <tt>animal_ids</tt> key.
+			Note that setting <a href="#Relation-keySource">keySource</a> will set <a href="#Relation-keyDestination">keyDestination</a> 
+			to the same value, if it isn't specified itself.
+			This means that when saving zoo, the animals attribute will be serialized back into the <tt>animal_ids</tt> key.
 		</p>
 
 		<p class="warning">
@@ -605,7 +381,8 @@ Company = Backbone.RelationalModel.extend({
 
 		<p id="Relation-keyDestination">
 			<strong class="header">keyDestination</strong><code>relation.keyDestination</code>
-			<br />
+		</p>
+		<p>
 			A string that references an attribute to serialize <a href="#Relation-relatedModel">relatedModel</a> into.
 		</p>
 
@@ -633,7 +410,8 @@ Company = Backbone.RelationalModel.extend({
 
 		<p id="Relation-collectionType">
 			<strong class="header">collectionType</strong><code>relation.collectionType</code>
-			<br />
+		</p>
+		<p>
 			A string that can be resolved to an object type on the global scope, or a reference to a <strong>Backbone.Collection
 			</strong> type.
 		</p>
@@ -647,7 +425,8 @@ Company = Backbone.RelationalModel.extend({
 
 		<p id="Relation-collectionKey">
 			<strong class="header">collectionKey</strong><code>relation.collectionKey</code>
-			<br />
+		</p>
+		<p>
 			A string or a boolean.
 		</p>
 
@@ -662,7 +441,8 @@ Company = Backbone.RelationalModel.extend({
 
 		<p id="Relation-collectionOptions">
 			<strong class="header">collectionOptions</strong><code>relation.collectionOptions</code>
-			<br />
+		</p>
+		<p>
 			An options hash or a function that accepts an instance of a <strong>Backbone.RelationalModel</strong> and returns an option
 			hash
 		</p>
@@ -675,7 +455,8 @@ Company = Backbone.RelationalModel.extend({
 
 		<p id="Relation-includeInJSON">
 			<strong class="header">includeInJSON</strong><code>relation.includeInJSON</code>
-			<br />
+		</p>
+		<p>
 			A boolean, a string referencing one of the model's attributes, or an array of strings referencing model
 			attributes. <a href="#Relation-includeInJson">includeInJson</a> is equal to <tt>true</tt> by default.
 		</p>
@@ -705,7 +486,8 @@ Company = Backbone.RelationalModel.extend({
 
 		<p id="Relation-createModels">
 			<strong class="header">createModels</strong><code>relation.createModels</code>
-			<br />
+		</p>
+		<p>
 			A boolean. By default it is equal to <tt>true</tt>.
 		</p>
 
@@ -715,7 +497,8 @@ Company = Backbone.RelationalModel.extend({
 
 		<p id="Relation-reverseRelation">
 			<strong class="header">reverseRelation</strong><code>relation.reverseRelation</code>
-			<br />
+		</p>
+		<p>
 			If the relation should be bidirectional, specify the details for the reverse relation here. It's only mandatory
 			to supply a <a href="#Relation-key">key</a>; <a href="#Relation-relatedModel">relatedModel</a> is automatically
 			set. The default type for a <a href="#Relation-reverseRelation">reverseRelation</a> is HasMany for a
@@ -734,7 +517,8 @@ Company = Backbone.RelationalModel.extend({
 
 		<p id="Relation-autoFetch">
 			<strong class="header">autoFetch</strong><code>relation.autoFetch</code>
-			<br />
+		</p>
+		<p>
 			A boolean or an object. Defaults to <tt>false</tt>.
 		</p>
 
@@ -772,63 +556,18 @@ Company = Backbone.RelationalModel.extend({
 });
 </code></pre>
 
-		<h2 id="RelationalModel">
-			Backbone.RelationalModel
-		</h2>
-
-		<p>
-			<strong>Backbone.RelationalModel</strong> introduces a couple of new methods, events and properties.
-			It's important to know which attributes are methods of an instance of <strong>Backbone.
-			RelationalModel</strong>, which are methods of the type itself, and which are properties.
-			These three subcategories are detailed below.
-		</p>
-
-		<p>
-			<strong class="header">Instance methods</strong>
-			</br>
-			These methods are on an instance of a type.
-		</p>
-
-		<ul class="small">
-			<li><a href="#RelationalModel-getRelations">getRelations</a></li>
-			<li><a href="#RelationalModel-fetchRelated">fetchRelated</a></li>
-		</ul>
-
-		<p>
-			<strong class="header">Methods on the type itself</strong>
-			</br>
-			Several methods don't operate on model instances, but are defined on the type itself.
-		</p>
-
-		<ul class="small">
-			<li><a href="#RelationalModel-setup">setup</a></li>
-			<li><a href="#RelationalModel-build">build</a></li>
-			<li><a href="#RelationalModel-findOrCreate">findOrCreate</a></li>
-		</ul>
-
-		<p>
-			<strong class="header">Properties</strong>
-			</br>
-			Properties can be defined along with the subclass prototype when extending Backbone.
-			RelationalModel or a subclass thereof.
-		</p>
-
-		<ul class="small">
-			<li><a href="#Relation">relations</a></li>
-			<li><a href="#RelationalModel-subModelTypes">subModelTypes</a></li>
-			<li><a href="#RelationalModel-subModelTypeAttribute">subModelTypeAttribute</a></li>
-		</ul>
-
 		<p id="RelationalModel-getRelations">
 			<strong class="header">getRelations</strong><code>relationModel.getRelations()</code>
-			<br />
+		</p>
+		<p>
 			Returns the set of initialized relations on the model.
 		</p>
 
 		<p id="RelationalModel-fetchRelated">
 			<strong class="header">fetchRelated</strong><code>relationalModel.fetchRelated(key&lt;string&gt;, [options&lt;object&gt;],
 			[update&lt;boolean&gt;])</code>
-			<br />
+		</p>
+		<p>
 			Returns the set of initialized relations on the model.
 		</p>
 
@@ -849,32 +588,57 @@ Company = Backbone.RelationalModel.extend({
 
 		<p id="RelationalModel-setup">
 			<strong class="header">setup</strong><code>relationModel.setup()</code>
-			<br />
-			Initialize the relations and submodels for the model type. See the Q and A for a possible scenario where it's
-			useful to call this method manually.
+		</p>
+		<p class="warning">
+			Note: this is a class method. It operate on the model type itself, not on an instance.
+		</p>
+		<p>
+			Initialize the relations and submodels for the model type. Normally, this happens automatically, but it doesn't if 
+			you're using CoffeeScript and using the syntax <tt>class MyModel extends Backbone.RelationalModel</tt> instead of
+			the JavaScript equivalent of <tt>MyModel = Backbone.RelationalModel.extend()</tt>.
+		</p>
+		<p>
+			This has advantages in CoffeeScript, but it also means that <tt>Backbone.Model.extend</tt> will not get called.
+			Instead, CoffeeScript generates piece of code that would normally achieve the same.	However, <tt>extend</tt> is also
+			the method that Backbone-relational overrides to set up relations as you're defining your <tt>Backbone.RelationalModel</tt> subclass.
+		</p>
+		<p>
+			In this case, you should call <tt>setup</tt> manually after defining your subclass CoffeeScript-style. For example:
 		</p>
 
-		<p class="warning">
-			Note that this method doesn't operate on model instances, but are defined on the type itself.
-		</p>
+<pre class="language-javascript"><code class="language-javascript"><!--
+-->class MyModel extends Backbone.RelationalModel
+	relations: [
+		// etc
+	]
+
+MyModel.setup()</code>
+</pre>
 
 		<p id="RelationalModel-build">
 			<strong class="header">build</strong><code>relationalModel.build(attributes&lt;object&gt;, [options&lt;object&gt;])</code>
-			<br />
+		</p>
+		<p class="warning">
+			Note: this is a class method. It operate on the model type itself, not on an instance.
+		</p>
+		<p>
 			Create an instance of a model, taking into account what submodels have been defined.
 		</p>
 
 		<p id="RelationalModel-findOrCreate">
-			<strong class="header">findOrCreate</strong><code>relationalModel.findOrCreate(attributes&lt;string|number|object&gt;,
-																				   [options&lt;object&gt;])</code>
-			<br />
+			<strong class="header">findOrCreate</strong>
+			<code>relationalModel.findOrCreate(attributes&lt;string|number|object&gt;, [options&lt;object&gt;])</code>
+		</p>
+		<p class="warning">
+			Note: this is a class method. It operate on the model type itself, not on an instance.
+		</p>
+		<p>
 			Search for a model instance in the <tt>Backbone.Relational.store</tt>.
 		</p>
 
 		<ul>
 			<li>
-				If attributes is a string or a number, <a href="#RelationalModel-findOrCreate">findOrCreate</a> will just
-				query the store and return a model if found.
+				If attributes is a string or a number, <tt>findOrCreate</tt> will query the store and return a model if found.
 			</li>
 			<li>
 				If attributes is an object, the model will be updated with attributes if found. Otherwise, a new model is
@@ -885,7 +649,8 @@ Company = Backbone.RelationalModel.extend({
 		<p id="RelationalModel-subModelTypes">
 			<strong class="header">subModelTypes</strong>
 			<code>relationalModel.subModelTypes(attributes&lt;string|number|object&gt;, [options&lt;object&gt;])</code>
-			<br />
+		</p>
+		<p>
 			An object that defaults to empty({}).
 		</p>
 
@@ -940,7 +705,8 @@ var mammals = new MammalCollection([
 
 		<p id="RelationalModel-subModelTypeAttribute">
 			<strong class="header">subModelTypeAttribute</strong><code>relationalModel.subModelTypeAttribute</code>
-			<br />
+		</p>
+		<p>
 			A string that defaults to 'type'.
 		</p>
 
@@ -953,7 +719,8 @@ var mammals = new MammalCollection([
 
 		<p id="RelationalModel-events">
 			<strong class="header">Catalog of Events</strong>
-			<br />
+		</p>
+		<p>
 			This is the complete list of all of the events that Backbone-relational makes available to you, in addition to
 			those found in Backbone.
 		</p>
@@ -978,6 +745,28 @@ var mammals = new MammalCollection([
 				<strong>"update:&lt;key&gt;"</strong> (model<Backbone.Model>, related<Backbone.Model|Backbone.Collection>) - .
 			</li>
 		</ul>
+		
+		<h2 id="Relation">Backbone.Relation</h2>
+		
+		<p>
+			Each <tt>relation</tt> definition in a model is used to create in instance of a <tt>Backbone.Relation</tt>; either
+			a <tt>Backbone.HasOne</tt> or a <tt>Backbone.HasMany</tt>.
+		</p>
+		
+		<h2 id="Store">Backbone.Relational.Store</h2>
+		
+		<p>
+			<strong>Store</strong> is a global model cache. Per application, one instance is created, which is accessible as
+			<tt>Backbone.store</tt> (much like <tt>Backbone.History</tt>).
+		</p>
+		
+		<p id="Store-addModelScope">
+			<strong class="header">addModelScope</strong><code>Backbone.store.addModelScope( scope&lt;object&gt; )</code>
+		</p>
+		<p>
+			When working in an environment without a shared global scope (like <tt>window</tt> is in a browser), you'll need
+			to tell the <tt>store</tt> where your models are defined, so it can resolve them to create and maintain relations. 
+		</p>
 
 		<h2 id="examples">Examples</h2>
 
@@ -1143,6 +932,6 @@ User = Backbone.RelationalModel.extend();
 			but it's much better than subtle bugs that can lead to major data loss later on in the life cycle of your application.
 		</p>
 	</div>
-	<script type="text/javascript" src="docs/static/js/prism.js"></script>
+	<script type="text/javascript" src="static/js/prism.js"></script>
 </body>
 </html>
