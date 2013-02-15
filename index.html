@@ -265,12 +265,21 @@ Animal = Backbone.RelationalModel.extend({
 });
 
 AnimalCollection = Backbone.Collection.extend({
-	model: Animal,
-
-	url: function( models ) {
-		return '/animal/' + ( models ? 'set/' + _.pluck( models, 'id' ).join(';') + '/' : '' );
-	}
+	model: Animal
 });
+
+// We've now created a fully managed relation. When you add or remove model from `zoo.animals`,
+// or update `animal.livesIn`, the other side of the relation will automatically be updated.
+var artis = new Zoo( { name: 'Artis' } );
+var lion = new Animal( { species: 'Lion', livesIn: artis } );
+
+// `animals` in `artis` now contains `lion`
+console.log( artis.get( 'animals' ).pluck( 'species' ) );
+
+var amersfoort = new Zoo( { name: 'Dierenpark Amersfoort', animals: [ lion ] } );
+
+// `lion` now livesIn `amersfoort`, and `animals` in `artis` no longer contains `lion`
+console.log( lion.get( 'livesIn' ).get( 'name' ), artis.get( 'animals' ) );
 </code></pre>
 
 		<p id="Relation-relatedModel">
@@ -831,7 +840,8 @@ paul.get('user').toJSON();
 ourHouse.fetchRelated( 'occupants' );
 
 // Use the 'add' and 'remove' events to listen for additions/removals on HasMany relations (like 'House.occupants').
-ourHouse.on( 'add:occupants', function( model, coll ) {
+ourHouse
+	.on( 'add:occupants', function( model, coll ) {
 		// create a View?
 		console.debug( 'add %o', model );
 	});
