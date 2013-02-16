@@ -275,12 +275,12 @@ var artis = new Zoo( { name: 'Artis' } );
 var lion = new Animal( { species: 'Lion', livesIn: artis } );
 
 // `animals` in `artis` now contains `lion`
-console.log( artis.get( 'animals' ).pluck( 'species' ) );
+alert( artis.get( 'animals' ).pluck( 'species' ) );
 
 var amersfoort = new Zoo( { name: 'Dierenpark Amersfoort', animals: [ lion ] } );
 
 // `lion` now livesIn `amersfoort`, and `animals` in `artis` no longer contains `lion`
-console.log( lion.get( 'livesIn' ).get( 'name' ), artis.get( 'animals' ) );
+alert( lion.get( 'livesIn' ).get( 'name' ) + ', ' + artis.get( 'animals' ).length );
 </code></pre>
 
 		<p id="Relation-relatedModel">
@@ -944,10 +944,14 @@ User = Backbone.RelationalModel.extend();
 		</p>
 	</div>
 	
+	<script type="text/javascript" src="test/lib/jquery-1.7.1.js"></script>
+	<script type="text/javascript" src="test/lib/underscore.js"></script>
+	<script type="text/javascript" src="test/lib/backbone.js"></script>
+	<script type="text/javascript" src="backbone-relational.js"></script>
 	<script type="text/javascript" src="static/js/prism.js"></script>
 	<script type="text/javascript">
 	// Set up the "play" buttons for each runnable code example.
-	/*$( function() {
+	$( function() {
 		$( '.runnable' ).each( function() {
 			var code = this;
 			var button = '<div class="run" title="Run"><a class="button orange" href="#run">&#x25BA;</a></div>';
@@ -955,7 +959,7 @@ User = Backbone.RelationalModel.extend();
 				eval( $( code ).text() );
 			});
 		});
-	});*/
+	});
 	</script>
 </body>
 </html>

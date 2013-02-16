@@ -58,9 +58,9 @@ p, ol, ul, dl, pre, figure, footer {
 	font: 14px/100% Arial, Helvetica, sans-serif;
 	padding: .5em 2em .55em;
 	text-shadow: 0 1px 1px rgba(0,0,0,.3);
-	-webkit-border-radius: .3em; 
-	-moz-border-radius: .3em;
-	border-radius: .3em;
+	-webkit-border-radius: .4em; 
+	-moz-border-radius: .4em;
+	border-radius: .4em;
 	-webkit-box-shadow: 0 1px 2px rgba(0,0,0,.2);
 	-moz-box-shadow: 0 1px 2px rgba(0,0,0,.2);
 	box-shadow: 0 1px 2px rgba(0,0,0,.2);
@@ -188,12 +188,15 @@ img#logo {
 div.run {
 	cursor: pointer;
 	font-family: Arial, Courier, Times New Roman;
-	font-size: 20px;
+	font-size: 16px;
 	position: absolute;
 	right: 15px;
 }
 	div.run a {
-		padding: .3em .6em .3em .7em;
+		-webkit-border-radius: .2em; 
+		-moz-border-radius: .2em;
+		border-radius: .2em;
+		padding: .2em .5em .2em .6em;
 	}
 
 p.warning {
