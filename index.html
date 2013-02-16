@@ -1,13 +1,14 @@
 <!DOCTYPE HTML>
 <html>
 <head>
-	<meta http-equiv="content-type" content="text/html;charset=UTF-8" />
-	<meta http-equiv="X-UA-Compatible" content="chrome=1" />
+	<meta http-equiv="content-type" content="text/html;charset=UTF-8">
+	<meta http-equiv="X-UA-Compatible" content="chrome=1">
 	<meta name="viewport" content="width=device-width">
-	<link rel="icon" href="static/images/favicon.ico" />
+	<link rel="icon" href="static/images/favicon.ico">
 	
-	<link rel="stylesheet" type="text/css" href="static/css/prism.css" />
-	<link rel="stylesheet" type="text/css" href="static/css/style.css" />
+	<link href="http://fonts.googleapis.com/css?family=Arimo" rel="stylesheet" type="text/css">
+	<link rel="stylesheet" type="text/css" href="static/css/prism.css">
+	<link rel="stylesheet" type="text/css" href="static/css/style.css">
 	
 	<title>Backbone-relational.js</title>
 </head>
@@ -245,7 +246,7 @@
 			<a href="#Relation-type">type</a> are mandatory. A relation could look like the following:
 		</p>
 
-<pre class="language-javascript"><code class="language-javascript"><!--
+<pre class="language-javascript"><code class="language-javascript runnable"><!--
 -->Zoo = Backbone.RelationalModel.extend({
 	relations: [{
 		type: Backbone.HasMany,
@@ -942,6 +943,19 @@ User = Backbone.RelationalModel.extend();
 			but it's much better than subtle bugs that can lead to major data loss later on in the life cycle of your application.
 		</p>
 	</div>
+	
 	<script type="text/javascript" src="static/js/prism.js"></script>
+	<script type="text/javascript">
+	// Set up the "play" buttons for each runnable code example.
+	/*$( function() {
+		$( '.runnable' ).each( function() {
+			var code = this;
+			var button = '<div class="run" title="Run"><a class="button orange" href="#run">&#x25BA;</a></div>';
+			$( button ).insertBefore( code ).bind( 'click', function() {
+				eval( $( code ).text() );
+			});
+		});
+	});*/
+	</script>
 </body>
 </html>
