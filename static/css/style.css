@@ -298,22 +298,25 @@ table {
 			padding: 0px 15px 5px 0;
 		}
 
-strong.header, code, pre, tt {
+strong.header, code, pre, q {
 	font-family: Consolas, Monaco, "Lucida Console", monospace;
 	font-size: 13px;
 	line-height: 18px;
 	font-style: normal;
 }
-	strong.header {
-		font-size: 18px;
-		line-height: 36px;
+	q:before, q:after {
+		content: '';
 	}
-	tt {
+	q {
 		padding: 0px 3px;
 		background: #fff;
 		border: 1px solid #ddd;
 	}
-	strong, tt , code {
+	strong.header {
+		font-size: 18px;
+		line-height: 36px;
+	}
+	strong, q , code {
 		white-space: nowrap;
 	}
 	code {
