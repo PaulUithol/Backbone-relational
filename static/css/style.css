@@ -193,6 +193,7 @@ div.run {
 	font-family: Arial, Courier, Times New Roman;
 	font-size: 16px;
 	position: absolute;
+	bottom: 15px;
 	right: 15px;
 }
 	div.run a {
@@ -326,12 +327,17 @@ strong.header, code, pre, q {
 		box-shadow: 0 0 6px rgba(0, 0, 0, 0.5);
 		font-size: 12px;
 		padding: 2px 0 2px 15px;
+		position: relative;
 		border: 0 solid #aaa;
-		border-width: 0 0 0 .5em;
+		border-left-width: .5em;
 		margin: 1.5em 0 1.5em -1.5em;
 	}
 	pre code {
 		margin: 0;
+	}
+	pre.nomargin {
+		border-top: 1px solid #444;
+		margin-top: -1.5em;
 	}
 	
 @media only screen and (-webkit-max-device-pixel-ratio: 1) and (max-width: 600px),
