@@ -64,6 +64,11 @@
 			Backbone.Relation
 		</a>
 		
+		<ul class="toc_section">
+			<li><a href="#Relation-HasOne">HasOne</a></li>
+			<li><a href="#Relation-HasMany">HasMany</a></li>
+		</ul>
+		
 		<a class="toc_title" href="#Store">
 			Backbone.Store
 		</a>
@@ -288,6 +293,7 @@ alert( lion.get( 'livesIn' ).get( 'name' ) + ', ' + artis.get( 'animals' ).lengt
 		</p>
 		<p>
 			A string that can be resolved to an object on the global scope, or a reference to a <strong>Backbone.RelationalModel</strong>.
+			Also see <a href="#Store-addModelScope">addModelScope</a>.
 		</p>
 
 		<p id="Relation-key">
@@ -756,6 +762,7 @@ var mammals = new MammalCollection([
 			</li>
 		</ul>
 		
+		
 		<h2 id="Relation">Backbone.Relation</h2>
 		
 		<p>
@@ -763,10 +770,26 @@ var mammals = new MammalCollection([
 			a <tt>Backbone.HasOne</tt> or a <tt>Backbone.HasMany</tt>.
 		</p>
 		
+		<p id="Relation-HasOne">
+			<strong class="header">Backbone.HasOne</strong>
+		</p>
+		<p>
+			Defines a <strong>HasOne</strong> relation. When defining a <a href="#Relation-reverseRelation">reverseRelation</a>, the default type
+			will be <strong>HasMany</strong>. However, this can also be set to <strong>HasOne</strong> to define a one-to-one relation.
+		</p>
+		
+		<p id="Relation-HasMany">
+			<strong class="header">Backbone.HasMany</strong>
+		</p>
+		<p>
+			Defines a <strong>HasMany</strong> relation. When defining a <a href="#Relation-reverseRelation">reverseRelation</a>, the type
+			will be <strong>HasOne</strong>.
+		</p>
+		
 		<h2 id="Store">Backbone.Relational.Store</h2>
 		
 		<p>
-			<strong>Store</strong> is a global model cache. Per application, one instance is created, which is accessible as
+			The <strong>Store</strong> is a global model cache. Per application, one instance is created, which is accessible as
 			<tt>Backbone.store</tt> (much like <tt>Backbone.History</tt>).
 		</p>
 		

@@ -13,7 +13,7 @@ body {
 	background: #f4f4f4 url('docs/static/images/background.png');
 }
 
-h1, h2, h3, h4, h5, h6, .interface {
+h1, h2, h3, h4, h5, h6, .toc_title {
 	font-family: MuseoSlab500, "Lucida Grande", "Lucida Sans Unicode", "Helvetica Neue", "Bitstream Vera Sans", Helvetica, Arial, sans-serif;
 }
 	h1, h2 {
@@ -48,6 +48,20 @@ h1, h2, h3, h4, h5, h6, .interface {
 p, ol, ul, dl, pre, figure, footer {
     margin: 1.5em 0;
 }
+
+ul {
+	margin: 6px 0 0 0;
+	padding-left: 0px;
+	list-style-type: none;
+}
+	ul li {
+		margin: 0;
+	}
+	ul li:before {
+		content: "\2013";
+		position: relative;
+		left: -1ex;
+	}
 	
 .button {
 	display: inline-block;
@@ -149,22 +163,10 @@ div#sidebar {
 	ul.toc_section {
 		font-size: 12px;
 		line-height: 20px;
-		margin: 6px 0 0 0;
-		padding-left: 0px;
-		list-style-type: none;
-		font-family: Lucida Grande;
 	}
 		ul.toc_section ul {
 			margin: 0 0 0 1em;
 		}
-		.toc_section li {
-			margin: 0;
-		}
-			.toc_section li:before {
-				content: "\2013";
-				position: relative;
-				left: -1ex;
-			}
 			.toc_section li.link_out:before {
 				content: "\00BB";
 			}
@@ -175,6 +177,7 @@ div#sidebar {
 			.toc_section li a:hover {
 				text-decoration: underline;
 			}
+			
 div.container {
 	position: relative;
 	width: 45em;
@@ -203,16 +206,13 @@ p.warning {
 	font-size: 13px;
 	font-style: italic;
 }
-div.container ul {
-	list-style: circle;
-	padding-left: 15px;
+
+div.container ul li {
+	margin-bottom: .5em;
 }
-	div.container ul li {
-		margin-bottom: .5em;
-	}
-	div.container ul.small {
-		font-size: 14px;
-	}
+div.container ul.small {
+	font-size: 14px;
+}
 
 a, a:visited {
 	color: #444;
@@ -241,7 +241,7 @@ a.punch {
 	font-weight: bold;
 	line-height: 1;
 	margin-bottom: 15px;
-	padding: 8px 0 10px 0;
+	padding: 10px 0;
 	text-align: center;
 	text-shadow: 0px -1px 1px #1e2d4d;
 	text-decoration: none;
