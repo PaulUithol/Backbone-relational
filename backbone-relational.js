@@ -124,6 +124,10 @@
 		this._modelScopes = [ exports ];
 	};
 	_.extend( Backbone.Store.prototype, Backbone.Events, {
+		/**
+		 * Add a scope for `getObjectByName` to look for model types by name.
+		 * @param {Object} scope
+		 */
 		addModelScope: function( scope ) {
 			this._modelScopes.push( scope );
 		},
@@ -243,7 +247,7 @@
 		},
 		
 		/**
-		 * Find a type on the global object by name. Splits name on dots.
+		 * Find a model type on one of the modelScopes by name. Names are split on dots.
 		 * @param {String} name
 		 * @return {Object}
 		 */
@@ -348,7 +352,7 @@
 
 				var modelColl = model.collection;
 				coll.add( model );
-				model.bind( 'destroy', this.unregister, this );
+				this.listenTo( model, 'destroy', this.unregister, this );
 				model.collection = modelColl;
 			}
 		},
@@ -367,9 +371,20 @@
 		 * @param {Backbone.RelationalModel} model
 		 */
 		unregister: function( model ) {
-			model.unbind( 'destroy', this.unregister );
+			this.stopListening( model, 'destroy', this.unregister );
 			var coll = this.getCollection( model );
 			coll && coll.remove( model );
+		},
+
+		/**
+		 * Reset the `store` to it's original state. The `reverseRelations` are kept though, since attempting to
+		 * re-initialize these on models would lead to a large amount of warnings.
+		 */
+		reset: function() {
+			this.stopListening();
+			this._collections = [];
+			this._subModels = [];
+			this._modelScopes = [ exports ];
 		}
 	});
 	Backbone.Relational.store = new Backbone.Store();
@@ -452,12 +467,12 @@
 
 			// When a model in the store is destroyed, check if it is 'this.instance'.
 			Backbone.Relational.store.getCollection( this.instance )
-				.bind( 'relational:remove', this._modelRemovedFromCollection );
+				.on( 'relational:remove', this._modelRemovedFromCollection );
 
 			// When 'relatedModel' are created or destroyed, check if it affects this relation.
 			Backbone.Relational.store.getCollection( this.relatedModel )
-				.bind( 'relational:add', this._relatedModelAdded )
-				.bind( 'relational:remove', this._relatedModelRemoved );
+				.on( 'relational:add', this._relatedModelAdded )
+				.on( 'relational:remove', this._relatedModelRemoved );
 		}
 	};
 	// Fix inheritance :\
@@ -627,11 +642,11 @@
 		// Cleanup. Get reverse relation, call removeRelated on each.
 		destroy: function() {
 			Backbone.Relational.store.getCollection( this.instance )
-				.unbind( 'relational:remove', this._modelRemovedFromCollection );
+				.off( 'relational:remove', this._modelRemovedFromCollection );
 			
 			Backbone.Relational.store.getCollection( this.relatedModel )
-				.unbind( 'relational:add', this._relatedModelAdded )
-				.unbind( 'relational:remove', this._relatedModelRemoved );
+				.off( 'relational:add', this._relatedModelAdded )
+				.off( 'relational:remove', this._relatedModelRemoved );
 			
 			_.each( this.getReverseRelations() || [], function( relation ) {
 				relation.removeRelated( this.instance );
@@ -647,7 +662,7 @@
 		initialize: function() {
 			_.bindAll( this, 'onChange' );
 
-			this.instance.bind( 'relational:change:' + this.key, this.onChange );
+			this.instance.on( 'relational:change:' + this.key, this.onChange );
 
 			var model = this.findRelated( { silent: true } );
 			this.setRelated( model );
@@ -780,7 +795,7 @@
 		
 		initialize: function() {
 			_.bindAll( this, 'onChange', 'handleAddition', 'handleRemoval', 'handleReset' );
-			this.instance.bind( 'relational:change:' + this.key, this.onChange );
+			this.instance.on( 'relational:change:' + this.key, this.onChange );
 			
 			// Handle a custom 'collectionType'
 			this.collectionType = this.options.collectionType;
@@ -816,9 +831,9 @@
 		_prepareCollection: function( collection ) {
 			if ( this.related ) {
 				this.related
-					.unbind( 'relational:add', this.handleAddition )
-					.unbind( 'relational:remove', this.handleRemoval )
-					.unbind( 'relational:reset', this.handleReset )
+					.off( 'relational:add', this.handleAddition )
+					.off( 'relational:remove', this.handleRemoval )
+					.off( 'relational:reset', this.handleReset )
 			}
 
 			if ( !collection || !( collection instanceof Backbone.Collection ) ) {
@@ -841,9 +856,9 @@
 			}
 			
 			collection
-				.bind( 'relational:add', this.handleAddition )
-				.bind( 'relational:remove', this.handleRemoval )
-				.bind( 'relational:reset', this.handleReset );
+				.on( 'relational:add', this.handleAddition )
+				.on( 'relational:remove', this.handleRemoval )
+				.on( 'relational:reset', this.handleReset );
 			
 			return collection;
 		},
@@ -1065,10 +1080,10 @@
 					if ( model === dit ) {
 						dit._deferProcessing = false;
 						dit.processQueue();
-						options.collection.unbind( 'relational:add', processQueue );
+						options.collection.off( 'relational:add', processQueue );
 					}
 				};
-				options.collection.bind( 'relational:add', processQueue );
+				options.collection.on( 'relational:add', processQueue );
 				
 				// So we do process the queue eventually, regardless of whether this model really gets added to 'options.collection'.
 				_.defer( function() {

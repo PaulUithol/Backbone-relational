@@ -316,10 +316,7 @@ $(document).ready(function() {
 		// Reset last ajax requests
 		window.requests = [];
 
-		// save _reverseRelations, otherwise we'll get a lot of warnings about existing relations
-		var oldReverseRelations = Backbone.Relational.store._reverseRelations;
-		Backbone.Relational.store = new Backbone.Store();
-		Backbone.Relational.store._reverseRelations = oldReverseRelations;
+		Backbone.Relational.store.reset();
 		Backbone.Relational.eventQueue = new Backbone.BlockingQueue();
 	}
 
@@ -381,9 +378,9 @@ $(document).ready(function() {
 		});
 	}
 
-
+/*
 	module( "Backbone.Semaphore", { setup: reset } );
-	
+
 	
 		test( "Unbounded", function() {
 			expect( 10 );
@@ -1798,7 +1795,7 @@ $(document).ready(function() {
 			ok( b2.get( 'a' ).id == 'a2' );
 		});
 
-
+*/
 	module( "Backbone.HasOne", { setup: initObjects } );
 
 
@@ -1807,13 +1804,13 @@ $(document).ready(function() {
 			equal( person1.get('user').id, 'user-1', "The id of 'person1's user is 'user-1'" );
 			ok( person2.get('likesALot') === person1 );
 		});
-		
+
 		test( "Reverse HasOne relations on Person are set up properly", function() {
 			ok( person1.get( 'likedALotBy' ) === person2 );
 			ok( person1.get( 'user' ).get( 'person' ) === person1, "The person belonging to 'person1's user is 'person1'" );
 			ok( person2.get( 'likedALotBy' ) === person1 );
 		});
-		
+
 		test( "'set' triggers 'change' and 'update', on a HasOne relation, for a Model with multiple relations", function() {
 			expect( 9 );
 
@@ -1851,9 +1848,7 @@ $(document).ready(function() {
 			user.set( { password: password } );
 		});
 
-		test( "'set' doesn't triggers 'change' and 'update:' when passed `silent: true`", function() {
-			expect( 2 );
-
+		test( "'set' doesn't triggers 'change' and 'update:' when passed `silent: true`", 2, function() {
 			person1.bind( 'change', function( model, options ) {
 				ok( false, "'change' should not get triggered" );
 			});
@@ -1911,7 +1906,7 @@ $(document).ready(function() {
 			
 			equal( user.get( 'person' ), null, "person1 is not set on 'user' anymore" );
 		});
-		
+/*
 
 	module( "Backbone.HasMany", { setup: initObjects } );
 	
@@ -2797,5 +2792,6 @@ $(document).ready(function() {
 			ok( removeEventsTriggered == 1, "Exactly one remove event was triggered (triggered " + removeEventsTriggered + " events)" );
 			ok( changeEventsTriggered == 1, "Exactly one change event was triggered (triggered " + changeEventsTriggered + " events)" );
 		});
+*/
 });
 
