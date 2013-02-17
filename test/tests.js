@@ -378,13 +378,11 @@ $(document).ready(function() {
 		});
 	}
 
-/*
+
 	module( "Backbone.Semaphore", { setup: reset } );
 
 	
-		test( "Unbounded", function() {
-			expect( 10 );
-			
+		test( "Unbounded", 10, function() {
 			var semaphore = _.extend( {}, Backbone.Semaphore );
 			ok( !semaphore.isLocked(), 'Semaphore is not locked initially' );
 			semaphore.acquire();
@@ -469,7 +467,7 @@ $(document).ready(function() {
 		test( "getObjectByName", function() {
 			equal( Backbone.Relational.store.getObjectByName( 'Backbone.RelationalModel' ), Backbone.RelationalModel );
 		});
-		
+
 		test( "Add and remove from store", function() {
 			var coll = Backbone.Relational.store.getCollection( person1 );
 			var length = coll.length;
@@ -1795,7 +1793,7 @@ $(document).ready(function() {
 			ok( b2.get( 'a' ).id == 'a2' );
 		});
 
-*/
+
 	module( "Backbone.HasOne", { setup: initObjects } );
 
 
@@ -1811,9 +1809,7 @@ $(document).ready(function() {
 			ok( person2.get( 'likedALotBy' ) === person1 );
 		});
 
-		test( "'set' triggers 'change' and 'update', on a HasOne relation, for a Model with multiple relations", function() {
-			expect( 9 );
-
+		test( "'set' triggers 'change' and 'update', on a HasOne relation, for a Model with multiple relations", 9, function() {
 			// triggers initialization of the reverse relation from User to Password
 			var password = new Password( { plaintext: 'asdf' } );
 			
@@ -1869,9 +1865,7 @@ $(document).ready(function() {
 			equal( person1.get( 'user' ), user );
 		});
 		
-		test( "'unset' triggers 'change' and 'update:'", function() {
-			expect( 4 );
-			
+		test( "'unset' triggers 'change' and 'update:'", 4, function() {
 			person1.bind( 'change', function( model, options ) {
 					equal( model.get('user'), null, "model.user is unset" );
 				});
@@ -1888,9 +1882,7 @@ $(document).ready(function() {
 			equal( user.get( 'person' ), null, "person1 is not set on 'user' anymore" );
 		});
 		
-		test( "'clear' triggers 'change' and 'update:'", function() {
-			expect( 4 );
-			
+		test( "'clear' triggers 'change' and 'update:'", 4, function() {
 			person1.bind( 'change', function( model, options ) {
 					equal( model.get('user'), null, "model.user is unset" );
 				});
@@ -1906,14 +1898,12 @@ $(document).ready(function() {
 			
 			equal( user.get( 'person' ), null, "person1 is not set on 'user' anymore" );
 		});
-/*
+
 
 	module( "Backbone.HasMany", { setup: initObjects } );
 	
 
-		test( "Listeners on 'add'/'remove'", function() {
-			expect( 7 );
-			
+		test( "Listeners on 'add'/'remove'", 7, function() {
 			ourHouse
 				.bind( 'add:occupants', function( model, coll ) {
 						ok( model === person1, "model === person1" );
@@ -2287,7 +2277,8 @@ $(document).ready(function() {
 			child.set( 'parent', parent );
 			parent.save( { 'parent': child } );
 
-			//console.log( parent, child );
+			ok( parent.get( 'parent' ) === child );
+			ok( child.get( 'parent' ) === parent );
 		});
 		
 		test( "HasMany relations to self (tree structure)", function() {
@@ -2792,6 +2783,5 @@ $(document).ready(function() {
 			ok( removeEventsTriggered == 1, "Exactly one remove event was triggered (triggered " + removeEventsTriggered + " events)" );
 			ok( changeEventsTriggered == 1, "Exactly one change event was triggered (triggered " + changeEventsTriggered + " events)" );
 		});
-*/
 });
 
