@@ -281,8 +281,8 @@ AnimalCollection = Backbone.Collection.extend({
 
 // We've now created a fully managed relation. When you add or remove model from `zoo.animals`,
 // or update `animal.livesIn`, the other side of the relation will automatically be updated.
-artis = new Zoo( { name: 'Artis' } );
-lion = new Animal( { species: 'Lion', livesIn: artis } );
+var artis = new Zoo( { name: 'Artis' } );
+var lion = new Animal( { species: 'Lion', livesIn: artis } );
 
 // `animals` in `artis` now contains `lion`
 alert( artis.get( 'animals' ).pluck( 'species' ) );
@@ -317,16 +317,16 @@ alert( lion.get( 'livesIn' ).get( 'name' ) + ', ' + artis.get( 'animals' ).lengt
 			or a direct reference to a relation type.
 		</p>
 		<p>
-			You can model a one-to-one or a many-to-one relationship by declaring the type as "HasOne" or
-			<a href="#Relation-HasOne"><q>Backbone.HasOne</q></a>. A HasOne relation contains a single <strong>Backbone.RelationalModel</strong>.
-			The default <q>reverseRelation.type</q> for a "HasOne" relation is "HasMany". This can be set to "HasOne" instead,
-			to create a	one-to-one relation.
+			You can model a one-to-one or a many-to-one relationship by declaring <q>type</q> as the string "HasOne", or by
+			directly referencing <a href="#Relation-HasOne"><q>Backbone.HasOne</q></a>. A HasOne relation contains a single
+			<strong>Backbone.RelationalModel</strong>. The default <q>reverseRelation.type</q> for a "HasOne" relation is
+			"HasMany". This can be set to "HasOne" instead, to create a one-to-one relation.
 		</p>
 		<p>
-			You can model a one-to-many relationship by declaring the type as "HasMany" or
-			<a href="#Relation-HasMany"><q>Backbone.HasMany</q></a>. A HasMany relation contains a Backbone.Collection,
-			containing zero or more	<strong>Backbone.RelationalModel</strong>s. The default
-			<q>reverseRelation.type</q> for a HasMany relation is HasOne; this is the only option here, since many-to-many is not supported directly.
+			You can model a one-to-many relationship by declaring <q>type</q> as the string "HasMany", or by directly
+			referencing <a href="#Relation-HasMany"><q>Backbone.HasMany</q></a>. A HasMany relation contains a Backbone.Collection,
+			containing zero or more	<strong>Backbone.RelationalModel</strong>s. The default <q>reverseRelation.type</q>
+			for a HasMany relation is HasOne; this is the only option here, since many-to-many is not supported directly.
 		</p>
 		<p>
 			It is possible model a many-to-many relationship using two <a href="#Relation-HasMany"><q>Backbone.HasMany</q></a>
@@ -630,8 +630,8 @@ var mammals = new MammalCollection([
 var chimp = mammals.get( 3 );
 
 alert( 'chimp is an animal? ' + ( chimp instanceof Animal ) + '\n' +
-'chimp is a carnivore? ' + ( chimp instanceof Carnivore ) + '\n' +
-'chimp is a primate? ' + ( chimp instanceof Primate ) );
+	'chimp is a carnivore? ' + ( chimp instanceof Carnivore ) + '\n' +
+	'chimp is a primate? ' + ( chimp instanceof Primate ) );
 </code></pre>
 
 		<p>
@@ -866,7 +866,7 @@ MyModel.setup()
 		</p>
 		
 <pre class="language-javascript"><code id="example-person-run1" class="language-javascript runnable" data-setup="#example-person"><!--
--->paul = new Person({
+-->var paul = new Person({
 	id: 'person-1',
 	name: 'Paul',
 	user: { id: 'user-1', login: 'dude', email: 'me@gmail.com' }
@@ -875,7 +875,7 @@ MyModel.setup()
 // A User object is automatically created from the JSON; so 'login' returns 'dude'.
 paul.get('user').get('login');
 
-ourHouse = new House({
+var ourHouse = new House({
 	id: 'house-1',
 	location: 'in the middle of the street',
 	occupants: ['person-1', 'person-2', 'person-5']
@@ -938,9 +938,9 @@ alert( 'theirHouse.occupants=' + theirHouse.get( 'occupants' ).pluck( 'name' ) )
 
 <pre class="language-javascript"><code class="language-javascript" id="example-person"><!--
 -->House = Backbone.RelationalModel.extend({
-	// The 'relations' property, on the House's prototype. Initialized separately for each instance of House.
-	// Each relation must define (as a minimum) the 'type', 'key' and 'relatedModel'. Options are
-	// 'includeInJSON', 'createModels' and 'reverseRelation', which takes the same options as the relation itself.
+	// The 'relations' property, on the House's prototype. Initialized separately for each
+	// instance of House. Each relation must define (as a minimum) the 'type', 'key' and
+	// 'relatedModel'. Options include 'includeInJSON', 'createModels' and 'reverseRelation'.
 	relations: [
 		{
 			type: Backbone.HasMany, // Use the type, or the string 'HasOne' or 'HasMany'.
@@ -1035,7 +1035,13 @@ User = Backbone.RelationalModel.extend();
 				window.alert = $.noop;
 			}
 
-			eval( $( codeElem ).text() );
+			// Grab the code, and eval it. Nasty twist: remove all `var` statement at the start of a line;
+			// this will make all eval'ed vars global, so vars from scripts used as setup can be used
+			// by those that need 'em.
+			var code = $( codeElem ).text();
+			code = code.replace( /(^|\n)(var )/g, '\n' );
+			//console.log( 'Executing:\n %s', code );
+			eval( code );
 
 			if ( silenceAlerts === true ) {
 				window.alert = _alert;

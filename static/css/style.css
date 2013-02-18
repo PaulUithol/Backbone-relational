@@ -9,8 +9,8 @@
 body {
 	font-size: 15px;
 	line-height: 1.5em;
-	font-family:  "Liberation Sans", Arimo, Helvetica Neue, Helvetica, Arial;
-	background: #f4f4f4 url('docs/static/images/background.png');
+	font-family:  "Helvetica Neue", "Lucida Grande", "Lucida Sans Unicode", Helvetica, Arial, sans-serif;
+	background: #f4f4f4;
 }
 
 h1, h2, h3, h4, h5, h6, .toc_title {
@@ -50,8 +50,7 @@ p, ol, ul, dl, pre, figure, footer {
 }
 
 ul {
-	margin: 6px 0 0 0;
-	padding-left: 0px;
+	padding-left: 0;
 	list-style-type: none;
 }
 	ul li {
@@ -151,7 +150,7 @@ div#sidebar {
 		display: block;
 		color: black;
 		font-weight: bold;
-		margin-top: 15px;
+		margin: 1em 0 .2em;
 	}
 	a.toc_title:hover {
 		text-decoration: underline;
@@ -271,7 +270,7 @@ a img {
 }
 
 img.example_image {
-	margin: 0px auto;
+	margin: 0 auto;
 }
 	img.example_retina {
 		margin: 20px;
@@ -311,18 +310,14 @@ code, pre, q {
 		content: '';
 	}
 	q {
-		padding: 0px 3px;
+		padding: 0 3px;
 		background: #fff;
 		border: 1px solid #ddd;
 	}
 		a q {
 			border: none;
 		}
-	strong.header {
-		font-size: 18px;
-		line-height: 36px;
-	}
-	strong, q , code {
+	q , code {
 		white-space: nowrap;
 	}
 	code {
