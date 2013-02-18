@@ -46,7 +46,7 @@ h1, h2, h3, h4, h5, h6, .toc_title {
 	}
 
 p, ol, ul, dl, pre, figure, footer {
-    margin: 1.5em 0;
+    margin: 0 0 1.5em 0;
 }
 
 ul {
@@ -299,11 +299,13 @@ table {
 			padding: 0px 15px 5px 0;
 		}
 
-strong.header, code, pre, q {
+h3.code, h4.code, h5.code, code, pre, q {
 	font-family: Consolas, Monaco, "Lucida Console", monospace;
+	font-style: normal;
+}
+code, pre, q {
 	font-size: 13px;
 	line-height: 18px;
-	font-style: normal;
 }
 	q:before, q:after {
 		content: '';

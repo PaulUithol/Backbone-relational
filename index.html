@@ -247,9 +247,10 @@
 			Properties
 		</h3>
 
-		<p id="RelationalModel-relations">
-			<strong class="header">relations</strong><code>relation[]</code>
-			<br>
+		<h4 class="code" id="RelationalModel-relations">
+			relations<code>relation[]</code>
+		</h4>
+		<p>
 			Each <strong>Backbone.RelationalModel</strong> can contain an array of relation definitions. Each relation supports a number of
 			options, of which <a href="#Relation-relatedModel"><q>relatedModel</q></a>, <a href="#Relation-key"><q>key</q></a> and
 			<a href="#Relation-type"><q>type</q></a> are mandatory. A relation could look like the following:
@@ -293,24 +294,24 @@ alert( artis.get( 'animals' ).pluck( 'species' ) );
 alert( lion.get( 'livesIn' ).get( 'name' ) + ', ' + artis.get( 'animals' ).length );
 </code></pre>
 
-		<p id="Relation-relatedModel">
-			<strong class="header">relatedModel</strong><code>relation.relatedModel</code>
-		</p>
+		<h4 class="code" id="Relation-relatedModel">
+			relatedModel<code>relation.relatedModel</code>
+		</h4>
 		<p>
 			A string that can be resolved to an object on the global scope, or a reference to a <strong>Backbone.RelationalModel</strong>.
 			Also see <a href="#Store-addModelScope"><q>addModelScope</q></a>.
 		</p>
 
-		<p id="Relation-key">
-			<strong class="header">key</strong><code>relation.key</code>
-		</p>
+		<h4 class="code" id="Relation-key">
+			key<code>relation.key</code>
+		</h4>
 		<p>
 			A string that references an attribute name on <a href="#Relation-relatedModel"><q>relatedModel</q></a>.
 		</p>
 
-		<p id="Relation-type">
-			<strong class="header">type</strong><code>relation.type</code>
-		</p>
+		<h4 class="code" id="Relation-type">
+			type<code>relation.type</code>
+		</h4>
 		<p>
 			A string that references a <a href="#Relation"><q>Backbone.Relation</q></a> type by name ("HasOne" or "HasMany"),
 			or a direct reference to a relation type.
@@ -364,9 +365,9 @@ Company = Backbone.RelationalModel.extend({
 });
 </code></pre>
 
-		<p id="Relation-keySource">
-			<strong class="header">keySource</strong><code>relation.keySource</code>
-		</p>
+		<h4 class="code" id="Relation-keySource">
+			keySource<code>relation.keySource</code>
+		</h4>
 		<p>
 			A string that references an attribute to deserialize data for <a href="#Relation-relatedModel"><q>relatedModel</q></a> from.
 		</p>
@@ -390,9 +391,9 @@ Company = Backbone.RelationalModel.extend({
 			WARNING: when using a keySource, you should not use that attribute name for	other purposes.
 		</p>
 
-		<p id="Relation-keyDestination">
-			<strong class="header">keyDestination</strong><code>relation.keyDestination</code>
-		</p>
+		<h4 class="code" id="Relation-keyDestination">
+			keyDestination<code>relation.keyDestination</code>
+		</h4>
 		<p>
 			A string that references an attribute to serialize <a href="#Relation-relatedModel"><q>relatedModel</q></a> into.
 		</p>
@@ -416,19 +417,37 @@ Company = Backbone.RelationalModel.extend({
 		</p>
 
 <pre class="language-javascript"><code class="language-javascript runnable" data-setup="#example-zoo"><!--
--->var CircusAnimal = Animal.extend({
-	//
+-->var FarmAnimal = Animal.extend();
+
+// This `Farm` is confused, like legacy stuff can be. It wants its data back on a completely
+// different key than it supplies it on. We want to use a different one in our app as well.
+var Farm = Backbone.RelationalModel.extend({
+	relations: [{
+		type: Backbone.HasMany,
+		key: 'animals',
+		keySource: 'livestock',
+		keyDestination: 'pets',
+		relatedModel: FarmAnimal,
+		reverseRelation: {
+			key: 'farm',
+			includeInJSON: 'name'
+		}
+	}]
 });
+
+// Create a `Farm`; parse `species`, add to `animals`, output goes to `pets`.
+var farm = new Farm( { name: 'Old MacDonald', livestock: [ { species: 'Sheep' } ] } );
+farm.get( 'animals' ).add( { species: 'Cow' } );
+alert( JSON.stringify( farm.toJSON(), null, 4 ) );
 </code></pre>
 
-		<p id="Relation-collectionType">
-			<strong class="header">collectionType</strong><code>relation.collectionType</code>
-		</p>
+		<h4 class="code" id="Relation-collectionType">
+			collectionType<code>relation.collectionType</code>
+		</h4>
 		<p>
 			A string that can be resolved to an object type on the global scope, or a reference to a
 			<strong>Backbone.Collection</strong> type.
 		</p>
-
 		<p>
 			Determine the type of collections used for a HasMany relation. If you define a
 			url(models&lt;Backbone.Model[]&gt;) function on the specified collection, this enables
@@ -436,9 +455,9 @@ Company = Backbone.RelationalModel.extend({
 			firing a separate request for each.
 		</p>
 
-		<p id="Relation-collectionKey">
-			<strong class="header">collectionKey</strong><code>relation.collectionKey</code>
-		</p>
+		<h4 class="code" id="Relation-collectionKey">
+			collectionKey<code>relation.collectionKey</code>
+		</h4>
 		<p>
 			A string or a boolean. Default: <q>true</q>.
 		</p>
@@ -451,9 +470,9 @@ Company = Backbone.RelationalModel.extend({
 			(or any falsy value) and this reference will not be created.
 		</p>
 
-		<p id="Relation-collectionOptions">
-			<strong class="header">collectionOptions</strong><code>relation.collectionOptions</code>
-		</p>
+		<h4 class="code" id="Relation-collectionOptions">
+			collectionOptions<code>relation.collectionOptions</code>
+		</h4>
 		<p>
 			An options hash or a function that accepts an instance of a <strong>Backbone.RelationalModel</strong> and returns an option
 			hash
@@ -464,9 +483,9 @@ Company = Backbone.RelationalModel.extend({
 			an options hash.
 		</p>
 
-		<p id="Relation-includeInJSON">
-			<strong class="header">includeInJSON</strong><code>relation.includeInJSON</code>
-		</p>
+		<h4 class="code" id="Relation-includeInJSON">
+			includeInJSON<code>relation.includeInJSON</code>
+		</h4>
 		<p>
 			A boolean, a string referencing one of the model's attributes, or an array of strings referencing model
 			attributes. <q>includeInJson</q> is equal to <q>true</q> by default.
@@ -496,9 +515,9 @@ Company = Backbone.RelationalModel.extend({
 			been serialized.
 		</p>
 
-		<p id="Relation-createModels">
-			<strong class="header">createModels</strong><code>relation.createModels</code>
-		</p>
+		<h4 class="code" id="Relation-createModels">
+			createModels<code>relation.createModels</code>
+		</h4>
 		<p>
 			A boolean. By default it is equal to <q>true</q>.
 		</p>
@@ -506,9 +525,9 @@ Company = Backbone.RelationalModel.extend({
 			Specifies whether models be created from nested objects or not.
 		</p>
 
-		<p id="Relation-reverseRelation">
-			<strong class="header">reverseRelation</strong><code>relation.reverseRelation</code>
-		</p>
+		<h4 class="code" id="Relation-reverseRelation">
+			reverseRelation<code>relation.reverseRelation</code>
+		</h4>
 		<p>
 			If the relation should be bidirectional, specify the details for the reverse relation here. It's only mandatory
 			to supply a <a href="#Relation-key"><q>key</q></a>; <a href="#Relation-relatedModel"><q>relatedModel</q></a> is automatically
@@ -517,7 +536,6 @@ Company = Backbone.RelationalModel.extend({
 			HasMany relation. In this case, you cannot create a <q>reverseRelation</q> with
 			type HasMany as well; please see Many-to-many relations on how to model these type of relations.
 		</p>
-
 		<p class="warning">
 			Note that if you define a relation (plus a reverseRelation) on a model,	but don't actually create an instance
 			of that model, it is possible <q>initializeRelations</q> will never get	called, and the reverseRelation
@@ -525,9 +543,9 @@ Company = Backbone.RelationalModel.extend({
 			See <a href="#RelationalModel-setup">setup</a>.
 		</p>
 
-		<p id="Relation-autoFetch">
-			<strong class="header">autoFetch</strong><code>relation.autoFetch</code>
-		</p>
+		<h4 class="code" id="Relation-autoFetch">
+			autoFetch<code>relation.autoFetch</code>
+		</h4>
 		<p>
 			A boolean or an object. Defaults to <q>false</q>.
 		</p>
@@ -565,10 +583,10 @@ Company = Backbone.RelationalModel.extend({
 });
 </code></pre>
 
-		<p id="RelationalModel-subModelTypes">
-			<strong class="header">subModelTypes</strong>
+		<h4 class="code" id="RelationalModel-subModelTypes">
+			subModelTypes
 			<code>relationalModel.subModelTypes(attributes&lt;string|number|object&gt;, [options&lt;object&gt;])</code>
-		</p>
+		</h4>
 		<p>
 			An object that defaults to empty({}).
 		</p>
@@ -625,9 +643,10 @@ alert( 'chimp is an animal? ' + ( chimp instanceof Animal ) + '\n' +
 			Note that this means that there cannot be any overlap in ids between instances of Mammal and Primate, as the
 			Primate with id 3 will be the Mammal with id 3.
 		</p>
-		<p id="RelationalModel-subModelTypeAttribute">
-			<strong class="header">subModelTypeAttribute</strong><code>relationalModel.subModelTypeAttribute</code>
-		</p>
+
+		<h4 class="code" id="RelationalModel-subModelTypeAttribute">
+			subModelTypeAttribute<code>relationalModel.subModelTypeAttribute</code>
+		</h4>
 		<p>
 			A string that defaults to 'type'.
 		</p>
@@ -642,24 +661,23 @@ alert( 'chimp is an animal? ' + ( chimp instanceof Animal ) + '\n' +
 			Instance methods
 		</h3>
 
-		<p id="RelationalModel-getRelation">
-			<strong class="header">getRelation</strong><code>relationModel.getRelation( name&lt;string&gt; )</code>
-		</p>
+		<h4 class="code" id="RelationalModel-getRelation">
+			getRelation<code>relationModel.getRelation( name&lt;string&gt; )</code>
+		</h4>
 		<p>
 			Returns: <q>Backbone.Relation</q> A single initialized relation on the model.
 		</p>
 
-		<p id="RelationalModel-getRelations">
-			<strong class="header">getRelations</strong><code>relationModel.getRelations()</code>
-		</p>
+		<h4 class="code" id="RelationalModel-getRelations">
+			getRelations<code>relationModel.getRelations()</code>
+		</h4>
 		<p>
 			Returns: <q>Backbone.Relation[]</q> The set of initialized relations on the model.
 		</p>
 
-		<p id="RelationalModel-fetchRelated">
-			<strong class="header">fetchRelated</strong><code>relationalModel.fetchRelated(key&lt;string&gt;, [options&lt;object&gt;],
-			[update&lt;boolean&gt;])</code>
-		</p>
+		<h4 class="code" id="RelationalModel-fetchRelated">
+			fetchRelated<code>relationalModel.fetchRelated(key&lt;string&gt;, [options&lt;object&gt;], [update&lt;boolean&gt;])</code>
+		</h4>
 		<p>
 			Returns: <q>deferred[]</q> An array of request objects.
 		</p>
@@ -678,9 +696,9 @@ alert( 'chimp is an animal? ' + ( chimp instanceof Animal ) + '\n' +
 			or <a href="https://github.com/PaulUithol/backbone-tastypie">Backbone-tastypie</a> for an example.
 		</p>
 
-		<p id="RelationalModel-toJSON">
-			<strong class="header">toJSON</strong><code>relationModel.toJSON( name&lt;string&gt; )</code>
-		</p>
+		<h4 class="code" id="RelationalModel-toJSON">
+			toJSON<code>relationModel.toJSON( name&lt;string&gt; )</code>
+		</h4>
 		<p>
 			Returns: <q>Object</q> The JSON representation of the model.
 			See <a href="http://backbonejs.org/#Model-toJSON">Backbone.Model.toJSON</a>.
@@ -695,9 +713,9 @@ alert( 'chimp is an animal? ' + ( chimp instanceof Animal ) + '\n' +
 			Static methods
 		</h3>
 
-		<p id="RelationalModel-setup">
-			<strong class="header">setup</strong><code>relationModel.setup()</code>
-		</p>
+		<h4 class="code" id="RelationalModel-setup">
+			setup<code>relationModel.setup()</code>
+		</h4>
 		<p>
 			Returns: <q>Backbone.RelationalModel.constuctor</q> The type.
 		</p>
@@ -727,9 +745,9 @@ alert( 'chimp is an animal? ' + ( chimp instanceof Animal ) + '\n' +
 MyModel.setup()
 </code></pre>
 
-		<p id="RelationalModel-build">
-			<strong class="header">build</strong><code>relationalModel.build(attributes&lt;object&gt;, [options&lt;object&gt;])</code>
-		</p>
+		<h4 class="code" id="RelationalModel-build">
+			build<code>relationalModel.build(attributes&lt;object&gt;, [options&lt;object&gt;])</code>
+		</h4>
 		<p>
 			Returns: <q>Backbone.RelationalModel</q> A model instance.
 		</p>
@@ -740,10 +758,10 @@ MyModel.setup()
 			Note: this is a static method. It operate on the model type itself, not on an instance.
 		</p>
 
-		<p id="RelationalModel-findOrCreate">
-			<strong class="header">findOrCreate</strong>
+		<h4 class="code" id="RelationalModel-findOrCreate">
+			findOrCreate
 			<code>relationalModel.findOrCreate(attributes&lt;string|number|object&gt;, [options&lt;object&gt;])</code>
-		</p>
+		</h4>
 		<p>
 			Returns: <q>Backbone.RelationalModel</q> A model instance.
 		</p>
@@ -764,9 +782,9 @@ MyModel.setup()
 			Note: this is a static method. It operate on the model type itself, not on an instance.
 		</p>
 
-		<p id="RelationalModel-events">
-			<strong class="header">Catalog of Events</strong>
-		</p>
+		<h4 id="RelationalModel-events">
+			Catalog of Events
+		</h4>
 		<p>
 			This is the complete list of all of the events that Backbone-relational makes available to you, on top of
 			the events already found in Backbone.
@@ -795,53 +813,50 @@ MyModel.setup()
 		
 		
 		<h2 id="Relation">Backbone.Relation</h2>
-		
 		<p>
 			Each <a href="#RelationalModel-relations">relation</a> definition on a model is used to create in instance of a <q>Backbone.Relation</q>; either
 			a <q>Backbone.HasOne</q> or a <q>Backbone.HasMany</q>.
 		</p>
-		
-		<p id="Relation-HasOne">
-			<strong class="header">Backbone.HasOne</strong>
-		</p>
+
+		<h4 class="code" id="Relation-HasOne">
+			Backbone.HasOne
+		</h4>
 		<p>
 			Defines a <strong>HasOne</strong> relation. When defining a <a href="#Relation-reverseRelation">reverseRelation</a>, the default type
 			will be <strong>HasMany</strong>. However, this can also be set to <strong>HasOne</strong> to define a one-to-one relation.
 		</p>
-		
-		<p id="Relation-HasMany">
-			<strong class="header">Backbone.HasMany</strong>
-		</p>
+
+		<h4 class="code" id="Relation-HasMany">
+			Backbone.HasMany
+		</h4>
 		<p>
 			Defines a <strong>HasMany</strong> relation. When defining a <a href="#Relation-reverseRelation">reverseRelation</a>, the type
 			will be <strong>HasOne</strong>.
 		</p>
 		
 		<h2 id="Store">Backbone.Relational.Store</h2>
-		
 		<p>
 			The <strong>Store</strong> is a global model cache. Per application, one instance is created, which is accessible as
 			<q>Backbone.store</q> (much like <q>Backbone.History</q>).
 		</p>
-		
-		<p id="Store-addModelScope">
-			<strong class="header">addModelScope</strong><code>Backbone.store.addModelScope( scope&lt;object&gt; )</code>
-		</p>
+
+		<h4 class="code" id="Store-addModelScope">
+			addModelScope<code>Backbone.store.addModelScope( scope&lt;object&gt; )</code>
+		</h4>
 		<p>
 			When working in an environment without a shared global scope (like <q>window</q> is in a browser), you'll need
 			to tell the <q>store</q> where your models are defined, so it can resolve them to create and maintain relations. 
 		</p>
 
-		<p id="Store-reset">
-			<strong class="header">reset</strong><code>Backbone.store.reset()</code>
-		</p>
+		<h4 class="code" id="Store-reset">
+			reset<code>Backbone.store.reset()</code>
+		</h4>
 		<p>
 			Reset the <q>store</q> to it's original state. This will disable relations for all models created up to this point,
 			remove added model scopes, and removed all internal store collections.
 		</p>
 
 		<h2 id="examples">Examples</h2>
-
 		<p>
 			A tutorial by antoviaque: <a href="http://antoviaque.org/docs/tutorials/backbone-relational-tutorial/">http://antoviaque.org/docs/tutorials/backbone-relational-tutorial/</a>
 			(<a href="https://github.com/antoviaque/backbone-relational-tutorial">and the accompanying git repository</a>).
