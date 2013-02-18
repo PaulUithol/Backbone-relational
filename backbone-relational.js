@@ -1202,7 +1202,9 @@
 		 * @return {jQuery.when[]} An array of request objects
 		 */
 		fetchRelated: function( key, options, update ) {
-			options || ( options = {} );
+			// Set default `options` for fetch
+			options = _.extend( { update: true, remove: false }, options );
+
 			var setUrl,
 				requests = [],
 				rel = this.getRelation( key ),
@@ -1249,8 +1251,7 @@
 							},
 							url: setUrl
 						},
-						options,
-						{ update: true, remove: false }
+						options
 					);
 
 					requests = [ rel.related.fetch( opts ) ];
