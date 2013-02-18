@@ -330,7 +330,7 @@ strong.header, code, pre, q {
 		position: relative;
 		border: 0 solid #aaa;
 		border-left-width: .5em;
-		margin: 1.5em 0 1.5em -1.5em;
+		margin: 1.5em 0 1.5em -1em;
 	}
 	pre code {
 		margin: 0;

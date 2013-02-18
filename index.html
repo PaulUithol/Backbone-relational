@@ -52,8 +52,10 @@
 			</li>
 			<li><a href="#RelationalModel-subModelTypes">subModelTypes</a></li>
 			<li><a href="#RelationalModel-subModelTypeAttribute">subModelTypeAttribute</a></li>
+			<li><a href="#RelationalModel-getRelation">getRelation</a></li>
 			<li><a href="#RelationalModel-getRelations">getRelations</a></li>
 			<li><a href="#RelationalModel-fetchRelated">fetchRelated</a></li>
+			<li><a href="#RelationalModel-toJSON">toJSON</a></li>
 			<li><a href="#RelationalModel-setup">setup</a></li>
 			<li><a href="#RelationalModel-build">build</a></li>
 			<li><a href="#RelationalModel-findOrCreate">findOrCreate</a></li>
@@ -391,7 +393,7 @@ Company = Backbone.RelationalModel.extend({
 		</p>
 
 		<p class="warning">
-			WARNING: when using a <a href="#Relation-keySource">keySource</a>, you should not use that attribute name for
+			WARNING: when using a <q>keySource</q>, you should not use that attribute name for
 			other purposes.
 		</p>
 
@@ -421,8 +423,14 @@ Company = Backbone.RelationalModel.extend({
 		</p>
 
 		<p class="warning">
-			WARNING: when using a <a href="#Relation-keyDestination">keyDestination</a>, you should not use that attribute name for other purposes.
+			WARNING: when using a <q>keyDestination</q>, you should not use that attribute name for other purposes.
 		</p>
+
+<pre class="language-javascript"><code class="language-javascript runnable" data-setup="#example-zoo"><!--
+-->var CircusAnimal = Animal.extend({
+	//
+});
+</code></pre>
 
 		<p id="Relation-collectionType">
 			<strong class="header">collectionType</strong><code>relation.collectionType</code>
@@ -654,6 +662,13 @@ alert( 'chimp is an animal? ' + ( chimp instanceof Animal ) + '\n' +
 			Instance methods
 		</h3>
 
+		<p id="RelationalModel-getRelation">
+			<strong class="header">getRelation</strong><code>relationModel.getRelation( name&lt;string&gt; )</code>
+		</p>
+		<p>
+			Returns: <q>Backbone.Relation</q> A single initialized relation on the model.
+		</p>
+
 		<p id="RelationalModel-getRelations">
 			<strong class="header">getRelations</strong><code>relationModel.getRelations()</code>
 		</p>
@@ -682,6 +697,19 @@ alert( 'chimp is an animal? ' + ( chimp instanceof Animal ) + '\n' +
 			collectionType for the relation you call fetchRelated on. The collectionType should have an overridden
 			url(models&lt;Backbone.Model[]&gt;) method that allows it to construct a url for an array of models. See the example
 			at the top of Backbone.Relation options or Backbone-tastypie for an example.
+		</p>
+
+		<p id="RelationalModel-toJSON">
+			<strong class="header">toJSON</strong><code>relationModel.toJSON( name&lt;string&gt; )</code>
+		</p>
+		<p>
+			Returns: <q>Object</q> The JSON representation of the model.
+			See <a href="http://backbonejs.org/#Model-toJSON">Backbone.Model.toJSON</a>.
+		</p>
+		<p>
+			The regular <q>toJSON</q> function has been overridden and modified to serialize (nested) relations
+			according to their <a href="#Relation-includeInJSON">includeInJSON</a>,	<a href="#Relation-keySource">keySource</a>,
+			and <a href="#Relation-keyDestination">keyDestination</a> options.
 		</p>
 
 		<h3 id="RelationalModel-static-methods">
@@ -741,27 +769,17 @@ MyModel.setup()
 			Returns: <q>Backbone.RelationalModel</q> A model instance.
 		</p>
 		<p>
-			Search for a model instance in the <a href="#Store">Backbone.Relational.store</a>.
+			Search for a model instance in the <a href="#Store">Backbone.Relational.store</a>, and return the model if found.
+			If no model is found, a new model will be created if <q>options.create</q> is <q>true</q>.
 		</p>
-
-		<ul>
-			<li>
-				If attributes is a string or a number, <q>findOrCreate</q> will query the store and return a model if found.
-			</li>
-			<li>
-				If attributes is an object, the model will be updated with attributes if found. Otherwise, a new model is
-				created with attributes (unless <q>options.create</q> is explicitly set to false).
-			</li>
-		</ul>
-
 		<p>
 			Accepted <q>options</q>:
 		</p>
 		<dl>
 			<dt><q>create</q></dt>
-			<dd>If true, a new model will be created if an instance matching <q>attributes</q> isn't found in the store</dd>
+			<dd>Default: <q>true</q>. If true, a new model will be created if an instance matching <q>attributes</q> isn't found in the store.</dd>
 			<dt><q>update</q></dt>
-			<dd>If true, a model will be updated with <q>attributes</q> if found.</dd>
+			<dd>Default: <q>true</q>. If true, a found model will be updated with <q>attributes</q> (if <q>attributes</q> is an <q>object</q>).</dd>
 		</dl>
 		<p class="warning">
 			Note: this is a static method. It operate on the model type itself, not on an instance.
@@ -780,19 +798,19 @@ MyModel.setup()
 				<strong>"add"</strong> - triggered on addition to a HasMany relation.
 			</li>
 			<li>
-				<strong>"add:&lt;key&gt;"</strong> (addedModel<Backbone.Model>, related<Backbone.Collection>) - .
+				<strong>"add:&lt;key&gt;"</strong><code>(addedModel&lt;Backbone.Model&gt;, related&lt;Backbone.Collection&gt;)</code>
 			</li>
 			<li>
 				<strong>"remove"</strong> - triggered on removal from a HasMany relation.
 			</li>
 			<li>
-				 <strong>"remove:&lt;key&gt;"</strong> (removedModel<Backbone.Model>, related<Backbone.Collection>) - .
+				 <strong>"remove:&lt;key&gt;"</strong><code>(removedModel&lt;Backbone.Model&gt;, related&lt;Backbone.Collection&gt;)</code>
 			</li>
 			<li>
 				<strong>"update"</strong> - triggered on changes to the key itself on HasMany and HasOne relations.
 			</li>
 			<li>
-				<strong>"update:&lt;key&gt;"</strong> (model<Backbone.Model>, related<Backbone.Model|Backbone.Collection>) - .
+				<strong>"update:&lt;key&gt;"</strong><code>(model&lt;Backbone.Model&gt;, related&lt;Backbone.Model|Backbone.Collection&gt;)</code>
 			</li>
 		</ul>
 		
@@ -800,7 +818,7 @@ MyModel.setup()
 		<h2 id="Relation">Backbone.Relation</h2>
 		
 		<p>
-			Each <q>relation</q> definition in a model is used to create in instance of a <q>Backbone.Relation</q>; either
+			Each <a href="#RelationalModel-relations">relation</a> definition on a model is used to create in instance of a <q>Backbone.Relation</q>; either
 			a <q>Backbone.HasOne</q> or a <q>Backbone.HasMany</q>.
 		</p>
 		
