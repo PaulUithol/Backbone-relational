@@ -33,7 +33,7 @@
 		<a class="toc_title" href="#RelationalModel">
 			Backbone.RelationalModel
 		</a>
-		
+
 		<ul class="toc_section">
 			<li>
 				<a href="#RelationalModel-relations">relations</a>
@@ -50,13 +50,13 @@
 					<li><a href="#Relation-reverseRelation">reverseRelation</a></li>
 				</ul>
 			</li>
+			<li><a href="#RelationalModel-subModelTypes">subModelTypes</a></li>
+			<li><a href="#RelationalModel-subModelTypeAttribute">subModelTypeAttribute</a></li>
 			<li><a href="#RelationalModel-getRelations">getRelations</a></li>
 			<li><a href="#RelationalModel-fetchRelated">fetchRelated</a></li>
 			<li><a href="#RelationalModel-setup">setup</a></li>
 			<li><a href="#RelationalModel-build">build</a></li>
 			<li><a href="#RelationalModel-findOrCreate">findOrCreate</a></li>
-			<li><a href="#RelationalModel-subModelTypes">subModelTypes</a></li>
-			<li><a href="#RelationalModel-subModelTypeAttribute">subModelTypeAttribute</a></li>
 			<li><a href="#RelationalModel-events"><strong>Catalog of Events</strong></a></li>
 		</ul>
 		
@@ -202,39 +202,14 @@
 
 		<p>
 			When using Backbone-relational, each model defining (or receiving) <q>relations</q> must extend
-			<strong>Backbone.RelationalModel</strong> in order to function. <strong>Backbone.RelationalModel</strong> introduces a couple
-			of new methods, events and properties. It's important to know which attributes are methods of an
-			instance of <strong>Backbone.RelationalModel</strong>, which operate on the type itself, and which are properties.
+			<strong>Backbone.RelationalModel</strong> in order to function. <strong>Backbone.RelationalModel</strong>
+			introduces a couple of new methods, events and properties. It's important to know which are properties,
+			which are methods of an	instance, and which operate on the type itself.
 			These three subcategories are detailed below.
 		</p>
 
 		<p>
-			<strong class="header">Instance methods</strong>
-			</br>
-			These methods operate on an instance of a type.
-		</p>
-
-		<ul class="small">
-			<li><a href="#RelationalModel-getRelations">getRelations</a></li>
-			<li><a href="#RelationalModel-fetchRelated">fetchRelated</a></li>
-		</ul>
-
-		<p>
-			<strong class="header">Methods on the type itself</strong>
-			</br>
-			Several methods don't operate on model instances, but are defined on the type itself.
-		</p>
-
-		<ul class="small">
-			<li><a href="#RelationalModel-setup">setup</a></li>
-			<li><a href="#RelationalModel-build">build</a></li>
-			<li><a href="#RelationalModel-findOrCreate">findOrCreate</a></li>
-		</ul>
-
-		<p>
-			<strong class="header">Properties</strong>
-			</br>
-			Properties can be defined along with the subclass prototype when extending Backbone.
+			<strong>Properties</strong> can be defined along with the subclass prototype when extending Backbone.
 			RelationalModel or a subclass thereof.
 		</p>
 
@@ -244,9 +219,32 @@
 			<li><a href="#RelationalModel-subModelTypeAttribute">subModelTypeAttribute</a></li>
 		</ul>
 
+		<p>
+			<strong>Instance methods</strong> operate on an instance of a type.
+		</p>
+
+		<ul class="small">
+			<li><a href="#RelationalModel-getRelations">getRelations</a></li>
+			<li><a href="#RelationalModel-fetchRelated">fetchRelated</a></li>
+		</ul>
+
+		<p>
+			<strong>Static methods</strong> operate on the type itself, as opposed to operating on model instances.
+		</p>
+
+		<ul class="small">
+			<li><a href="#RelationalModel-setup">setup</a></li>
+			<li><a href="#RelationalModel-build">build</a></li>
+			<li><a href="#RelationalModel-findOrCreate">findOrCreate</a></li>
+		</ul>
+
+		<h3 id="RelationalModel-properties">
+			Properties
+		</h3>
+
 		<p id="RelationalModel-relations">
 			<strong class="header">relations</strong><code>relation[]</code>
-			</br>
+			<br>
 			Each <strong>Backbone.RelationalModel</strong> can contain an array of relation definitions. Each relation supports a number of
 			options, of which <a href="#Relation-relatedModel">relatedModel</a>, <a href="#Relation-key">key</a> and
 			<a href="#Relation-type">type</a> are mandatory. A relation could look like the following:
@@ -574,96 +572,6 @@ Company = Backbone.RelationalModel.extend({
 });
 </code></pre>
 
-		<p id="RelationalModel-getRelations">
-			<strong class="header">getRelations</strong><code>relationModel.getRelations()</code>
-		</p>
-		<p>
-			Returns the set of initialized relations on the model.
-		</p>
-
-		<p id="RelationalModel-fetchRelated">
-			<strong class="header">fetchRelated</strong><code>relationalModel.fetchRelated(key&lt;string&gt;, [options&lt;object&gt;],
-			[update&lt;boolean&gt;])</code>
-		</p>
-		<p>
-			Returns the set of initialized relations on the model.
-		</p>
-
-		<p>
-			Fetch models from the server that were referenced in the model's attributes, but have not been found/created yet.
-			This can be used specifically for lazy-loading scenarios. Setting update to true guarantees that the model will
-			be fetched from the server and any model that already exists in the store will be updated with the retrieved data.
-			The options object specifies options to be passed to <a href="http://backbonejs.org/#Sync">Backbone.Sync</a>.
-		</p>
-
-		<p>
-			By default, a separate request will be fired for each additional model that is to be fetched from the server.
-			However, if your server/API supports it, you can fetch the set of models in one request by specifying a
-			collectionType for the relation you call fetchRelated on. The collectionType should have an overridden
-			url(models&lt;Backbone.Model[]&gt;) method that allows it to construct a url for an array of models. See the example
-			at the top of Backbone.Relation options or Backbone-tastypie for an example.
-		</p>
-
-		<p id="RelationalModel-setup">
-			<strong class="header">setup</strong><code>relationModel.setup()</code>
-		</p>
-		<p class="warning">
-			Note: this is a class method. It operate on the model type itself, not on an instance.
-		</p>
-		<p>
-			Initialize the relations and submodels for the model type. Normally, this happens automatically, but it doesn't if 
-			you're using CoffeeScript and using the syntax <q>class MyModel extends Backbone.RelationalModel</q> instead of
-			the JavaScript equivalent of <q>MyModel = Backbone.RelationalModel.extend()</q>.
-		</p>
-		<p>
-			This has advantages in CoffeeScript, but it also means that <q>Backbone.Model.extend</q> will not get called.
-			Instead, CoffeeScript generates piece of code that would normally achieve the same.	However, <q>extend</q> is also
-			the method that Backbone-relational overrides to set up relations as you're defining your <q>Backbone.RelationalModel</q> subclass.
-		</p>
-		<p>
-			In this case, you should call <q>setup</q> manually after defining your subclass CoffeeScript-style. For example:
-		</p>
-
-<pre class="language-javascript"><code class="language-javascript"><!--
--->class MyModel extends Backbone.RelationalModel
-	relations: [
-		// etc
-	]
-
-MyModel.setup()</code>
-</pre>
-
-		<p id="RelationalModel-build">
-			<strong class="header">build</strong><code>relationalModel.build(attributes&lt;object&gt;, [options&lt;object&gt;])</code>
-		</p>
-		<p class="warning">
-			Note: this is a class method. It operate on the model type itself, not on an instance.
-		</p>
-		<p>
-			Create an instance of a model, taking into account what submodels have been defined.
-		</p>
-
-		<p id="RelationalModel-findOrCreate">
-			<strong class="header">findOrCreate</strong>
-			<code>relationalModel.findOrCreate(attributes&lt;string|number|object&gt;, [options&lt;object&gt;])</code>
-		</p>
-		<p class="warning">
-			Note: this is a class method. It operate on the model type itself, not on an instance.
-		</p>
-		<p>
-			Search for a model instance in the <q>Backbone.Relational.store</q>.
-		</p>
-
-		<ul>
-			<li>
-				If attributes is a string or a number, <q>findOrCreate</q> will query the store and return a model if found.
-			</li>
-			<li>
-				If attributes is an object, the model will be updated with attributes if found. Otherwise, a new model is
-				created with attributes (unless options.create is explicitly set to false).
-			</li>
-		</ul>
-
 		<p id="RelationalModel-subModelTypes">
 			<strong class="header">subModelTypes</strong>
 			<code>relationalModel.subModelTypes(attributes&lt;string|number|object&gt;, [options&lt;object&gt;])</code>
@@ -713,8 +621,8 @@ var mammals = new MammalCollection([
 var chimp = mammals.get( 3 );
 
 alert( 'chimp is an animal? ' + ( chimp instanceof Animal ) + '\n' +
-	'chimp is a carnivore? ' + ( chimp instanceof Carnivore ) + '\n' +
-	'chimp is a primate? ' + ( chimp instanceof Primate ) );
+'chimp is a carnivore? ' + ( chimp instanceof Carnivore ) + '\n' +
+'chimp is a primate? ' + ( chimp instanceof Primate ) );
 </code></pre>
 
 		<p>
@@ -742,12 +650,129 @@ alert( 'chimp is an animal? ' + ( chimp instanceof Animal ) + '\n' +
 			and if the <a href="#Relation-relatedModel">relatedModel</a> has one or more submodels.
 		</p>
 
+		<h3 id="RelationalModel-instance-methods">
+			Instance methods
+		</h3>
+
+		<p id="RelationalModel-getRelations">
+			<strong class="header">getRelations</strong><code>relationModel.getRelations()</code>
+		</p>
+		<p>
+			Returns: <q>Backbone.Relation[]</q> The set of initialized relations on the model.
+		</p>
+
+		<p id="RelationalModel-fetchRelated">
+			<strong class="header">fetchRelated</strong><code>relationalModel.fetchRelated(key&lt;string&gt;, [options&lt;object&gt;],
+			[update&lt;boolean&gt;])</code>
+		</p>
+		<p>
+			Returns: <q>deferred[]</q> An array of request objects.
+		</p>
+
+		<p>
+			Fetch models from the server that were referenced in the model's attributes, but have not been found/created yet.
+			This can be used specifically for lazy-loading scenarios. Setting update to true guarantees that the model will
+			be fetched from the server and any model that already exists in the store will be updated with the retrieved data.
+			The options object specifies options to be passed to <a href="http://backbonejs.org/#Sync">Backbone.Sync</a>.
+		</p>
+
+		<p>
+			By default, a separate request will be fired for each additional model that is to be fetched from the server.
+			However, if your server/API supports it, you can fetch the set of models in one request by specifying a
+			collectionType for the relation you call fetchRelated on. The collectionType should have an overridden
+			url(models&lt;Backbone.Model[]&gt;) method that allows it to construct a url for an array of models. See the example
+			at the top of Backbone.Relation options or Backbone-tastypie for an example.
+		</p>
+
+		<h3 id="RelationalModel-static-methods">
+			Static methods
+		</h3>
+
+		<p id="RelationalModel-setup">
+			<strong class="header">setup</strong><code>relationModel.setup()</code>
+		</p>
+		<p>
+			Returns: <q>Backbone.RelationalModel.constuctor</q> The type.
+		</p>
+		<p>
+			Initialize the relations and submodels for the model type. Normally, this happens automatically, but it doesn't if 
+			you're using CoffeeScript and using the syntax <q>class MyModel extends Backbone.RelationalModel</q> instead of
+			the JavaScript equivalent of <q>MyModel = Backbone.RelationalModel.extend()</q>.
+		</p>
+		<p>
+			This has advantages in CoffeeScript, but it also means that <q>Backbone.Model.extend</q> will not get called.
+			Instead, CoffeeScript generates piece of code that would normally achieve the same.	However, <q>extend</q> is also
+			the method that Backbone-relational overrides to set up relations as you're defining your <q>Backbone.RelationalModel</q> subclass.
+		</p>
+		<p>
+			In this case, you should call <q>setup</q> manually after defining your subclass CoffeeScript-style. For example:
+		</p>
+		<p class="warning">
+			Note: this is a static method. It operate on the model type itself, not on an instance.
+		</p>
+
+<pre class="language-javascript"><code class="language-javascript"><!--
+-->class MyModel extends Backbone.RelationalModel
+	relations: [
+		// etc
+	]
+
+MyModel.setup()
+</code></pre>
+
+		<p id="RelationalModel-build">
+			<strong class="header">build</strong><code>relationalModel.build(attributes&lt;object&gt;, [options&lt;object&gt;])</code>
+		</p>
+		<p>
+			Returns: <q>Backbone.RelationalModel</q> A model instance.
+		</p>
+		<p>
+			Create an instance of a model, taking into account what submodels have been defined.
+		</p>
+		<p class="warning">
+			Note: this is a static method. It operate on the model type itself, not on an instance.
+		</p>
+
+		<p id="RelationalModel-findOrCreate">
+			<strong class="header">findOrCreate</strong>
+			<code>relationalModel.findOrCreate(attributes&lt;string|number|object&gt;, [options&lt;object&gt;])</code>
+		</p>
+		<p>
+			Returns: <q>Backbone.RelationalModel</q> A model instance.
+		</p>
+		<p>
+			Search for a model instance in the <a href="#Store">Backbone.Relational.store</a>.
+		</p>
+
+		<ul>
+			<li>
+				If attributes is a string or a number, <q>findOrCreate</q> will query the store and return a model if found.
+			</li>
+			<li>
+				If attributes is an object, the model will be updated with attributes if found. Otherwise, a new model is
+				created with attributes (unless <q>options.create</q> is explicitly set to false).
+			</li>
+		</ul>
+
+		<p>
+			Accepted <q>options</q>:
+		</p>
+		<dl>
+			<dt><q>create</q></dt>
+			<dd>If true, a new model will be created if an instance matching <q>attributes</q> isn't found in the store</dd>
+			<dt><q>update</q></dt>
+			<dd>If true, a model will be updated with <q>attributes</q> if found.</dd>
+		</dl>
+		<p class="warning">
+			Note: this is a static method. It operate on the model type itself, not on an instance.
+		</p>
+
 		<p id="RelationalModel-events">
 			<strong class="header">Catalog of Events</strong>
 		</p>
 		<p>
-			This is the complete list of all of the events that Backbone-relational makes available to you, in addition to
-			those found in Backbone.
+			This is the complete list of all of the events that Backbone-relational makes available to you, on top of
+			the events already found in Backbone.
 		</p>
 
 		<ul class="small">
