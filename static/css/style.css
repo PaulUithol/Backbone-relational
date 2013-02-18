@@ -313,6 +313,9 @@ strong.header, code, pre, q {
 		background: #fff;
 		border: 1px solid #ddd;
 	}
+		a q {
+			border: none;
+		}
 	strong.header {
 		font-size: 18px;
 		line-height: 36px;
