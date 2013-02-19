@@ -461,8 +461,8 @@
 		if ( instance ) {
 			this.initialize();
 
-			if ( options.autoFetch ) {
-				this.instance.fetchRelated( options.key, _.isObject( options.autoFetch ) ? options.autoFetch : {} );
+			if ( this.options.autoFetch ) {
+				this.instance.fetchRelated( this.key, _.isObject( this.options.autoFetch ) ? this.options.autoFetch : {} );
 			}
 
 			// When a model in the store is destroyed, check if it is 'this.instance'.
@@ -647,6 +647,13 @@
 			Backbone.Relational.store.getCollection( this.relatedModel )
 				.off( 'relational:add', this._relatedModelAdded )
 				.off( 'relational:remove', this._relatedModelRemoved );
+
+			if ( this instanceof Backbone.HasOne ) {
+				this.setRelated( null );
+			}
+			else if ( this instanceof Backbone.HasMany ) {
+				this.setRelated( this._prepareCollection() );
+			}
 			
 			_.each( this.getReverseRelations() || [], function( relation ) {
 				relation.removeRelated( this.instance );
@@ -674,14 +681,14 @@
 		},
 		
 		findRelated: function( options ) {
-			var item = this.keyContents;
 			var model = null;
 			
-			if ( item instanceof this.relatedModel ) {
-				model = item;
+			if ( this.keyContents instanceof this.relatedModel ) {
+				model = this.keyContents;
 			}
-			else if ( item || item === 0 ) { // since 0 can be a valid `id` as well
-				model = this.relatedModel.findOrCreate( item, { create: this.options.createModels } );
+			else if ( this.keyContents || this.keyContents === 0 ) { // since 0 can be a valid `id` as well
+				var opts = _.defaults( { create: this.options.createModels }, options );
+				model = this.relatedModel.findOrCreate( this.keyContents, opts );
 			}
 			
 			return model;
@@ -704,7 +711,7 @@
 			var changed = _.isUndefined( options._related ),
 				oldRelated = changed ? this.related : options._related;
 			
-			if ( changed ) {	
+			if ( changed ) {
 				this.keyContents = attr;
 				
 				// Set new 'related'
@@ -751,12 +758,11 @@
 			if ( this.related ) {
 				return;
 			}
-			options = this.sanitizeOptions( options );
-			
-			var item = this.keyContents;
-			if ( item || item === 0 ) { // since 0 can be a valid `id` as well
-				var id = Backbone.Relational.store.resolveIdForItem( this.relatedModel, item );
+
+			if ( this.keyContents || this.keyContents === 0 ) { // since 0 can be a valid `id` as well
+				var id = Backbone.Relational.store.resolveIdForItem( this.relatedModel, this.keyContents );
 				if ( !_.isNull( id ) && model.id === id ) {
+					options = this.sanitizeOptions( options );
 					this.addRelated( model, options );
 				}
 			}
@@ -881,7 +887,8 @@
 							model = item;
 						}
 						else if ( item || item === 0 ) { // since 0 can be a valid `id` as well
-							model = this.relatedModel.findOrCreate( item, { create: this.options.createModels } );
+							var opts = _.defaults( { create: this.options.createModels }, options );
+							model = this.relatedModel.findOrCreate( item, opts );
 						}
 
 						if ( model && !this.related.get( model ) ) {
@@ -942,7 +949,7 @@
 				}
 
 				_.each( attr, function( attributes ) {
-					var model = this.relatedModel.findOrCreate( attributes, { create: this.options.createModels } );
+					var model = this.relatedModel.findOrCreate( attributes, _.extend( options, { create: this.options.createModels } ) );
 					if ( model ) {
 						coll.add( model );
 					}
@@ -959,7 +966,6 @@
 		},
 		
 		tryAddRelated: function( model, options ) {
-			options = this.sanitizeOptions( options );
 			if ( !this.related.get( model ) ) {
 				// Check if this new model was specified in 'this.keyContents'
 				var item = _.any( this.keyContents || [], function( item ) {
@@ -968,6 +974,7 @@
 				}, this );
 				
 				if ( item ) {
+					options = this.sanitizeOptions( options );
 					this.related.add( model, options );
 				}
 			}
@@ -1220,12 +1227,12 @@
 					var model;
 
 					if ( _.isObject( item ) ) {
-						model = rel.relatedModel.findOrCreate( item );
+						model = rel.relatedModel.findOrCreate( item, options );
 					}
 					else {
 						var attrs = {};
 						attrs[ rel.relatedModel.prototype.idAttribute ] = item;
-						model = rel.relatedModel.findOrCreate( attrs );
+						model = rel.relatedModel.findOrCreate( attrs, options );
 					}
 
 					return model;
@@ -1665,7 +1672,7 @@
 		if ( modelsToAdd.length ) {
 			add.call( this, modelsToAdd, options );
 
-			_.each( modelsToAdd || [], function( model ) {
+			_.each( modelsToAdd, function( model ) {
 				this.trigger( 'relational:add', model, this, options );
 			}, this );
 		}
@@ -1687,7 +1694,7 @@
 		options || ( options = {} );
 
 		//console.debug('calling remove on coll=%o; models=%o, options=%o', this, models, options );
-		_.each( models || [], function( model ) {
+		_.each( models, function( model ) {
 			model = this.get( model ) || this.get( model.cid );
 
 			if ( model instanceof Backbone.Model ) {
