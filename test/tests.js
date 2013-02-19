@@ -2813,10 +2813,11 @@ $(document).ready(function() {
 			var house = new House({
 				id: 'house-100',
 				location: 'in the middle of the street',
-				occupants: [ { id : 'person-5' }, { id : 'person-6' } ]
+				occupants: [ { id : 'person-5', jobs: [ { id : 'job-22' } ] }, { id : 'person-6' } ]
 			});
 
 			var eventsTriggered = 0;
+			
 			house
 				.on( 'add:occupants', function(model) {
 					ok( false, model.id + " should not be added" );
@@ -2827,7 +2828,13 @@ $(document).ready(function() {
 					eventsTriggered++;
 				});
 
+			house.get( 'occupants' ).at( 0 ).on( 'add:jobs', function( model ) {
+				ok( false, model.id + " should not be added" );
+				eventsTriggered++;
+			});
+
 			house.set( house.toJSON() );
+
 			ok( eventsTriggered === 0, "No add / remove events were triggered" )
 		});
 
