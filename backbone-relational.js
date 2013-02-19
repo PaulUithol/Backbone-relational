@@ -1370,8 +1370,8 @@
 			}
 
 			_.each( this.getRelations() || [], function( rel ) {
-					delete attributes[ rel.key ];
-				});
+				delete attributes[ rel.key ];
+			});
 
 			return new this.constructor( attributes );
 		},
@@ -1379,7 +1379,7 @@
 		/**
 		 * Convert relations to JSON, omits them when required
 		 */
-		toJSON: function(options) {
+		toJSON: function( options ) {
 			// If this Model has already been fully serialized in this branch once, return to avoid loops
 			if ( this.isLocked() ) {
 				return this.id;
@@ -1451,6 +1451,11 @@
 		}
 	},
 	{
+		/**
+		 *
+		 * @param superModel
+		 * @returns {Backbone.RelationalModel.constructor}
+		 */
 		setup: function( superModel ) {
 			// We don't want to share a relations array with a parent, as this will cause problems with
 			// reverse relations.
@@ -1522,6 +1527,9 @@
 			return new model( attributes, options );
 		},
 
+		/**
+		 *
+		 */
 		initializeModelHierarchy: function() {
 			// If we're here for the first time, try to determine if this modelType has a 'superModel'.
 			if ( _.isUndefined( this._superModel ) || _.isNull( this._superModel ) ) {
@@ -1630,23 +1638,26 @@
 	 */
 	var add = Backbone.Collection.prototype.__add = Backbone.Collection.prototype.add;
 	Backbone.Collection.prototype.add = function( models, options ) {
-		options || (options = {});
-		if ( !_.isArray( models ) ) {
-			models = [ models ];
+		// Short-circuit if this Collection doesn't hold RelationalModels
+		if ( !( this.model instanceof Backbone.RelationalModel.constructor ) ) {
+			return add.apply( this, arguments );
 		}
+
+		models = _.isArray( models ) ? models.slice() : [ models ];
+		options || ( options = {} );
 
 		var modelsToAdd = [];
 
 		//console.debug( 'calling add on coll=%o; model=%o, options=%o', this, models, options );
 		_.each( models || [], function( model ) {
-			if ( !( model instanceof Backbone.Model ) ) {
-				// `_prepareModel` attempts to find `model` in Backbone.store through `findOrCreate`,
-				// and sets the new properties on it if is found. Otherwise, a new model is instantiated.
-				model = Backbone.Collection.prototype._prepareModel.call( this, model, options );
-			}
+			if ( !( this.get( model ) || this.get( model.cid ) ) || options.merge ) {
+				if ( !( model instanceof Backbone.Model ) ) {
+					// `_prepareModel` attempts to find `model` in Backbone.store through `findOrCreate`,
+					// and sets the new properties on it if is found. Otherwise, a new model is instantiated.
+					model = Backbone.Collection.prototype._prepareModel.call( this, model, options );
+				}
 
-			if ( model instanceof Backbone.Model && !this.get( model ) && !this.get( model.cid ) ) {
-				modelsToAdd.push( model );
+				model && modelsToAdd.push( model );
 			}
 		}, this );
 
@@ -1667,13 +1678,13 @@
 	 */
 	var remove = Backbone.Collection.prototype.__remove = Backbone.Collection.prototype.remove;
 	Backbone.Collection.prototype.remove = function( models, options ) {
-		options || (options = {});
-		if ( !_.isArray( models ) ) {
-			models = [ models ];
+		// Short-circuit if this Collection doesn't hold RelationalModels
+		if ( !( this.model instanceof Backbone.RelationalModel.constructor ) ) {
+			return remove.apply( this, arguments );
 		}
-		else {
-			models = models.slice( 0 );
-		}
+
+		models = _.isArray( models ) ? models.slice() : [ models ];
+		options || ( options = {} );
 
 		//console.debug('calling remove on coll=%o; models=%o, options=%o', this, models, options );
 		_.each( models || [], function( model ) {
@@ -1694,7 +1705,10 @@
 	var reset = Backbone.Collection.prototype.__reset = Backbone.Collection.prototype.reset;
 	Backbone.Collection.prototype.reset = function( models, options ) {
 		reset.call( this, models, options );
-		this.trigger( 'relational:reset', this, options );
+
+		if ( this.model instanceof Backbone.RelationalModel.constructor ) {
+			this.trigger( 'relational:reset', this, options );
+		}
 
 		return this;
 	};
@@ -1705,7 +1719,10 @@
 	var sort = Backbone.Collection.prototype.__sort = Backbone.Collection.prototype.sort;
 	Backbone.Collection.prototype.sort = function( options ) {
 		sort.call( this, options );
-		this.trigger( 'relational:reset', this, options );
+
+		if ( this.model instanceof Backbone.RelationalModel.constructor ) {
+			this.trigger( 'relational:reset', this, options );
+		}
 
 		return this;
 	};
@@ -1716,6 +1733,11 @@
 	 */
 	var trigger = Backbone.Collection.prototype.__trigger = Backbone.Collection.prototype.trigger;
 	Backbone.Collection.prototype.trigger = function( eventName ) {
+		// Short-circuit if this Collection doesn't hold RelationalModels
+		if ( !( this.model instanceof Backbone.RelationalModel.constructor ) ) {
+			return trigger.apply( this, arguments );
+		}
+
 		if ( eventName === 'add' || eventName === 'remove' || eventName === 'reset' ) {
 			var dit = this, args = arguments;
 			

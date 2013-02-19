@@ -2591,7 +2591,7 @@ $(document).ready(function() {
 		});
 
 
-	module( "Model loading", { setup: initObjects } );
+	module( "Backbone.Collection", { setup: reset } );
 	
 	
 		test( "Loading (fetching) multiple times updates the model, and relations's `keyContents`", function() {
@@ -2608,14 +2608,14 @@ $(document).ready(function() {
 			
 			// The 'name' of 'user' is updated when adding a new hash to the collection
 			name = 'New name';
-			collA.add( { id: '/user/1/', name: name } );
+			collA.add( { id: '/user/1/', name: name }, { merge: true } );
 			var updatedUser = collA.at( 0 );
 			equal( user.get( 'name' ), name );
 			equal( updatedUser.get( 'name' ), name );
 			
 			// The 'name' of 'user' is also updated when adding a new hash to another collection
 			name = 'Another new name';
-			collB.add( { id: '/user/1/', name: name, title: 'Superuser' } );
+			collB.add( { id: '/user/1/', name: name, title: 'Superuser' }, { merge: true } );
 			var updatedUser2 = collA.at( 0 );
 			equal( user.get( 'name' ), name );
 			equal( updatedUser2.get('name'), name );
@@ -2635,7 +2635,7 @@ $(document).ready(function() {
 
 			equal( user.get( 'login' ), 'User' );
 
-			coll.add( { id: 'person-10', name: 'New person', user: { id: 'user-10', login: 'New user' } } );
+			coll.add( { id: 'person-10', name: 'New person', user: { id: 'user-10', login: 'New user' } }, { merge: true } );
 
 			equal( person.get( 'name' ), 'New person' );
 			equal( user.get( 'login' ), 'New user' );
@@ -2653,11 +2653,94 @@ $(document).ready(function() {
 			equal( lion.get( 'name' ), 'Mufasa' );
 
 			// Update the name of 'zoo' and 'lion'
-			coll.add( { id: 'zoo-1', name: 'Zoo Station', animals: [ { id: 'lion-1', name: 'Simba' } ] } );
+			coll.add( { id: 'zoo-1', name: 'Zoo Station', animals: [ { id: 'lion-1', name: 'Simba' } ] }, { merge: true } );
 
 			equal( zoo.get( 'name' ), 'Zoo Station' );
 			equal( lion.get( 'name' ), 'Simba' );
 		});
+
+		test( "add/remove/update", function() {
+			var coll = new AnimalCollection();
+
+			/**
+			 * Add
+			 */
+			coll.add( { id: 1, species: 'giraffe' } );
+
+			ok( coll.length === 1 );
+
+			coll.add( {	id: 1, species: 'giraffe' } );
+
+			ok( coll.length === 1 );
+
+			coll.add([
+				{
+					id: 1, species: 'giraffe'
+				},
+				{
+					id: 2, species: 'gorilla'
+				}
+			]);
+
+			var giraffe = coll.get( 1 ),
+				gorilla = coll.get( 2 );
+
+			ok( coll.length === 2 );
+
+			var dolphin = new Animal( { species: 'dolphin' } );
+			coll.add( dolphin );
+
+			ok( coll.length === 3 );
+
+			// Update won't do anything
+			coll.add( {	id: 1, species: 'giraffe', name: 'Long John' } );
+
+			ok( !coll.get( 1 ).get( 'name' ) );
+
+			// Update with `merge: true` will update the animal
+			coll.add( { id: 1, species: 'giraffe', name: 'Long John' }, { merge: true } );
+
+			ok( coll.get( 1 ).get( 'name' ) === 'Long John' );
+
+			/**
+			 * Remove
+			 */
+			coll.remove( 1 );
+
+			ok( coll.length === 2 );
+			ok( !coll.get( 1 ), "`giraffe` removed from coll" );
+
+			coll.remove( dolphin );
+
+			ok( coll.length === 1 );
+			ok( coll.get( 2 ) === gorilla, "Only `gorilla` is left in coll" );
+
+			/**
+			 * Update
+			 */
+			coll.add( giraffe );
+
+			// This shouldn't do much at all
+			var options = { add: false, merge: false, remove: false };
+			coll.update( [ dolphin, { id: 2, name: 'Silverback' } ], options );
+
+			ok( coll.length === 2 );
+			ok( coll.get( 2 ) === gorilla, "`gorilla` is left in coll" );
+			ok( !coll.get( 2 ).get( 'name' ), "`gorilla` name not updated" );
+
+			console.log( coll );
+
+			// This should remove `giraffe`, leave `dolphin`, and update `gorilla`.
+			options = { add: true, merge: true, remove: true };
+			coll.update( [ dolphin, { id: 2, name: 'Silverback' } ], options );
+
+			ok( coll.length === 2 );
+			ok( !coll.get( 1 ), "`giraffe` removed from coll" );
+			equal( coll.get( 2 ), gorilla );
+			equal( coll.get( dolphin ), dolphin );
+			equal( gorilla.get( 'name' ), 'Silverback' );
+		});
+
 
 	module( "Events", { setup: reset } );
 
@@ -2677,11 +2760,11 @@ $(document).ready(function() {
 //					console.log( 'update:animals; args=%o', arguments );
 //				})
 				.bind( 'add:animals', function( model, coll ) {
-					console.log( 'add:animals; args=%o', arguments );
+					//console.log( 'add:animals; args=%o', arguments );
 					addEventsTriggered++;
 				})
 				.bind( 'remove:animals', function( model, coll ) {
-					console.log( 'remove:animals; args=%o', arguments );
+					//console.log( 'remove:animals; args=%o', arguments );
 					removeEventsTriggered++;
 				});
 
@@ -2690,7 +2773,7 @@ $(document).ready(function() {
 //					console.log( 'change:livesIn; args=%o', arguments );
 //				})
 				.bind( 'update:livesIn', function( model, coll ) {
-					console.log( 'update:livesIn; args=%o', arguments );
+					//console.log( 'update:livesIn; args=%o', arguments );
 					updateEventsTriggered++;
 				});
 
