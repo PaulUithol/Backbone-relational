@@ -302,22 +302,22 @@ alert( lion.get( 'livesIn' ).get( 'name' ) + ', ' + artis.get( 'animals' ).lengt
 			relatedModel<code>relation.relatedModel</code>
 		</h4>
 		<p>
-			A string that can be resolved to an object on the global scope, or a reference to a <strong>Backbone.RelationalModel</strong>.
-			Also see <a href="#Store-addModelScope"><q>addModelScope</q></a>.
+			Required. A string that can be resolved to an object on the global scope, or a reference to a
+			<strong>Backbone.RelationalModel</strong>. Also see <a href="#Store-addModelScope"><q>addModelScope</q></a>.
 		</p>
 
 		<h4 class="code" id="Relation-key">
 			key<code>relation.key</code>
 		</h4>
 		<p>
-			A string that references an attribute name on <a href="#Relation-relatedModel"><q>relatedModel</q></a>.
+			Required. A string that references an attribute name on <a href="#Relation-relatedModel"><q>relatedModel</q></a>.
 		</p>
 
 		<h4 class="code" id="Relation-type">
 			type<code>relation.type</code>
 		</h4>
 		<p>
-			A string that references a <a href="#Relation"><q>Backbone.Relation</q></a> type by name ("HasOne" or "HasMany"),
+			Required. A string that references a <a href="#Relation"><q>Backbone.Relation</q></a> type by name ("HasOne" or "HasMany"),
 			or a direct reference to a relation type.
 		</p>
 		<p>
@@ -478,8 +478,8 @@ alert( JSON.stringify( farm.toJSON(), null, 4 ) );
 			collectionOptions<code>relation.collectionOptions</code>
 		</h4>
 		<p>
-			An options hash or a function that accepts an instance of a <strong>Backbone.RelationalModel</strong> and returns an option
-			hash
+			An options hash, or a function that accepts an instance of a <strong>Backbone.RelationalModel</strong> and returns an options
+			hash.
 		</p>
 		<p>
 			Used to provide options for the initialization of the collection in the 'Many'-end of a HasMany relation. Can be
@@ -492,7 +492,7 @@ alert( JSON.stringify( farm.toJSON(), null, 4 ) );
 		</h4>
 		<p>
 			A boolean, a string referencing one of the model's attributes, or an array of strings referencing model
-			attributes. <q>includeInJson</q> is equal to <q>true</q> by default.
+			attributes. Default: <q>true</q>.
 		</p>
 		<p>
 			Determines how the contents of a relation will be serialized following a call to the
@@ -523,7 +523,7 @@ alert( JSON.stringify( farm.toJSON(), null, 4 ) );
 			createModels<code>relation.createModels</code>
 		</h4>
 		<p>
-			A boolean. By default it is equal to <q>true</q>.
+			A boolean. Default: <q>true</q>.
 		</p>
 		<p>
 			Specifies whether models be created from nested objects or not.
@@ -532,6 +532,9 @@ alert( JSON.stringify( farm.toJSON(), null, 4 ) );
 		<h4 class="code" id="Relation-reverseRelation">
 			reverseRelation<code>relation.reverseRelation</code>
 		</h4>
+		<p>
+			An object specifying the relation pointing back to this model from <a href="#Relation-relatedModel"><q>relatedModel</q></a>.
+		</p>
 		<p>
 			If the relation should be bidirectional, specify the details for the reverse relation here. It's only mandatory
 			to supply a <a href="#Relation-key"><q>key</q></a>; <a href="#Relation-relatedModel"><q>relatedModel</q></a> is automatically
@@ -551,7 +554,7 @@ alert( JSON.stringify( farm.toJSON(), null, 4 ) );
 			autoFetch<code>relation.autoFetch</code>
 		</h4>
 		<p>
-			A boolean or an object. Defaults to <q>false</q>.
+			A boolean or an object. Default: <q>false</q>.
 		</p>
 		<p>
 			If this property is set to <q>true</q>, when a model is instantiated the related model is
@@ -592,7 +595,7 @@ alert( JSON.stringify( farm.toJSON(), null, 4 ) );
 			<code>relationalModel.subModelTypes(attributes&lt;string|number|object&gt;, [options&lt;object&gt;])</code>
 		</h4>
 		<p>
-			An object that defaults to empty({}).
+			An object. Default: <q>{}</q>.
 		</p>
 		<p>
 			A mapping that defines what submodels exist for the model (the superModel) on which
@@ -652,7 +655,7 @@ alert( 'chimp is an animal? ' + ( chimp instanceof Animal ) + '\n' +
 			subModelTypeAttribute<code>relationalModel.subModelTypeAttribute</code>
 		</h4>
 		<p>
-			A string that defaults to 'type'.
+			A string. Default: <q>type</q>.
 		</p>
 		<p>
 			The <q>subModelTypeAttribute</q> is a references an attribute on the data

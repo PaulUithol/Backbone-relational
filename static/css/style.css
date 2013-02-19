@@ -13,6 +13,13 @@ body {
 	background: #f4f4f4;
 }
 
+a, a:visited {
+	color: #444;
+}
+a:active, a:hover {
+	color: #000;
+}
+
 h1, h2, h3, h4, h5, h6, .toc_title {
 	font-family: MuseoSlab500, "Lucida Grande", "Lucida Sans Unicode", "Helvetica Neue", "Bitstream Vera Sans", Helvetica, Arial, sans-serif;
 }
@@ -61,7 +68,7 @@ ul {
 		position: relative;
 		left: -1ex;
 	}
-	
+
 .button {
 	display: inline-block;
 	outline: none;
@@ -146,14 +153,17 @@ div#sidebar {
 	-webkit-box-shadow: 0 0 20px #ccc;
 	-moz-box-shadow: 0 0 20px #ccc;
 }
+	div#sidebar a, a:visited {
+		color: black;
+		text-decoration: none;
+	}
+	div#sidebar a:hover {
+		text-decoration: underline;
+	}
 	a.toc_title, a.toc_title:visited {
 		display: block;
-		color: black;
 		font-weight: bold;
 		margin: 1em 0 .2em;
-	}
-	a.toc_title:hover {
-		text-decoration: underline;
 	}
 	#sidebar .version {
 		font-size: 10px;
@@ -169,13 +179,6 @@ div#sidebar {
 			.toc_section li.link_out:before {
 				content: "\00BB";
 			}
-			.toc_section li a {
-				text-decoration: none;
-				color: black;
-			}
-			.toc_section li a:hover {
-				text-decoration: underline;
-			}
 			
 div.container {
 	position: relative;
@@ -189,7 +192,7 @@ img#logo {
 
 div.run {
 	cursor: pointer;
-	font-family: Arial, Courier, Times New Roman;
+	font-family: Arial, Courier, Times New Roman, serif;
 	font-size: 16px;
 	position: absolute;
 	bottom: 15px;
@@ -214,12 +217,6 @@ div.container ul.small {
 	font-size: 14px;
 }
 
-a, a:visited {
-	color: #444;
-}
-a:active, a:hover {
-	color: #000;
-}
 a.punch {
 	display: inline-block;
 	background: #4162a8;
@@ -315,7 +312,8 @@ code, pre, q {
 		border: 1px solid #ddd;
 	}
 		a q {
-			border: none;
+			border-bottom: none;
+			color: #111;
 		}
 	q , code {
 		white-space: nowrap;
