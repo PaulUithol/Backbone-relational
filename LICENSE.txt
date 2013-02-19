@@ -1,6 +1,6 @@
 The MIT License (MIT)
 
-Copyright (c) 2011, 2012 Paul Uithol, http://progressivecompany.nl/
+Copyright (c) 2011-2013 Paul Uithol, http://progressivecompany.nl/
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the

@@ -106,6 +106,10 @@
 			<a href="http://backbonejs.org/#Model-save">save()</a> or <a href="http://backbonejs.org/#Model-fetch">
 			fetch()</a>, sync the model and all of its related models.
 		</p>
+		<p>
+			Backbone-relational is hosted on <a href="https://github.com/PaulUithol/Backbone-relational">GibHub</a>,
+			and is available under the <a href="https://github.com/PaulUithol/Backbone-relational/blob/master/LICENSE.txt">MIT license</a>.
+		</p>
 
 		<h2 id="Downloads">
 			Downloads &amp; Dependencies
@@ -134,9 +138,9 @@
 
 		<p>
 			Backbone-relational.js provides one-to-one, one-to-many and many-to-one relations
-			between models for Backbone. To use relations, extend <a href="#RelationalModel"><strong>Backbone.RelationalModel</strong></a> (instead of the regular
-			<a href="http://backbonejs.org/#Model">Backbone.Model</a>) and define a <a href="#RelationalModel-relations"><q>relations</q></a> property, containing an array of option objects.
-			Each relation must define (as a minimum) the <a href="#Relation-type"><q>type</q></a>, <a href="#Relation-key"><q>key</q></a>,
+			between models for Backbone. To use relations, extend <a href="#RelationalModel"><strong>Backbone.RelationalModel</strong></a>
+			(instead of a regular <a href="http://backbonejs.org/#Model">Backbone.Model</a>) and define a <a href="#RelationalModel-relations"><q>relations</q></a> property, containing an array of option objects.
+			Each relation must define (at least) the <a href="#Relation-type"><q>type</q></a>, <a href="#Relation-key"><q>key</q></a>,
 			and <a href="#Relation-relatedModel"><q>relatedModel</q></a>. Available relation types are <a href="#Relation-HasOne"><q>Backbone.HasOne</q></a>
 			and <a href="#Relation-HasMany"><q>Backbone.HasMany</q></a>.
 		</p>
