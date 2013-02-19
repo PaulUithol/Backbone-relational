@@ -837,7 +837,7 @@
 			}
 
 			if ( !collection || !( collection instanceof Backbone.Collection ) ) {
-				collection = new this.collectionType( [], this._getCollectionOptions() );
+				collection = new this.collectionType( null, this._getCollectionOptions() );
 			}
 
 			collection.model = this.relatedModel;

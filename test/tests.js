@@ -2809,6 +2809,45 @@ $(document).ready(function() {
 			ok( updateEventsTriggered === 2 );
 		});
 
+		test( "No (`reset`) events when initializing a ", function() {
+			var eventsTriggered = 0;
+
+			var PropertiesCollection = Backbone.Collection.extend({
+				initialize: function() {
+					this
+						.on( 'add', function() {
+							eventsTriggered++;
+						})
+						.on( 'reset', function() {
+							eventsTriggered++;
+						})
+						.on( 'remove', function() {
+							eventsTriggered++;
+						});
+				}
+			});
+			var Properties = Backbone.RelationalModel.extend({});
+			var View = Backbone.RelationalModel.extend({
+				relations: [
+					{
+						type: Backbone.HasMany,
+						key: 'properties',
+						relatedModel: Properties,
+						collectionType: PropertiesCollection,
+						reverseRelation: {
+							type: Backbone.HasOne,
+							key: 'view'
+						}
+					}
+				]
+			});
+
+			var view = new View();
+
+			ok( view.get( 'properties' ) instanceof PropertiesCollection );
+			ok( eventsTriggered === 0 );
+		});
+
 		test( "Does not trigger add / remove events for existing models on bulk assignment", function() {
 			var house = new House({
 				id: 'house-100',
@@ -2817,7 +2856,7 @@ $(document).ready(function() {
 			});
 
 			var eventsTriggered = 0;
-			
+
 			house
 				.on( 'add:occupants', function(model) {
 					ok( false, model.id + " should not be added" );
