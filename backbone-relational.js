@@ -512,7 +512,7 @@
 		}
 
 		if ( instance ) {
-			_.bindAll( this, '_modelRemovedFromCollection', '_relatedModelAdded', '_relatedModelRemoved' );
+			_.bindAll( this, 'destroy', '_relatedModelAdded', '_relatedModelRemoved' );
 
 			this.initialize();
 
@@ -520,9 +520,8 @@
 				this.instance.fetchRelated( this.key, _.isObject( this.options.autoFetch ) ? this.options.autoFetch : {} );
 			}
 
-			// When a model in the store is destroyed, check if it is 'this.instance'.
-			Backbone.Relational.store.getCollection( this.instance )
-				.on( 'relational:remove', this._modelRemovedFromCollection );
+			this.instance
+				.on( 'destroy', this.destroy );
 
 			// When 'relatedModel' are created or destroyed, check if it affects this relation.
 			Backbone.Relational.store.getCollection( this.relatedModel )
@@ -559,12 +558,6 @@
 		
 		_relatedModelRemoved: function( model, coll, options ) {
 			this.removeRelated( model, options );
-		},
-		
-		_modelRemovedFromCollection: function( model ) {
-			if ( model === this.instance ) {
-				this.destroy();
-			}
 		},
 		
 		/**
@@ -693,11 +686,14 @@
 			}
 			return options;
 		},
-		
-		// Cleanup. Get reverse relation, call removeRelated on each.
+
+		/**
+		 * When `this.instance` is destroyed, cleanup our relations.
+		 * Get reverse relation, call removeRelated on each.
+		 */
 		destroy: function() {
-			Backbone.Relational.store.getCollection( this.instance )
-				.off( 'relational:remove', this._modelRemovedFromCollection );
+			this.instance
+				.off( 'destroy', this.destroy );
 			
 			Backbone.Relational.store.getCollection( this.relatedModel )
 				.off( 'relational:add', this._relatedModelAdded )
