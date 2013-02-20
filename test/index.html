@@ -1,28 +1,45 @@
 <!doctype html>
 <html lang="en">
 <head>
-	<title>QUnit Tests</title>
-	<!--<link rel="stylesheet" href="http://code.jquery.com/qunit/git/qunit.css" type="text/css" media="screen" />-->
+	<title>Backbone-relational Test Suite</title>
 	<link rel="stylesheet" href="./lib/qunit.css" type="text/css" media="screen" />
 
-	<!--<script src="http://code.jquery.com/jquery-latest.js"></script>-->
-	<script type="text/javascript" src="./lib/jquery-1.7.1.js"></script>
-	<script type="text/javascript" src="./lib/underscore.js"></script>
-	<script type="text/javascript" src="./lib/backbone.js"></script>
-	<script type="text/javascript" src="../backbone-relational.js"></script>
-	<!--<script type="text/javascript" src="./lib/backbone-tastypie.js"></script>-->
-	
-	<!--<script type="text/javascript" src="http://code.jquery.com/qunit/git/qunit.js"></script>-->
+	<script type="text/javascript" src="./lib/jquery-1.9.1.js"></script>
 	<script type="text/javascript" src="./lib/qunit.js"></script>
+	<script type="text/javascript">
+	QUnit.config.urlConfig.push({
+		id: 'master',
+		label: 'Backbone+Underscore master',
+		tooltip: 'Load Backbone and Underscore master, instead of using the local copies.'
+	});
+	
+	var srcPath,
+		cacheBust = '?' + ( +new Date() );
+	
+	if ( QUnit.urlParams.master ) {
+		var sources = [
+			'https://raw.github.com/documentcloud/underscore/master/underscore.js',
+			'https://raw.github.com/documentcloud/backbone/master/backbone.js'
+		];
+	}
+	else {
+		var sources = [
+			'./lib/underscore.js',
+			'./lib/backbone.js'
+		];
+	}
+	
+	// Load source
+	sources.forEach( function( source ) {
+		document.write(	'<script type="text/javascript" src="' + source + cacheBust + '"><\/script>' );
+	});
+	</script>
+	<script type="text/javascript" src="../backbone-relational.js"></script>
+	
 	<script type="text/javascript" src="./tests.js"></script>
 </head>
 <body>
-	<h1 id="qunit-header">Backbone-relational Test Suite</h1>
-	<h2 id="qunit-banner"></h2>
-	<div id="qunit-testrunner-toolbar"></div>
-	<h2 id="qunit-userAgent"></h2>
-	<ol id="qunit-tests"></ol>
-	<div id="qunit-fixture">
-	</div>
+	<div id="qunit"></div>
+	<div id="qunit-fixture"></div>
 </body>
 </html>
