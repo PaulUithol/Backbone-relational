@@ -2996,5 +2996,167 @@ $(document).ready(function() {
 			ok( changeEventsTriggered == 1, "Exactly one change event was triggered (triggered " + changeEventsTriggered + " events)" );
 		});
 
+
+	module( "Performance", { setup: reset } );
+
+
+		test( "Creation and destruction", 0, function() {
+			var relatedModelAddedCount = 0;
+			Backbone.Relation.prototype._relatedModelAdded = function( model, coll, options ) {
+				// Allow 'model' to set up its relations, before calling 'tryAddRelated'
+				// (which can result in a call to 'addRelated' on a relation of 'model')
+				var dit = this;
+				model.queue( function() {
+					dit.tryAddRelated( model, options );
+				});
+				relatedModelAddedCount++;
+				//console.log( this, model, coll, options );
+			};
+
+			var relatedModelRemovedCount = 0;
+			Backbone.Relation.prototype._relatedModelRemoved = function( model, coll, options ) {
+				this.removeRelated( model, options );
+				relatedModelRemovedCount++;
+			};
+
+			var Child = Backbone.RelationalModel.extend({
+				url: '/child/'
+			});
+
+			var Parent = Backbone.RelationalModel.extend({
+				relations: [{
+					type: Backbone.HasMany,
+					key: 'children',
+					relatedModel: Child
+				}]
+			});
+
+			var Parents = Backbone.Collection.extend({
+				model: Parent
+			});
+
+			// bootstrap data
+			var data = [];
+			for ( var i = 1; i <= 300; i++ ) {
+				data.push({
+					name: 'parent-' + i,
+					children: [
+						{id: 'p-' + i + '-c1', name: 'child-1'},
+						{id: 'p-' + i + '-c2', name: 'child-2'},
+						{id: 'p-' + i + '-c3', name: 'child-3'}
+					]
+				});
+			}
+
+			// test 2 (run separetly)
+			Backbone.Relational.store.reset();
+			relatedModelAddedCount = 0;
+			console.log('loading test 2...');
+			var start = new Date();
+
+			data.forEach(function (parent) {
+				parent.children = parent.children.map(function (child) {
+					return new Child(child);
+				});
+			});
+
+			var parents = new Parents();
+			parents.on('reset', function () {
+				var end = new Date();
+				var secs = (end - start) / 1000;
+				console.log('data loaded in ' + secs + ', relatedModelAddedCount=' + relatedModelAddedCount );
+			});
+			parents.reset(data);
+
+			var Child = Backbone.RelationalModel.extend({
+				url: '/child/'
+			});
+
+			var Parent = Backbone.RelationalModel.extend({
+				relations: [{
+					type: Backbone.HasMany,
+					key: 'children',
+					relatedModel: Child,
+					reverseRelation: {
+						key: 'parent'
+					}
+				}]
+			});
+
+			var Parents = Backbone.Collection.extend({
+				model: Parent
+			});
+
+			// test 1
+			Backbone.Relational.store.reset();
+			relatedModelAddedCount = 0;
+			console.log('loading test 1...');
+			var start = new Date();
+
+			var parents = new Parents();
+			parents.on('reset', function () {
+				var end = new Date();
+				var secs = (end - start) / 1000;
+				console.log('data loaded in ' + secs + ', relatedModelAddedCount=' + relatedModelAddedCount );
+			});
+			parents.reset(data);
+
+			// test 2 (run separetly)
+			Backbone.Relational.store.reset();
+			relatedModelAddedCount = 0;
+			console.log('loading test 2...');
+			var start = new Date();
+
+			data.forEach(function (parent) {
+				parent.children = parent.children.map(function (child) {
+					return new Child(child);
+				});
+			});
+
+			var parents = new Parents();
+			parents.on('reset', function () {
+				var end = new Date();
+				var secs = (end - start) / 1000;
+				console.log('data loaded in ' + secs + ', relatedModelAddedCount=' + relatedModelAddedCount );
+			});
+			parents.reset(data);
+
+			var start = new Date();
+			relatedModelRemovedCount = 0;
+
+			parents.each( function( parent ) {
+				parent.get( 'children' ).each( function( child ) {
+					child.destroy();
+				});
+			});
+
+			var end = new Date();
+			var secs = (end - start) / 1000;
+			console.log('data removed in ' + secs + ', relatedModelRemovedCount=' + relatedModelRemovedCount );
+
+			// test 1
+			Backbone.Relational.store.reset();
+			relatedModelAddedCount = 0;
+			console.log('loading test 1...');
+			var start = new Date();
+
+			var parents = new Parents();
+			parents.on('reset', function () {
+				var end = new Date();
+				var secs = (end - start) / 1000;
+				console.log('data loaded in ' + secs + ', relatedModelAddedCount=' + relatedModelAddedCount );
+			});
+			parents.reset(data);
+
+			var start = new Date();
+			relatedModelRemovedCount = 0;
+
+			parents.remove( parents.models );
+
+			var end = new Date();
+			var secs = (end - start) / 1000;
+			console.log('data removed in ' + secs + ', relatedModelRemovedCount=' + relatedModelRemovedCount );
+		});
+
 });
 
