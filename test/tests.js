@@ -180,7 +180,11 @@ $(document).ready(function() {
 				type: Backbone.HasOne,
 				key: 'password'
 			}
-		}]
+		}],
+
+		toString: function() {
+			return 'Password (' + this.id + ')';
+		}
 	});
 	
 	// A link table between 'Person' and 'Company', to achieve many-to-many relations
@@ -464,7 +468,7 @@ $(document).ready(function() {
 	
 	
 		test( "Initialized", function() {
-			// `initObjects` instantiates models of the following types: `Person`, `Job`, `Company`, `User`, `House` and `Password`
+			// `initObjects` instantiates models of the following types: `Person`, `Job`, `Company`, `User`, `House` and `Password`.
 			equal( Backbone.Relational.store._collections.length, 6, "Store contains 6 collections" );
 		});
 		
@@ -882,7 +886,6 @@ $(document).ready(function() {
 				parseCalled++;
 				return resp;
 			};
-			Zoo.setup();
 
 			var animal = new Animal({ id: '123' });
 			animal.set({
@@ -2674,6 +2677,30 @@ $(document).ready(function() {
 			ok( user.get('person') === person );
 			//console.debug( person, user );
 		});
+
+	test( "ReverseRelations are applied retroactively (2)", function() {
+		var models = {};
+		Backbone.Relational.store.addModelScope( models );
+
+		// Use brand new Model types, so we can be sure we don't have any reverse relations cached from previous tests
+		models.NewPerson = Backbone.RelationalModel.extend({
+			relations: [{
+				type: Backbone.HasOne,
+				key: 'user',
+				relatedModel: 'NewUser',
+				reverseRelation: {
+					type: Backbone.HasOne,
+					key: 'person'
+				}
+			}]
+		});
+		models.NewUser = Backbone.RelationalModel.extend({});
+
+		var user = new models.NewUser( { id: 'newuser-1', person: { id: 'newperson-1' } } );
+
+		equal( user.getRelations().length, 1 );
+		ok( user.get( 'person' ) instanceof models.NewPerson );
+	});
 
 
 	module( "Backbone.Collection", { setup: reset } );

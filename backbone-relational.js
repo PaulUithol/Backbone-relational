@@ -120,10 +120,26 @@
 	Backbone.Store = function() {
 		this._collections = [];
 		this._reverseRelations = [];
+		this._orphanRelations = [];
 		this._subModels = [];
 		this._modelScopes = [ exports ];
 	};
 	_.extend( Backbone.Store.prototype, Backbone.Events, {
+		/**
+		 * Create a new `Relation`.
+		 * @param {Backbone.RelationalModel} [model]
+		 * @param {Object} relation
+		 */
+		initializeRelation: function( model, relation ) {
+			var type = !_.isString( relation.type ) ? relation.type : Backbone[ relation.type ] || this.getObjectByName( relation.type );
+			if ( type && type.prototype instanceof Backbone.Relation ) {
+				new type( model, relation ); // Also pushes the new Relation into `model._relations`
+			}
+			else {
+				Backbone.Relational.showWarnings && typeof console !== 'undefined' && console.warn( 'Relation=%o; missing or invalid type!', relation );
+			}
+		},
+
 		/**
 		 * Add a scope for `getObjectByName` to look for model types by name.
 		 * @param {Object} scope
@@ -181,7 +197,7 @@
 		 * @param {String|Object} relation.relatedModel
 		 */
 		addReverseRelation: function( relation ) {
-			var exists = _.any( this._reverseRelations || [], function( rel ) {
+			var exists = _.any( this._reverseRelations, function( rel ) {
 				return _.all( relation || [], function( val, key ) {
 					return val === rel[ key ];
 				});
@@ -194,13 +210,50 @@
 			}
 		},
 
-		_addRelation: function( model, relation ) {
-			if ( !model.prototype.relations ) {
-				model.prototype.relations = [];
-			}
-			model.prototype.relations.push( relation );
+		/**
+		 * Deposit a `relation` for which the `relatedModel` can't be resolved at the moment.
+		 *
+		 * @param {Object} relation
+		 */
+		addOrphanRelation: function( relation ) {
+			var exists = _.any( this._orphanRelations, function( rel ) {
+				return _.all( relation || [], function( val, key ) {
+					return val === rel[ key ];
+				});
+			});
 
-			_.each( model._subModels || [], function( subModel ) {
+			if ( !exists && relation.model && relation.type ) {
+				this._orphanRelations.push( relation );
+			}
+		},
+
+		/**
+		 * Try to initialize any `_orphanRelation`s
+		 */
+		processOrphanRelations: function() {
+			// Make sure to operate on a copy since we're removing while iterating
+			_.each( this._orphanRelations.slice( 0 ), function( rel ) {
+				var relatedModel = Backbone.Relational.store.getObjectByName( rel.relatedModel );
+				if ( relatedModel ) {
+					this.initializeRelation( null, rel );
+					this._orphanRelations = _.without( this._orphanRelations, rel );
+				}
+			}, this );
+		},
+
+		/**
+		 *
+		 * @param {Backbone.RelationalModel.constructor} type
+		 * @param {Object} relation
+		 * @private
+		 */
+		_addRelation: function( type, relation ) {
+			if ( !type.prototype.relations ) {
+				type.prototype.relations = [];
+			}
+			type.prototype.relations.push( relation );
+
+			_.each( type._subModels || [], function( subModel ) {
 				this._addRelation( subModel, relation );
 			}, this );
 		},
@@ -210,27 +263,28 @@
 		 * @param {Object} relation
 		 */
 		retroFitRelation: function( relation ) {
-			var coll = this.getCollection( relation.model );
-			coll.each( function( model ) {
+			var coll = this.getCollection( relation.model, false );
+			coll && coll.each( function( model ) {
 				if ( !( model instanceof relation.model ) ) {
 					return;
 				}
 
 				new relation.type( model, relation );
-			}, this);
+			}, this );
 		},
 		
 		/**
 		 * Find the Store's collection for a certain type of model.
-		 * @param {Backbone.RelationalModel} model
+		 * @param {Backbone.RelationalModel} type
+		 * @param {Boolean} [create=true] Should a collection be created if none is found?
 		 * @return {Backbone.Collection} A collection if found (or applicable for 'model'), or null
 		 */
-		getCollection: function( model ) {
-			if ( model instanceof Backbone.RelationalModel ) {
-				model = model.constructor;
+		getCollection: function( type, create ) {
+			if ( type instanceof Backbone.RelationalModel ) {
+				type = type.constructor;
 			}
 			
-			var rootModel = model;
+			var rootModel = type;
 			while ( rootModel._superModel ) {
 				rootModel = rootModel._superModel;
 			}
@@ -239,7 +293,7 @@
 				return c.model === rootModel;
 			});
 			
-			if ( !coll ) {
+			if ( !coll && create !== false ) {
 				coll = this._createCollection( rootModel );
 			}
 			
@@ -255,7 +309,7 @@
 			var parts = name.split( '.' ),
 				type = null;
 
-			_.find( this._modelScopes || [], function( scope ) {
+			_.find( this._modelScopes, function( scope ) {
 				type = _.reduce( parts || [], function( memo, val ) {
 					return memo ? memo[ val ] : undefined;
 				}, scope );
@@ -393,7 +447,8 @@
 	 * The main Relation class, from which 'HasOne' and 'HasMany' inherit. Internally, 'relational:<key>' events
 	 * are used to regulate addition and removal of models from relations.
 	 *
-	 * @param {Backbone.RelationalModel} instance
+	 * @param {Backbone.RelationalModel} [instance] Model that this relation is created for. If no model is supplied,
+	 *      Relation just tries to instantiate it's `reverseRelation` if specified, and bails out after that.
 	 * @param {Object} options
 	 * @param {string} options.key
 	 * @param {Backbone.RelationalModel.constructor} options.relatedModel
@@ -408,16 +463,16 @@
 		// Make sure 'options' is sane, and fill with defaults from subclasses and this object's prototype
 		options = _.isObject( options ) ? options : {};
 		this.reverseRelation = _.defaults( options.reverseRelation || {}, this.options.reverseRelation );
+		this.options = _.defaults( options, this.options, Backbone.Relation.prototype.options );
+
 		this.reverseRelation.type = !_.isString( this.reverseRelation.type ) ? this.reverseRelation.type :
 			Backbone[ this.reverseRelation.type ] || Backbone.Relational.store.getObjectByName( this.reverseRelation.type );
-		this.model = options.model || this.instance.constructor;
-		this.options = _.defaults( options, this.options, Backbone.Relation.prototype.options );
-		
+
 		this.key = this.options.key;
 		this.keySource = this.options.keySource || this.key;
 		this.keyDestination = this.options.keyDestination || this.keySource || this.key;
 
-		// 'exports' should be the global object where 'relatedModel' can be found on if given as a string.
+		this.model = this.options.model || this.instance.constructor;
 		this.relatedModel = this.options.relatedModel;
 		if ( _.isString( this.relatedModel ) ) {
 			this.relatedModel = Backbone.Relational.store.getObjectByName( this.relatedModel );
@@ -456,9 +511,9 @@
 			) );
 		}
 
-		_.bindAll( this, '_modelRemovedFromCollection', '_relatedModelAdded', '_relatedModelRemoved' );
-
 		if ( instance ) {
+			_.bindAll( this, '_modelRemovedFromCollection', '_relatedModelAdded', '_relatedModelRemoved' );
+
 			this.initialize();
 
 			if ( this.options.autoFetch ) {
@@ -935,10 +990,10 @@
 				var coll = this.related;
 				if ( coll instanceof Backbone.Collection ) {
 					// Make sure to operate on a copy since we're removing while iterating
-					_.each( coll.models.slice(0) , function( model ) {
+					_.each( coll.models.slice( 0 ) , function( model ) {
 						// When fetch is called with the 'keepNewModels' option, we don't want to remove
 						// client-created new models when the fetch is completed.
-						// Also, don't remove the model from `coll` if it is in `newIds`, and will stay in the relation
+						// Also, don't remove the model from `coll` if it is in `newIds`, and will stay in the relation.
 						if ( !( options.keepNewModels && model.isNew() ) && !( model.id in newIds ) ) {
 							coll.remove( model );
 						}
@@ -1073,16 +1128,13 @@
 		
 		constructor: function( attributes, options ) {
 			// Nasty hack, for cases like 'model.get( <HasMany key> ).add( item )'.
-			// Defer 'processQueue', so that when 'Relation.createModels' is used we:
-			// a) Survive 'Backbone.Collection.add'; this takes care we won't error on "can't add model to a set twice"
-			//    (by creating a model from properties, having the model add itself to the collection via one of
-			//    its relations, then trying to add it to the collection).
-			// b) Trigger 'HasMany' collection events only after the model is really fully set up.
-			// Example that triggers both a and b: "p.get('jobs').add( { company: c, person: p } )".
+			// Defer 'processQueue', so that when 'Relation.createModels' is used we trigger 'HasMany'
+			// collection events only after the model is really fully set up.
+			// Example: "p.get('jobs').add( { company: c, person: p } )".
 			var dit = this;
 			if ( options && options.collection ) {
 				this._deferProcessing = true;
-				
+
 				var processQueue = function( model ) {
 					if ( model === dit ) {
 						dit._deferProcessing = false;
@@ -1091,12 +1143,14 @@
 					}
 				};
 				options.collection.on( 'relational:add', processQueue );
-				
+
 				// So we do process the queue eventually, regardless of whether this model really gets added to 'options.collection'.
 				_.defer( function() {
 					processQueue( dit );
 				});
 			}
+
+			Backbone.Relational.store.processOrphanRelations();
 			
 			this._queue = new Backbone.BlockingQueue();
 			this._queue.block();
@@ -1134,13 +1188,7 @@
 			this._relations = [];
 			
 			_.each( this.relations || [], function( rel ) {
-				var type = !_.isString( rel.type ) ? rel.type :	Backbone[ rel.type ] || Backbone.Relational.store.getObjectByName( rel.type );
-				if ( type && type.prototype instanceof Backbone.Relation ) {
-					new type( this, rel ); // Also pushes the new Relation into _relations
-				}
-				else {
-					Backbone.Relational.showWarnings && typeof console !== 'undefined' && console.warn( 'Relation=%o; missing or invalid type!', rel );
-				}
+				Backbone.Relational.store.initializeRelation( this, rel );
 			}, this );
 			
 			this._isInitialized = true;
@@ -1491,17 +1539,22 @@
 					if ( _.isString( rel.relatedModel ) ) {
 						/**
 						 * The related model might not be defined for two reasons
-						 *  1. it never gets defined, e.g. a typo
-						 *  2. it is related to itself
+						 *  1. it is related to itself
+						 *  2. it never gets defined, e.g. a typo
+						 *  3. the model hasn't been defined yet, but will be later
 						 * In neither of these cases do we need to pre-initialize reverse relations.
+						 * However, for 3. (which is, to us, indistinguishable from 2.), we do need to attempt
+						 * setting up this relation again later, in case the related model is defined later.
 						 */
 						var relatedModel = Backbone.Relational.store.getObjectByName( rel.relatedModel );
 						preInitialize = relatedModel && ( relatedModel.prototype instanceof Backbone.RelationalModel );
 					}
 
-					var type = !_.isString( rel.type ) ? rel.type : Backbone[ rel.type ] || Backbone.Relational.store.getObjectByName( rel.type );
-					if ( preInitialize && type && type.prototype instanceof Backbone.Relation ) {
-						new type( null, rel );
+					if ( preInitialize ) {
+						Backbone.Relational.store.initializeRelation( null, rel );
+					}
+					else if ( _.isString( rel.relatedModel ) ) {
+						Backbone.Relational.store.addOrphanRelation( rel );
 					}
 				}
 			}, this );
