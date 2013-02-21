@@ -488,7 +488,7 @@
 				contentKey = this.key;
 			}
 
-			this.keyContents = this.instance.get( contentKey );
+			this.setKeyContents( this.instance.get( contentKey ) );
 
 			// Explicitly clear 'keySource', to prevent a leaky abstraction if 'keySource' differs from 'key'.
 			if ( this.keySource !== this.key ) {
@@ -744,6 +744,15 @@
 			
 			return model;
 		},
+
+		/**
+		 * Normalize and reduce `keyContents` to an `id`, for easier comparison
+		 * @param {String|Number|Backbone.Model} keyContents
+		 */
+		setKeyContents: function( keyContents ) {
+			this.keyContents = keyContents;
+			this.keyId = Backbone.Relational.store.resolveIdForItem( this.relatedModel, this.keyContents );
+		},
 		
 		/**
 		 * If the key is changed, notify old & new reverse relations and initialize the new relation
@@ -763,13 +772,13 @@
 				oldRelated = changed ? this.related : options._related;
 			
 			if ( changed ) {
-				this.keyContents = attr;
+				this.setKeyContents( attr );
 				
 				// Set new 'related'
-				if ( attr instanceof this.relatedModel ) {
-					this.related = attr;
+				if ( this.keyContents instanceof this.relatedModel ) {
+					this.related = this.keyContents;
 				}
-				else if ( attr ) {
+				else if ( this.keyContents ) {
 					var related = this.findRelated( options );
 					this.setRelated( related );
 				}
@@ -810,9 +819,8 @@
 				return;
 			}
 
-			if ( this.keyContents || this.keyContents === 0 ) { // since 0 can be a valid `id` as well
-				var id = Backbone.Relational.store.resolveIdForItem( this.relatedModel, this.keyContents );
-				if ( !_.isNull( id ) && model.id === id ) {
+			if ( this.keyId || this.keyId === 0 ) { // since 0 can be a valid `id` as well
+				if ( model.id === this.keyId ) {
 					options = this.sanitizeOptions( options );
 					this.addRelated( model, options );
 				}
@@ -860,7 +868,7 @@
 				this.collectionType = Backbone.Relational.store.getObjectByName( this.collectionType );
 			}
 			if ( !this.collectionType.prototype instanceof Backbone.Collection ){
-				throw new Error( 'collectionType must inherit from Backbone.Collection' );
+				throw new Error( '`collectionType` must inherit from Backbone.Collection' );
 			}
 
 			// Handle cases where a model/relation is created with a collection passed straight into 'attributes'
@@ -928,9 +936,6 @@
 					models = this.keyContents.models;
 				}
 				else {
-					// Handle cases the an API/user supplies just an Object/id instead of an Array
-					this.keyContents = _.isArray( this.keyContents ) ? this.keyContents : [ this.keyContents ];
-
 					// Try to find instances of the appropriate 'relatedModel' in the store
 					_.each( this.keyContents || [], function( item ) {
 						var model = null;
@@ -955,32 +960,45 @@
 				}
 			}
 		},
+
+		/**
+		 * Normalize and reduce `keyContents` to a list of `ids`, for easier comparison
+		 * @param {String|Number|String[]|Number[]|Backbone.Collection} keyContents
+		 */
+		setKeyContents: function( keyContents ) {
+			this.keyContents = keyContents instanceof Backbone.Collection ? keyContents : null;
+			this.keyIds = [];
+
+			if ( !this.keyContents ) {
+				// Handle cases the an API/user supplies just an Object/id instead of an Array
+				this.keyContents = _.isArray( keyContents ) ? keyContents : [ keyContents ];
+
+				this.keyIds = _.map( this.keyContents, function( item ) {
+					return Backbone.Relational.store.resolveIdForItem( this.relatedModel, item );
+				}, this );
+			}
+		},
 		
 		/**
 		 * If the key is changed, notify old & new reverse relations and initialize the new relation
 		 */
 		onChange: function( model, attr, options ) {
 			options = this.sanitizeOptions( options );
-			this.keyContents = attr;
+			this.setKeyContents( attr );
 			
-			// Replace 'this.related' by 'attr' if it is a Backbone.Collection
-			if ( attr instanceof Backbone.Collection ) {
-				this._prepareCollection( attr );
-				this.related = attr;
+			// Replace 'this.related' by 'this.keyContents' if it is a Backbone.Collection
+			if ( this.keyContents instanceof Backbone.Collection ) {
+				this._prepareCollection( this.keyContents );
+				this.related = this.keyContents;
 			}
-			// Otherwise, 'attr' should be an array of related object ids.
-			// Re-use the current 'this.related' if it is a Backbone.Collection, and remove any current entries.
-			// Otherwise, create a new collection.
+			// Otherwise, 'this.keyContents' should be an array of related object ids.
+			// Re-use the current 'this.related' if it is a Backbone.Collection; otherwise, create a new collection.
 			else {
-				var newIds = {};
+				var toAdd = [];
 
-				if ( !_.isArray( attr ) && attr !== undefined ) {
-					attr = [ attr ];
-				}
-
-				_.each( attr, function( attributes ) {
-					var id = Backbone.Relational.store.resolveIdForItem( this.relatedModel, attributes );
-					newIds[ id ] = true;
+				_.each( this.keyContents, function( attributes ) {
+					var model = this.relatedModel.findOrCreate( attributes, _.extend( options, { create: this.options.createModels } ) );
+					model && toAdd.push( model );
 				}, this );
 
 				var coll = this.related;
@@ -990,7 +1008,7 @@
 						// When fetch is called with the 'keepNewModels' option, we don't want to remove
 						// client-created new models when the fetch is completed.
 						// Also, don't remove the model from `coll` if it is in `newIds`, and will stay in the relation.
-						if ( !( options.keepNewModels && model.isNew() ) && !( model.id in newIds ) ) {
+						if ( !( options.keepNewModels && model.isNew() ) && !( _.contains( toAdd, model ) ) ) {
 							coll.remove( model );
 						}
 					});
@@ -999,15 +1017,11 @@
 					coll = this._prepareCollection();
 				}
 
-				_.each( attr, function( attributes ) {
-					var model = this.relatedModel.findOrCreate( attributes, _.extend( options, { create: this.options.createModels } ) );
-					if ( model ) {
-						coll.add( model );
-					}
-				}, this );
+				if ( toAdd.length ) {
+					coll.add( toAdd );
+				}
 
 				this.setRelated( coll );
-
 			}
 			
 			var dit = this;
@@ -1019,10 +1033,7 @@
 		tryAddRelated: function( model, options ) {
 			if ( !this.related.get( model ) ) {
 				// Check if this new model was specified in 'this.keyContents'
-				var item = _.any( this.keyContents || [], function( item ) {
-					var id = Backbone.Relational.store.resolveIdForItem( this.relatedModel, item );
-					return !_.isNull( id ) && id === model.id;
-				}, this );
+				var item = _.contains( this.keyIds, model.id );
 				
 				if ( item ) {
 					options = this.sanitizeOptions( options );
@@ -1702,7 +1713,7 @@
 		models = _.isArray( models ) ? models.slice() : [ models ];
 		options || ( options = {} );
 
-		var modelsToAdd = [];
+		var toAdd = [];
 
 		//console.debug( 'calling add on coll=%o; model=%o, options=%o', this, models, options );
 		_.each( models || [], function( model ) {
@@ -1713,15 +1724,15 @@
 					model = Backbone.Collection.prototype._prepareModel.call( this, model, options );
 				}
 
-				model && modelsToAdd.push( model );
+				model && toAdd.push( model );
 			}
 		}, this );
 
 		// Add 'models' in a single batch, so the original add will only be called once (and thus 'sort', etc).
-		if ( modelsToAdd.length ) {
-			add.call( this, modelsToAdd, options );
+		if ( toAdd.length ) {
+			add.call( this, toAdd, options );
 
-			_.each( modelsToAdd, function( model ) {
+			_.each( toAdd, function( model ) {
 				this.trigger( 'relational:add', model, this, options );
 			}, this );
 		}

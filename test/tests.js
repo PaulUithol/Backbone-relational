@@ -1714,18 +1714,19 @@ $(document).ready(function() {
 			var parent = new Node();
 			var child = new Node( { parent: parent } );
 
-			equal( child.get( 'parent' ), parent );
+			ok( child.get( 'parent' ) === parent );
 			parent.destroy();
-			equal( child.get( 'parent' ), null );
+			ok( child.get( 'parent' ) === null, child.get( 'parent' ) + ' === null' );
 
 			// It used to be the case that `randomOtherNode` became `child`s parent here, since both the `parent.id`
 			// (which is stored as the relation's `keyContents`) and `randomOtherNode.id` were undefined.
 			var randomOtherNode = new Node();
-			equal( child.get( 'parent' ), null );
+			ok( child.get( 'parent' ) === null, child.get( 'parent' ) + ' === null' );
 
 			// Create a child with parent id=0, then create the parent
 			child = new Node( { parent: 0 } );
-			equal( child.get( 'parent' ), null );
+			ok( child.get( 'parent' ) === null, child.get( 'parent' ) + ' === null' );
+
 			parent = new Node( { id: 0 } );
 			ok( child.get( 'parent' ) === parent );
 
@@ -1735,6 +1736,7 @@ $(document).ready(function() {
 			// The other way around; create the parent with id=0, then the child
 			parent = new Node( { id: 0 } );
 			equal( parent.get( 'children' ).length, 0 );
+
 			child = new Node( { parent: 0 } );
 			ok( child.get( 'parent' ) === parent );
 		});
