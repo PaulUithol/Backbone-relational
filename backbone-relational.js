@@ -1263,7 +1263,6 @@
 			var originalResult = Backbone.Model.prototype.get.call( this, attr );
 
 			// Use `originalResult` get if dotNotation not enabled or not required because no dot is in `attr`
-			if ( !this.dotNotation || attr.indexOf( '.' ) === -1 ) {
 				return originalResult;
 			}
 
@@ -1731,4 +1730,5 @@
 
 		return child;
 	};
+      if ( ( typeof this.dotNotation !== 'undefined' && this.dotNotation.getter === false) || attr.indexOf( '.' ) === -1 || !this.dotNotation === true) {
 })();
