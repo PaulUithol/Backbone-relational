@@ -1207,10 +1207,13 @@ $(document).ready(function() {
 			ok( person.get( 'user' ).get( 'resource_uri' ) == null );
 		});
 
-		test("'dotNotation' is true", function(){
+		test("'dotNotation' getter only", function(){
 			var NewUser = Backbone.RelationalModel.extend({});
 			var NewPerson = Backbone.RelationalModel.extend({
-				dotNotation: true,
+				dotNotation: {
+					getter: true,
+					setter: false
+				},
 				relations: [{
 					type: Backbone.HasOne,
 					key: 'user',
@@ -1227,9 +1230,68 @@ $(document).ready(function() {
 			ok( person.get( 'normal' ) === true, "getting normal attributes works as usual" );
 			ok( person.get( 'user.name' ) === "John", "attributes of nested models can be get via dot notation: nested.attribute");
 			ok(oldCompany.get( 'ceo.name' ) === undefined, "no dotNotation when not enabled");
+
+			person.set( 'user.name', 'Mike' );
+			ok( person.get('user').get('name') !== "Mike", "attributes of nested models cannot be set via dot notation: nested.attribute");
+
 			raises( function() {
 				person.get( 'user.over' );
 			}, "getting ambiguous nested attributes raises an exception");
+		});
+
+		test("'dotNotation' setter only", function(){
+			var NewUser = Backbone.RelationalModel.extend({});
+			var NewPerson = Backbone.RelationalModel.extend({
+				dotNotation: {
+					getter: false,
+					setter: true
+				},
+				relations: [{
+					type: Backbone.HasOne,
+					key: 'user',
+					relatedModel: NewUser
+				}]
+			});
+			var person = new NewPerson({
+				"normal": true,
+				"user.over": 2,
+				user: {name: "John", "over" : 1}
+			});
+
+			person.set( 'normal', false );
+			ok( person.get( 'normal' ) === false, "setting normal attributes works as usual" );
+
+			person.set( 'user.name', 'Mike' );
+			ok( person.get('user').get('name') === "Mike", "attributes of nested models can be set via dot notation: nested.attribute");
+
+			ok( person.get( 'user.name' ) !== "Mike", "attributes of nested models can not be get via dot notation: nested.attribute");
+			
+			oldCompany.set( 'ceo.name', 'Mike' );
+			ok( oldCompany.get('ceo').get('name') !== "Mike", "no deep set via dotNotation when not enabled");
+		});
+
+		test("'dotNotation' enabled", function(){
+			var NewUser = Backbone.RelationalModel.extend({});
+			var NewPerson = Backbone.RelationalModel.extend({
+				dotNotation: true,
+				relations: [{
+					type: Backbone.HasOne,
+					key: 'user',
+					relatedModel: NewUser
+				}]
+			});
+			var person = new NewPerson({
+				"normal": true,
+				"user.over": 2,
+				user: {name: "John", "over" : 1}
+			});
+
+			person.set( 'normal', false );
+			ok( person.get( 'normal' ) === false, "setting normal attributes works as usual" );
+
+			person.set( 'user.name', 'Mike' );
+			ok( person.get('user').get('name') === "Mike", "attributes of nested models can be set via dot notation: nested.attribute");
+			ok( person.get('user.name') === "Mike", "attributes of nested models can be get via dot notation: nested.attribute");
 		});
 
 		test( "Relations load from both `keySource` and `key`", function() {

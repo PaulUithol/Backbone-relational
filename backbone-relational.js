@@ -1341,7 +1341,6 @@
 			var originalResult = Backbone.Model.prototype.get.call( this, attr );
 
 			// Use `originalResult` get if dotNotation not enabled or not required because no dot is in `attr`
-			if ( !this.dotNotation || attr.indexOf( '.' ) === -1 ) {
 				return originalResult;
 			}
 
@@ -1362,44 +1361,6 @@
 			return originalResult || result;
 		},
 		
-		set: function( key, value, options ) {
-			Backbone.Relational.eventQueue.block();
-			
-			// Duplicate backbone's behavior to allow separate key/value parameters, instead of a single 'attributes' object
-			var attributes;
-			if ( _.isObject( key ) || key == null ) {
-				attributes = key;
-				options = value;
-			}
-			else {
-				attributes = {};
-				attributes[ key ] = value;
-			}
-			
-			var result = Backbone.Model.prototype.set.apply( this, arguments );
-			
-			// Ideal place to set up relations :)
-			if ( !this._isInitialized && !this.isLocked() ) {
-				this.constructor.initializeModelHierarchy();
-
-				Backbone.Relational.store.register( this );
-
-				this.initializeRelations();
-			}
-			// Update the 'idAttribute' in Backbone.store if; we don't want it to miss an 'id' update due to {silent:true}
-			else if ( attributes && this.idAttribute in attributes ) {
-				Backbone.Relational.store.update( this );
-			}
-			
-			if ( attributes ) {
-				this.updateRelations( options );
-			}
-			
-			// Try to run the global queue holding external events
-			Backbone.Relational.eventQueue.unblock();
-			
-			return result;
-		},
 		
 		unset: function( attribute, options ) {
 			Backbone.Relational.eventQueue.block();
@@ -1836,4 +1797,116 @@
 
 		return child;
 	};
+      if ( ( typeof this.dotNotation !== 'undefined' && this.dotNotation.getter === false) || attr.indexOf( '.' ) === -1 || !this.dotNotation === true) {
+    set: function( key, value, options ) {
+      Backbone.Relational.eventQueue.block();
+      
+      // Duplicate backbone's behavior to allow separate key/value parameters, instead of a single 'attributes' object
+      var attributes;
+      if ( _.isObject( key ) || key === null ){
+        attributes = key;
+        options = value;
+      }
+      else {
+        attributes = {};
+        attributes[ key ] = value;
+      }
+
+      // Function to create deep nested object
+      function assign(obj, keyPath, value){
+        var lastKeyIndex = keyPath.length-1,
+        newObj={};
+        
+        // Assign last key with value
+        obj[keyPath[lastKeyIndex]] = value;
+        // For each key within key path, create an object containing the previous object
+        for (var i = 1; i < lastKeyIndex; ++ i) {
+          var tempObj= {};
+          var key = keyPath[lastKeyIndex-i];
+          tempObj[key]= obj;
+          obj = tempObj;
+        }
+        newObj[keyPath[0]]= obj;
+        return newObj;
+      }
+      
+      function _mixinDeepExtend(){
+        var deepExtend = function(obj) {
+          var parentRE = /#{\s*?_\s*?}/,
+              slice = Array.prototype.slice,
+              hasOwnProperty = Object.prototype.hasOwnProperty;
+         
+          _.each(slice.call(arguments, 1), function(source) {
+            for (var prop in source) {
+              if (hasOwnProperty.call(source, prop)) {
+                if (_.isUndefined(obj[prop])) {
+                  obj[prop] = source[prop];
+                }
+                else if (_.isString(source[prop]) && parentRE.test(source[prop])) {
+                  if (_.isString(obj[prop])) {
+                    obj[prop] = source[prop].replace(parentRE, obj[prop]);
+                  }
+                }
+                else if (_.isArray(obj[prop]) || _.isArray(source[prop])){
+                  if (!_.isArray(obj[prop]) || !_.isArray(source[prop])){
+                    throw 'Error: Trying to combine an array with a non-array (' + prop + ')';
+                  } else {
+                    obj[prop] = _.reject(_.deepExtend(obj[prop], source[prop]), function (item) { return _.isNull(item);});
+                  }
+                }
+                else if (_.isObject(obj[prop]) || _.isObject(source[prop])){
+                  if (!_.isObject(obj[prop]) || !_.isObject(source[prop])){
+                    throw 'Error: Trying to combine an object with a non-object (' + prop + ')';
+                  } else {
+                    obj[prop] = _.deepExtend(obj[prop], source[prop]);
+                  }
+                } else {
+                  obj[prop] = source[prop];
+                }
+              }
+            }
+          });
+          return obj;
+        };
+        _.mixin({deepExtend: deepExtend});
+      }
+      
+      if ( (typeof this.dotNotation !== 'undefined' && this.dotNotation.setter) || this.dotNotation === true ) {
+        _mixinDeepExtend();
+        // Find any attribute key containing '.', and create deep nested objects for each split
+        _.each(attributes, function(value, key, list){
+          var keyPath = key.split('.');
+          if (keyPath.length>1){
+            var deepObj = assign({},keyPath,value);
+            list= _.deepExtend(list, deepObj);
+            delete list[key];
+          }
+          attributes = list;
+        });
+      }
+
+      var result = Backbone.Model.prototype.set.apply( this, [attributes,options] );
+      
+      // Ideal place to set up relations :)
+      if ( !this._isInitialized && !this.isLocked() ) {
+        this.constructor.initializeModelHierarchy();
+
+        Backbone.Relational.store.register( this );
+
+        this.initializeRelations();
+      }
+      // Update the 'idAttribute' in Backbone.store if; we don't want it to miss an 'id' update due to {silent:true}
+      else if ( attributes && this.idAttribute in attributes ) {
+        Backbone.Relational.store.update( this );
+      }
+      
+      if ( attributes ) {
+        this.updateRelations( options );
+      }
+      
+      // Try to run the global queue holding external events
+      Backbone.Relational.eventQueue.unblock();
+      
+      return result;
+    },
 })();
