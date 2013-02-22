@@ -1018,12 +1018,12 @@
 				}
 
 				if ( toAdd.length ) {
-					coll.add( toAdd );
+					coll.add( toAdd, options );
 				}
 
 				this.setRelated( coll );
 			}
-			
+
 			var dit = this;
 			Backbone.Relational.eventQueue.add( function() {
 				!options.silentChange && dit.instance.trigger( 'update:' + dit.key, dit.instance, dit.related, options );
@@ -1700,13 +1700,13 @@
 
 	
 	/**
-	 * Override Backbone.Collection.add, so objects fetched from the server multiple times will
-	 * update the existing Model. Also, trigger 'relational:add'.
+	 * Override Backbone.Collection.add, so we'll create objects from attributes where required,
+	 * and update the existing models. Also, trigger 'relational:add'.
 	 */
 	var add = Backbone.Collection.prototype.__add = Backbone.Collection.prototype.add;
 	Backbone.Collection.prototype.add = function( models, options ) {
 		// Short-circuit if this Collection doesn't hold RelationalModels
-		if ( !( this.model instanceof Backbone.RelationalModel.constructor ) ) {
+		if ( !( this.model.prototype instanceof Backbone.RelationalModel ) ) {
 			return add.apply( this, arguments );
 		}
 
@@ -1717,10 +1717,10 @@
 
 		//console.debug( 'calling add on coll=%o; model=%o, options=%o', this, models, options );
 		_.each( models || [], function( model ) {
-			if ( !( this.get( model ) || this.get( model.cid ) ) || options.merge ) {
+			if ( !( this.get( model ) || this.get( model.cid ) ) || options.merge || options.remove ) {
 				if ( !( model instanceof Backbone.Model ) ) {
 					// `_prepareModel` attempts to find `model` in Backbone.store through `findOrCreate`,
-					// and sets the new properties on it if is found. Otherwise, a new model is instantiated.
+					// (which sets the new properties on it if found), or instantiates a new model.
 					model = Backbone.Collection.prototype._prepareModel.call( this, model, options );
 				}
 
@@ -1746,7 +1746,7 @@
 	var remove = Backbone.Collection.prototype.__remove = Backbone.Collection.prototype.remove;
 	Backbone.Collection.prototype.remove = function( models, options ) {
 		// Short-circuit if this Collection doesn't hold RelationalModels
-		if ( !( this.model instanceof Backbone.RelationalModel.constructor ) ) {
+		if ( !( this.model.prototype instanceof Backbone.RelationalModel ) ) {
 			return remove.apply( this, arguments );
 		}
 
@@ -1773,7 +1773,7 @@
 	Backbone.Collection.prototype.reset = function( models, options ) {
 		reset.call( this, models, options );
 
-		if ( this.model instanceof Backbone.RelationalModel.constructor ) {
+		if ( this.model.prototype instanceof Backbone.RelationalModel ) {
 			this.trigger( 'relational:reset', this, options );
 		}
 
@@ -1787,7 +1787,7 @@
 	Backbone.Collection.prototype.sort = function( options ) {
 		sort.call( this, options );
 
-		if ( this.model instanceof Backbone.RelationalModel.constructor ) {
+		if ( this.model.prototype instanceof Backbone.RelationalModel ) {
 			this.trigger( 'relational:reset', this, options );
 		}
 
@@ -1801,7 +1801,7 @@
 	var trigger = Backbone.Collection.prototype.__trigger = Backbone.Collection.prototype.trigger;
 	Backbone.Collection.prototype.trigger = function( eventName ) {
 		// Short-circuit if this Collection doesn't hold RelationalModels
-		if ( !( this.model instanceof Backbone.RelationalModel.constructor ) ) {
+		if ( !( this.model.prototype instanceof Backbone.RelationalModel ) ) {
 			return trigger.apply( this, arguments );
 		}
 
