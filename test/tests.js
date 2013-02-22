@@ -386,7 +386,7 @@ $(document).ready(function() {
 		});
 	}
 
-	module ( "General JS + Backbone", { setup: reset } );
+	module ( "General / Backbone", { setup: reset } );
 
 		test( "Prototypes, constructors and inheritance", function() {
 			// This stuff makes my brain hurt a bit. So, for reference:
@@ -981,8 +981,8 @@ $(document).ready(function() {
 			ok( person instanceof Person );
 			ok( origPersonCollSize + 1 === personColl.length, "No person was found (1 created)" );
 
-			// Find when options.update is false
-			person = Person.findOrCreate( { id: person1.id, name: 'phil' }, { update: false } );
+			// Find when options.merge is false
+			person = Person.findOrCreate( { id: person1.id, name: 'phil' }, { merge: false } );
 
 			equal( person.get( 'name' ), 'dude' );
 			equal( person1.get( 'name' ), 'dude' );
@@ -2819,7 +2819,7 @@ $(document).ready(function() {
 			equal( lion.get( 'name' ), 'Simba' );
 		});
 
-		test( "add/remove/update", function() {
+		test( "add/remove/update (with `add`, `remove` and `merge` options)", function() {
 			var coll = new AnimalCollection();
 
 			/**
@@ -2843,11 +2843,12 @@ $(document).ready(function() {
 			]);
 
 			var giraffe = coll.get( 1 ),
-				gorilla = coll.get( 2 );
+				gorilla = coll.get( 2 ),
+				dolphin = new Animal( { species: 'dolphin' } ),
+				hippo = new Animal( { id: 4, species: 'hippo' } );
 
 			ok( coll.length === 2 );
 
-			var dolphin = new Animal( { species: 'dolphin' } );
 			coll.add( dolphin );
 
 			ok( coll.length === 3 );
@@ -2888,13 +2889,15 @@ $(document).ready(function() {
 			ok( coll.get( 2 ) === gorilla, "`gorilla` is left in coll" );
 			ok( !coll.get( 2 ).get( 'name' ), "`gorilla` name not updated" );
 
-			// This should remove `giraffe`, leave `dolphin`, and update `gorilla`.
+			// This should remove `giraffe`, add `hippo`, leave `dolphin`, and update `gorilla`.
 			options = { add: true, merge: true, remove: true };
-			coll.update( [ dolphin, { id: 2, name: 'Silverback' } ], options );
+			coll.update( [ 4, dolphin, { id: 2, name: 'Silverback' } ], options );
 
-			ok( coll.length === 2 );
+			ok( coll.length === 3 );
 			ok( !coll.get( 1 ), "`giraffe` removed from coll" );
 			equal( coll.get( 2 ), gorilla );
+			ok( !coll.get( 3 ) );
+			equal( coll.get( 4 ), hippo );
 			equal( coll.get( dolphin ), dolphin );
 			equal( gorilla.get( 'name' ), 'Silverback' );
 		});
