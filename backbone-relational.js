@@ -1756,15 +1756,21 @@
 		models = _.isArray( models ) ? models.slice() : [ models ];
 		options || ( options = {} );
 
+		var toRemove = [];
+
 		//console.debug('calling remove on coll=%o; models=%o, options=%o', this, models, options );
 		_.each( models, function( model ) {
 			model = this.get( model ) || this.get( model.cid );
-
-			if ( model instanceof Backbone.Model ) {
-				remove.call( this, model, options );
-				this.trigger('relational:remove', model, this, options);
-			}
+			model && toRemove.push( model );
 		}, this );
+
+		if ( toRemove.length ) {
+			remove.call( this, toRemove, options );
+
+			_.each( toRemove, function( model ) {
+				this.trigger('relational:remove', model, this, options);
+			}, this );
+		}
 		
 		return this;
 	};
