@@ -1734,7 +1734,9 @@
 			add.call( this, toAdd, options );
 
 			_.each( toAdd, function( model ) {
-				this.trigger( 'relational:add', model, this, options );
+				if ( this.get( model ) || this.get( model.cid ) ) {
+					this.trigger( 'relational:add', model, this, options );
+				}
 			}, this );
 		}
 		
@@ -1813,7 +1815,7 @@
 				args = _.toArray( args );
 				// the fourth argument in case of a regular add is the option object.
 				// we need to clone it, as it could be modified while we wait on the eventQueue to be unblocked
-				if (_.isObject( args[3] ) ) {
+				if ( _.isObject( args[3] ) ) {
 					args[3] = _.clone( args[3] );
 				}
 			}
