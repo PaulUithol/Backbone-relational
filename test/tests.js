@@ -1037,6 +1037,107 @@ $(document).ready(function() {
 			equal( changedAttrs.color, 'red', '... with correct properties in "changedAttributes"' );
 		});
 
+		test( "change event shouldn't get fired on nested obj (using parse to construct same id)", function() {
+
+			var Phone = Backbone.RelationalModel.extend();
+			var Phones = Backbone.Collection.extend({
+				model: Phone
+			});
+
+			var Contact = Backbone.RelationalModel.extend({
+				relations: [
+					{
+						type: Backbone.HasMany,
+						key: 'phones',
+						relatedModel: Phone,
+						collectionType: Phones,
+						reverseRelation: {
+							key: 'contact'
+						}
+					}
+				],
+				parse: function(response) {
+					if (response.phones) {
+						_(response.phones).each(function(obj, n) { obj.id = response.id + '-phone-' + n; });
+					}
+					return response;
+				}
+			});
+
+			var Contacts = Backbone.Collection.extend({
+				model: Contact
+			});
+
+			var Company = Backbone.RelationalModel.extend({
+				relations: [
+					{
+						type: Backbone.HasMany,
+						key: 'contacts',
+						relatedModel: Contact,
+						collectionType: Contacts,
+						reverseRelation: {
+							key: 'company',
+							includeInJSON: 'id',
+							keyDestination: 'company_id'
+						}
+					}
+				],
+				parse: function(response) {
+					if (response && response.contacts) {
+						response.contacts = _(response.contacts).map(function(obj, n) {
+							return Contact.prototype.parse.call(null, obj);
+						});
+					}
+					return response;
+				}
+			});
+
+			var companyData = {
+				"id": "company-1",
+				"name": "Company Name",
+				"contacts": [
+					{
+						"id": "1013855", 
+						"name": "Jeff Smith", 
+						"title": "Owner",
+						"phones": [
+							{
+								"phone": "+19045551234", 
+							},
+							{
+								"phone": "+13035552222", 
+							}
+						]
+					}, 
+					{
+						"id": "contact-2", 
+						"name": "Contact 2", 
+						"phones": []
+					}
+				]
+			};
+			
+			var company = new Company(companyData, { parse: true });
+			
+			// test fails without this line here. this line shouldn't be necessary, but it's not the
+			// exact problem i'm trying to address here.
+			company.set(company.parse(companyData));
+
+			var contacts = company.get('contacts'),
+				contact = contacts.first();
+			ok(contact, 'contact exists');
+
+			var change;
+			contact.on('change', function() { change = true; });
+
+			// simulate what would happen if company.fetch() was called.
+			company.set(company.parse(companyData));
+
+			ok(contacts === company.get('contacts'), 'contacts collection is same instance after fetch');
+			ok(contact === contacts.first(), 'contact is same instance after fetch');
+			ok(!change, 'no change event should fire upon fetch');	
+
+		});
 	
 	module( "Backbone.RelationalModel inheritance (`subModelTypes`)", { setup: reset } );
 
