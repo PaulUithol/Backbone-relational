@@ -1,6 +1,6 @@
 /* vim: set tabstop=4 softtabstop=4 shiftwidth=4 noexpandtab: */
 /**
- * Backbone-relational.js 0.7.1
+ * Backbone-relational.js 0.7.1+
  * (c) 2011-2013 Paul Uithol and contributors (https://github.com/PaulUithol/Backbone-relational/graphs/contributors)
  * 
  * Backbone-relational may be freely distributed under the MIT license; see the accompanying LICENSE.txt.
@@ -1640,19 +1640,19 @@
 		 * @param {Object|String|Number} attributes Either a model's id, or the attributes used to create or update a model.
 		 * @param {Object} [options]
 		 * @param {Boolean} [options.create=true]
-		 * @param {Boolean} [options.update=true]
+		 * @param {Boolean} [options.merge=true]
 		 * @return {Backbone.RelationalModel}
 		 */
 		findOrCreate: function( attributes, options ) {
 			options || ( options = {} );
-			var parsedAttributes = (_.isObject( attributes ) && this.prototype.parse) ? this.prototype.parse( attributes ) : attributes;
+			var parsedAttributes = ( _.isObject( attributes ) && this.prototype.parse ) ? this.prototype.parse( attributes ) : attributes;
 			// Try to find an instance of 'this' model type in the store
 			var model = Backbone.Relational.store.find( this, parsedAttributes );
 
-			// If we found an instance, update it with the data in 'item' (unless 'options.update' is false).
+			// If we found an instance, update it with the data in 'item' (unless 'options.merge' is false).
 			// If not, create an instance (unless 'options.create' is false).
 			if ( _.isObject( attributes ) ) {
-				if ( model && options.update !== false ) {
+				if ( model && options.merge !== false ) {
 					model.set( parsedAttributes, options );
 				}
 				else if ( !model && options.create !== false ) {
@@ -1691,6 +1691,7 @@
 			}
 			
 			if ( !model._validate( attrs, options ) ) {
+				this.trigger( 'invalid', this, attrs, options );
 				model = false;
 			}
 		}
