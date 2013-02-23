@@ -1,3 +1,7 @@
+header, nav, section, article, aside, footer, hgroup {
+	display: block;
+}
+
 @font-face {
 	font-family: 'MuseoSlab500';
 	font-weight: normal;
@@ -15,6 +19,7 @@ body {
 
 a, a:visited {
 	color: #444;
+	text-decoration: underline;
 }
 a:active, a:hover {
 	color: #000;
@@ -50,6 +55,11 @@ h1, h2, h3, h4, h5, h6, .toc_title {
 		font-size: 1em;
 		line-height: 1.5;
 		margin: 1.5em 0 0;
+	}
+	h1 small, h2 small, h3 small, h4 small, h5 small, h6 small {
+		font-size: 12px;
+		font-family:  "Helvetica Neue", "Lucida Grande", "Lucida Sans Unicode", Helvetica, Arial, sans-serif;
+		font-weight: normal;
 	}
 
 p, ol, ul, dl, pre, figure, footer {
@@ -212,6 +222,7 @@ p.warning {
 
 div.container ul li {
 	margin-bottom: .5em;
+	text-indent: -1.5ex;
 }
 div.container ul.small {
 	font-size: 14px;
@@ -307,14 +318,23 @@ code, pre, q {
 		content: '';
 	}
 	q {
+		display: inline-block; /* Prevents the syndrome where the left border and part of the padding are rendered on the previous line */
 		padding: 0 3px;
+		margin: 0;
 		background: #fff;
 		border: 1px solid #ddd;
 	}
+		li q {
+			display: inline; /* No idea why, but having them `inline-block` in a list gets the sizing wrong */
+		}
 		a q {
 			border-bottom: none;
 			color: #111;
+			text-decoration: underline;
 		}
+			a:hover q {
+				color: #000;
+			}
 	q , code {
 		white-space: nowrap;
 	}
@@ -337,7 +357,15 @@ code, pre, q {
 		border-top: 1px solid #444;
 		margin-top: -1.5em;
 	}
-	
+
+#change-log small {
+	float: right;
+}
+	#change-log small .date {
+		color: #999;
+	}
+
+
 @media only screen and (-webkit-max-device-pixel-ratio: 1) and (max-width: 600px),
 		only screen and (max--moz-device-pixel-ratio: 1) and (max-width: 600px) {
 	div#sidebar {
@@ -357,6 +385,7 @@ code, pre, q {
 		width: auto;
 	}
 }
+
 
 @media only screen and (-webkit-min-device-pixel-ratio: 1.5) and (max-width: 640px),
 	only screen and (-o-min-device-pixel-ratio: 3/2) and (max-width: 640px),
