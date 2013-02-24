@@ -482,23 +482,6 @@
 			return;
 		}
 
-		if ( instance ) {
-			var contentKey = this.keySource;
-			if ( contentKey !== this.key && typeof this.instance.get( this.key ) === 'object' ) {
-				contentKey = this.key;
-			}
-
-			this.setKeyContents( this.instance.get( contentKey ) );
-
-			// Explicitly clear 'keySource', to prevent a leaky abstraction if 'keySource' differs from 'key'.
-			if ( this.keySource !== this.key ) {
-				this.instance.unset( this.keySource, { silent: true } );
-			}
-
-			// Add this Relation to instance._relations
-			this.instance._relations.push( this );
-		}
-
 		// Add the reverse relation on 'relatedModel' to the store's reverseRelations
 		if ( !this.options.isAutoRelation && this.reverseRelation.type && this.reverseRelation.key ) {
 			Backbone.Relational.store.addReverseRelation( _.defaults( {
@@ -512,7 +495,22 @@
 		}
 
 		if ( instance ) {
+			var contentKey = this.keySource;
+			if ( contentKey !== this.key && typeof this.instance.get( this.key ) === 'object' ) {
+				contentKey = this.key;
+			}
+
 			_.bindAll( this, 'destroy', '_relatedModelAdded', '_relatedModelRemoved' );
+
+			this.setKeyContents( this.instance.get( contentKey ) );
+
+			// Explicitly clear 'keySource', to prevent a leaky abstraction if 'keySource' differs from 'key'.
+			if ( this.keySource !== this.key ) {
+				this.instance.unset( this.keySource, { silent: true } );
+			}
+
+			// Add this Relation to instance._relations
+			this.instance._relations.push( this );
 
 			this.initialize();
 
@@ -718,7 +716,7 @@
 
 			this.instance.on( 'relational:change:' + this.key, this.onChange );
 
-			var model = this.findRelated( { silent: true } );
+			var model = this.findRelated();
 			this.setRelated( model );
 
 			// Notify new 'related' object of the new relation.

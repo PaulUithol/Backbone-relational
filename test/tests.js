@@ -650,7 +650,6 @@ $(document).ready(function() {
 			nodeList.reset( nodes );
 			
 			var storeColl = Backbone.Relational.store.getCollection( Node );
-			console.log( storeColl );
 			equal( storeColl.length, 4, "Every Node is in Backbone.Relational.store" );
 			ok( Backbone.Relational.store.find( Node, 1 ) instanceof Node, "Node 1 can be found" );
 			ok( Backbone.Relational.store.find( Node, 2 ) instanceof Node, "Node 2 can be found" );
