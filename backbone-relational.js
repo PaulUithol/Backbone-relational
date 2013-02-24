@@ -169,7 +169,7 @@
 		 * @param {Backbone.RelationalModel} modelType
 		 */
 		setupSuperModel: function( modelType ) {
-			_.find( this._subModels || [], function( subModelDef ) {
+			_.find( this._subModels, function( subModelDef ) {
 				return _.find( subModelDef.subModels || [], function( subModelTypeName, typeValue ) {
 					var subModelType = this.getObjectByName( subModelTypeName );
 
@@ -629,11 +629,8 @@
 		 * @return {Boolean}
 		 */
 		_isReverseRelation: function( relation ) {
-			if ( relation.instance instanceof this.relatedModel && this.reverseRelation.key === relation.key &&
-					this.key === relation.reverseRelation.key ) {
-				return true;
-			}
-			return false;
+			return relation.instance instanceof this.relatedModel && this.reverseRelation.key === relation.key &&
+				this.key === relation.reverseRelation.key;
 		},
 		
 		/**
@@ -1001,27 +998,13 @@
 					model && toAdd.push( model );
 				}, this );
 
-				var coll = this.related;
-				if ( coll instanceof Backbone.Collection ) {
-					// Make sure to operate on a copy since we're removing while iterating
-					_.each( coll.models.slice( 0 ) , function( model ) {
-						// When fetch is called with the 'keepNewModels' option, we don't want to remove
-						// client-created new models when the fetch is completed.
-						// Also, don't remove the model from `coll` if it is in `newIds`, and will stay in the relation.
-						if ( !( options.keepNewModels && model.isNew() ) && !( _.contains( toAdd, model ) ) ) {
-							coll.remove( model );
-						}
-					});
-				}
-				else {
-					coll = this._prepareCollection();
+				if ( !( this.related instanceof Backbone.Collection ) ) {
+					this.related = this._prepareCollection();
 				}
 
-				if ( toAdd.length ) {
-					coll.add( toAdd, options );
-				}
+				this.related.update( toAdd, options );
 
-				this.setRelated( coll );
+				this.setRelated( this.related );
 			}
 
 			var dit = this;
@@ -1477,8 +1460,9 @@
 					}
 				}
 				else if ( _.isArray( rel.options.includeInJSON ) ) {
+					var valueSub = [];
+
 					if ( value instanceof Backbone.Collection ) {
-						var valueSub = [];
 						value.each( function( model ) {
 							var curJson = {};
 							_.each( rel.options.includeInJSON, function( key ) {
@@ -1489,7 +1473,6 @@
 						json[ rel.keyDestination ] = valueSub;
 					}
 					else if ( value instanceof Backbone.Model ) {
-						var valueSub = {};
 						_.each( rel.options.includeInJSON, function( key ) {
 							valueSub[ key ] = value.get( key );
 						});
@@ -1668,6 +1651,8 @@
 	/**
 	 * Override Backbone.Collection._prepareModel, so objects will be built using the correct type
 	 * if the collection.model has subModels.
+	 * Attempts to find a model for `attrs` in Backbone.store through `findOrCreate`
+	 * (which sets the new properties on it if found), or instantiates a new model.
 	 */
 	Backbone.Collection.prototype.__prepareModel = Backbone.Collection.prototype._prepareModel;
 	Backbone.Collection.prototype._prepareModel = function ( attrs, options ) {
@@ -1712,33 +1697,41 @@
 		}
 
 		models = _.isArray( models ) ? models.slice() : [ models ];
-		options || ( options = {} );
+		// Set default options to the same values as `add` uses, so `findOrCreate` will also respect those.
+		options = _.extend( { merge: false }, options );
 
-		var toAdd = [];
+		var newModels = [],
+			toAdd = [];
 
 		//console.debug( 'calling add on coll=%o; model=%o, options=%o', this, models, options );
-		_.each( models || [], function( model ) {
-			if ( !( this.get( model ) || this.get( model.cid ) ) || options.merge || options.remove ) {
-				if ( !( model instanceof Backbone.Model ) ) {
-					// `_prepareModel` attempts to find `model` in Backbone.store through `findOrCreate`,
-					// (which sets the new properties on it if found), or instantiates a new model.
-					model = Backbone.Collection.prototype._prepareModel.call( this, model, options );
-				}
+		_.each( models, function( model ) {
+			if ( !( model instanceof Backbone.Model ) ) {
+				model = Backbone.Collection.prototype._prepareModel.call( this, model, options );
+			}
 
-				model && toAdd.push( model );
+			if ( model ) {
+				toAdd.push( model );
+
+				if ( !( this.get( model ) || this.get( model.cid ) ) ) {
+					newModels.push( model );
+				}
+				// If we arrive in `add` while performing a `set` (after a create, so the model gains an `id`),
+				// we may get here before `_onModelEvent` has had the chance to update `_byId`.
+				else if ( model.id != null ) {
+					this._byId[ model.id ] = model;
+				}
 			}
 		}, this );
 
 		// Add 'models' in a single batch, so the original add will only be called once (and thus 'sort', etc).
-		if ( toAdd.length ) {
-			add.call( this, toAdd, options );
+		add.call( this, toAdd, options );
 
-			_.each( toAdd, function( model ) {
-				if ( this.get( model ) || this.get( model.cid ) ) {
-					this.trigger( 'relational:add', model, this, options );
-				}
-			}, this );
-		}
+		_.each( newModels, function( model ) {
+			// Fire a `relational:add` event for any model in `newModels` that has actually been added to the collection.
+			if ( this.get( model ) || this.get( model.cid ) ) {
+				this.trigger( 'relational:add', model, this, options );
+			}
+		}, this );
 		
 		return this;
 	};
