@@ -612,9 +612,8 @@
 		/**
 		 * Set the related model(s) for this relation
 		 * @param {Backbone.Model|Backbone.Collection} related
-		 * @param {Object} [options]
 		 */
-		setRelated: function( related, options ) {
+		setRelated: function( related ) {
 			this.related = related;
 
 			this.instance.acquire();
@@ -889,6 +888,7 @@
 		 * Bind events and setup collectionKeys for a collection that is to be used as the backing store for a HasMany.
 		 * If no 'collection' is supplied, a new collection will be created of the specified 'collectionType' option.
 		 * @param {Backbone.Collection} [collection]
+		 * @return {Backbone.Collection}
 		 */
 		_prepareCollection: function( collection ) {
 			if ( this.related ) {
@@ -982,11 +982,13 @@
 		onChange: function( model, attr, options ) {
 			options = this.sanitizeOptions( options );
 			this.setKeyContents( attr );
+
+			var related = null;
 			
 			// Replace 'this.related' by 'this.keyContents' if it is a Backbone.Collection
 			if ( this.keyContents instanceof Backbone.Collection ) {
 				this._prepareCollection( this.keyContents );
-				this.related = this.keyContents;
+				related = this.keyContents;
 			}
 			// Otherwise, 'this.keyContents' should be an array of related object ids.
 			// Re-use the current 'this.related' if it is a Backbone.Collection; otherwise, create a new collection.
@@ -998,14 +1000,17 @@
 					model && toAdd.push( model );
 				}, this );
 
-				if ( !( this.related instanceof Backbone.Collection ) ) {
-					this.related = this._prepareCollection();
+				if ( this.related instanceof Backbone.Collection ) {
+					related = this.related;
+				}
+				else {
+					related = this._prepareCollection();
 				}
 
-				this.related.update( toAdd, options );
-
-				this.setRelated( this.related );
+				related.update( toAdd, options );
 			}
+
+			this.setRelated( related );
 
 			var dit = this;
 			Backbone.Relational.eventQueue.add( function() {

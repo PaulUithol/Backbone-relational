@@ -1706,12 +1706,11 @@ $(document).ready(function() {
 
 			ok( lion.get( 'livesIn' ) === zoo1, "zoo1 connected to lion" );
 			ok( zoo1.get( 'animals' ).length === 1, "zoo1 has one Animal" );
-			console.log( zoo1.get( 'animals' ).models );
 			ok( zoo1.get( 'animals' ).at( 0 ) === lion, "lion added to zoo1" );
 			ok( zoo1.get( 'animals' ).get( lion ) === lion, "lion can be retrieved from zoo1" );
 
 			// Other way around
-			/*var elephant = new Animal( { id: 6 } ),
+			var elephant = new Animal( { id: 6 } ),
 				tiger = new Animal( { id: 7 } ),
 				zoo2 = new Zoo( { animals: [ 6 ] } );
 
@@ -1728,7 +1727,7 @@ $(document).ready(function() {
 			ok( zoo2.get( 'animals' ).at( 0 ) === elephant, "elephant added to zoo2" );
 			ok( zoo2.get( 'animals' ).at( 1 ) === tiger, "tiger added to zoo2" );
 			ok( zoo2.get( 'animals' ).get( elephant ) === elephant, "elephant can be retrieved from zoo2" );
-			ok( zoo2.get( 'animals' ).get( tiger ) === tiger, "tiger can be retrieved from zoo2" );*/
+			ok( zoo2.get( 'animals' ).get( tiger ) === tiger, "tiger can be retrieved from zoo2" );
 		});
 
 		test( "Collections can be passed as attributes on creation", function() {
@@ -3124,6 +3123,7 @@ $(document).ready(function() {
 
 		test( "Creation and destruction", 0, function() {
 			var relatedModelAddedCount = 0;
+
 			Backbone.Relation.prototype._relatedModelAdded = function( model, coll, options ) {
 				// Allow 'model' to set up its relations, before calling 'tryAddRelated'
 				// (which can result in a call to 'addRelated' on a relation of 'model')
