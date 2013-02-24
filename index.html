@@ -50,16 +50,16 @@
 		<li>
 			<a href="#RelationalModel-relations">relations</a>
 			<ul class="toc_section">
-				<li><a href="#Relation-relatedModel">relatedModel</a></li>
-				<li><a href="#Relation-key">key</a></li>
-				<li><a href="#Relation-type">type</a></li>
-				<li><a href="#Relation-keySource">keySource</a></li>
-				<li><a href="#Relation-keyDestination">keyDestination</a></li>
-				<li><a href="#Relation-collectionType">collectionType</a></li>
-				<li><a href="#Relation-collectionKey">collectionKey</a></li>
-				<li><a href="#Relation-includeInJSON">includeInJSON</a></li>
-				<li><a href="#Relation-createModels">createModels</a></li>
-				<li><a href="#Relation-reverseRelation">reverseRelation</a></li>
+				<li><a href="#relations-relatedModel">relatedModel</a></li>
+				<li><a href="#relations-key">key</a></li>
+				<li><a href="#relations-type">type</a></li>
+				<li><a href="#relations-keySource">keySource</a></li>
+				<li><a href="#relations-keyDestination">keyDestination</a></li>
+				<li><a href="#relations-collectionType">collectionType</a></li>
+				<li><a href="#relations-collectionKey">collectionKey</a></li>
+				<li><a href="#relations-includeInJSON">includeInJSON</a></li>
+				<li><a href="#relations-createModels">createModels</a></li>
+				<li><a href="#relations-reverseRelation">reverseRelation</a></li>
 			</ul>
 		</li>
 		<li><a href="#RelationalModel-subModelTypes">subModelTypes</a></li>
@@ -169,8 +169,8 @@
 			between models for Backbone. To use relations, extend <a href="#RelationalModel"><strong>Backbone.RelationalModel</strong></a>
 			(instead of a regular <a href="http://backbonejs.org/#Model">Backbone.Model</a>) and define a
 			<a href="#RelationalModel-relations"><q>relations</q></a> property, containing an array of option objects.
-			Each relation must define (at least) the <a href="#Relation-type"><q>type</q></a>, <a href="#Relation-key"><q>key</q></a>,
-			and <a href="#Relation-relatedModel"><q>relatedModel</q></a>. Available relation types are
+			Each relation must define (at least) the <a href="#relations-type"><q>type</q></a>, <a href="#relations-key"><q>key</q></a>,
+			and <a href="#relations-relatedModel"><q>relatedModel</q></a>. Available relation types are
 			<a href="#Relation-HasOne"><q>Backbone.HasOne</q></a> and <a href="#Relation-HasMany"><q>Backbone.HasMany</q></a>.
 		</p>
 
@@ -183,18 +183,18 @@
 				Bidirectional relations, which notify related models of changes through events.
 			</li>
 			<li>
-				Control how relations are serialized using the <a href="#Relation-includeInJSON"><q>includeInJSON</q></a> option.
+				Control how relations are serialized using the <a href="#relations-includeInJSON"><q>includeInJSON</q></a> option.
 			</li>
 			<li>
 				Automatically convert nested objects in a model's attributes into model instances using the
-				<a href="#Relation-createModels"><q>createModels</q></a> option.
+				<a href="#relations-createModels"><q>createModels</q></a> option.
 			</li>
 			<li>
 				Lazily retrieve a set of related models through the <a href="#RelationalModel-fetchRelated"><q>fetchRelated</q></a>
 				method.
 			</li>
 			<li>
-				Determine the type of HasMany collections with <a href="#Relation-collectionType"><q>collectionType</q></a>.
+				Determine the type of HasMany collections with <a href="#relations-collectionType"><q>collectionType</q></a>.
 			</li>
 		</ul>
 
@@ -249,8 +249,7 @@
 		</p>
 
 		<p>
-			<strong>Properties</strong> can be defined along with the subclass prototype when extending Backbone.
-			RelationalModel or a subclass thereof.
+			<strong>Properties</strong> can be defined when extending Backbone.RelationalModel, or a subclass thereof.
 		</p>
 
 		<ul class="small">
@@ -289,8 +288,8 @@
 		</h4>
 		<p>
 			Each <strong>Backbone.RelationalModel</strong> can contain an array of relation definitions. Each relation supports a number of
-			options, of which <a href="#Relation-relatedModel"><q>relatedModel</q></a>, <a href="#Relation-key"><q>key</q></a> and
-			<a href="#Relation-type"><q>type</q></a> are mandatory. A relation could look like the following:
+			options, of which <a href="#relations-relatedModel"><q>relatedModel</q></a>, <a href="#relations-key"><q>key</q></a> and
+			<a href="#relations-type"><q>type</q></a> are mandatory. A relation could look like the following:
 		</p>
 
 <pre class="language-javascript"><code id="example-zoo" class="language-javascript runnable"><!--
@@ -331,7 +330,7 @@ alert( artis.get( 'animals' ).pluck( 'species' ) );
 alert( lion.get( 'livesIn' ).get( 'name' ) + ', ' + artis.get( 'animals' ).length );
 </code></pre>
 
-		<h4 class="code" id="Relation-relatedModel">
+		<h4 class="code" id="relations-relatedModel">
 			relatedModel<code>relation.relatedModel</code>
 		</h4>
 		<p>
@@ -339,14 +338,14 @@ alert( lion.get( 'livesIn' ).get( 'name' ) + ', ' + artis.get( 'animals' ).lengt
 			<strong>Backbone.RelationalModel</strong>. Also see <a href="#Store-addModelScope"><q>addModelScope</q></a>.
 		</p>
 
-		<h4 class="code" id="Relation-key">
+		<h4 class="code" id="relations-key">
 			key<code>relation.key</code>
 		</h4>
 		<p>
-			Required. A string that references an attribute name on <a href="#Relation-relatedModel"><q>relatedModel</q></a>.
+			Required. A string that references an attribute name on <a href="#relations-relatedModel"><q>relatedModel</q></a>.
 		</p>
 
-		<h4 class="code" id="Relation-type">
+		<h4 class="code" id="relations-type">
 			type<code>relation.type</code>
 		</h4>
 		<p>
@@ -402,11 +401,11 @@ Company = Backbone.RelationalModel.extend({
 });
 </code></pre>
 
-		<h4 class="code" id="Relation-keySource">
+		<h4 class="code" id="relations-keySource">
 			keySource<code>relation.keySource</code>
 		</h4>
 		<p>
-			A string that references an attribute to deserialize data for <a href="#Relation-relatedModel"><q>relatedModel</q></a> from.
+			A string that references an attribute to deserialize data for <a href="#relations-relatedModel"><q>relatedModel</q></a> from.
 		</p>
 		<p>
 			Used to override key when determining what data to use when (de)serializing a relation, since the data backing
@@ -420,7 +419,7 @@ Company = Backbone.RelationalModel.extend({
 			<q>animal_ids</q>, while you want to access this relation as <q>zoo.get('animals')</q>.
 		</p>
 		<p class="warning">
-			Note that setting <q>keySource</q> will set <a href="#Relation-keyDestination"><q>keyDestination</q></a>
+			Note that setting <q>keySource</q> will set <a href="#relations-keyDestination"><q>keyDestination</q></a>
 			to the same value, if it isn't specified itself.
 			This means that when saving zoo, the animals attribute will be serialized back into the <q>animal_ids</q> key.
 		</p>
@@ -428,14 +427,14 @@ Company = Backbone.RelationalModel.extend({
 			WARNING: when using a keySource, you should not use that attribute name for	other purposes.
 		</p>
 
-		<h4 class="code" id="Relation-keyDestination">
+		<h4 class="code" id="relations-keyDestination">
 			keyDestination<code>relation.keyDestination</code>
 		</h4>
 		<p>
-			A string that references an attribute to serialize <a href="#Relation-relatedModel"><q>relatedModel</q></a> into.
+			A string that references an attribute to serialize <a href="#relations-relatedModel"><q>relatedModel</q></a> into.
 		</p>
 		<p>
-			Used to override key (and <a href="#Relation-keySource"><q>keySource</q></a>) when determining what attribute to be
+			Used to override key (and <a href="#relations-keySource"><q>keySource</q></a>) when determining what attribute to be
 			written into when serializing a relation, since the server backing your relations may use different naming
 			conventions. For example, a Rails backend may expect the keys to be suffixed with _attributes for nested
 			attributes.
@@ -478,7 +477,7 @@ farm.get( 'animals' ).add( { species: 'Cow' } );
 alert( JSON.stringify( farm.toJSON(), null, 4 ) );
 </code></pre>
 
-		<h4 class="code" id="Relation-collectionType">
+		<h4 class="code" id="relations-collectionType">
 			collectionType<code>relation.collectionType</code>
 		</h4>
 		<p>
@@ -492,7 +491,7 @@ alert( JSON.stringify( farm.toJSON(), null, 4 ) );
 			firing a separate request for each.
 		</p>
 
-		<h4 class="code" id="Relation-collectionKey">
+		<h4 class="code" id="relations-collectionKey">
 			collectionKey<code>relation.collectionKey</code>
 		</h4>
 		<p>
@@ -507,7 +506,7 @@ alert( JSON.stringify( farm.toJSON(), null, 4 ) );
 			(or any falsy value) and this reference will not be created.
 		</p>
 
-		<h4 class="code" id="Relation-collectionOptions">
+		<h4 class="code" id="relations-collectionOptions">
 			collectionOptions<code>relation.collectionOptions</code>
 		</h4>
 		<p>
@@ -520,7 +519,7 @@ alert( JSON.stringify( farm.toJSON(), null, 4 ) );
 			an options hash.
 		</p>
 
-		<h4 class="code" id="Relation-includeInJSON">
+		<h4 class="code" id="relations-includeInJSON">
 			includeInJSON<code>relation.includeInJSON</code>
 		</h4>
 		<p>
@@ -552,7 +551,7 @@ alert( JSON.stringify( farm.toJSON(), null, 4 ) );
 			been serialized.
 		</p>
 
-		<h4 class="code" id="Relation-createModels">
+		<h4 class="code" id="relations-createModels">
 			createModels<code>relation.createModels</code>
 		</h4>
 		<p>
@@ -562,15 +561,15 @@ alert( JSON.stringify( farm.toJSON(), null, 4 ) );
 			Specifies whether models be created from nested objects or not.
 		</p>
 
-		<h4 class="code" id="Relation-reverseRelation">
+		<h4 class="code" id="relations-reverseRelation">
 			reverseRelation<code>relation.reverseRelation</code>
 		</h4>
 		<p>
-			An object specifying the relation pointing back to this model from <a href="#Relation-relatedModel"><q>relatedModel</q></a>.
+			An object specifying the relation pointing back to this model from <a href="#relations-relatedModel"><q>relatedModel</q></a>.
 		</p>
 		<p>
 			If the relation should be bidirectional, specify the details for the reverse relation here. It's only mandatory
-			to supply a <a href="#Relation-key"><q>key</q></a>; <a href="#Relation-relatedModel"><q>relatedModel</q></a> is automatically
+			to supply a <a href="#relations-key"><q>key</q></a>; <a href="#relations-relatedModel"><q>relatedModel</q></a> is automatically
 			set. The default type for a <q>reverseRelation</q> is HasMany for a
 			HasOne relation (which can be overridden to HasOne in order to create a one-to-one relation), and HasOne for a
 			HasMany relation. In this case, you cannot create a <q>reverseRelation</q> with
@@ -583,7 +582,7 @@ alert( JSON.stringify( farm.toJSON(), null, 4 ) );
 			See <a href="#RelationalModel-setup">setup</a>.
 		</p>
 
-		<h4 class="code" id="Relation-autoFetch">
+		<h4 class="code" id="relations-autoFetch">
 			autoFetch<code>relation.autoFetch</code>
 		</h4>
 		<p>
@@ -692,9 +691,9 @@ alert( 'chimp is an animal? ' + ( chimp instanceof Animal ) + '\n' +
 		</p>
 		<p>
 			The <q>subModelTypeAttribute</q> is a references an attribute on the data
-			used to instantiate <a href="#Relation-relatedModel"><q>relatedModel</q></a>. The attribute that will be checked to
+			used to instantiate <a href="#relations-relatedModel"><q>relatedModel</q></a>. The attribute that will be checked to
 			determine the type of model that should be built when a raw object of attributes is set as the related value,
-			and if the <a href="#Relation-relatedModel"><q>relatedModel</q></a> has one or more submodels.
+			and if the <a href="#relations-relatedModel"><q>relatedModel</q></a> has one or more submodels.
 		</p>
 
 		<h3 id="RelationalModel-instance-methods">
@@ -730,7 +729,7 @@ alert( 'chimp is an animal? ' + ( chimp instanceof Animal ) + '\n' +
 		<p>
 			By default, a separate request will be fired for each additional model that is to be fetched from the server.
 			However, if your server/API supports it, you can fetch the set of models in one request by specifying a
-			collectionType for the relation you call fetchRelated on. The <a href="#Relation-collectionType"><q>collectionType</q></a>
+			collectionType for the relation you call fetchRelated on. The <a href="#relations-collectionType"><q>collectionType</q></a>
 			should have an overridden <a href="http://backbonejs.org/#Collection-url"><q>url</q></a>
 			method that allows it to construct a url for an array of models. See <a href="#example-person">this example</a>
 			or <a href="https://github.com/PaulUithol/backbone-tastypie">Backbone-tastypie</a> for an example.
@@ -769,8 +768,8 @@ alert( 'chimp is an animal? ' + ( chimp instanceof Animal ) + '\n' +
 		</p>
 		<p>
 			The regular <q>toJSON</q> function has been overridden and modified to serialize (nested) relations
-			according to their <a href="#Relation-includeInJSON"><q>includeInJSON</q></a>, <a href="#Relation-keySource"><q>keySource</q></a>,
-			and <a href="#Relation-keyDestination"><q>keyDestination</q></a> options.
+			according to their <a href="#relations-includeInJSON"><q>includeInJSON</q></a>, <a href="#relations-keySource"><q>keySource</q></a>,
+			and <a href="#relations-keyDestination"><q>keyDestination</q></a> options.
 		</p>
 
 		<h3 id="RelationalModel-static-methods">
@@ -887,7 +886,7 @@ MyModel.setup()
 			Backbone.HasOne
 		</h4>
 		<p>
-			Defines a <strong>HasOne</strong> relation. When defining a <a href="#Relation-reverseRelation">reverseRelation</a>, the default type
+			Defines a <strong>HasOne</strong> relation. When defining a <a href="#relations-reverseRelation">reverseRelation</a>, the default type
 			will be <strong>HasMany</strong>. However, this can also be set to <strong>HasOne</strong> to define a one-to-one relation.
 		</p>
 
@@ -895,7 +894,7 @@ MyModel.setup()
 			Backbone.HasMany
 		</h4>
 		<p>
-			Defines a <strong>HasMany</strong> relation. When defining a <a href="#Relation-reverseRelation">reverseRelation</a>, the type
+			Defines a <strong>HasMany</strong> relation. When defining a <a href="#relations-reverseRelation">reverseRelation</a>, the type
 			will be <strong>HasOne</strong>.
 		</p>
 	</section>
@@ -1087,7 +1086,7 @@ User = Backbone.RelationalModel.extend();
 		</h4>
 		<ul>
 			<li>Compatible with Backbone >= 0.9.10</li>
-			<li>Implemented the <a href="#Relation-autoFetch"><q>autoFetch</q></a> property for relations.</li>
+			<li>Implemented the <a href="#relations-autoFetch"><q>autoFetch</q></a> property for relations.</li>
 			<li>Adding <q>update</q> option to <a href="#RelationalModel-findOrCreate"><q>findOrCreate</q></a>.</li>
 		</ul>
 		
