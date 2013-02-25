@@ -289,9 +289,7 @@
 				rootModel = rootModel._superModel;
 			}
 			
-			var coll = _.detect( this._collections, function( c ) {
-				return c.model === rootModel;
-			});
+			var coll = _.findWhere( this._collections, { model: rootModel } );
 			
 			if ( !coll && create !== false ) {
 				coll = this._createCollection( rootModel );
@@ -1227,11 +1225,7 @@
 		 * @return {Backbone.Relation} An instance of 'Backbone.Relation', if a relation was found for 'key', or null.
 		 */
 		getRelation: function( key ) {
-			return _.detect( this._relations, function( rel ) {
-				if ( rel.key === key ) {
-					return true;
-				}
-			}, this );
+			return _.findWhere( this._relations, { key: key } );
 		},
 		
 		/**

@@ -741,12 +741,28 @@ $(document).ready(function() {
 		});
 		
 		test( "getRelations", function() {
-			equal( person1.getRelations().length, 6 );
+			var relations = person1.getRelations();
+
+			equal( relations.length, 6 );
+
+			ok( _.every( relations, function( rel ) {
+					return rel instanceof Backbone.Relation;
+				})
+			);
 		});
 		
 		test( "getRelation", function() {
-			var rel = person1.getRelation( 'user' );
-			equal( rel.key, 'user' );
+			var userRel = person1.getRelation( 'user' );
+
+			ok( userRel instanceof Backbone.HasOne );
+			equal( userRel.key, 'user' );
+
+			var jobsRel = person1.getRelation( 'jobs' );
+
+			ok( jobsRel instanceof Backbone.HasMany );
+			equal( jobsRel.key, 'jobs' );
+
+			ok( person1.getRelation( 'nope' ) == null );
 		});
 		
 		test( "fetchRelated on a HasOne relation", function() {
