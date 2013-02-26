@@ -969,7 +969,7 @@
 			this.keyContents = keyContents instanceof Backbone.Collection ? keyContents : null;
 			this.keyIds = [];
 
-			if ( !this.keyContents && !_.isUndefined( keyContents ) && !_.isNull( keyContents ) ) {
+			if ( !this.keyContents && (keyContents || keyContents === 0) ) { // since 0 can be a valid `id` as well
 				// Handle cases the an API/user supplies just an Object/id instead of an Array
 				this.keyContents = _.isArray( keyContents ) ? keyContents : [ keyContents ];
 
