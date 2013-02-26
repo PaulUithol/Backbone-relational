@@ -1671,8 +1671,8 @@
 			else {
 				model = new this.model( attrs, options );
 			}
-			
-			if ( !model._validate( attrs, options ) ) {
+
+			if ( model && model.isNew() && !model._validate( attrs, options ) ) {
 				this.trigger( 'invalid', this, attrs, options );
 				model = false;
 			}
