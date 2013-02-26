@@ -422,10 +422,10 @@
 		 * Remove a 'model' from the store.
 		 * @param {Backbone.RelationalModel} model
 		 */
-		unregister: function( model ) {
+		unregister: function( model, collection, options ) {
 			this.stopListening( model, 'destroy', this.unregister );
 			var coll = this.getCollection( model );
-			coll && coll.remove( model );
+			coll && coll.remove( model, options );
 		},
 
 		/**
