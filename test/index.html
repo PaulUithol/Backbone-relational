@@ -12,18 +12,17 @@
 		label: 'Backbone+Underscore master',
 		tooltip: 'Load Backbone and Underscore master, instead of using the local copies.'
 	});
-	
-	var srcPath,
-		cacheBust = '?' + ( +new Date() );
+
+	var sources;
 	
 	if ( QUnit.urlParams.master ) {
-		var sources = [
+		sources = [
 			'https://raw.github.com/documentcloud/underscore/master/underscore.js',
 			'https://raw.github.com/documentcloud/backbone/master/backbone.js'
 		];
 	}
 	else {
-		var sources = [
+		sources = [
 			'./lib/underscore.js',
 			'./lib/backbone.js'
 		];
@@ -31,7 +30,7 @@
 	
 	// Load source
 	sources.forEach( function( source ) {
-		document.write(	'<script type="text/javascript" src="' + source + cacheBust + '"><\/script>' );
+		document.write(	'<script type="text/javascript" src="' + source + '"><\/script>' );
 	});
 	</script>
 	<script type="text/javascript" src="../backbone-relational.js"></script>

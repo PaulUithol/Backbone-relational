@@ -108,7 +108,7 @@
 		}
 	});
 	/**
-	 * Global event queue. Accumulates external events ('add:<key>', 'remove:<key>' and 'update:<key>')
+	 * Global event queue. Accumulates external events ('add:<key>', 'remove:<key>' and 'change:<key>')
 	 * until the top-level object is fully initialized (see 'Backbone.RelationalModel').
 	 */
 	Backbone.Relational.eventQueue = new Backbone.BlockingQueue();
@@ -412,7 +412,7 @@
 		/**
 		 * Explicitly update a model's id in its store collection
 		 * @param {Backbone.RelationalModel} model
-		 */
+		*/
 		update: function( model ) {
 			var coll = this.getCollection( model );
 			coll._onModelEvent( 'change:' + model.idAttribute, model, coll );
@@ -589,7 +589,7 @@
 
 			// Check if we're not attempting to create a duplicate relationship
 			if ( i && i._relations.length ) {
-				var exists = _.any( i._relations || [], function( rel ) {
+				var exists = _.any( i._relations, function( rel ) {
 						var hasReverseRelation = this.reverseRelation.key && rel.reverseRelation.key;
 						return rel.relatedModel === rm && rel.key === k &&
 							( !hasReverseRelation || this.reverseRelation.key === rel.reverseRelation.key );
@@ -793,11 +793,13 @@
 				relation.addRelated( this.instance, options );
 			}, this);
 			
-			// Fire the 'update:<key>' event if 'related' was updated
+			// Fire the 'change:<key>' event if 'related' was updated
 			if ( !options.silentChange && this.related !== oldRelated ) {
 				var dit = this;
+				this.changed = true;
 				Backbone.Relational.eventQueue.add( function() {
-					dit.instance.trigger( 'update:' + dit.key, dit.instance, dit.related, options );
+					dit.instance.trigger( 'change:' + dit.key, dit.instance, dit.related, options, true );
+					dit.changed = false;
 				});
 			}
 			this.release();
@@ -977,7 +979,9 @@
 		 */
 		onChange: function( model, attr, options ) {
 			options = this.sanitizeOptions( options );
+
 			this.setKeyContents( attr );
+			this.changed = false;
 
 			var related = null;
 			
@@ -992,7 +996,8 @@
 				var toAdd = [];
 
 				_.each( this.keyContents, function( attributes ) {
-					var model = this.relatedModel.findOrCreate( attributes, _.extend( options, { create: this.options.createModels } ) );
+					// If `merge` is true, update models here, instead of during update.
+					var model = this.relatedModel.findOrCreate( attributes, _.extend( { merge: true }, options, { create: this.options.createModels } ) );
 					model && toAdd.push( model );
 				}, this );
 
@@ -1003,15 +1008,18 @@
 					related = this._prepareCollection();
 				}
 
-				related.update( toAdd, options );
+				related.update( toAdd, _.defaults( { merge: false }, options ) );
 			}
 
 			this.setRelated( related );
 
-			var dit = this;
-			Backbone.Relational.eventQueue.add( function() {
-				!options.silentChange && dit.instance.trigger( 'update:' + dit.key, dit.instance, dit.related, options );
-			});
+			if ( !options.silentChange ) {
+				var dit = this;
+				Backbone.Relational.eventQueue.add( function() {
+					dit.changed && dit.instance.trigger( 'change:' + dit.key, dit.instance, dit.related, options, true );
+					dit.changed = false;
+				});
+			}
 		},
 		
 		tryAddRelated: function( model, options ) {
@@ -1037,7 +1045,9 @@
 			if ( !( model instanceof Backbone.Model ) ) {
 				return;
 			}
-			
+
+			this.changed = true;
+
 			options = this.sanitizeOptions( options );
 			
 			_.each( this.getReverseRelations( model ) || [], function( relation ) {
@@ -1060,6 +1070,8 @@
 			if ( !( model instanceof Backbone.Model ) ) {
 				return;
 			}
+
+			this.changed = true;
 
 			options = this.sanitizeOptions( options );
 			
@@ -1105,7 +1117,7 @@
 	 * New events when compared to the original:
 	 *  - 'add:<key>' (model, related collection, options)
 	 *  - 'remove:<key>' (model, related collection, options)
-	 *  - 'update:<key>' (model, related model or collection, options)
+	 *  - 'change:<key>' (model, related model or collection, options)
 	 */
 	Backbone.RelationalModel = Backbone.Model.extend({
 		relations: null, // Relation descriptions on the prototype
@@ -1157,10 +1169,34 @@
 		 * Override 'trigger' to queue 'change' and 'change:*' events
 		 */
 		trigger: function( eventName ) {
-			if ( eventName.length > 5 && 'change' === eventName.substr( 0, 6 ) ) {
-				var dit = this, args = arguments;
+			if ( eventName.length > 5 && eventName.indexOf( 'change' ) === 0 ) {
+				var dit = this,
+					args = arguments;
+
 				Backbone.Relational.eventQueue.add( function() {
-					Backbone.Model.prototype.trigger.apply( dit, args );
+					// Determine if the `change` event is still valid, now that all relations are populated
+					var changed = true;
+					if ( eventName === 'change' ) {
+						changed = dit.hasChanged();
+					}
+					else {
+						var attr = eventName.slice( 7 );
+						// If `attr` is a relation, `change:` events are triggered from `Relation.onChange`.
+						// These set a fourth attribute to `true`.
+						var rel = dit.getRelation( attr );
+						if ( rel ) {
+							changed = ( args[ 4 ] === true );
+
+							if ( rel.changed ) {
+								dit.changed[ attr ] = args[ 2 ];
+							}
+							else {
+								dit.changed && delete dit.changed[ attr ];
+							}
+						}
+					}
+
+					changed && Backbone.Model.prototype.trigger.apply( dit, args );
 				});
 			}
 			else {
@@ -1193,7 +1229,7 @@
 		 */
 		updateRelations: function( options ) {
 			if ( this._isInitialized && !this.isLocked() ) {
-				_.each( this._relations || [], function( rel ) {
+				_.each( this._relations, function( rel ) {
 					// Update from data in `rel.keySource` if set, or `rel.key` otherwise
 					var val = this.attributes[ rel.keySource ] || this.attributes[ rel.key ];
 					if ( rel.related !== val ) {
@@ -1434,7 +1470,7 @@
 				json[ this.constructor._subModelTypeAttribute ] = this.constructor._subModelTypeValue;
 			}
 			
-			_.each( this._relations || [], function( rel ) {
+			_.each( this._relations, function( rel ) {
 				var value = json[ rel.key ];
 
 				if ( rel.options.includeInJSON === true) {
@@ -1671,7 +1707,7 @@
 			else {
 				model = new this.model( attrs, options );
 			}
-
+			
 			if ( model && model.isNew() && !model._validate( attrs, options ) ) {
 				this.trigger( 'invalid', this, attrs, options );
 				model = false;
@@ -1805,15 +1841,14 @@
 		}
 
 		if ( eventName === 'add' || eventName === 'remove' || eventName === 'reset' ) {
-			var dit = this, args = arguments;
+			var dit = this,
+				args = arguments;
 			
-			if (eventName === 'add') {
+			if ( _.isObject( args[ 3 ] ) ) {
 				args = _.toArray( args );
-				// the fourth argument in case of a regular add is the option object.
+				// the fourth argument is the option object.
 				// we need to clone it, as it could be modified while we wait on the eventQueue to be unblocked
-				if ( _.isObject( args[3] ) ) {
-					args[3] = _.clone( args[3] );
-				}
+				args[ 3 ] = _.clone( args[ 3 ] );
 			}
 			
 			Backbone.Relational.eventQueue.add( function() {

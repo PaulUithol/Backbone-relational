@@ -1949,8 +1949,8 @@ $(document).ready(function() {
 					equal( model.previous( 'user' ).get( 'login' ), oldLogin, "previousAttributes is available on 'change'" );
 				});
 			
-			person1.bind( 'update:user', function( model, attr, options ) {
-					ok( model.get( 'user' ) instanceof User, "In 'update:user', model.user is an instance of User" );
+			person1.bind( 'change:user', function( model, attr, options ) {
+					ok( model.get( 'user' ) instanceof User, "In 'change:user', model.user is an instance of User" );
 					ok( attr.get( 'person' ) === person1, "The user's 'person' is 'person1'" );
 					ok( attr.get( 'password' ) instanceof Password, "The user's password attribute is a model of type Password");
 					equal( attr.get( 'password' ).get( 'plaintext' ), 'qwerty', "The user's password is ''qwerty'" );
@@ -1962,21 +1962,21 @@ $(document).ready(function() {
 			// Triggers assertions for 'change' and 'change:user'
 			person1.set( { user: user } );
 			
-			user = person1.get( 'user' ).bind( 'update:password', function( model, attr, options ) {
+			user = person1.get( 'user' ).bind( 'change:password', function( model, attr, options ) {
 				equal( attr.get( 'plaintext' ), 'asdf', "The user's password is ''qwerty'" );
 			});
 			
-			// Triggers assertions for 'update:user'
+			// Triggers assertions for 'change:user'
 			user.set( { password: password } );
 		});
 
-		test( "'set' doesn't triggers 'change' and 'update:' when passed `silent: true`", 2, function() {
+		test( "'set' doesn't triggers 'change' and 'change:' when passed `silent: true`", 2, function() {
 			person1.bind( 'change', function( model, options ) {
 				ok( false, "'change' should not get triggered" );
 			});
 
-			person1.bind( 'update:user', function( model, attr, options ) {
-				ok( false, "'update:user' should not get triggered" );
+			person1.bind( 'change:user', function( model, attr, options ) {
+				ok( false, "'change:user' should not get triggered" );
 			});
 
 			person1.bind( 'change:user', function( model, attr, options ) {
@@ -1991,12 +1991,12 @@ $(document).ready(function() {
 			equal( person1.get( 'user' ), user );
 		});
 		
-		test( "'unset' triggers 'change' and 'update:'", 4, function() {
+		test( "'unset' triggers 'change' and 'change:<key>'", 4, function() {
 			person1.bind( 'change', function( model, options ) {
 					equal( model.get('user'), null, "model.user is unset" );
 				});
 			
-			person1.bind( 'update:user', function( model, attr, options ) {
+			person1.bind( 'change:user', function( model, attr, options ) {
 					equal( attr, null, "new value of attr (user) is null" );
 				});
 			
@@ -2008,14 +2008,14 @@ $(document).ready(function() {
 			equal( user.get( 'person' ), null, "person1 is not set on 'user' anymore" );
 		});
 		
-		test( "'clear' triggers 'change' and 'update:'", 4, function() {
+		test( "'clear' triggers 'change' and 'change:<key>'", 4, function() {
 			person1.bind( 'change', function( model, options ) {
-					equal( model.get('user'), null, "model.user is unset" );
-				});
+				equal( model.get('user'), null, "model.user is unset" );
+			});
 			
-			person1.bind( 'update:user', function( model, attr, options ) {
-					equal( attr, null, "new value of attr (user) is null" );
-				});
+			person1.bind( 'change:user', function( model, attr, options ) {
+				equal( attr, null, "new value of attr (user) is null" );
+			});
 			
 			ok( person1.get( 'user' ) instanceof User, "person1 has a 'user'" );
 			
@@ -2047,19 +2047,19 @@ $(document).ready(function() {
 					});
 			
 			var count = 0;
-			person1.bind( 'update:livesIn', function( model, attr ) {
-					if ( count === 0 ) {
-						ok( attr === ourHouse, "model === ourHouse" );
-					}
-					else if ( count === 1 ) {
-						ok( attr === theirHouse, "model === theirHouse" );
-					}
-					else if ( count === 2 ) {
-						ok( attr === null, "model === null" );
-					}
-					
-					count++;
-				});
+			person1.bind( 'change:livesIn', function( model, attr ) {
+				if ( count === 0 ) {
+					ok( attr === ourHouse, "model === ourHouse" );
+				}
+				else if ( count === 1 ) {
+					ok( attr === theirHouse, "model === theirHouse" );
+				}
+				else if ( count === 2 ) {
+					ok( attr === null, "model === null" );
+				}
+
+				count++;
+			});
 			
 			ourHouse.get( 'occupants' ).add( person1 );
 			person1.set( { 'livesIn': theirHouse } );
@@ -2963,20 +2963,20 @@ $(document).ready(function() {
 
 	module( "Events", { setup: reset } );
 
-		test( "`add:`, `remove:` and `update:` events", function() {
+		test( "`add:`, `remove:` and `change:` events", function() {
 			var zoo = new Zoo(),
 				animal = new Animal();
 
 			var addEventsTriggered = 0;
 			var removeEventsTriggered = 0;
-			var updateEventsTriggered = 0;
+			var changeEventsTriggered = 0;
 
 			zoo
 //				.on( 'change:animals', function( model, coll ) {
 //					console.log( 'change:animals; args=%o', arguments );
 //				})
-//				.on( 'update:animals', function( model, coll ) {
-//					console.log( 'update:animals; args=%o', arguments );
+//				.on( 'change:animals', function( model, coll ) {
+//					console.log( 'change:animals; args=%o', arguments );
 //				})
 				.bind( 'add:animals', function( model, coll ) {
 					//console.log( 'add:animals; args=%o', arguments );
@@ -2991,9 +2991,9 @@ $(document).ready(function() {
 //				.on( 'change:livesIn', function( model, coll ) {
 //					console.log( 'change:livesIn; args=%o', arguments );
 //				})
-				.bind( 'update:livesIn', function( model, coll ) {
-					//console.log( 'update:livesIn; args=%o', arguments );
-					updateEventsTriggered++;
+				.bind( 'change:livesIn', function( model, coll ) {
+					//console.log( 'change:livesIn; args=%o', arguments );
+					changeEventsTriggered++;
 				});
 
 			// Should trigger `change:livesIn` and `add:animals`
@@ -3004,28 +3004,28 @@ $(document).ready(function() {
 
 			ok( addEventsTriggered === 1 );
 			ok( removeEventsTriggered === 0 );
-			ok( updateEventsTriggered === 1 );
+			ok( changeEventsTriggered === 1 );
 
 			// Doing this shouldn't trigger any `add`/`remove`/`update` events
 			zoo.set( 'animals', [ 'a1' ] );
 
 			ok( addEventsTriggered === 1 );
 			ok( removeEventsTriggered === 0 );
-			ok( updateEventsTriggered === 1 );
+			ok( changeEventsTriggered === 1 );
 
 			// Doesn't cause an actual state change
 			animal.set( 'livesIn', 'z1' );
 
 			ok( addEventsTriggered === 1 );
 			ok( removeEventsTriggered === 0 );
-			ok( updateEventsTriggered === 1 );
+			ok( changeEventsTriggered === 1 );
 
 			// Should trigger a `remove` on zoo and an `update` on animal
 			animal.set( 'livesIn', { id: 'z2' } );
 
 			ok( addEventsTriggered === 1 );
 			ok( removeEventsTriggered === 1 );
-			ok( updateEventsTriggered === 2 );
+			ok( changeEventsTriggered === 2 );
 		});
 
 		test( "No (`reset`) events when initializing a HasMany", function() {
@@ -3065,6 +3065,109 @@ $(document).ready(function() {
 
 			ok( view.get( 'properties' ) instanceof PropertiesCollection );
 			ok( eventsTriggered === 0 );
+		});
+
+		test( "Firing of `change` and `change:<key>` events", function() {
+			var data = {
+				id: 1,
+				animals: []
+			};
+
+			var zoo = new Zoo( data );
+
+			var change = 0;
+			zoo.on( 'change', function() {
+				change++;
+			});
+
+			var changeAnimals = 0;
+			zoo.on( 'change:animals', function() {
+				changeAnimals++;
+			});
+
+			var animalChange = 0;
+			zoo.get( 'animals' ).on( 'change', function() {
+				animalChange++;
+			});
+
+			// Set the same data
+			zoo.set( data );
+
+			ok( change === 0, 'no change event should fire' );
+			ok( changeAnimals === 0, 'no change:animals event should fire' );
+			ok( animalChange === 0, 'no animals:change event should fire' );
+
+			// Add an `animal`
+			change = changeAnimals = animalChange = 0;
+			zoo.set( { animals: [ { id: 'a1' } ] } );
+
+			ok( change === 1, 'change event should fire' );
+			ok( changeAnimals === 1, 'change:animals event should fire' );
+			ok( animalChange === 0, 'no animals:change event should fire' );
+
+			// Change an animal
+			change = changeAnimals = animalChange = 0;
+			zoo.set( { animals: [ { id: 'a1', name: 'a1' } ] } );
+
+			ok( change === 0, 'no change event should fire' );
+			ok( changeAnimals === 0, 'no change:animals event should fire' );
+			ok( animalChange === 1, 'animals:change event should fire' );
+
+			// Only change the `zoo` itself
+			change = changeAnimals = animalChange = 0;
+			zoo.set( { name: 'Artis' } );
+
+			ok( change === 1, 'change event should fire' );
+			ok( changeAnimals === 0, 'no change:animals event should fire' );
+			ok( animalChange === 0, 'no animals:change event should fire' );
+
+			// Replace an `animal`
+			change = changeAnimals = animalChange = 0;
+			zoo.set( { animals: [ { id: 'a2' } ] } );
+
+			ok( change === 1, 'change event should fire' );
+			ok( changeAnimals === 1, 'change:animals event should fire' );
+			ok( animalChange === 0, 'no animals:change event should fire' );
+
+			// Remove an `animal`
+			change = changeAnimals = animalChange = 0;
+			zoo.set( { animals: [] } );
+
+			ok( change === 1, 'change event should fire' );
+			ok( changeAnimals === 1, 'change:animals event should fire' );
+			ok( animalChange === 0, 'no animals:change event should fire' );
+
+			// Operate directly on the HasMany collection
+			var animals = zoo.get( 'animals' ),
+				a1 = Animal.findOrCreate( 'a1', { create: false } ),
+				a2 = Animal.findOrCreate( 'a2', { create: false } );
+
+			ok( a1 instanceof Animal );
+			ok( a2 instanceof Animal );
+
+			// Add an animal
+			change = changeAnimals = animalChange = 0;
+			animals.add( 'a2' );
+
+			ok( change === 0, 'change event not should fire' );
+			ok( changeAnimals === 1, 'change:animals event should fire(??)' );
+			ok( animalChange === 0, 'no animals:change event should fire' );
+
+			// Update an animal directly
+			change = changeAnimals = animalChange = 0;
+			a2.set( 'name', 'a2' );
+
+			ok( change === 0, 'no change event should fire' );
+			ok( changeAnimals === 0, 'no change:animals event should fire' );
+			ok( animalChange === 1, 'animals:change event should fire' );
+
+			// Remove an animal directly
+			change = changeAnimals = animalChange = 0;
+			animals.remove( 'a2' );
+
+			ok( change === 0, 'no change event should fire' );
+			ok( changeAnimals === 1, 'change:animals event should fire(??)' );
+			ok( animalChange === 0, 'no animals:change event should fire' );
 		});
 
 		test( "Does not trigger add / remove events for existing models on bulk assignment", function() {
@@ -3294,6 +3397,5 @@ $(document).ready(function() {
 			var secs = (end - start) / 1000;
 			console.log('data removed in ' + secs + ', relatedModelRemovedCount=' + relatedModelRemovedCount );
 		});
-
 });
 
