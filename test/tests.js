@@ -58,7 +58,7 @@ $(document).ready(function() {
 				collectionOptions: function( instance ) { return { 'url': 'zoo/' + instance.cid + '/animal/' } },
 				reverseRelation: {
 					key: 'livesIn',
-					includeInJSON: 'id'
+					includeInJSON: [ 'id', 'name' ]
 				}
 			},
 			{ // A simple HasMany without recursive relation
@@ -1226,21 +1226,31 @@ $(document).ready(function() {
 
 		test( "'includeInJSON' (Zoo to JSON)", function() {
 			var zoo = new Zoo({
+				id: 0,
 				name: 'Artis',
+				city: 'Amsterdam',
 				animals: [
 					new Animal( { id: 1, species: 'bear', name: 'Baloo' } ),
 					new Animal( { id: 2, species: 'tiger', name: 'Shere Khan' } )
 				]
 			});
 
-			var json = zoo.toJSON();
+			var jsonZoo = zoo.toJSON(),
+				jsonBear = jsonZoo.animals[ 0 ];
 
-			equal( json.animals.length, 2 );
+			ok( _.isArray( jsonZoo.animals ), "animals is an Array" );
+			equal( jsonZoo.animals.length, 2 );
+			equal( jsonBear.species, 'bear', "animal's species has been included in the JSON" );
+			ok( !jsonBear.name, "animal's name has not been included in the JSON" );
 
-			var bear = json.animals[ 0 ];
+			var tiger = zoo.get( 'animals' ).get( 1 ),
+				jsonTiger = tiger.toJSON();
 
-			equal( bear.species, 'bear', "animal's species has been included in the JSON" );
-			equal( bear.name, undefined, "animal's name has not been included in the JSON" );
+			ok( _.isObject( jsonTiger.livesIn ) && !_.isArray( jsonTiger.livesIn ), "zoo is an Object" );
+			console.log( jsonTiger, jsonTiger.livesIn );
+			ok( jsonTiger.livesIn.id === 0, "zoo.id is included in the JSON" );
+			equal( jsonTiger.livesIn.name, 'Artis', "zoo.name is included in the JSON" );
+			ok( !jsonTiger.livesIn.city, "zoo.city is not included in the JSON" );
 		});
 		
 		test( "'createModels' is false", function() {
@@ -1648,7 +1658,7 @@ $(document).ready(function() {
 		test( "Only valid models (no validation failure) should be added to a relation", function() {
 			var zoo = new Zoo();
 			
-			zoo.bind( 'add:animals', function( animal ) {
+			zoo.on( 'add:animals', function( animal ) {
 				ok( animal instanceof Animal );
 			});
 			
@@ -1939,17 +1949,17 @@ $(document).ready(function() {
 			// triggers initialization of the reverse relation from User to Password
 			var password = new Password( { plaintext: 'asdf' } );
 			
-			person1.bind( 'change', function( model, options ) {
+			person1.on( 'change', function( model, options ) {
 					ok( model.get( 'user' ) instanceof User, "In 'change', model.user is an instance of User" );
 					equal( model.previous( 'user' ).get( 'login' ), oldLogin, "previousAttributes is available on 'change'" );
 				});
 			
-			person1.bind( 'change:user', function( model, options ) {
+			person1.on( 'change:user', function( model, options ) {
 					ok( model.get( 'user' ) instanceof User, "In 'change:user', model.user is an instance of User" );
 					equal( model.previous( 'user' ).get( 'login' ), oldLogin, "previousAttributes is available on 'change'" );
 				});
 			
-			person1.bind( 'change:user', function( model, attr, options ) {
+			person1.on( 'change:user', function( model, attr, options ) {
 					ok( model.get( 'user' ) instanceof User, "In 'change:user', model.user is an instance of User" );
 					ok( attr.get( 'person' ) === person1, "The user's 'person' is 'person1'" );
 					ok( attr.get( 'password' ) instanceof Password, "The user's password attribute is a model of type Password");
@@ -1962,7 +1972,7 @@ $(document).ready(function() {
 			// Triggers assertions for 'change' and 'change:user'
 			person1.set( { user: user } );
 			
-			user = person1.get( 'user' ).bind( 'change:password', function( model, attr, options ) {
+			user = person1.get( 'user' ).on( 'change:password', function( model, attr, options ) {
 				equal( attr.get( 'plaintext' ), 'asdf', "The user's password is ''qwerty'" );
 			});
 			
@@ -1971,15 +1981,15 @@ $(document).ready(function() {
 		});
 
 		test( "'set' doesn't triggers 'change' and 'change:' when passed `silent: true`", 2, function() {
-			person1.bind( 'change', function( model, options ) {
+			person1.on( 'change', function( model, options ) {
 				ok( false, "'change' should not get triggered" );
 			});
 
-			person1.bind( 'change:user', function( model, attr, options ) {
+			person1.on( 'change:user', function( model, attr, options ) {
 				ok( false, "'change:user' should not get triggered" );
 			});
 
-			person1.bind( 'change:user', function( model, attr, options ) {
+			person1.on( 'change:user', function( model, attr, options ) {
 				ok( false, "'change:user' should not get triggered" );
 			});
 
@@ -1992,11 +2002,11 @@ $(document).ready(function() {
 		});
 		
 		test( "'unset' triggers 'change' and 'change:<key>'", 4, function() {
-			person1.bind( 'change', function( model, options ) {
+			person1.on( 'change', function( model, options ) {
 					equal( model.get('user'), null, "model.user is unset" );
 				});
 			
-			person1.bind( 'change:user', function( model, attr, options ) {
+			person1.on( 'change:user', function( model, attr, options ) {
 					equal( attr, null, "new value of attr (user) is null" );
 				});
 			
@@ -2009,11 +2019,11 @@ $(document).ready(function() {
 		});
 		
 		test( "'clear' triggers 'change' and 'change:<key>'", 4, function() {
-			person1.bind( 'change', function( model, options ) {
+			person1.on( 'change', function( model, options ) {
 				equal( model.get('user'), null, "model.user is unset" );
 			});
 			
-			person1.bind( 'change:user', function( model, attr, options ) {
+			person1.on( 'change:user', function( model, attr, options ) {
 				equal( attr, null, "new value of attr (user) is null" );
 			});
 			
@@ -2031,23 +2041,23 @@ $(document).ready(function() {
 
 		test( "Listeners on 'add'/'remove'", 7, function() {
 			ourHouse
-				.bind( 'add:occupants', function( model, coll ) {
+				.on( 'add:occupants', function( model, coll ) {
 						ok( model === person1, "model === person1" );
 					})
-				.bind( 'remove:occupants', function( model, coll ) {
+				.on( 'remove:occupants', function( model, coll ) {
 						ok( model === person1, "model === person1" );
 					});
 			
 			theirHouse
-				.bind( 'add:occupants', function( model, coll ) {
+				.on( 'add:occupants', function( model, coll ) {
 						ok( model === person1, "model === person1" );
 					})
-				.bind( 'remove:occupants', function( model, coll ) {
+				.on( 'remove:occupants', function( model, coll ) {
 						ok( model === person1, "model === person1" );
 					});
 			
 			var count = 0;
-			person1.bind( 'change:livesIn', function( model, attr ) {
+			person1.on( 'change:livesIn', function( model, attr ) {
 				if ( count === 0 ) {
 					ok( attr === ourHouse, "model === ourHouse" );
 				}
@@ -2072,12 +2082,12 @@ $(document).ready(function() {
 			var job3 = { person: person1 };
 			var newJob = null;
 			
-			newCompany.bind( 'add:employees', function( model, coll ) {
+			newCompany.on( 'add:employees', function( model, coll ) {
 					ok( false, "person1 should only be added to 'oldCompany'." );
 				});
 			
 			// Assert that all relations on a Model are set up, before notifying related models.
-			oldCompany.bind( 'add:employees', function( model, coll ) {
+			oldCompany.on( 'add:employees', function( model, coll ) {
 					newJob = model;
 					
 					ok( model instanceof Job );
@@ -2085,7 +2095,7 @@ $(document).ready(function() {
 						"Both Person and Company are set on the Job instance" );
 				});
 			
-			person1.bind( 'add:jobs', function( model, coll ) {
+			person1.on( 'add:jobs', function( model, coll ) {
 					ok( model.get( 'company' ) === oldCompany && model.get( 'person' ) === person1,
 						"Both Person and Company are set on the Job instance" );
 				});
@@ -2366,15 +2376,13 @@ $(document).ready(function() {
 			var zoo = new window.Zoo({
 				visitors : [ { name : "Incognito" } ]
 			});
-			
-			var visitor = new window.Visitor({
-				id : 0
-			}); 
-			
-			zoo.get('visitors').bind( 'add', function( model, coll ) {
+
+			var visitor = new window.Visitor();
+
+			zoo.get( 'visitors' ).on( 'add', function( model, coll ) {
 				addedModels++;
 			});
-			
+
 			visitor.clone();
 			
 			equal( addedModels, 0, "A new visitor should not be forced to go to the zoo!" );
@@ -2520,12 +2528,12 @@ $(document).ready(function() {
 		
 		test( "'Save' objects (performing 'set' multiple times without and with id)", 4, function() {
 			person3
-				.bind( 'add:jobs', function( model, coll ) {
+				.on( 'add:jobs', function( model, coll ) {
 					var company = model.get('company');
 					ok( company instanceof Company && company.get('ceo').get('name') === 'Lunar boy' && model.get('person') === person3,
 						"add:jobs: Both Person and Company are set on the Job instance once the event gets fired" );
 				})
-				.bind( 'remove:jobs', function( model, coll ) {
+				.on( 'remove:jobs', function( model, coll ) {
 					ok( false, "remove:jobs: 'person3' should not lose his job" );
 				});
 			
@@ -2539,12 +2547,12 @@ $(document).ready(function() {
 			});
 
 			company
-				.bind( 'add:employees', function( model, coll ) {
+				.on( 'add:employees', function( model, coll ) {
 					var company = model.get('company');
 					ok( company instanceof Company && company.get('ceo').get('name') === 'Lunar boy' && model.get('person') === person3,
 						"add:employees: Both Person and Company are set on the Company instance once the event gets fired" );
 				})
-				.bind( 'remove:employees', function( model, coll ) {
+				.on( 'remove:employees', function( model, coll ) {
 					ok( true, "'remove:employees: person3' should lose a job once" );
 				});
 			
@@ -2998,11 +3006,11 @@ $(document).ready(function() {
 //				.on( 'change:animals', function( model, coll ) {
 //					console.log( 'change:animals; args=%o', arguments );
 //				})
-				.bind( 'add:animals', function( model, coll ) {
+				.on( 'add:animals', function( model, coll ) {
 					//console.log( 'add:animals; args=%o', arguments );
 					addEventsTriggered++;
 				})
-				.bind( 'remove:animals', function( model, coll ) {
+				.on( 'remove:animals', function( model, coll ) {
 					//console.log( 'remove:animals; args=%o', arguments );
 					removeEventsTriggered++;
 				});
@@ -3011,7 +3019,7 @@ $(document).ready(function() {
 //				.on( 'change:livesIn', function( model, coll ) {
 //					console.log( 'change:livesIn; args=%o', arguments );
 //				})
-				.bind( 'change:livesIn', function( model, coll ) {
+				.on( 'change:livesIn', function( model, coll ) {
 					//console.log( 'change:livesIn; args=%o', arguments );
 					changeEventsTriggered++;
 				});
@@ -3231,7 +3239,7 @@ $(document).ready(function() {
 			var changeEventsTriggered = 0;
 
 			house
-//				.bind( 'all', function(ev, model) {
+//				.on( 'all', function(ev, model) {
 //					console.log('all', ev, model);
 //				})
 				.on( 'add:occupants', function( model ) {
