@@ -191,19 +191,19 @@ div#sidebar {
 		font-weight: bold;
 		margin: 1em 0 .2em;
 	}
-	#sidebar .version {
+	div#sidebar .version {
 		font-size: 10px;
 		font-weight: normal;
 	}
-	ul.toc_section {
+	div#sidebar ul {
 		font-size: 12px;
 		line-height: 20px;
 		margin-bottom: .5em;
 	}
-		ul.toc_section ul {
+		div#sidebar ul ul {
 			margin: 0 0 0 1em;
 		}
-			.toc_section li.link_out:before {
+			div#sidebar li.link_out:before {
 				content: "\00BB";
 			}
 			

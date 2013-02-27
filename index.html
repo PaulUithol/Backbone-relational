@@ -30,7 +30,7 @@
 		Backbone-relational.js <span class="version">(0.7.1)</span>
 	</a>
 
-	<ul class="toc_section">
+	<ul>
 		<li class="link_out"><a href="https://github.com/PaulUithol/Backbone-relational">GitHub Repository</a></li>
 	</ul>
 
@@ -46,10 +46,10 @@
 		Backbone.RelationalModel
 	</a>
 
-	<ul class="toc_section">
+	<ul>
 		<li>
 			<a href="#RelationalModel-relations">relations</a>
-			<ul class="toc_section">
+			<ul>
 				<li><a href="#relations-relatedModel">relatedModel</a></li>
 				<li><a href="#relations-key">key</a></li>
 				<li><a href="#relations-type">type</a></li>
@@ -60,24 +60,27 @@
 				<li><a href="#relations-includeInJSON">includeInJSON</a></li>
 				<li><a href="#relations-createModels">createModels</a></li>
 				<li><a href="#relations-reverseRelation">reverseRelation</a></li>
+				<li><a href="#relations-autoFetch">autoFetch</a></li>
 			</ul>
 		</li>
+	</ul>
+	<ul>
 		<li><a href="#RelationalModel-subModelTypes">subModelTypes</a></li>
 		<li><a href="#RelationalModel-subModelTypeAttribute">subModelTypeAttribute</a></li>
 	</ul>
-	<ul class="toc_section">
+	<ul>
 		<li><a href="#RelationalModel-getRelation">getRelation</a></li>
 		<li><a href="#RelationalModel-getRelations">getRelations</a></li>
 		<li><a href="#RelationalModel-fetchRelated">fetchRelated</a></li>
 		<li><a href="#RelationalModel-set">set</a></li>
 		<li><a href="#RelationalModel-toJSON">toJSON</a></li>
 	</ul>
-	<ul class="toc_section">
+	<ul>
 		<li><a href="#RelationalModel-setup">setup</a></li>
 		<li><a href="#RelationalModel-build">build</a></li>
 		<li><a href="#RelationalModel-findOrCreate">findOrCreate</a></li>
 	</ul>
-	<ul class="toc_section">
+	<ul>
 		<li><a href="#RelationalModel-events"><strong>Catalog of Events</strong></a></li>
 	</ul>
 
@@ -85,7 +88,7 @@
 		Backbone.Relation
 	</a>
 
-	<ul class="toc_section">
+	<ul>
 		<li><a href="#Relation-HasOne">HasOne</a></li>
 		<li><a href="#Relation-HasMany">HasMany</a></li>
 	</ul>
@@ -94,7 +97,7 @@
 		Backbone.Store
 	</a>
 
-	<ul class="toc_section">
+	<ul>
 		<li><a href="#Store-addModelScope">addModelScope</a></li>
 		<li><a href="#Store-reset">reset</a></li>
 	</ul>
@@ -893,14 +896,14 @@ MyModel.setup()
 	</section>
 
 	<section id="Store">
-		<h2 >Backbone.Relational.Store</h2>
+		<h2 >Backbone.Store</h2>
 		<p>
-			The <strong>Store</strong> is a global model cache. Per application, one instance is created, which is accessible as
-			<q>Backbone.store</q> (much like <q>Backbone.History</q>).
+			<strong>Backbone.Store</strong> is a global model cache. Per application, one instance is created (much like <q>Backbone.History</q>),
+			which is accessible as <q>Backbone.Relational.store</q>.
 		</p>
 
 		<h4 class="code" id="Store-addModelScope">
-			addModelScope<code>Backbone.store.addModelScope( scope&lt;object&gt; )</code>
+			addModelScope<code>Backbone.Relational.store.addModelScope( scope&lt;object&gt; )</code>
 		</h4>
 		<p>
 			When working in an environment without a shared global scope (like <q>window</q> is in a browser), you'll need
@@ -908,7 +911,7 @@ MyModel.setup()
 		</p>
 
 		<h4 class="code" id="Store-reset">
-			reset<code>Backbone.store.reset()</code>
+			reset<code>Backbone.Relational.store.reset()</code>
 		</h4>
 		<p>
 			Reset the <q>store</q> to it's original state. This will disable relations for all models created up to this point,
