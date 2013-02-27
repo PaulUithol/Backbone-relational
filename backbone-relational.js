@@ -964,14 +964,14 @@
 			this.keyContents = keyContents instanceof Backbone.Collection ? keyContents : null;
 			this.keyIds = [];
 
-			if ( !this.keyContents && (keyContents || keyContents === 0) ) { // since 0 can be a valid `id` as well
+			if ( !this.keyContents && ( keyContents || keyContents === 0 ) ) { // since 0 can be a valid `id` as well
 				// Handle cases the an API/user supplies just an Object/id instead of an Array
 				this.keyContents = _.isArray( keyContents ) ? keyContents : [ keyContents ];
 
 				_.each( this.keyContents, function( item ) {
 					var itemId = Backbone.Relational.store.resolveIdForItem( this.relatedModel, item );
-					if ( itemId || itemId === 0) {
-						this.keyIds.push(itemId);
+					if ( itemId || itemId === 0 ) {
+						this.keyIds.push( itemId );
 					}
 				}, this );
 			}
@@ -1183,13 +1183,17 @@
 						changed = dit.hasChanged();
 					}
 					else {
-						var attr = eventName.slice( 7 );
-						// If `attr` is a relation, `change:` events are triggered from `Relation.onChange`.
-						// These set a fourth attribute to `true`.
-						var rel = dit.getRelation( attr );
+						var attr = eventName.slice( 7 ),
+							rel = dit.getRelation( attr );
+
 						if ( rel ) {
+							// If `attr` is a relation, `change:attr` get triggered from `Relation.onChange`.
+							// These take precedence over `change:attr` events triggered by `Backbone.set`.
+							// The relation set a fourth attribute to `true`. If this attribute is present,
+							// continue triggering this event; otherwise, it should be stopped.
 							changed = ( args[ 4 ] === true );
 
+							// Set the right values in `this.changed` (collection instead of raw data).
 							if ( rel.changed ) {
 								dit.changed[ attr ] = args[ 2 ];
 							}
@@ -1450,7 +1454,7 @@
 				attributes[ this.idAttribute ] = null;
 			}
 
-			_.each( this.getRelations() || [], function( rel ) {
+			_.each( this.getRelations(), function( rel ) {
 				delete attributes[ rel.key ];
 			});
 
@@ -1496,7 +1500,6 @@
 					}
 				}
 				else if ( _.isArray( rel.options.includeInJSON ) ) {
-
 					if ( value instanceof Backbone.Collection ) {
 						var valueSub = [];
 						value.each( function( model ) {
