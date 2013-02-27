@@ -3268,8 +3268,8 @@ $(document).ready(function() {
 
 
 		test( "Creation and destruction", 0, function() {
-			var relatedModelAddedCount = 0;
 
+			var relatedModelAddedCount = 0;
 			Backbone.Relation.prototype._relatedModelAdded = function( model, coll, options ) {
 				// Allow 'model' to set up its relations, before calling 'tryAddRelated'
 				// (which can result in a call to 'addRelated' on a relation of 'model')
@@ -3287,54 +3287,6 @@ $(document).ready(function() {
 				relatedModelRemovedCount++;
 			};
 
-			var Child = Backbone.RelationalModel.extend({
-				url: '/child/'
-			});
-
-			var Parent = Backbone.RelationalModel.extend({
-				relations: [{
-					type: Backbone.HasMany,
-					key: 'children',
-					relatedModel: Child
-				}]
-			});
-
-			var Parents = Backbone.Collection.extend({
-				model: Parent
-			});
-
-			// bootstrap data
-			var data = [];
-			for ( var i = 1; i <= 300; i++ ) {
-				data.push({
-					name: 'parent-' + i,
-					children: [
-						{id: 'p-' + i + '-c1', name: 'child-1'},
-						{id: 'p-' + i + '-c2', name: 'child-2'},
-						{id: 'p-' + i + '-c3', name: 'child-3'}
-					]
-				});
-			}
-
-			// test 2 (run separetly)
-			Backbone.Relational.store.reset();
-			relatedModelAddedCount = 0;
-			console.log('loading test 2...');
-			var start = new Date();
-
-			data.forEach(function (parent) {
-				parent.children = parent.children.map(function (child) {
-					return new Child(child);
-				});
-			});
-
-			var parents = new Parents();
-			parents.on('reset', function () {
-				var end = new Date();
-				var secs = (end - start) / 1000;
-				console.log('data loaded in ' + secs + ', relatedModelAddedCount=' + relatedModelAddedCount );
-			});
-			parents.reset(data);
 
 			var Child = Backbone.RelationalModel.extend({
 				url: '/child/'
@@ -3355,7 +3307,50 @@ $(document).ready(function() {
 				model: Parent
 			});
 
-			// test 1
+
+
+			// bootstrap data
+			var data = [];
+			for ( var i = 1; i <= 300; i++ ) {
+				data.push({
+					name: 'parent-' + i,
+					children: [
+						{id: 'p-' + i + '-c1', name: 'child-1'},
+						{id: 'p-' + i + '-c2', name: 'child-2'},
+						{id: 'p-' + i + '-c3', name: 'child-3'}
+					]
+				});
+			}
+
+
+			/**
+			 * Test 2
+			 */
+			Backbone.Relational.store.reset();
+			relatedModelAddedCount = 0;
+			console.log('loading test 2...');
+			var start = new Date();
+
+			var preparedData = _.map( data, function( item ) {
+				item = _.clone( item );
+				item.children = item.children.map( function( child ) {
+					return new Child( child );
+				});
+				return item;
+			});
+
+			var parents = new Parents();
+			parents.on('reset', function () {
+				var end = new Date();
+				var secs = (end - start) / 1000;
+				console.log('data loaded in ' + secs + ', relatedModelAddedCount=' + relatedModelAddedCount );
+			});
+			parents.reset( preparedData );
+
+
+			/**
+			 * Test 1
+			 */
 			Backbone.Relational.store.reset();
 			relatedModelAddedCount = 0;
 			console.log('loading test 1...');
@@ -3367,19 +3362,16 @@ $(document).ready(function() {
 				var secs = (end - start) / 1000;
 				console.log('data loaded in ' + secs + ', relatedModelAddedCount=' + relatedModelAddedCount );
 			});
-			parents.reset(data);
+			parents.reset( data );
 
-			// test 2 (run separetly)
+
+			/**
+			 * Test 2 (again)
+ 			 */
 			Backbone.Relational.store.reset();
 			relatedModelAddedCount = 0;
 			console.log('loading test 2...');
 			var start = new Date();
-
-			data.forEach(function (parent) {
-				parent.children = parent.children.map(function (child) {
-					return new Child(child);
-				});
-			});
 
 			var parents = new Parents();
 			parents.on('reset', function () {
@@ -3387,7 +3379,7 @@ $(document).ready(function() {
 				var secs = (end - start) / 1000;
 				console.log('data loaded in ' + secs + ', relatedModelAddedCount=' + relatedModelAddedCount );
 			});
-			parents.reset(data);
+			parents.reset( preparedData );
 
 			var start = new Date();
 			relatedModelRemovedCount = 0;
@@ -3402,7 +3394,10 @@ $(document).ready(function() {
 			var secs = (end - start) / 1000;
 			console.log('data removed in ' + secs + ', relatedModelRemovedCount=' + relatedModelRemovedCount );
 
-			// test 1
+
+			/**
+			 * Test 1 (again)
+			 */
 			Backbone.Relational.store.reset();
 			relatedModelAddedCount = 0;
 			console.log('loading test 1...');
