@@ -2301,7 +2301,9 @@ $(document).ready(function() {
 		test( "Cloned instances of persisted models should not be added to any existing collections", function() {
 			var addedModels = 0;
 			
-			var zoo = new window.Zoo();
+			var zoo = new window.Zoo({
+				visitors : [ { name : "Incognito" } ]
+			});
 			
 			var visitor = new window.Visitor({
 				id : 0

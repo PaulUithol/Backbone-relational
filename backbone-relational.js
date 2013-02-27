@@ -973,8 +973,11 @@
 				// Handle cases the an API/user supplies just an Object/id instead of an Array
 				this.keyContents = _.isArray( keyContents ) ? keyContents : [ keyContents ];
 
-				this.keyIds = _.map( this.keyContents, function( item ) {
-					return Backbone.Relational.store.resolveIdForItem( this.relatedModel, item );
+				_.each( this.keyContents, function( item ) {
+					var itemId = Backbone.Relational.store.resolveIdForItem( this.relatedModel, item );
+					if ( itemId || itemId === 0) {
+						this.keyIds.push(itemId);
+					}
 				}, this );
 			}
 		},
