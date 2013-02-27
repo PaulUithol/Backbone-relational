@@ -2360,6 +2360,26 @@ $(document).ready(function() {
 			ok( secondLocatable.get( 'locations' ).at( 0 ).get( 'locatable' ) === secondLocatable );
 		});
 		
+		test( "Cloned instances of persisted models should not be added to any existing collections", function() {
+			var addedModels = 0;
+			
+			var zoo = new window.Zoo({
+				visitors : [ { name : "Incognito" } ]
+			});
+			
+			var visitor = new window.Visitor({
+				id : 0
+			}); 
+			
+			zoo.get('visitors').bind( 'add', function( model, coll ) {
+				addedModels++;
+			});
+			
+			visitor.clone();
+			
+			equal( addedModels, 0, "A new visitor should not be forced to go to the zoo!" );
+		});
+		
 		
 	module( "Reverse relations", { setup: initObjects } );
 	
