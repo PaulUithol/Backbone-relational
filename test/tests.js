@@ -1247,7 +1247,6 @@ $(document).ready(function() {
 				jsonTiger = tiger.toJSON();
 
 			ok( _.isObject( jsonTiger.livesIn ) && !_.isArray( jsonTiger.livesIn ), "zoo is an Object" );
-			console.log( jsonTiger, jsonTiger.livesIn );
 			ok( jsonTiger.livesIn.id === 0, "zoo.id is included in the JSON" );
 			equal( jsonTiger.livesIn.name, 'Artis', "zoo.name is included in the JSON" );
 			ok( !jsonTiger.livesIn.city, "zoo.city is not included in the JSON" );
@@ -2995,14 +2994,11 @@ $(document).ready(function() {
 			var zoo = new Zoo(),
 				animal = new Animal();
 
-			var addEventsTriggered = 0;
-			var removeEventsTriggered = 0;
-			var changeEventsTriggered = 0;
+			var addEventsTriggered = 0,
+				removeEventsTriggered = 0,
+				changeEventsTriggered = 0;
 
 			zoo
-//				.on( 'change:animals', function( model, coll ) {
-//					console.log( 'change:animals; args=%o', arguments );
-//				})
 //				.on( 'change:animals', function( model, coll ) {
 //					console.log( 'change:animals; args=%o', arguments );
 //				})
@@ -3016,9 +3012,6 @@ $(document).ready(function() {
 				});
 
 			animal
-//				.on( 'change:livesIn', function( model, coll ) {
-//					console.log( 'change:livesIn; args=%o', arguments );
-//				})
 				.on( 'change:livesIn', function( model, coll ) {
 					//console.log( 'change:livesIn; args=%o', arguments );
 					changeEventsTriggered++;
@@ -3056,43 +3049,44 @@ $(document).ready(function() {
 			ok( changeEventsTriggered === 2 );
 		});
 
-		test( "No (`reset`) events when initializing a HasMany", function() {
-			var eventsTriggered = 0;
+		test( "`reset` events", function() {
+			var initialize = AnimalCollection.prototype.initialize;
+			var resetEvents = 0,
+				addEvents = 0,
+				removeEvents = 0;
 
-			var PropertiesCollection = Backbone.Collection.extend({
-				initialize: function() {
-					this
-						.on( 'add', function() {
-							eventsTriggered++;
-						})
-						.on( 'reset', function() {
-							eventsTriggered++;
-						})
-						.on( 'remove', function() {
-							eventsTriggered++;
-						});
-				}
-			});
-			var Properties = Backbone.RelationalModel.extend({});
-			var View = Backbone.RelationalModel.extend({
-				relations: [
-					{
-						type: Backbone.HasMany,
-						key: 'properties',
-						relatedModel: Properties,
-						collectionType: PropertiesCollection,
-						reverseRelation: {
-							type: Backbone.HasOne,
-							key: 'view'
-						}
-					}
-				]
-			});
+			AnimalCollection.prototype.initialize = function() {
+				this
+					.on( 'add', function() {
+						addEvents++;
+					})
+					.on( 'reset', function() {
+						resetEvents++;
+					})
+					.on( 'remove', function() {
+						removeEvents++;
+					});
+			};
 
-			var view = new View();
+			var zoo = new Zoo();
 
-			ok( view.get( 'properties' ) instanceof PropertiesCollection );
-			ok( eventsTriggered === 0 );
+			// No events triggered when initializing a HasMany
+			ok( zoo.get( 'animals' ) instanceof AnimalCollection );
+			ok( resetEvents === 0, "No `reset` event fired" );
+			ok( addEvents === 0 );
+			ok( removeEvents === 0 );
+
+			zoo.set( 'animals', { id: 1 } );
+
+			ok( addEvents === 1 );
+			ok( zoo.get( 'animals' ).length === 1, "animals.length === 1" );
+
+			zoo.get( 'animals' ).reset();
+
+			ok( resetEvents === 1, "`reset` event fired" );
+			ok( zoo.get( 'animals' ).length === 0, "animals.length === 0" );
+
+			AnimalCollection.prototype.initialize = initialize;
 		});
 
 		test( "Firing of `change` and `change:<key>` events", function() {
@@ -3178,7 +3172,7 @@ $(document).ready(function() {
 			animals.add( 'a2' );
 
 			ok( change === 0, 'change event not should fire' );
-			ok( changeAnimals === 1, 'change:animals event should fire(??)' );
+			ok( changeAnimals === 1, 'change:animals event should fire (should it??)' );
 			ok( animalChange === 0, 'no animals:change event should fire' );
 
 			// Update an animal directly
@@ -3194,7 +3188,7 @@ $(document).ready(function() {
 			animals.remove( 'a2' );
 
 			ok( change === 0, 'no change event should fire' );
-			ok( changeAnimals === 1, 'change:animals event should fire(??)' );
+			ok( changeAnimals === 1, 'change:animals event should fire (should it??)' );
 			ok( animalChange === 0, 'no animals:change event should fire' );
 		});
 
@@ -3234,9 +3228,9 @@ $(document).ready(function() {
 				occupants: [ { id : 'person-5', nickname : 'Jane' }, { id : 'person-6' }, { id : 'person-8', nickname : 'Jon' } ]
 			});
 
-			var addEventsTriggered = 0;
-			var removeEventsTriggered = 0;
-			var changeEventsTriggered = 0;
+			var addEventsTriggered = 0,
+				removeEventsTriggered = 0,
+				changeEventsTriggered = 0;
 
 			house
 //				.on( 'all', function(ev, model) {
@@ -3268,23 +3262,32 @@ $(document).ready(function() {
 
 
 		test( "Creation and destruction", 0, function() {
+			var addHasManyCount = 0,
+				addHasOneCount = 0,
+				tryAddRelatedHasMany = Backbone.HasMany.prototype.tryAddRelated,
+				tryAddRelatedHasOne = Backbone.HasOne.prototype.tryAddRelated;
 
-			var relatedModelAddedCount = 0;
-			Backbone.Relation.prototype._relatedModelAdded = function( model, coll, options ) {
-				// Allow 'model' to set up its relations, before calling 'tryAddRelated'
-				// (which can result in a call to 'addRelated' on a relation of 'model')
-				var dit = this;
-				model.queue( function() {
-					dit.tryAddRelated( model, options );
-				});
-				relatedModelAddedCount++;
-				//console.log( this, model, coll, options );
+			Backbone.HasMany.prototype.tryAddRelated = function( model, coll, options ) {
+				addHasManyCount++;
+				return tryAddRelatedHasMany.apply( this, arguments );
+			};
+			Backbone.HasOne.prototype.tryAddRelated = function( model, coll, options ) {
+				addHasOneCount++;
+				return tryAddRelatedHasOne.apply( this, arguments );
 			};
 
-			var relatedModelRemovedCount = 0;
-			Backbone.Relation.prototype._relatedModelRemoved = function( model, coll, options ) {
-				this.removeRelated( model, options );
-				relatedModelRemovedCount++;
+			var removeHasManyCount = 0,
+				removeHasOneCount = 0,
+				removeRelatedHasMany = Backbone.HasMany.prototype.removeRelated,
+				removeRelatedHasOne= Backbone.HasOne.prototype.removeRelated;
+
+			Backbone.HasMany.prototype.removeRelated = function( model, coll, options ) {
+				removeHasManyCount++;
+				return removeRelatedHasMany.apply( this, arguments );
+			};
+			Backbone.HasOne.prototype.removeRelated = function( model, coll, options ) {
+				removeHasOneCount++;
+				return removeRelatedHasOne.apply( this, arguments );
 			};
 
 
@@ -3327,7 +3330,7 @@ $(document).ready(function() {
 			 * Test 2
 			 */
 			Backbone.Relational.store.reset();
-			relatedModelAddedCount = 0;
+			addHasManyCount = addHasOneCount = 0;
 			console.log('loading test 2...');
 			var start = new Date();
 
@@ -3341,9 +3344,8 @@ $(document).ready(function() {
 
 			var parents = new Parents();
 			parents.on('reset', function () {
-				var end = new Date();
-				var secs = (end - start) / 1000;
-				console.log('data loaded in ' + secs + ', relatedModelAddedCount=' + relatedModelAddedCount );
+				var secs = (new Date() - start) / 1000;
+				console.log( 'data loaded in %s, addHasManyCount=%o, addHasOneCount=%o', secs, addHasManyCount, addHasOneCount );
 			});
 			parents.reset( preparedData );
 
@@ -3352,15 +3354,14 @@ $(document).ready(function() {
 			 * Test 1
 			 */
 			Backbone.Relational.store.reset();
-			relatedModelAddedCount = 0;
+			addHasManyCount = addHasOneCount = 0;
 			console.log('loading test 1...');
 			var start = new Date();
 
 			var parents = new Parents();
 			parents.on('reset', function () {
-				var end = new Date();
-				var secs = (end - start) / 1000;
-				console.log('data loaded in ' + secs + ', relatedModelAddedCount=' + relatedModelAddedCount );
+				var secs = (new Date() - start) / 1000;
+				console.log( 'data loaded in %s, addHasManyCount=%o, addHasOneCount=%o', secs, addHasManyCount, addHasOneCount );
 			});
 			parents.reset( data );
 
@@ -3369,20 +3370,19 @@ $(document).ready(function() {
 			 * Test 2 (again)
  			 */
 			Backbone.Relational.store.reset();
-			relatedModelAddedCount = 0;
+			addHasManyCount = addHasOneCount = removeHasManyCount = removeHasOneCount = 0;
 			console.log('loading test 2...');
 			var start = new Date();
 
 			var parents = new Parents();
 			parents.on('reset', function () {
-				var end = new Date();
-				var secs = (end - start) / 1000;
-				console.log('data loaded in ' + secs + ', relatedModelAddedCount=' + relatedModelAddedCount );
+				var secs = (new Date() - start) / 1000;
+				console.log( 'data loaded in %s, addHasManyCount=%o, addHasOneCount=%o', secs, addHasManyCount, addHasOneCount );
 			});
 			parents.reset( preparedData );
 
-			var start = new Date();
-			relatedModelRemovedCount = 0;
+
+			start = new Date();
 
 			parents.each( function( parent ) {
 				parent.get( 'children' ).each( function( child ) {
@@ -3390,35 +3390,31 @@ $(document).ready(function() {
 				});
 			});
 
-			var end = new Date();
-			var secs = (end - start) / 1000;
-			console.log('data removed in ' + secs + ', relatedModelRemovedCount=' + relatedModelRemovedCount );
+			var secs = (new Date() - start) / 1000;
+			console.log( 'data loaded in %s, removeHasManyCount=%o, removeHasOneCount=%o', secs, removeHasManyCount, removeHasOneCount );
 
 
 			/**
 			 * Test 1 (again)
 			 */
 			Backbone.Relational.store.reset();
-			relatedModelAddedCount = 0;
+			addHasManyCount = addHasOneCount = removeHasManyCount = removeHasOneCount = 0;
 			console.log('loading test 1...');
 			var start = new Date();
 
 			var parents = new Parents();
 			parents.on('reset', function () {
-				var end = new Date();
-				var secs = (end - start) / 1000;
-				console.log('data loaded in ' + secs + ', relatedModelAddedCount=' + relatedModelAddedCount );
+				var secs = (new Date() - start) / 1000;
+				console.log( 'data loaded in %s, addHasManyCount=%o, addHasOneCount=%o', secs, addHasManyCount, addHasOneCount );
 			});
 			parents.reset(data);
 
-			var start = new Date();
-			relatedModelRemovedCount = 0;
+			start = new Date();
 
 			parents.remove( parents.models );
 
-			var end = new Date();
-			var secs = (end - start) / 1000;
-			console.log('data removed in ' + secs + ', relatedModelRemovedCount=' + relatedModelRemovedCount );
+			var secs = (new Date() - start) / 1000;
+			console.log( 'data loaded in %s, removeHasManyCount=%o, removeHasOneCount=%o', secs, removeHasManyCount, removeHasOneCount );
 		});
 });
 

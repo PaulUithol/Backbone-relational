@@ -498,9 +498,8 @@
 				contentKey = this.key;
 			}
 
-			_.bindAll( this, 'destroy', '_relatedModelAdded', '_relatedModelRemoved' );
-
 			this.setKeyContents( this.instance.get( contentKey ) );
+			this.relatedCollection = Backbone.Relational.store.getCollection( this.relatedModel );
 
 			// Explicitly clear 'keySource', to prevent a leaky abstraction if 'keySource' differs from 'key'.
 			if ( this.keySource !== this.key ) {
@@ -516,13 +515,10 @@
 				this.instance.fetchRelated( this.key, _.isObject( this.options.autoFetch ) ? this.options.autoFetch : {} );
 			}
 
-			this.instance
-				.on( 'destroy', this.destroy );
-
 			// When 'relatedModel' are created or destroyed, check if it affects this relation.
-			Backbone.Relational.store.getCollection( this.relatedModel )
-				.on( 'relational:add', this._relatedModelAdded )
-				.on( 'relational:remove', this._relatedModelRemoved );
+			this.listenTo( this.instance, 'destroy', this.destroy )
+				.listenTo( this.relatedCollection, 'relational:add', this.tryAddRelated )
+				.listenTo( this.relatedCollection, 'relational:remove', this.removeRelated )
 		}
 	};
 	// Fix inheritance :\
@@ -540,21 +536,9 @@
 		key: null,
 		keyContents: null,
 		relatedModel: null,
+		relatedCollection: null,
 		reverseRelation: null,
 		related: null,
-		
-		_relatedModelAdded: function( model, coll, options ) {
-			// Allow 'model' to set up its relations, before calling 'tryAddRelated'
-			// (which can result in a call to 'addRelated' on a relation of 'model')
-			var dit = this;
-			model.queue( function() {
-				dit.tryAddRelated( model, options );
-			});
-		},
-		
-		_relatedModelRemoved: function( model, coll, options ) {
-			this.removeRelated( model, options );
-		},
 		
 		/**
 		 * Check several pre-conditions.
@@ -684,12 +668,7 @@
 		 * Get reverse relation, call removeRelated on each.
 		 */
 		destroy: function() {
-			this.instance
-				.off( 'destroy', this.destroy );
-			
-			Backbone.Relational.store.getCollection( this.relatedModel )
-				.off( 'relational:add', this._relatedModelAdded )
-				.off( 'relational:remove', this._relatedModelRemoved );
+			this.stopListening();
 
 			if ( this instanceof Backbone.HasOne ) {
 				this.setRelated( null );
@@ -710,9 +689,7 @@
 		},
 		
 		initialize: function() {
-			_.bindAll( this, 'onChange' );
-
-			this.instance.on( 'relational:change:' + this.key, this.onChange );
+			this.listenTo( this.instance, 'relational:change:' + this.key, this.onChange );
 
 			var model = this.findRelated();
 			this.setRelated( model );
@@ -782,7 +759,7 @@
 			// Notify old 'related' object of the terminated relation
 			if ( oldRelated && this.related !== oldRelated ) {
 				_.each( this.getReverseRelations( oldRelated ) || [], function( relation ) {
-					relation.removeRelated( this.instance, options );
+					relation.removeRelated( this.instance, null, options );
 				}, this );
 			}
 			
@@ -809,27 +786,25 @@
 		 * If a new 'this.relatedModel' appears in the 'store', try to match it to the last set 'keyContents'
 		 */
 		tryAddRelated: function( model, options ) {
-			if ( this.related ) {
-				return;
-			}
-
-			if ( this.keyId || this.keyId === 0 ) { // since 0 can be a valid `id` as well
-				if ( model.id === this.keyId ) {
-					options = this.sanitizeOptions( options );
-					this.addRelated( model, options );
-				}
+			if ( ( this.keyId || this.keyId === 0 ) && model.id === this.keyId ) { // since 0 can be a valid `id` as well
+				this.addRelated( model, options );
 			}
 		},
 		
 		addRelated: function( model, options ) {
-			if ( model !== this.related ) {
-				var oldRelated = this.related || null;
-				this.setRelated( model );
-				this.onChange( this.instance, model, { _related: oldRelated } );
-			}
+			// Allow 'model' to set up its relations before proceeding.
+			// (which can result in a call to 'addRelated' from a relation of 'model')
+			var dit = this;
+			model.queue( function() {
+				if ( model !== dit.related ) {
+					var oldRelated = dit.related || null;
+					dit.setRelated( model );
+					dit.onChange( dit.instance, model, _.defaults( { _related: oldRelated }, options ) );
+				}
+			});
 		},
 		
-		removeRelated: function( model, options ) {
+		removeRelated: function( model, coll, options ) {
 			if ( !this.related ) {
 				return;
 			}
@@ -837,7 +812,7 @@
 			if ( model === this.related ) {
 				var oldRelated = this.related || null;
 				this.setRelated( null );
-				this.onChange( this.instance, model, { _related: oldRelated } );
+				this.onChange( this.instance, model, _.defaults( { _related: oldRelated }, options ) );
 			}
 		}
 	});
@@ -853,8 +828,7 @@
 		},
 		
 		initialize: function() {
-			_.bindAll( this, 'onChange', 'handleAddition', 'handleRemoval', 'handleReset' );
-			this.instance.on( 'relational:change:' + this.key, this.onChange );
+			this.listenTo( this.instance, 'relational:change:' + this.key, this.onChange );
 			
 			// Handle a custom 'collectionType'
 			this.collectionType = this.options.collectionType;
@@ -890,10 +864,7 @@
 		 */
 		_prepareCollection: function( collection ) {
 			if ( this.related ) {
-				this.related
-					.off( 'relational:add', this.handleAddition )
-					.off( 'relational:remove', this.handleRemoval )
-					.off( 'relational:reset', this.handleReset )
+				this.stopListening( this.related );
 			}
 
 			if ( !collection || !( collection instanceof Backbone.Collection ) ) {
@@ -914,11 +885,10 @@
 					collection[ key ] = this.instance;
 				}
 			}
-			
-			collection
-				.on( 'relational:add', this.handleAddition )
-				.on( 'relational:remove', this.handleRemoval )
-				.on( 'relational:reset', this.handleReset );
+
+			this.listenTo( collection, 'relational:add', this.handleAddition )
+				.listenTo( collection, 'relational:remove', this.handleRemoval )
+				.listenTo( collection, 'relational:reset', this.handleReset );
 			
 			return collection;
 		},
@@ -1019,21 +989,12 @@
 			if ( !options.silentChange ) {
 				var dit = this;
 				Backbone.Relational.eventQueue.add( function() {
-					dit.changed && dit.instance.trigger( 'change:' + dit.key, dit.instance, dit.related, options, true );
-					dit.changed = false;
+					// The `changed` flag can be set in `handleAddition` or `handleRemoval`
+					if ( dit.changed ) {
+						dit.instance.trigger( 'change:' + dit.key, dit.instance, dit.related, options, true );
+						dit.changed = false;
+					}
 				});
-			}
-		},
-		
-		tryAddRelated: function( model, options ) {
-			if ( !this.related.get( model ) ) {
-				// Check if this new model was specified in 'this.keyContents'
-				var item = _.contains( this.keyIds, model.id );
-				
-				if ( item ) {
-					options = this.sanitizeOptions( options );
-					this.related.add( model, options );
-				}
 			}
 		},
 		
@@ -1043,12 +1004,6 @@
 		 */
 		handleAddition: function( model, coll, options ) {
 			//console.debug('handleAddition called; args=%o', arguments);
-			// Make sure the model is in fact a valid model before continuing.
-			// (it can be invalid as a result of failing validation in Backbone.Collection._prepareModel)
-			if ( !( model instanceof Backbone.Model ) ) {
-				return;
-			}
-
 			this.changed = true;
 
 			options = this.sanitizeOptions( options );
@@ -1059,8 +1014,8 @@
 
 			// Only trigger 'add' once the newly added model is initialized (so, has its relations set up)
 			var dit = this;
-			Backbone.Relational.eventQueue.add( function() {
-				!options.silentChange && dit.instance.trigger( 'add:' + dit.key, model, dit.related, options );
+			!options.silentChange && Backbone.Relational.eventQueue.add( function() {
+				dit.instance.trigger( 'add:' + dit.key, model, dit.related, options );
 			});
 		},
 		
@@ -1070,46 +1025,51 @@
 		 */
 		handleRemoval: function( model, coll, options ) {
 			//console.debug('handleRemoval called; args=%o', arguments);
-			if ( !( model instanceof Backbone.Model ) ) {
-				return;
-			}
-
 			this.changed = true;
 
 			options = this.sanitizeOptions( options );
 			
 			_.each( this.getReverseRelations( model ) || [], function( relation ) {
-				relation.removeRelated( this.instance, options );
+				relation.removeRelated( this.instance, null, options );
 			}, this );
 			
 			var dit = this;
-			Backbone.Relational.eventQueue.add( function() {
-				!options.silentChange && dit.instance.trigger( 'remove:' + dit.key, model, dit.related, options );
+			!options.silentChange && Backbone.Relational.eventQueue.add( function() {
+				 dit.instance.trigger( 'remove:' + dit.key, model, dit.related, options );
 			});
 		},
 
 		handleReset: function( coll, options ) {
-			options = this.sanitizeOptions( options );
-
 			var dit = this;
-			Backbone.Relational.eventQueue.add( function() {
-				!options.silentChange && dit.instance.trigger( 'reset:' + dit.key, dit.related, options );
+			options = this.sanitizeOptions( options );
+			!options.silentChange && Backbone.Relational.eventQueue.add( function() {
+				dit.instance.trigger( 'reset:' + dit.key, dit.related, options );
 			});
+		},
+
+		tryAddRelated: function( model, coll, options ) {
+			var item = _.contains( this.keyIds, model.id );
+
+			if ( item ) {
+				this.addRelated( model, options );
+			}
 		},
 		
 		addRelated: function( model, options ) {
+			// Allow 'model' to set up its relations before proceeding.
+			// (which can result in a call to 'addRelated' from a relation of 'model')
 			var dit = this;
-			options = this.unsanitizeOptions( options );
-			model.queue( function() { // Queued to avoid errors for adding 'model' to the 'this.related' set twice
+			model.queue( function() {
 				if ( dit.related && !dit.related.get( model ) ) {
+					options = dit.unsanitizeOptions( options );
 					dit.related.add( model, options );
 				}
 			});
 		},
 		
-		removeRelated: function( model, options ) {
-			options = this.unsanitizeOptions( options );
+		removeRelated: function( model, coll, options ) {
 			if ( this.related.get( model ) ) {
+				options = this.unsanitizeOptions( options );
 				this.related.remove( model, options );
 			}
 		}
@@ -1137,8 +1097,8 @@
 			// Defer 'processQueue', so that when 'Relation.createModels' is used we trigger 'HasMany'
 			// collection events only after the model is really fully set up.
 			// Example: "p.get('jobs').add( { company: c, person: p } )".
-			var dit = this;
 			if ( options && options.collection ) {
+				var dit = this;
 				this._deferProcessing = true;
 
 				var processQueue = function( model ) {
@@ -1150,7 +1110,7 @@
 				};
 				options.collection.on( 'relational:add', processQueue );
 
-				// So we do process the queue eventually, regardless of whether this model really gets added to 'options.collection'.
+				// So we do process the queue eventually, regardless of whether this model actually gets added to 'options.collection'.
 				_.defer( function() {
 					processQueue( dit );
 				});
