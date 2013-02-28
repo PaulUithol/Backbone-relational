@@ -785,7 +785,7 @@
 		/**
 		 * If a new 'this.relatedModel' appears in the 'store', try to match it to the last set 'keyContents'
 		 */
-		tryAddRelated: function( model, options ) {
+		tryAddRelated: function( model, coll, options ) {
 			if ( ( this.keyId || this.keyId === 0 ) && model.id === this.keyId ) { // since 0 can be a valid `id` as well
 				this.addRelated( model, options );
 			}

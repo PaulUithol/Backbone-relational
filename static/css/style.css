@@ -307,7 +307,7 @@ table {
 		}
 
 h3.code, h4.code, h5.code, code, pre, q {
-	font-family: Consolas, Monaco, "Lucida Console", monospace;
+	font-family: Consolas, Monaco, "Liberation Mono", "Lucida Console", monospace;
 	font-style: normal;
 }
 code, pre, q {
