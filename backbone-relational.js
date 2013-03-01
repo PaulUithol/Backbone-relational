@@ -136,7 +136,7 @@
 				new type( model, relation ); // Also pushes the new Relation into `model._relations`
 			}
 			else {
-				Backbone.Relational.showWarnings && typeof console !== 'undefined' && console.warn( 'Relation=%o; missing or invalid type!', relation );
+				Backbone.Relational.showWarnings && typeof console !== 'undefined' && console.warn( 'Relation=%o; missing or invalid relation type!', relation );
 			}
 		},
 
@@ -507,7 +507,7 @@
 			}
 
 			// Add this Relation to instance._relations
-			this.instance._relations.push( this );
+			this.instance._relations[ this.key ] = this;
 
 			this.initialize();
 
@@ -552,36 +552,33 @@
 				warn = Backbone.Relational.showWarnings && typeof console !== 'undefined';
 
 			if ( !m || !k || !rm ) {
-				warn && console.warn( 'Relation=%o; no model, key or relatedModel (%o, %o, %o)', this, m, k, rm );
+				warn && console.warn( 'Relation=%o: missing model, key or relatedModel (%o, %o, %o).', this, m, k, rm );
 				return false;
 			}
 			// Check if the type in 'model' inherits from Backbone.RelationalModel
 			if ( !( m.prototype instanceof Backbone.RelationalModel ) ) {
-				warn && console.warn( 'Relation=%o; model does not inherit from Backbone.RelationalModel (%o)', this, i );
+				warn && console.warn( 'Relation=%o: model does not inherit from Backbone.RelationalModel (%o).', this, i );
 				return false;
 			}
 			// Check if the type in 'relatedModel' inherits from Backbone.RelationalModel
 			if ( !( rm.prototype instanceof Backbone.RelationalModel ) ) {
-				warn && console.warn( 'Relation=%o; relatedModel does not inherit from Backbone.RelationalModel (%o)', this, rm );
+				warn && console.warn( 'Relation=%o: relatedModel does not inherit from Backbone.RelationalModel (%o).', this, rm );
 				return false;
 			}
 			// Check if this is not a HasMany, and the reverse relation is HasMany as well
 			if ( this instanceof Backbone.HasMany && this.reverseRelation.type === Backbone.HasMany ) {
-				warn && console.warn( 'Relation=%o; relation is a HasMany, and the reverseRelation is HasMany as well.', this );
+				warn && console.warn( 'Relation=%o: relation is a HasMany, and the reverseRelation is HasMany as well.', this );
 				return false;
 			}
+			// Check if we're not attempting to create a relationship on a `key` that's already used.
+			if ( i && _.keys( i._relations ).length ) {
+				var existing = _.find( i._relations, function( rel ) {
+					return rel.key === k;
+				}, this );
 
-			// Check if we're not attempting to create a duplicate relationship
-			if ( i && i._relations.length ) {
-				var exists = _.any( i._relations, function( rel ) {
-						var hasReverseRelation = this.reverseRelation.key && rel.reverseRelation.key;
-						return rel.relatedModel === rm && rel.key === k &&
-							( !hasReverseRelation || this.reverseRelation.key === rel.reverseRelation.key );
-					}, this );
-
-				if ( exists ) {
-					warn && console.warn( 'Relation=%o between instance=%o.%s and relatedModel=%o.%s already exists',
-						this, i, k, rm, this.reverseRelation.key );
+				if ( existing ) {
+					warn && console.warn( 'Cannot create relation=%o on %o for model=%o: already taken by relation=%o.',
+						this, k, i, existing );
 					return false;
 				}
 			}
@@ -1179,7 +1176,7 @@
 		 */
 		initializeRelations: function() {
 			this.acquire(); // Setting up relations often also involve calls to 'set', and we only want to enter this function once
-			this._relations = [];
+			this._relations = {};
 			
 			_.each( this.relations || [], function( rel ) {
 				Backbone.Relational.store.initializeRelation( this, rel );
@@ -1228,7 +1225,7 @@
 		 * @return {Backbone.Relation} An instance of 'Backbone.Relation', if a relation was found for 'key', or null.
 		 */
 		getRelation: function( key ) {
-			return _.findWhere( this._relations, { key: key } );
+			return this._relations[ key ];
 		},
 		
 		/**
@@ -1236,7 +1233,7 @@
 		 * @return {Backbone.Relation[]}
 		 */
 		getRelations: function() {
-			return this._relations;
+			return _.values( this._relations );
 		},
 		
 		/**
