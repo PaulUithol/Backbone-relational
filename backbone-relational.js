@@ -1145,17 +1145,20 @@
 
 						if ( rel ) {
 							// If `attr` is a relation, `change:attr` get triggered from `Relation.onChange`.
-							// These take precedence over `change:attr` events triggered by `Backbone.set`.
+							// These take precedence over `change:attr` events triggered by `Model.set`.
 							// The relation set a fourth attribute to `true`. If this attribute is present,
-							// continue triggering this event; otherwise, it should be stopped.
+							// continue triggering this event; otherwise, it's from `Model.set` and should be stopped.
 							changed = ( args[ 4 ] === true );
 
-							// Set the right values in `this.changed` (collection instead of raw data).
-							if ( rel.changed ) {
+							// If this event was triggered by a relation, set the right value in `this.changed`
+							// (a Collection or Model instead of raw data).
+							if ( changed ) {
 								dit.changed[ attr ] = args[ 2 ];
 							}
-							else {
-								dit.changed && delete dit.changed[ attr ];
+							// Otherwise, this event is from `Model.set`. If the relation doesn't report a change,
+							// remove attr from `dit.changed` so `hasChanged` doesn't take it into account.
+							else if ( !rel.changed ) {
+								delete dit.changed[ attr ];
 							}
 						}
 					}
