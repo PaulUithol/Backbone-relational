@@ -397,7 +397,7 @@
 			if ( coll ) {
 				if ( coll.get( model ) ) {
 					if ( Backbone.Relational.showWarnings && typeof console !== 'undefined' ) {
-						console.warn( 'Duplicate id! Old RelationalModel:%o, New RelationalModel:%o', coll.get( model ), model );
+						console.warn( 'Duplicate id! Old RelationalModel=%o, new RelationalModel=%o', coll.get( model ), model );
 					}
 					throw new Error( "Cannot instantiate more than one Backbone.RelationalModel with the same id per type!" );
 				}
@@ -1118,11 +1118,14 @@
 			this._queue = new Backbone.BlockingQueue();
 			this._queue.block();
 			Backbone.Relational.eventQueue.block();
-			
-			Backbone.Model.apply( this, arguments );
-			
-			// Try to run the global queue holding external events
-			Backbone.Relational.eventQueue.unblock();
+
+			try {
+				Backbone.Model.apply( this, arguments );
+			}
+			finally {
+				// Try to run the global queue holding external events
+				Backbone.Relational.eventQueue.unblock();
+			}
 		},
 		
 		/**
@@ -1134,6 +1137,10 @@
 					args = arguments;
 
 				Backbone.Relational.eventQueue.add( function() {
+					if ( !dit._isInitialized ) {
+						return;
+					}
+
 					// Determine if the `change` event is still valid, now that all relations are populated
 					var changed = true;
 					if ( eventName === 'change' ) {
@@ -1362,24 +1369,27 @@
 			var result = Backbone.Model.prototype.set.apply( this, arguments );
 			
 			// Ideal place to set up relations :)
-			if ( !this._isInitialized && !this.isLocked() ) {
-				this.constructor.initializeModelHierarchy();
+			try {
+				if ( !this._isInitialized && !this.isLocked() ) {
+					this.constructor.initializeModelHierarchy();
 
-				Backbone.Relational.store.register( this );
+					Backbone.Relational.store.register( this );
 
-				this.initializeRelations();
+					this.initializeRelations();
+				}
+				// Update the 'idAttribute' in Backbone.store if; we don't want it to miss an 'id' update due to {silent:true}
+				else if ( attributes && this.idAttribute in attributes ) {
+					Backbone.Relational.store.update( this );
+				}
+
+				if ( attributes ) {
+					this.updateRelations( options );
+				}
 			}
-			// Update the 'idAttribute' in Backbone.store if; we don't want it to miss an 'id' update due to {silent:true}
-			else if ( attributes && this.idAttribute in attributes ) {
-				Backbone.Relational.store.update( this );
+			finally {
+				// Try to run the global queue holding external events
+				Backbone.Relational.eventQueue.unblock();
 			}
-			
-			if ( attributes ) {
-				this.updateRelations( options );
-			}
-			
-			// Try to run the global queue holding external events
-			Backbone.Relational.eventQueue.unblock();
 			
 			return result;
 		},

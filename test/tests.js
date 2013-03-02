@@ -589,6 +589,21 @@ $(document).ready(function() {
 
 			ok( people.at(0).iam() == "I am a student" );
 		});
+
+		test( "`eventQueue` is unblocked again after a duplicate id error", 3, function() {
+			var node = new Node( { id: 1 } );
+
+			ok( Backbone.Relational.eventQueue.isBlocked() === false );
+
+			try {
+				duplicateNode = new Node( { id: 1 } );
+			}
+			catch( error ) {
+				ok( true, "Duplicate id error thrown" );
+			}
+
+			ok( Backbone.Relational.eventQueue.isBlocked() === false );
+		});
 		
 		test( "Models are created from objects, can then be found, destroyed, cannot be found anymore", function() {
 			var houseId = 'house-10';
