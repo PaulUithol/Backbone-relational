@@ -843,6 +843,9 @@ MyModel.setup()
 			<dd>Default: <q>true</q>. If true, a new model will be created if an instance matching <q>attributes</q> isn't found in the store.</dd>
 			<dt><q>merge</q></dt>
 			<dd>Default: <q>true</q>. If true, a found model will be updated with <q>attributes</q> (if <q>attributes</q> is an <q>object</q>).</dd>
+			<dt><q>parse</q></dt>
+			<dd>Default: <q>false</q>. If true, <q>attributes</q> will be parsed first. Please note this will cause <q>Model.parse</q> to be called
+			as a function (<q>this</q> will not point to a model), instead of as a method.</dd>
 		</dl>
 		<p class="warning">
 			Note: this is a static method. It operate on the model type itself, not on an instance.
@@ -1074,6 +1077,7 @@ User = Backbone.RelationalModel.extend();
 				The <q>update:&lt;key&gt;</q> event has been removed, in favor of handling everything using "standard"
 				<q>change:&lt;key&gt;</q> events.
 			</li>
+			<li>`findOrCreate` now takes a `parse` options, analogous to the `Backbone.Model` constructor. It defaults to `false`.</li>
 		</ul>
 		
 		<h4>0.7.1

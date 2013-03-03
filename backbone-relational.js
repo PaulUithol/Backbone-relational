@@ -1635,11 +1635,14 @@
 		 * @param {Object} [options]
 		 * @param {Boolean} [options.create=true]
 		 * @param {Boolean} [options.merge=true]
+		 * @param {Boolean} [options.parse=false]
 		 * @return {Backbone.RelationalModel}
 		 */
 		findOrCreate: function( attributes, options ) {
 			options || ( options = {} );
-			var parsedAttributes = ( _.isObject( attributes ) && this.prototype.parse ) ? this.prototype.parse( attributes ) : attributes;
+			var parsedAttributes = ( _.isObject( attributes ) && options.parse && this.prototype.parse ) ?
+				this.prototype.parse( attributes ) : attributes;
+
 			// Try to find an instance of 'this' model type in the store
 			var model = Backbone.Relational.store.find( this, parsedAttributes );
 
