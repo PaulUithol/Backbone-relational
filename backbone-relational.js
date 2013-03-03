@@ -130,10 +130,10 @@
 		 * @param {Backbone.RelationalModel} [model]
 		 * @param {Object} relation
 		 */
-		initializeRelation: function( model, relation ) {
+		initializeRelation: function( model, relation, options ) {
 			var type = !_.isString( relation.type ) ? relation.type : Backbone[ relation.type ] || this.getObjectByName( relation.type );
 			if ( type && type.prototype instanceof Backbone.Relation ) {
-				new type( model, relation ); // Also pushes the new Relation into `model._relations`
+				new type( model, relation, options ); // Also pushes the new Relation into `model._relations`
 			}
 			else {
 				Backbone.Relational.showWarnings && typeof console !== 'undefined' && console.warn( 'Relation=%o; missing or invalid relation type!', relation );
@@ -455,8 +455,9 @@
 	 * @param {Object} [options.reverseRelation] Specify a bi-directional relation. If provided, Relation will reciprocate
 	 *    the relation to the 'relatedModel'. Required and optional properties match 'options', except that it also needs
 	 *    {Backbone.Relation|String} type ('HasOne' or 'HasMany').
+	 * @param {Object} opts
 	 */
-	Backbone.Relation = function( instance, options ) {
+	Backbone.Relation = function( instance, options, opts ) {
 		this.instance = instance;
 		// Make sure 'options' is sane, and fill with defaults from subclasses and this object's prototype
 		options = _.isObject( options ) ? options : {};
@@ -509,7 +510,7 @@
 			// Add this Relation to instance._relations
 			this.instance._relations[ this.key ] = this;
 
-			this.initialize();
+			this.initialize( opts );
 
 			if ( this.options.autoFetch ) {
 				this.instance.fetchRelated( this.key, _.isObject( this.options.autoFetch ) ? this.options.autoFetch : {} );
@@ -685,10 +686,10 @@
 			reverseRelation: { type: 'HasMany' }
 		},
 		
-		initialize: function() {
+		initialize: function( opts ) {
 			this.listenTo( this.instance, 'relational:change:' + this.key, this.onChange );
 
-			var model = this.findRelated();
+			var model = this.findRelated( opts );
 			this.setRelated( model );
 
 			// Notify new 'related' object of the new relation.
@@ -824,7 +825,7 @@
 			collectionOptions: {}
 		},
 		
-		initialize: function() {
+		initialize: function( opts ) {
 			this.listenTo( this.instance, 'relational:change:' + this.key, this.onChange );
 			
 			// Handle a custom 'collectionType'
@@ -844,7 +845,7 @@
 				this.setRelated( this._prepareCollection() );
 			}
 
-			this.findRelated( { silent: true } );
+			this.findRelated( $.extend( { silent: true }, opts ) );
 		},
 		
 		_getCollectionOptions: function() {
@@ -1184,12 +1185,12 @@
 		 * Initialize Relations present in this.relations; determine the type (HasOne/HasMany), then creates a new instance.
 		 * Invoked in the first call so 'set' (which is made from the Backbone.Model constructor).
 		 */
-		initializeRelations: function() {
+		initializeRelations: function( options ) {
 			this.acquire(); // Setting up relations often also involve calls to 'set', and we only want to enter this function once
 			this._relations = {};
 			
 			_.each( this.relations || [], function( rel ) {
-				Backbone.Relational.store.initializeRelation( this, rel );
+				Backbone.Relational.store.initializeRelation( this, rel, options );
 			}, this );
 			
 			this._isInitialized = true;
@@ -1375,7 +1376,7 @@
 
 					Backbone.Relational.store.register( this );
 
-					this.initializeRelations();
+					this.initializeRelations( options );
 				}
 				// Update the 'idAttribute' in Backbone.store if; we don't want it to miss an 'id' update due to {silent:true}
 				else if ( attributes && this.idAttribute in attributes ) {

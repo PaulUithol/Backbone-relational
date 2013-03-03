@@ -223,10 +223,6 @@ $(document).ready(function() {
 		}
 	});
 
-	window.CompanyCollection = Backbone.Collection.extend({
-		model: Company
-	});
-
 
 	window.Node = Backbone.RelationalModel.extend({
 		urlRoot: '/node/',
@@ -960,27 +956,182 @@ $(document).ready(function() {
 
 		test( "`parse` gets called through `findOrCreate`", function() {
 			var parseCalled = 0;
-			Zoo.prototype.parse = function( resp, options ) {
+			Zoo.prototype.parse = Animal.prototype.parse = function( resp, options ) {
 				parseCalled++;
 				return resp;
 			};
 
-			var animal = new Animal({ id: '123' });
-			animal.set({
-				id: '123',
-				livesIn: {
-					id: '456',
-					name: 'San Diego Zoo',
-					animals: [ '123' ]
-				}
-			}, { parse: true });
+			var zoo = Zoo.findOrCreate({
+				id: '1',
+				name: 'San Diego Zoo',
+				animals: [ { id: 'a' } ]
+			}, { parse: true } );
+			var animal = zoo.get( 'animals' ).first();
 
 			ok( animal.get( 'livesIn' ) instanceof Zoo );
 			ok( animal.get( 'livesIn' ).get( 'animals' ).get( animal ) === animal );
 
-			// `parse` should get called once by `findOrCreate` directly when trying to lookup `456`,
-			// and once when it `build` (called from `findOrCreate`) calls the Zoo constructor with `{ parse: true}`.
-			ok( parseCalled === 2 );
+			// `parse` gets called once by `findOrCreate` directly when trying to lookup `1`,
+			// once when `build` (called from `findOrCreate`) calls the Zoo constructor with `{ parse: true}`.
+			// Same for the nested `Animal`.
+			ok( parseCalled === 4, 'parse called 4 times? ' + parseCalled );
+
+			parseCalled = 0;
+
+			animal = new Animal({ id: 'b' });
+			animal.set({
+				id: 'b',
+				livesIn: {
+					id: '2',
+					name: 'San Diego Zoo',
+					animals: [ 'b' ]
+				}
+			}, { parse: true } );
+
+			ok( animal.get( 'livesIn' ) instanceof Zoo );
+			ok( animal.get( 'livesIn' ).get( 'animals' ).get( animal ) === animal );
+
+			// `parse` gets called once by `findOrCreate` directly when trying to lookup `b`,
+			// and once when `build` (called from `findOrCreate`) calls its constructor
+			ok( parseCalled === 2, 'parse called 2 times? ' + parseCalled );
+
+			// Reset `parse` methods
+			Zoo.prototype.parse = Animal.prototype.parse = Backbone.RelationalModel.prototype.parse;
+		});
+
+		test( "`parse` with a nested collection", function() {
+			var parseCalled = 0;
+			Zoo.prototype.parse = Animal.prototype.parse = function( resp, options ) {
+				parseCalled++;
+				return resp.model;
+			};
+
+			var zoo = new Zoo({
+				model: {
+					id: 'z1',
+					name: 'San Diego Zoo',
+					animals: [ { model: { id: 'a1' } } ]
+				}
+			}, { parse: true } );
+			var animal = zoo.get( 'animals' ).first();
+
+			ok( animal instanceof Animal );
+			ok( animal.id === 'a1' );
+			ok( animal.get( 'livesIn' ) instanceof Zoo );
+
+			// `parse` called by `Zoo` constructor, `Animal.findOrCreate`, `Animal` constructor
+			ok( parseCalled === 3, 'parse called 3 times? ' + parseCalled );
+
+			// Reset `parse` methods
+			Zoo.prototype.parse = Animal.prototype.parse = Backbone.RelationalModel.prototype.parse;
+		});
+
+		test( "`parse` with deeply nested relations", function() {
+			var parseCalled = 0;
+			Company.prototype.parse = Job.prototype.parse = Person.prototype.parse = function( resp, options ) {
+				parseCalled++;
+				var data = _.clone( resp.model );
+				data.id = data.id.uri;
+				return data;
+			};
+
+			var data = {
+				model: {
+					id: { uri: 'c1' },
+					employees: [
+						{
+							model: {
+								id: { uri: 'e1' },
+								person: { model: { id: { uri: 'p1' } } }
+							}
+						},
+						{
+							model: {
+								id: { uri: 'e2' },
+								person: { model: { id: { uri: 'p2' } } }
+							}
+						}
+					]
+				}
+			};
+
+			var company = new Company( data, { parse: true } ),
+				employees = company.get( 'employees' ),
+				job = employees.first(),
+				person = job.get( 'person' );
+
+			ok( job && job.id === 'e1', 'job exists' );
+			ok( person && person.id === 'p1', 'person exists' );
+
+			ok( parseCalled === 9, 'parse called 9 times? ' + parseCalled );
+
+			// Reset `parse` methods
+			Company.prototype.parse = Job.prototype.parse = Person.prototype.parse = Backbone.RelationalModel.prototype.parse;
+		});
+
+		test( "`parse` should only get called on top-level objects; not for nested models and collections", function() {
+			var companyData = {
+				'data': {
+					'id': 'company-1',
+					'contacts': [
+						{
+							'id': '1013855'
+						},
+						{
+							'id': '1949517'
+						}
+					]
+				}
+			};
+
+			var Contact = Backbone.RelationalModel.extend();
+			var Contacts = Backbone.Collection.extend({
+				model: Contact
+			});
+
+			var Company = Backbone.RelationalModel.extend({
+				relations: [{
+					type: Backbone.HasMany,
+					key: 'contacts',
+					relatedModel: Contact,
+					collectionType: Contacts
+				}],
+
+				sync: function( method, model, options ) {
+					// fake a 'sync'
+					var success = options.success;
+					var resp = _.clone( companyData );
+					if (success) success(model, resp, options);
+					model.trigger('sync', model, resp, options);
+				}
+			});
+
+			var parseCalled = 0;
+			Company.prototype.parse = Contact.prototype.parse = Contacts.prototype.parse = function( resp, options ) {
+				parseCalled++;
+				options && ( options.parse = false );
+				return resp.data;
+			};
+
+			var company = new Company( companyData, { parse: true } ),
+				contacts = company.get( 'contacts' ),
+				contact = contacts.first();
+
+			ok( company.id === 'company-1' );
+			ok( contact && contact.id === '1013855', 'contact exists' );
+			ok( parseCalled === 1, 'parse called 1 time? ' + parseCalled );
+
+			// simulate what would happen if company.fetch() was called.
+			company.fetch();
+			//company.set(company.parse(companyData)); // passes, but this isn't how 'fetch' works
+			//company.set(company.parse(companyData, { parse: true }), { parse: true }); // fails (internally this is what 'fetch' does)
+
+			ok( parseCalled === 2, 'parse called 2 times? ' + parseCalled );
+
+			ok( contacts === company.get( 'contacts' ), 'contacts collection is same instance after fetch' );
+			equal( contacts.length, 2, '... with correct length' );
+			ok( contact && contact.id === '1013855', 'contact exists' );
+			ok( contact === contacts.first(), '... and same model instances' );
 		});
 
 		test( "constructor.findOrCreate", function() {
@@ -1850,6 +2001,9 @@ $(document).ready(function() {
 			ok( companyA.get('employees') instanceof Backbone.Collection, "Company's employees should be a collection" );
 			equal(companyA.get('employees').length, 2, 'with elements');
 
+			var CompanyCollection = Backbone.Collection.extend({
+				model: Company
+			});
 			var companyCollection = new CompanyCollection( [ dataCompanyA, dataCompanyB ] );
 
 			// After loading a collection with models of the same type
@@ -3002,6 +3156,20 @@ $(document).ready(function() {
 			zoo.set( 'animals', [ { id: 'c', species: 'c' } ], { add: true, merge: true, remove: false } );
 			ok( animals.length == 3, 'animals.length=' + animals.length + ' == 3?' );
 			ok( c.get( 'species' ) === 'c', "`c` added, attributes got merged" );
+		});
+
+		test( "`merge` on a nested relation", function() {
+			var zoo = new Zoo( { id: 1, animals: [ { id: 'a' } ] } ),
+				animals = zoo.get( 'animals' ),
+				a = animals.get( 'a' );
+
+			ok( a.get( 'livesIn' ) === zoo, "`a` is in `zoo`" );
+
+			// Pass a non-default option to a new model, with an existing nested model
+			var zoo2 = new Zoo( { id: 2, animals: [ { id: 'a', species: 'a' } ] }, { merge: false } );
+
+			ok( a.get( 'livesIn' ) === zoo2, "`a` is in `zoo2`" );
+			ok( !a.get( 'species' ), "`a` hasn't gotten merged" );
 		});
 
 
