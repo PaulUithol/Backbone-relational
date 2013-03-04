@@ -634,36 +634,6 @@
 		},
 
 		/**
-		 * Rename options.silent to options.silentChange, so events propagate properly.
-		 * (for example in HasMany, from 'addRelated'->'handleAddition')
-		 * @param {Object} [options]
-		 * @return {Object}
-		 */
-		sanitizeOptions: function( options ) {
-			options = options ? _.clone( options ) : {};
-			if ( options.silent ) {
-				options.silentChange = true;
-				delete options.silent;
-			}
-			return options;
-		},
-
-		/**
-		 * Rename options.silentChange to options.silent, so events are silenced as intended in Backbone's
-		 * original functions.
-		 * @param {Object} [options]
-		 * @return {Object}
-		 */
-		unsanitizeOptions: function( options ) {
-			options = options ? _.clone( options ) : {};
-			if ( options.silentChange ) {
-				options.silent = true;
-				delete options.silentChange;
-			}
-			return options;
-		},
-
-		/**
 		 * When `this.instance` is destroyed, cleanup our relations.
 		 * Get reverse relation, call removeRelated on each.
 		 */
@@ -735,13 +705,13 @@
 				return;
 			}
 			this.acquire();
-			options = this.sanitizeOptions( options );
+			options = options ? _.clone( options ) : {};
 			
-			// 'options._related' is set by 'addRelated'/'removeRelated'. If it is set, the change
+			// 'options.__related' is set by 'addRelated'/'removeRelated'. If it is set, the change
 			// is the result of a call from a relation. If it's not, the change is the result of 
 			// a 'set' call on this.instance.
-			var changed = _.isUndefined( options._related ),
-				oldRelated = changed ? this.related : options._related;
+			var changed = _.isUndefined( options.__related ),
+				oldRelated = changed ? this.related : options.__related;
 			
 			if ( changed ) {
 				this.setKeyContents( attr );
@@ -763,7 +733,7 @@
 			}, this );
 			
 			// Fire the 'change:<key>' event if 'related' was updated
-			if ( !options.silentChange && this.related !== oldRelated ) {
+			if ( !options.silent && this.related !== oldRelated ) {
 				var dit = this;
 				this.changed = true;
 				Backbone.Relational.eventQueue.add( function() {
@@ -792,7 +762,7 @@
 				if ( model !== dit.related ) {
 					var oldRelated = dit.related || null;
 					dit.setRelated( model );
-					dit.onChange( dit.instance, model, _.defaults( { _related: oldRelated }, options ) );
+					dit.onChange( dit.instance, model, _.defaults( { __related: oldRelated }, options ) );
 				}
 			});
 		},
@@ -805,7 +775,7 @@
 			if ( model === this.related ) {
 				var oldRelated = this.related || null;
 				this.setRelated( null );
-				this.onChange( this.instance, model, _.defaults( { _related: oldRelated }, options ) );
+				this.onChange( this.instance, model, _.defaults( { __related: oldRelated }, options ) );
 			}
 		}
 	});
@@ -907,8 +877,7 @@
 					related = this._prepareCollection();
 				}
 
-				options = this.unsanitizeOptions( _.defaults( { merge: false }, options ) );
-				related.update( toAdd, options );
+				related.update( toAdd, _.defaults( { merge: false }, options ) );
 			}
 
 			this.setRelated( related );
@@ -939,12 +908,13 @@
 		 * If the key is changed, notify old & new reverse relations and initialize the new relation
 		 */
 		onChange: function( model, attr, options ) {
+			options = options ? _.clone( options ) : {};
 			this.setKeyContents( attr );
 			this.changed = false;
 
 			this.findRelated( options );
 
-			if ( !options.silentChange ) {
+			if ( !options.silent ) {
 				var dit = this;
 				Backbone.Relational.eventQueue.add( function() {
 					// The `changed` flag can be set in `handleAddition` or `handleRemoval`
@@ -962,9 +932,8 @@
 		 */
 		handleAddition: function( model, coll, options ) {
 			//console.debug('handleAddition called; args=%o', arguments);
+			options = options ? _.clone( options ) : {};
 			this.changed = true;
-
-			options = this.sanitizeOptions( options );
 			
 			_.each( this.getReverseRelations( model ), function( relation ) {
 				relation.addRelated( this.instance, options );
@@ -972,7 +941,7 @@
 
 			// Only trigger 'add' once the newly added model is initialized (so, has its relations set up)
 			var dit = this;
-			!options.silentChange && Backbone.Relational.eventQueue.add( function() {
+			!options.silent && Backbone.Relational.eventQueue.add( function() {
 				dit.instance.trigger( 'add:' + dit.key, model, dit.related, options );
 			});
 		},
@@ -983,24 +952,23 @@
 		 */
 		handleRemoval: function( model, coll, options ) {
 			//console.debug('handleRemoval called; args=%o', arguments);
+			options = options ? _.clone( options ) : {};
 			this.changed = true;
-
-			options = this.sanitizeOptions( options );
 			
 			_.each( this.getReverseRelations( model ), function( relation ) {
 				relation.removeRelated( this.instance, null, options );
 			}, this );
 			
 			var dit = this;
-			!options.silentChange && Backbone.Relational.eventQueue.add( function() {
+			!options.silent && Backbone.Relational.eventQueue.add( function() {
 				 dit.instance.trigger( 'remove:' + dit.key, model, dit.related, options );
 			});
 		},
 
 		handleReset: function( coll, options ) {
 			var dit = this;
-			options = this.sanitizeOptions( options );
-			!options.silentChange && Backbone.Relational.eventQueue.add( function() {
+			options = options ? _.clone( options ) : {};
+			!options.silent && Backbone.Relational.eventQueue.add( function() {
 				dit.instance.trigger( 'reset:' + dit.key, dit.related, options );
 			});
 		},
@@ -1020,7 +988,6 @@
 			var dit = this;
 			model.queue( function() {
 				if ( dit.related && !dit.related.get( model ) ) {
-					options = dit.unsanitizeOptions( options );
 					dit.related.add( model, options );
 				}
 			});
@@ -1028,7 +995,6 @@
 
 		removeRelated: function( model, coll, options ) {
 			if ( this.related.get( model ) ) {
-				options = this.unsanitizeOptions( options );
 				this.related.remove( model, options );
 			}
 		}

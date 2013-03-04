@@ -2018,6 +2018,32 @@ $(document).ready(function() {
 			ok( child.get( 'parent' ) === parent );
 		});
 
+		test( "Relations are not affected by `silent: true`", function() {
+			var ceo = new Person( { id: 1 } );
+			var company = new Company( {
+					employees: [ { id: 2 }, { id: 3 }, 4 ],
+					ceo: 1
+				}, { silent: true } ),
+				employees = company.get( 'employees' ),
+				employee = employees.first();
+
+			ok( company.get( 'ceo' ) === ceo );
+			ok( employees instanceof Backbone.Collection );
+			equal( employees.length, 2 );
+
+			employee.set( 'company', null, { silent: true } );
+			equal( employees.length, 1 );
+
+			employees.add( employee, { silent: true } );
+			ok( employee.get( 'company' ) === company );
+
+			ceo.set( 'runs', null, { silent: true } );
+			ok( !company.get( 'ceo' ) );
+
+			var employee4 = new Job( { id: 4 } );
+			equal( employees.length, 3 );
+		});
+
 		test( "Repeated model initialization and a collection should not break existing models", function () {
 			var dataCompanyA = {
 				id: 'company-a',
