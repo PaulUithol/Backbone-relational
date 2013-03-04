@@ -1377,8 +1377,6 @@ $(document).ready(function() {
 				pets: [ dog ]
 			});
 
-			console.log( dog, person );
-
 			ok( dog.get( 'owner' ) === person, "Dog has a working owner relation." );
 
 			var flea = new scope.Flea({
@@ -3070,7 +3068,7 @@ $(document).ready(function() {
 			
 			ok( person.get('user') === user );
 			ok( user.get('person') === person );
-			//console.debug( person, user );
+			//console.log( person, user );
 		});
 
 	test( "ReverseRelations are applied retroactively (2)", function() {

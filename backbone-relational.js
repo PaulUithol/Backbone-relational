@@ -835,12 +835,6 @@
 			this.findRelated( opts );
 		},
 
-		_getCollectionOptions: function() {
-			return _.isFunction( this.options.collectionOptions ) ?
-				this.options.collectionOptions( this.instance ) :
-				this.options.collectionOptions;
-		},
-
 		/**
 		 * Bind events and setup collectionKeys for a collection that is to be used as the backing store for a HasMany.
 		 * If no 'collection' is supplied, a new collection will be created of the specified 'collectionType' option.
@@ -853,7 +847,10 @@
 			}
 
 			if ( !collection || !( collection instanceof Backbone.Collection ) ) {
-				collection = new this.collectionType( null, this._getCollectionOptions() );
+				var options = _.isFunction( this.options.collectionOptions ) ?
+					this.options.collectionOptions( this.instance ) : this.options.collectionOptions;
+
+				collection = new this.collectionType( null, options );
 			}
 
 			collection.model = this.relatedModel;
