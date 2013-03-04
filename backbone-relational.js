@@ -531,7 +531,8 @@
 			createModels: true,
 			includeInJSON: true,
 			isAutoRelation: false,
-			autoFetch: false
+			autoFetch: false,
+			parse: false
 		},
 
 		instance: null,
@@ -676,7 +677,7 @@
 				this.setRelated( this._prepareCollection() );
 			}
 			
-			_.each( this.getReverseRelations() || [], function( relation ) {
+			_.each( this.getReverseRelations(), function( relation ) {
 				relation.removeRelated( this.instance );
 			}, this );
 		}
@@ -690,27 +691,30 @@
 		initialize: function( opts ) {
 			this.listenTo( this.instance, 'relational:change:' + this.key, this.onChange );
 
-			var model = this.findRelated( opts );
-			this.setRelated( model );
+			this.findRelated( opts );
 
 			// Notify new 'related' object of the new relation.
-			_.each( this.getReverseRelations() || [], function( relation ) {
-				relation.addRelated( this.instance );
+			_.each( this.getReverseRelations(), function( relation ) {
+				relation.addRelated( this.instance, opts );
 			}, this );
 		},
 
 		findRelated: function( options ) {
-			var model = null;
-			
+			var related = null;
+
+			/*if ( _.isObject( options ) && options.parse && !this.options.parse ) {
+			 options.parse = false;
+			 }*/
+
 			if ( this.keyContents instanceof this.relatedModel ) {
-				model = this.keyContents;
+				related = this.keyContents;
 			}
 			else if ( this.keyContents || this.keyContents === 0 ) { // since 0 can be a valid `id` as well
 				var opts = _.defaults( { create: this.options.createModels }, options );
-				model = this.relatedModel.findOrCreate( this.keyContents, opts );
+				related = this.relatedModel.findOrCreate( this.keyContents, opts );
 			}
-			
-			return model;
+
+			this.setRelated( related );
 		},
 
 		/**
@@ -741,33 +745,22 @@
 			
 			if ( changed ) {
 				this.setKeyContents( attr );
-				
-				// Set new 'related'
-				if ( this.keyContents instanceof this.relatedModel ) {
-					this.related = this.keyContents;
-				}
-				else if ( this.keyContents ) {
-					var related = this.findRelated( options );
-					this.setRelated( related );
-				}
-				else {
-					this.setRelated( null );
-				}
+				this.findRelated( options );
 			}
 			
 			// Notify old 'related' object of the terminated relation
 			if ( oldRelated && this.related !== oldRelated ) {
-				_.each( this.getReverseRelations( oldRelated ) || [], function( relation ) {
+				_.each( this.getReverseRelations( oldRelated ), function( relation ) {
 					relation.removeRelated( this.instance, null, options );
 				}, this );
 			}
-			
+
 			// Notify new 'related' object of the new relation. Note we do re-apply even if this.related is oldRelated;
 			// that can be necessary for bi-directional relations if 'this.instance' was created after 'this.related'.
 			// In that case, 'this.instance' will already know 'this.related', but the reverse might not exist yet.
-			_.each( this.getReverseRelations() || [], function( relation ) {
+			_.each( this.getReverseRelations(), function( relation ) {
 				relation.addRelated( this.instance, options );
-			}, this);
+			}, this );
 			
 			// Fire the 'change:<key>' event if 'related' was updated
 			if ( !options.silentChange && this.related !== oldRelated ) {
@@ -839,15 +832,7 @@
 				throw new Error( '`collectionType` must inherit from Backbone.Collection' );
 			}
 
-			// Handle cases where a model/relation is created with a collection passed straight into 'attributes'
-			if ( this.keyContents instanceof Backbone.Collection ) {
-				this.setRelated( this._prepareCollection( this.keyContents ) );
-			}
-			else {
-				this.setRelated( this._prepareCollection() );
-			}
-
-			this.findRelated( $.extend( { silent: true }, opts ) );
+			this.findRelated( opts );
 		},
 
 		_getCollectionOptions: function() {
@@ -894,36 +879,42 @@
 		},
 
 		findRelated: function( options ) {
-			if ( this.keyContents ) {
-				var models = [];
+			var related = null;
 
-				if ( this.keyContents instanceof Backbone.Collection ) {
-					models = this.keyContents.models;
+			// Replace 'this.related' by 'this.keyContents' if it is a Backbone.Collection
+			if ( this.keyContents instanceof Backbone.Collection ) {
+				this._prepareCollection( this.keyContents );
+				related = this.keyContents;
+			}
+			// Otherwise, 'this.keyContents' should be an array of related object ids.
+			// Re-use the current 'this.related' if it is a Backbone.Collection; otherwise, create a new collection.
+			else {
+				var toAdd = [];
+
+				_.each( this.keyContents, function( attributes ) {
+					if ( attributes instanceof this.relatedModel ) {
+						var model = attributes;
+					}
+					else {
+						// If `merge` is true, update models here, instead of during update.
+						model = this.relatedModel.findOrCreate( attributes, _.extend( { merge: true }, options, { create: this.options.createModels } ) );
+					}
+
+					model && toAdd.push( model );
+				}, this );
+
+				if ( this.related instanceof Backbone.Collection ) {
+					related = this.related;
 				}
 				else {
-					// Try to find instances of the appropriate 'relatedModel' in the store
-					_.each( this.keyContents || [], function( item ) {
-						var model = null;
-						if ( item instanceof this.relatedModel ) {
-							model = item;
-						}
-						else if ( item || item === 0 ) { // since 0 can be a valid `id` as well
-							var opts = _.defaults( { create: this.options.createModels }, options );
-							model = this.relatedModel.findOrCreate( item, opts );
-						}
-
-						if ( model && !this.related.get( model ) ) {
-							models.push( model );
-						}
-					}, this );
+					related = this._prepareCollection();
 				}
 
-				// Add all found 'models' in on go, so 'add' will only be called once (and thus 'sort', etc.)
-				if ( models.length ) {
-					options = this.unsanitizeOptions( options );
-					this.related.add( models, options );
-				}
+				options = this.unsanitizeOptions( _.defaults( { merge: false }, options ) );
+				related.update( toAdd, options );
 			}
+
+			this.setRelated( related );
 		},
 
 		/**
@@ -951,40 +942,10 @@
 		 * If the key is changed, notify old & new reverse relations and initialize the new relation
 		 */
 		onChange: function( model, attr, options ) {
-			options = this.sanitizeOptions( options );
-
 			this.setKeyContents( attr );
 			this.changed = false;
 
-			var related = null;
-			
-			// Replace 'this.related' by 'this.keyContents' if it is a Backbone.Collection
-			if ( this.keyContents instanceof Backbone.Collection ) {
-				this._prepareCollection( this.keyContents );
-				related = this.keyContents;
-			}
-			// Otherwise, 'this.keyContents' should be an array of related object ids.
-			// Re-use the current 'this.related' if it is a Backbone.Collection; otherwise, create a new collection.
-			else {
-				var toAdd = [];
-
-				_.each( this.keyContents, function( attributes ) {
-					// If `merge` is true, update models here, instead of during update.
-					var model = this.relatedModel.findOrCreate( attributes, _.extend( { merge: true }, options, { create: this.options.createModels } ) );
-					model && toAdd.push( model );
-				}, this );
-
-				if ( this.related instanceof Backbone.Collection ) {
-					related = this.related;
-				}
-				else {
-					related = this._prepareCollection();
-				}
-
-				related.update( toAdd, _.defaults( { merge: false }, options ) );
-			}
-
-			this.setRelated( related );
+			this.findRelated( options );
 
 			if ( !options.silentChange ) {
 				var dit = this;
@@ -1008,7 +969,7 @@
 
 			options = this.sanitizeOptions( options );
 			
-			_.each( this.getReverseRelations( model ) || [], function( relation ) {
+			_.each( this.getReverseRelations( model ), function( relation ) {
 				relation.addRelated( this.instance, options );
 			}, this );
 
@@ -1029,7 +990,7 @@
 
 			options = this.sanitizeOptions( options );
 			
-			_.each( this.getReverseRelations( model ) || [], function( relation ) {
+			_.each( this.getReverseRelations( model ), function( relation ) {
 				relation.removeRelated( this.instance, null, options );
 			}, this );
 			

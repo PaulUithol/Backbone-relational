@@ -1377,6 +1377,8 @@ $(document).ready(function() {
 				pets: [ dog ]
 			});
 
+			console.log( dog, person );
+
 			ok( dog.get( 'owner' ) === person, "Dog has a working owner relation." );
 
 			var flea = new scope.Flea({
@@ -2365,20 +2367,125 @@ $(document).ready(function() {
 		});
 
 
-		test( "Setting a new collection or array of ids updates the relation", function() {
-			var zoo = new Zoo();
+		test( "On `set`, or creation, accept a collection or an array of ids/objects/models", function() {
+			// Handle an array of ids
+			var visitor1 = new Visitor( { id: 'visitor-1', name: 'Mr. Pink' } ),
+				visitor2 = new Visitor( { id: 'visitor-2' } );
 
-			var visitors = [
-				{ name: 'Paul' }
-			];
+			var zoo = new Zoo( { visitors: [ 'visitor-1', 'visitor-3' ] } ),
+				visitors = zoo.get( 'visitors' );
 
-			zoo.set( 'visitors', visitors );
+			equal( visitors.length, 1 );
 
-			equal( zoo.get( 'visitors' ).length, 1 );
+			var visitor3 = new Visitor( { id: 'visitor-3' } );
+			equal( visitors.length, 2 );
+
+			zoo.set( 'visitors', [ { name: 'Incognito' } ] );
+			equal( visitors.length, 1 );
 
 			zoo.set( 'visitors', [] );
+			equal( visitors.length, 0 );
 
-			equal( zoo.get( 'visitors' ).length, 0 );
+			// Handle an array of objects
+			zoo = new Zoo( { visitors: [ { id: 'visitor-1' }, { id: 'visitor-4' } ] } );
+			visitors = zoo.get( 'visitors' );
+
+			equal( visitors.length, 2 );
+			equal( visitors.get( 'visitor-1' ).get( 'name' ), 'Mr. Pink', 'visitor-1 is Mr. Pink' );
+
+			zoo.set( 'visitors', [ { id: 'visitor-1' }, { id: 'visitor-5' } ] );
+			equal( visitors.length, 2 );
+
+			// Handle an array of models
+			zoo = new Zoo( { visitors: [ visitor1 ] } );
+			visitors = zoo.get( 'visitors' );
+
+			equal( visitors.length, 1 );
+			ok( visitors.first() === visitor1 );
+
+			zoo.set( 'visitors', [ visitor2 ] );
+			equal( visitors.length, 1 );
+			ok( visitors.first() === visitor2 );
+
+			// Handle a Collection
+			var visitorColl = new Backbone.Collection( [ visitor1, visitor2 ] );
+			zoo = new Zoo( { visitors: visitorColl } );
+			visitors = zoo.get( 'visitors' );
+
+			equal( visitors.length, 2 );
+
+			zoo.set( 'visitors', false );
+			equal( visitors.length, 0 );
+
+			visitorColl = new Backbone.Collection( [ visitor2 ] );
+			zoo.set( 'visitors', visitorColl );
+			ok( visitorColl === zoo.get( 'visitors' ) );
+			equal( zoo.get( 'visitors' ).length, 1 );
+		});
+
+		test( "On `set`, or creation, handle edge-cases where the server supplies a single object/id", function() {
+			// Handle single objects
+			var zoo = new Zoo({
+				animals: { id: 'lion-1' }
+			});
+			var animals = zoo.get( 'animals' );
+
+			equal( animals.length, 1, "There is 1 animal in the zoo" );
+
+			zoo.set( 'animals', { id: 'lion-2' } );
+			equal( animals.length, 1, "There is 1 animal in the zoo" );
+
+			// Handle single models
+			var lion3 = new Animal( { id: 'lion-3' } );
+			zoo = new Zoo({
+				animals: lion3
+			});
+			animals = zoo.get( 'animals' );
+
+			equal( animals.length, 1, "There is 1 animal in the zoo" );
+
+			zoo.set( 'animals', null );
+			equal( animals.length, 0, "No animals in the zoo" );
+
+			zoo.set( 'animals', lion3 );
+			equal( animals.length, 1, "There is 1 animal in the zoo" );
+
+			// Handle single ids
+			zoo = new Zoo({
+				animals: 'lion-4'
+			});
+			animals = zoo.get( 'animals' );
+
+			equal( animals.length, 0, "No animals in the zoo" );
+
+			var lion4 = new Animal( { id: 'lion-4' } );
+			equal( animals.length, 1, "There is 1 animal in the zoo" );
+
+			zoo.set( 'animals', 'lion-5' );
+			equal( animals.length, 0, "No animals in the zoo" );
+
+			var lion5 = new Animal( { id: 'lion-5' } );
+			equal( animals.length, 1, "There is 1 animal in the zoo" );
+
+			zoo.set( 'animals', null );
+			equal( animals.length, 0, "No animals in the zoo" );
+
+
+			zoo = new Zoo({
+				animals: 'lion-4'
+			});
+			animals = zoo.get( 'animals' );
+
+			equal( animals.length, 1, "There is 1 animal in the zoo" );
+
+			// Bulletproof?
+			zoo = new Zoo({
+				animals: ''
+			});
+			animals = zoo.get( 'animals' );
+
+			ok( animals instanceof AnimalCollection );
+			equal( animals.length, 0, "No animals in the zoo" );
 		});
 
 		test( "Setting a custom collection in 'collectionType' uses that collection for instantiation", function() {
@@ -2532,18 +2639,6 @@ $(document).ready(function() {
 
 			equal( barnNoKey.get( 'animals' ).livesIn, undefined );
 			equal( barnNoKey.get( 'animals' ).barn, undefined );
-		});
-
-		test( "Handle edge-cases where the server supplies a single Object/id instead of an Array", function() {
-			var zoo = new Zoo({
-				animals: { id: 'lion-1' }
-			});
-
-			equal( zoo.get( 'animals' ).length, 1, "There is 1 animal in the zoo" );
-
-			zoo.set( 'animals', { id: 'lion-2' } );
-
-			equal( zoo.get( 'animals' ).length, 1, "There is 1 animal in the zoo" );
 		});
 
 		test( "Polymorhpic relations", function() {
@@ -2745,7 +2840,7 @@ $(document).ready(function() {
 					ok( false, "remove:jobs: 'person3' should not lose his job" );
 				});
 			
-			// Create Models from an object. Should trigger `add:jobs`
+			// Create Models from an object. Should trigger `add:jobs` on `person3`
 			var company = new Company({
 				name: 'Luna Corp.',
 				ceo: {
