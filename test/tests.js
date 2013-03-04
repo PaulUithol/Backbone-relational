@@ -14,9 +14,43 @@ if ( !window.console ) {
 }
 
 $(document).ready(function() {
-	$.ajax = function( obj ) {
-		window.requests.push( obj );
-		return obj;
+	window.requests = [];
+	Backbone.ajax = function( request ) {
+		// If a `response` has been defined, execute it.
+		// If status < 299, trigger 'success'; otherwise, trigger 'error'
+		if ( request.response && request.response.status ) {
+			var response = request.response;
+
+			// Define a `getResponseHeader` function on `response`; used in some tests.
+			// See https://developer.mozilla.org/en-US/docs/DOM/XMLHttpRequest#getResponseHeader%28%29
+			response.getResponseHeader = function( headerName ) {
+				return response.headers && response.headers[ headerName ] || null;
+			};
+
+			// Add the request before triggering callbacks that may get us in here again
+			window.requests.push( request );
+
+			/**
+			 * Trigger success/error with arguments like jQuery would:
+			 * // Success/Error
+			 * if ( isSuccess ) {
+			 *   deferred.resolveWith( callbackContext, [ success, statusText, jqXHR ] );
+			 * } else {
+			 *   deferred.rejectWith( callbackContext, [ jqXHR, statusText, error ] );
+			 * }
+			 */
+			if ( response.status >= 200 && response.status < 300 || response.status === 304 ) {
+				request.success( response.responseText, 'success', response );
+			}
+			else {
+				request.error( response, 'error', 'Internal Server Error' );
+			}
+		}
+		else {
+			window.requests.push( request );
+		}
+
+		return request;
 	};
 	
 	Backbone.Model.prototype.url = function() {
@@ -813,7 +847,7 @@ $(document).ready(function() {
 		test( "fetchRelated on a HasMany relation", function() {
 			var errorCount = 0;
 			var zoo = new Zoo({
-				animals: [ 'lion-1', 'zebra-1' ]
+				animals: [ { id: 'monkey-1' }, 'lion-1', 'zebra-1' ]
 			});
 			
 			//
@@ -822,14 +856,14 @@ $(document).ready(function() {
 			var requests = zoo.fetchRelated( 'animals', { error: function() { errorCount++; } } );
 			ok( _.isArray( requests ) );
 			equal( requests.length, 2, "Two requests have been made (a separate one for each animal)" );
-			equal( zoo.get( 'animals' ).length, 2, "Two animals in the zoo" );
+			equal( zoo.get( 'animals' ).length, 3, "Three animals in the zoo" );
 			
-			// Triggering the 'error' callback for either request should destroy the model
+			// Triggering the 'error' callback for a request should destroy the model
 			requests[ 0 ].error();
-			// Trigger the 'success' callback to fire the 'destroy' event
-			window.requests[ window.requests.length - 1 ].success();
+			// Trigger the 'success' callback on the `destroy` call to fire the 'destroy' event
+			_.last( window.requests ).success();
 			
-			equal( zoo.get( 'animals' ).length, 1, "One animal left in the zoo" );
+			equal( zoo.get( 'animals' ).length, 2, "Two animals left in the zoo" );
 			equal( errorCount, 1, "The error callback executed successfully" );
 			
 			//
@@ -842,17 +876,17 @@ $(document).ready(function() {
 			};
 			
 			// Set two new animals to be fetched; both should be fetched in a single request
-			zoo.set( { animals: [ 'lion-2', 'zebra-2' ] } );
+			zoo.set( { animals: [ 'monkey-1', 'lion-2', 'zebra-2' ] } );
 			
-			equal( zoo.get( 'animals' ).length, 0 );
+			equal( zoo.get( 'animals' ).length, 1 );
 
 			// `fetchRelated` creates two placeholder models for the ids present in the relation.
 			requests = zoo.fetchRelated( 'animals', { error: function() { errorCount++; } } );
 			
 			ok( _.isArray( requests ) );
 			equal( requests.length, 1 );
-			ok( requests[ 0 ].url === '/animal/set/lion-2;zebra-2/' );
-			equal( zoo.get('animals').length, 2 );
+			equal( requests[ 0 ].url, '/animal/set/lion-2;zebra-2/' );
+			equal( zoo.get('animals').length, 3 );
 			
 			// Triggering the 'error' callback (some error occured during fetching) should trigger the 'destroy' event
 			// on both fetched models, but should NOT actually make 'delete' requests to the server!
@@ -860,21 +894,25 @@ $(document).ready(function() {
 			requests[ 0 ].error();
 			ok( window.requests.length === numRequests, "An error occured when fetching, but no DELETE requests are made to the server while handling local cleanup." );
 			
-			equal( zoo.get( 'animals' ).length, 0, "Both animals are destroyed" );
+			equal( zoo.get( 'animals' ).length, 1, "Both animals are destroyed" );
 			equal( errorCount, 2, "The error callback executed successfully for both models" );
 			
-			// Re-fetch them
+			// Try to re-fetch; nothing left to get though
 			requests = zoo.fetchRelated( 'animals' );
 			
-			equal( requests.length, 1 );
-			equal( zoo.get( 'animals' ).length, 2 );
-			
-			// No more animals to fetch!
-			requests = zoo.fetchRelated( 'animals' );
-			
-			ok( _.isArray( requests ) );
 			equal( requests.length, 0 );
-			equal( zoo.get( 'animals' ).length, 2 );
+			equal( zoo.get( 'animals' ).length, 1 );
+
+			// Re-fetch the existing model
+			requests = zoo.fetchRelated( 'animals', null, true );
+
+			equal( requests.length, 1 );
+			equal( requests[ 0 ].url, '/animal/set/monkey-1/' );
+			equal( zoo.get( 'animals' ).length, 1 );
+
+			// An error while refreshing an existing model shouldn't affect it
+			requests[ 0 ].error();
+			equal( zoo.get( 'animals' ).length, 1 );
 		});
 
 		test( "autoFetch a HasMany relation", function() {

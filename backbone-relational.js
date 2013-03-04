@@ -787,6 +787,7 @@
 		tryAddRelated: function( model, coll, options ) {
 			if ( ( this.keyId || this.keyId === 0 ) && model.id === this.keyId ) { // since 0 can be a valid `id` as well
 				this.addRelated( model, options );
+				this.keyId = null;
 			}
 		},
 
@@ -1051,6 +1052,7 @@
 
 			if ( item ) {
 				this.addRelated( model, options );
+				this.keyIds = _.without( this.keyIds, model.id );
 			}
 		},
 
@@ -1252,38 +1254,36 @@
 		 * Retrieve related objects.
 		 * @param key {string} The relation key to fetch models for.
 		 * @param [options] {Object} Options for 'Backbone.Model.fetch' and 'Backbone.sync'.
-		 * @param [update=false] {boolean} Whether to force a fetch from the server (updating existing models).
+		 * @param [refresh=false] {boolean} Fetch existing models from the server as well (in order to update them).
 		 * @return {jQuery.when[]} An array of request objects
 		 */
-		fetchRelated: function( key, options, update ) {
+		fetchRelated: function( key, options, refresh ) {
 			// Set default `options` for fetch
 			options = _.extend( { update: true, remove: false }, options );
 
 			var setUrl,
 				requests = [],
 				rel = this.getRelation( key ),
-				keyContents = rel && rel.keyContents,
-				toFetch = keyContents && _.select( _.isArray( keyContents ) ? keyContents : [ keyContents ], function( item ) {
-					var id = Backbone.Relational.store.resolveIdForItem( rel.relatedModel, item );
-					return !_.isNull( id ) && ( update || !Backbone.Relational.store.find( rel.relatedModel, id ) );
+				keys = rel && ( rel.keyIds || [ rel.keyId ] ),
+				toFetch = keys && _.select( keys || [], function( id ) {
+					return ( id || id === 0 ) && ( refresh || !Backbone.Relational.store.find( rel.relatedModel, id ) );
 				}, this );
 			
 			if ( toFetch && toFetch.length ) {
-				// Create a model for each entry in 'keyContents' that is to be fetched
-				var models = _.map( toFetch, function( item ) {
-					var model;
+				// Find (or create) a model for each one that is to be fetched
+				var created = [],
+					models = _.map( toFetch, function( id ) {
+						var model = Backbone.Relational.store.find( rel.relatedModel, id );
+						
+						if ( !model ) {
+							var attrs = {};
+							attrs[ rel.relatedModel.prototype.idAttribute ] = id;
+							model = rel.relatedModel.findOrCreate( attrs, options );
+							created.push( model );
+						}
 
-					if ( _.isObject( item ) ) {
-						model = rel.relatedModel.findOrCreate( item, options );
-					}
-					else {
-						var attrs = {};
-						attrs[ rel.relatedModel.prototype.idAttribute ] = item;
-						model = rel.relatedModel.findOrCreate( attrs, options );
-					}
-
-					return model;
-				}, this );
+						return model;
+					}, this );
 				
 				// Try if the 'collection' can provide a url to fetch a set of models in one request.
 				if ( rel.related instanceof Backbone.Collection && _.isFunction( rel.related.url ) ) {
@@ -1298,7 +1298,7 @@
 						{
 							error: function() {
 								var args = arguments;
-								_.each( models || [], function( model ) {
+								_.each( created, function( model ) {
 									model.trigger( 'destroy', model, model.collection, options );
 									options.error && options.error.apply( model, args );
 								});
@@ -1311,12 +1311,14 @@
 					requests = [ rel.related.fetch( opts ) ];
 				}
 				else {
-					requests = _.map( models || [], function( model ) {
+					requests = _.map( models, function( model ) {
 						var opts = _.defaults(
 							{
 								error: function() {
-									model.trigger( 'destroy', model, model.collection, options );
-									options.error && options.error.apply( model, arguments );
+									if ( _.contains( created, model ) ) {
+										model.trigger( 'destroy', model, model.collection, options );
+										options.error && options.error.apply( model, arguments );
+									}
 								}
 							},
 							options
