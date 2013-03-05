@@ -458,6 +458,10 @@ Company = Backbone.RelationalModel.extend({
 				value of the property can also be an object. In that case the object is passed to
 				<a href="#RelationalModel-fetchRelated"><q>fetchRelated</q></a> as the options parameter.
 			</p>
+			<p>
+				Note that <q>autoFetch</q> operates independently from other `fetch` operations,
+				including those that may have fetched the current model.
+			</p>
 		</section>
 
 <pre class="language-javascript"><code class="language-javascript"><!--
