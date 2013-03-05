@@ -1011,8 +1011,7 @@ $(document).ready(function() {
 
 			// `parse` gets called once by `findOrCreate` directly when trying to lookup `1`,
 			// once when `build` (called from `findOrCreate`) calls the Zoo constructor with `{ parse: true}`.
-			// Same for the nested `Animal`.
-			ok( parseCalled === 4, 'parse called 4 times? ' + parseCalled );
+			ok( parseCalled === 2, 'parse called 2 times? ' + parseCalled );
 
 			parseCalled = 0;
 
@@ -1029,94 +1028,22 @@ $(document).ready(function() {
 			ok( animal.get( 'livesIn' ) instanceof Zoo );
 			ok( animal.get( 'livesIn' ).get( 'animals' ).get( animal ) === animal );
 
-			// `parse` gets called once by `findOrCreate` directly when trying to lookup `b`,
-			// and once when `build` (called from `findOrCreate`) calls its constructor
-			ok( parseCalled === 2, 'parse called 2 times? ' + parseCalled );
+			ok( parseCalled === 0, 'parse called 0 times? ' + parseCalled );
 
 			// Reset `parse` methods
 			Zoo.prototype.parse = Animal.prototype.parse = Backbone.RelationalModel.prototype.parse;
 		});
 
-		test( "`parse` with a nested collection", function() {
-			var parseCalled = 0;
-			Zoo.prototype.parse = Animal.prototype.parse = function( resp, options ) {
-				parseCalled++;
-				return resp.model;
-			};
-
-			var zoo = new Zoo({
-				model: {
-					id: 'z1',
-					name: 'San Diego Zoo',
-					animals: [ { model: { id: 'a1' } } ]
-				}
-			}, { parse: true } );
-			var animal = zoo.get( 'animals' ).first();
-
-			ok( animal instanceof Animal );
-			ok( animal.id === 'a1' );
-			ok( animal.get( 'livesIn' ) instanceof Zoo );
-
-			// `parse` called by `Zoo` constructor, `Animal.findOrCreate`, `Animal` constructor
-			ok( parseCalled === 3, 'parse called 3 times? ' + parseCalled );
-
-			// Reset `parse` methods
-			Zoo.prototype.parse = Animal.prototype.parse = Backbone.RelationalModel.prototype.parse;
-		});
-
-		test( "`parse` with deeply nested relations", function() {
-			var parseCalled = 0;
-			Company.prototype.parse = Job.prototype.parse = Person.prototype.parse = function( resp, options ) {
-				parseCalled++;
-				var data = _.clone( resp.model );
-				data.id = data.id.uri;
-				return data;
-			};
-
-			var data = {
-				model: {
-					id: { uri: 'c1' },
-					employees: [
-						{
-							model: {
-								id: { uri: 'e1' },
-								person: { model: { id: { uri: 'p1' } } }
-							}
-						},
-						{
-							model: {
-								id: { uri: 'e2' },
-								person: { model: { id: { uri: 'p2' } } }
-							}
-						}
-					]
-				}
-			};
-
-			var company = new Company( data, { parse: true } ),
-				employees = company.get( 'employees' ),
-				job = employees.first(),
-				person = job.get( 'person' );
-
-			ok( job && job.id === 'e1', 'job exists' );
-			ok( person && person.id === 'p1', 'person exists' );
-
-			ok( parseCalled === 9, 'parse called 9 times? ' + parseCalled );
-
-			// Reset `parse` methods
-			Company.prototype.parse = Job.prototype.parse = Person.prototype.parse = Backbone.RelationalModel.prototype.parse;
-		});
-
-		test( "`parse` should only get called on top-level objects; not for nested models and collections", function() {
+		test( "By default, `parse` should only get called on top-level objects; not for nested models and collections", function() {
 			var companyData = {
 				'data': {
 					'id': 'company-1',
 					'contacts': [
 						{
-							'id': '1013855'
+							'id': '1'
 						},
 						{
-							'id': '1949517'
+							'id': '2'
 						}
 					]
 				}
@@ -1147,8 +1074,7 @@ $(document).ready(function() {
 			var parseCalled = 0;
 			Company.prototype.parse = Contact.prototype.parse = Contacts.prototype.parse = function( resp, options ) {
 				parseCalled++;
-				options && ( options.parse = false );
-				return resp.data;
+				return resp.data || resp;
 			};
 
 			var company = new Company( companyData, { parse: true } ),
@@ -1156,7 +1082,7 @@ $(document).ready(function() {
 				contact = contacts.first();
 
 			ok( company.id === 'company-1' );
-			ok( contact && contact.id === '1013855', 'contact exists' );
+			ok( contact && contact.id === '1', 'contact exists' );
 			ok( parseCalled === 1, 'parse called 1 time? ' + parseCalled );
 
 			// simulate what would happen if company.fetch() was called.
@@ -1168,7 +1094,7 @@ $(document).ready(function() {
 
 			ok( contacts === company.get( 'contacts' ), 'contacts collection is same instance after fetch' );
 			equal( contacts.length, 2, '... with correct length' );
-			ok( contact && contact.id === '1013855', 'contact exists' );
+			ok( contact && contact.id === '1', 'contact exists' );
 			ok( contact === contacts.first(), '... and same model instances' );
 		});
 
@@ -1602,6 +1528,97 @@ $(document).ready(function() {
 		test( "'collectionOptions' sets the options on the created HasMany Collections", function() {
 			var zoo = new Zoo();
 			ok( zoo.get("animals").url === "zoo/" + zoo.cid + "/animal/");
+		});
+
+		test( "`parse` with deeply nested relations", function() {
+			var collParseCalled = 0,
+				modelParseCalled = 0;
+
+			var Job = Backbone.RelationalModel.extend({});
+
+			var JobCollection = Backbone.Collection.extend({
+				model: Job,
+
+				parse: function( resp, options ) {
+					collParseCalled++;
+					return resp.data || resp;
+				}
+			});
+
+			var Company = Backbone.RelationalModel.extend({
+				relations: [{
+					type: 'HasMany',
+					key: 'employees',
+					parse: true,
+					relatedModel: Job,
+					collectionType: JobCollection,
+					reverseRelation: {
+						key: 'company'
+					}
+				}]
+			});
+
+			var Person = Backbone.RelationalModel.extend({
+				relations: [{
+					type: 'HasMany',
+					key: 'jobs',
+					parse: true,
+					relatedModel: Job,
+					collectionType: JobCollection,
+					reverseRelation: {
+						key: 'person',
+						parse: false
+					}
+				}],
+
+				parse: function( resp, options ) {
+					modelParseCalled++;
+					return resp;
+				}
+			});
+
+			Company.prototype.parse = Job.prototype.parse = function( resp, options ) {
+				modelParseCalled++;
+				var data = _.clone( resp.model );
+				data.id = data.id.uri;
+				return data;
+			};
+
+			var data = {
+				model: {
+					id: { uri: 'c1' },
+					employees: [
+						{
+							model: {
+								id: { uri: 'e1' },
+								person: {
+									id: 'p1',
+									jobs: [ 'e1', { model: { id: { uri: 'e3' } } } ]
+								}
+							}
+						},
+						{
+							model: {
+								id: { uri: 'e2' },
+								person: {
+									id: 'p2'
+								}
+							}
+						}
+					]
+				}
+			};
+
+			var company = new Company( data, { parse: true } ),
+				employees = company.get( 'employees' ),
+				job = employees.first(),
+				person = job.get( 'person' );
+
+			ok( job && job.id === 'e1', 'job exists' );
+			ok( person && person.id === 'p1', 'person exists' );
+
+			ok( modelParseCalled === 7, 'model.parse called 7 times? ' + modelParseCalled );
+			ok( collParseCalled === 0, 'coll.parse called 0 times? ' + collParseCalled );
 		});
 		
 		

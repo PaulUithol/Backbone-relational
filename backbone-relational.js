@@ -661,7 +661,8 @@
 		initialize: function( opts ) {
 			this.listenTo( this.instance, 'relational:change:' + this.key, this.onChange );
 
-			this.findRelated( opts );
+			var related = this.findRelated( opts );
+			this.setRelated( related );
 
 			// Notify new 'related' object of the new relation.
 			_.each( this.getReverseRelations(), function( relation ) {
@@ -669,12 +670,15 @@
 			}, this );
 		},
 
+		/**
+		 * Find related Models.
+		 * @param {Object} [options]
+		 * @return {Backbone.Model}
+		 */
 		findRelated: function( options ) {
 			var related = null;
 
-			/*if ( _.isObject( options ) && options.parse && !this.options.parse ) {
-			 options.parse = false;
-			 }*/
+			options = _.defaults( { parse: this.options.parse }, options );
 
 			if ( this.keyContents instanceof this.relatedModel ) {
 				related = this.keyContents;
@@ -684,7 +688,7 @@
 				related = this.relatedModel.findOrCreate( this.keyContents, opts );
 			}
 
-			this.setRelated( related );
+			return related;
 		},
 
 		/**
@@ -697,7 +701,8 @@
 		},
 
 		/**
-		 * If the key is changed, notify old & new reverse relations and initialize the new relation
+		 * Event handler for `change:<key>`.
+		 * If the key is changed, notify old & new reverse relations and initialize the new relation.
 		 */
 		onChange: function( model, attr, options ) {
 			// Don't accept recursive calls to onChange (like onChange->findRelated->findOrCreate->initializeRelations->addRelated->onChange)
@@ -715,7 +720,8 @@
 			
 			if ( changed ) {
 				this.setKeyContents( attr );
-				this.findRelated( options );
+				var related = this.findRelated( options );
+				this.setRelated( related );
 			}
 			
 			// Notify old 'related' object of the terminated relation
@@ -802,7 +808,8 @@
 				throw new Error( '`collectionType` must inherit from Backbone.Collection' );
 			}
 
-			this.findRelated( opts );
+			var related = this.findRelated( opts );
+			this.setRelated( related );
 		},
 
 		/**
@@ -845,8 +852,15 @@
 			return collection;
 		},
 
+		/**
+		 * Find related Models.
+		 * @param {Object} [options]
+		 * @return {Backbone.Collection}
+		 */
 		findRelated: function( options ) {
 			var related = null;
+
+			options = _.defaults( { parse: this.options.parse }, options );
 
 			// Replace 'this.related' by 'this.keyContents' if it is a Backbone.Collection
 			if ( this.keyContents instanceof Backbone.Collection ) {
@@ -877,10 +891,10 @@
 					related = this._prepareCollection();
 				}
 
-				related.update( toAdd, _.defaults( { merge: false }, options ) );
+				related.update( toAdd, _.defaults( { merge: false, parse: false }, options ) );
 			}
 
-			this.setRelated( related );
+			return related;
 		},
 
 		/**
@@ -905,14 +919,16 @@
 		},
 
 		/**
-		 * If the key is changed, notify old & new reverse relations and initialize the new relation
+		 * Event handler for `change:<key>`.
+		 * If the contents of the key are changed, notify old & new reverse relations and initialize the new relation.
 		 */
 		onChange: function( model, attr, options ) {
 			options = options ? _.clone( options ) : {};
 			this.setKeyContents( attr );
 			this.changed = false;
 
-			this.findRelated( options );
+			var related = this.findRelated( options );
+			this.setRelated( related );
 
 			if ( !options.silent ) {
 				var dit = this;
@@ -929,7 +945,7 @@
 		/**
 		 * When a model is added to a 'HasMany', trigger 'add' on 'this.instance' and notify reverse relations.
 		 * (should be 'HasOne', must set 'this.instance' as their related).
-		 */
+		*/
 		handleAddition: function( model, coll, options ) {
 			//console.debug('handleAddition called; args=%o', arguments);
 			options = options ? _.clone( options ) : {};
