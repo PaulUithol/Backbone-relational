@@ -95,7 +95,7 @@ $(document).ready(function() {
 					includeInJSON: [ 'id', 'name' ]
 				}
 			},
-			{ // A simple HasMany without recursive relation
+			{ // A simple HasMany without reverse relation
 				type: Backbone.HasMany,
 				key: 'visitors',
 				relatedModel: 'Visitor'
@@ -258,6 +258,10 @@ $(document).ready(function() {
 	});
 
 
+	/**
+	 * Node/NodeList
+	 */
+
 	window.Node = Backbone.RelationalModel.extend({
 		urlRoot: '/node/',
 
@@ -279,6 +283,11 @@ $(document).ready(function() {
 	window.NodeList = Backbone.Collection.extend({
 		model: Node
 	});
+
+
+	/**
+	 * Customer/Address/Shop/Agent
+	 */
 
 	window.Customer = Backbone.RelationalModel.extend({
 		urlRoot: '/customer/',
@@ -2599,14 +2608,14 @@ $(document).ready(function() {
 
 			var indexes = [];
 
-			zoo.get("animals").on("add", function(model, collection, options) {
-				var index = collection.indexOf(model);
+			zoo.get( 'animals' ).on( 'add', function( model, collection, options ) {
+				var index = collection.indexOf( model );
 				indexes.push(index);
 			});
 
-			zoo.set("animals", [
+			zoo.set( 'animals', [
 					{ id : 1, species : 'Lion' },
-					{ id : 2, species : 'Zebra'}
+					{ id : 2, species : 'Zebra' }
 			]);
 
 			equal( indexes[0], 0, "First item has index 0" );
@@ -3114,29 +3123,59 @@ $(document).ready(function() {
 			//console.log( person, user );
 		});
 
-	test( "ReverseRelations are applied retroactively (2)", function() {
-		var models = {};
-		Backbone.Relational.store.addModelScope( models );
+		test( "ReverseRelations are applied retroactively (2)", function() {
+			var models = {};
+			Backbone.Relational.store.addModelScope( models );
 
-		// Use brand new Model types, so we can be sure we don't have any reverse relations cached from previous tests
-		models.NewPerson = Backbone.RelationalModel.extend({
-			relations: [{
-				type: Backbone.HasOne,
-				key: 'user',
-				relatedModel: 'NewUser',
-				reverseRelation: {
+			// Use brand new Model types, so we can be sure we don't have any reverse relations cached from previous tests
+			models.NewPerson = Backbone.RelationalModel.extend({
+				relations: [{
 					type: Backbone.HasOne,
-					key: 'person'
-				}
-			}]
+					key: 'user',
+					relatedModel: 'NewUser',
+					reverseRelation: {
+						type: Backbone.HasOne,
+						key: 'person'
+					}
+				}]
+			});
+			models.NewUser = Backbone.RelationalModel.extend({});
+
+			var user = new models.NewUser( { id: 'newuser-1', person: { id: 'newperson-1' } } );
+
+			equal( user.getRelations().length, 1 );
+			ok( user.get( 'person' ) instanceof models.NewPerson );
 		});
-		models.NewUser = Backbone.RelationalModel.extend({});
 
-		var user = new models.NewUser( { id: 'newuser-1', person: { id: 'newperson-1' } } );
+		test( "Deep reverse relation starting from a collection", function() {
+			var nodes = new NodeList([
+				{
+					id: 1,
+					children: [
+						{
+							id: 2,
+							children: [
+								{ id: 3 }
+							]
+						}
+					]
+				}
+			]);
 
-		equal( user.getRelations().length, 1 );
-		ok( user.get( 'person' ) instanceof models.NewPerson );
-	});
+			var parent = nodes.first();
+			ok( parent, 'first item accessible after resetting collection' );
+
+			ok( parent.collection === nodes, '`parent.collection` is set to `nodes`' );
+
+			var child = parent.get( 'children' ).first();
+			ok( child, '`child` can be retrieved from `parent`' );
+			ok( child.get( 'parent' ), 'reverse relation from `child` to `parent` works');
+
+			var grandchild = child.get( 'children' ).first();
+			ok( grandchild, '`grandchild` can be retrieved from `child`' );
+
+			ok( grandchild.get( 'parent' ), 'reverse relation from `grandchild` to `child` works');
+		});
 
 
 	module( "Backbone.Collection", { setup: reset } );

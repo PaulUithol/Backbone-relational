@@ -1039,17 +1039,22 @@
 			// collection events only after the model is really fully set up.
 			// Example: "p.get('jobs').add( { company: c, person: p } )".
 			if ( options && options.collection ) {
-				var dit = this;
+				var dit = this,
+					collection = this.collection =  options.collection;
+
+				// Prevent this option from cascading down to related models; they shouldn't go into this `if` clause.
+				delete options.collection;
+
 				this._deferProcessing = true;
 
 				var processQueue = function( model ) {
 					if ( model === dit ) {
 						dit._deferProcessing = false;
 						dit.processQueue();
-						options.collection.off( 'relational:add', processQueue );
+						collection.off( 'relational:add', processQueue );
 					}
 				};
-				options.collection.on( 'relational:add', processQueue );
+				collection.on( 'relational:add', processQueue );
 
 				// So we do process the queue eventually, regardless of whether this model actually gets added to 'options.collection'.
 				_.defer( function() {
