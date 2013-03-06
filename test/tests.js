@@ -3138,6 +3138,58 @@ $(document).ready(function() {
 		ok( user.get( 'person' ) instanceof models.NewPerson );
 	});
 
+		test( "Deep reverse relation starting from a collection", function() {
+			var Phone = Backbone.RelationalModel.extend();
+			var Contact = Backbone.RelationalModel.extend({
+				relations: [
+					{
+						type: Backbone.HasMany,
+						key: 'phones',
+						relatedModel: Phone,
+						reverseRelation: {
+							key: 'contact'
+						}
+					}
+				]
+			});
+
+			var Company = Backbone.RelationalModel.extend({
+				relations: [
+					{
+						type: Backbone.HasMany,
+						key: 'contacts',
+						relatedModel: Contact
+					}
+				]
+			});
+			var Companies = Backbone.Collection.extend({
+				model: Company
+			});
+
+			var companies = new Companies([{
+				"id": "company-1",
+				"contacts": [
+					{
+						"id": "contact-1", 
+						"phones": [
+							{ "foo": "bar" }
+						]
+					}
+				]
+			}]);
+
+			var company = companies.first();
+			ok(company, 'company is accessible after resetting collection');
+
+			var contact = company.get('contacts').first();
+			ok(contact, 'contact can be retrieved from company');
+
+			var phoneObj = contact.get('phones').first();
+			ok(phoneObj, 'phone obj can be retrieved from contact');
+
+			ok(phoneObj.get('contact'), 'reverse relation from phone -> contact works');
+		});
+
 
 	module( "Backbone.Collection", { setup: reset } );
 	
