@@ -3155,7 +3155,10 @@ $(document).ready(function() {
 						{
 							id: 2,
 							children: [
-								{ id: 3 }
+								{
+									id: 3,
+									children: [ 1 ]
+								}
 							]
 						}
 					]
@@ -3175,6 +3178,9 @@ $(document).ready(function() {
 			ok( grandchild, '`grandchild` can be retrieved from `child`' );
 
 			ok( grandchild.get( 'parent' ), 'reverse relation from `grandchild` to `child` works');
+
+			ok( grandchild.get( 'children' ).first() === parent, 'reverse relation from `grandchild` to `child` works');
+			ok( parent.get( 'parent' ) === grandchild, 'circular reference from `grandchild` to `parent` works' );
 		});
 
 
