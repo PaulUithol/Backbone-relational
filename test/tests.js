@@ -340,7 +340,8 @@ $(document).ready(function() {
 			{
 				type: Backbone.HasMany,
 				key: 'customers',
-				relatedModel: 'Customer'
+				relatedModel: 'Customer',
+				includeInJSON: Backbone.RelationalModel.prototype.idAttribute
 			},
 			{
 				type: Backbone.HasOne,
@@ -991,7 +992,7 @@ $(document).ready(function() {
 			ok( person1.get( 'user' ) === user );
 		});
 		
-		test( "toJSON", function() {
+		test( "`toJSON`: simple cases", function() {
 			var node = new Node({ id: '1', parent: '3', name: 'First node' });
 			new Node({ id: '2', parent: '1', name: 'Second node' });
 			new Node({ id: '3', parent: '2', name: 'Third node' });
@@ -999,6 +1000,55 @@ $(document).ready(function() {
 			var json = node.toJSON();
 
 			ok( json.children.length === 1 );
+		});
+
+		test( "`toJSON` should include ids for 'unknown' or 'missing' models (if `includeInJSON` is `idAttribute`)", function() {
+			// See GH-191
+
+			// `Zoo` shouldn't be affected; `animals.includeInJSON` is not equal to `idAttribute`
+			var zoo = new Zoo({ id: 'z1', animals: [ 'a1', 'a2' ] }),
+				zooJSON = zoo.toJSON();
+
+			ok( _.isArray( zooJSON.animals ) );
+			equal( zooJSON.animals.length, 0, "0 animals in zooJSON; it serializes an array of attributes" );
+
+			var a1 = new Animal( { id: 'a1' } );
+			zooJSON = zoo.toJSON();
+			equal( zooJSON.animals.length, 1, "0 animals in zooJSON; it serializes an array of attributes" );
+
+			// Agent -> Customer; `idAttribute` on a HasMany
+			var agent = new Agent({ id: 'a1', customers: [ 'c1', 'c2' ] } ),
+				agentJSON = agent.toJSON();
+
+			ok( _.isArray( agentJSON.customers ) );
+			equal( agentJSON.customers.length, 2, "2 customers in agentJSON; it serializes the `idAttribute`" );
+
+			var c1 = new Agent( { id: 'c1' } );
+			equal( agent.get( 'customers' ).length, 1, '1 customer in agent' );
+
+			agentJSON = agent.toJSON();
+			equal( agentJSON.customers.length, 2, "2 customers in agentJSON; `idAttribute` for 1 missing, other existing" );
+
+			c1.destroy();
+
+			agentJSON = agent.toJSON();
+			equal( agentJSON.customers.length, 1, "1 customer in agentJSON; `idAttribute` for 1 missing, other destroyed" );
+
+			// Person -> User; `idAttribute` on a HasMany
+			var person = new Person({ id: 'p1', user: 'u1' } ),
+				personJSON = person.toJSON();
+
+			equal( personJSON.user_id, 'u1', "`user_id` gets set in JSON" );
+
+			var u1 = new User( { id: 'u1' } );
+			personJSON = person.toJSON();
+			ok( u1.get( 'person' ) === person );
+			equal( personJSON.user_id, 'u1', "`user_id` gets set in JSON" );
+
+			u1.destroy();
+			personJSON = person.toJSON();
+			ok( !u1.get( 'person' ) );
+			equal( personJSON.user_id, null, "`user_id` does not get set in JSON anymore" );
 		});
 
 		test( "`parse` gets called through `findOrCreate`", function() {
@@ -1346,25 +1396,25 @@ $(document).ready(function() {
 	module( "Backbone.Relation options", { setup: initObjects } );
 		
 		
-		test( "'includeInJSON' (Person to JSON)", function() {
+		test( "`includeInJSON` (Person to JSON)", function() {
 			var json = person1.toJSON();
 			equal( json.user_id, 'user-1', "The value of 'user_id' is the user's id (not an object, since 'includeInJSON' is set to the idAttribute)" );
 			ok ( json.likesALot instanceof Object, "The value of 'likesALot' is an object ('includeInJSON' is 'true')" );
 			equal( json.likesALot.likesALot, 'person-1', "Person is serialized only once" );
 			
 			json = person1.get( 'user' ).toJSON();
-			equal( json.person, 'boy', "The value of 'person' is the person's name ('includeInJSON is set to 'name')" );
+			equal( json.person, 'boy', "The value of 'person' is the person's name (`includeInJSON` is set to 'name')" );
 			
 			json = person2.toJSON();
 			ok( person2.get('livesIn') instanceof House, "'person2' has a 'livesIn' relation" );
-			equal( json.livesIn, undefined , "The value of 'livesIn' is not serialized ('includeInJSON is 'false')" );
+			equal( json.livesIn, undefined , "The value of 'livesIn' is not serialized (`includeInJSON` is 'false')" );
 			
 			json = person3.toJSON();
 			ok( json.user_id === null, "The value of 'user_id' is null");
 			ok( json.likesALot === null, "The value of 'likesALot' is null");
 		});
 
-		test( "'includeInJSON' (Zoo to JSON)", function() {
+		test( "`includeInJSON` (Zoo to JSON)", function() {
 			var zoo = new Zoo({
 				id: 0,
 				name: 'Artis',
@@ -1380,6 +1430,7 @@ $(document).ready(function() {
 
 			ok( _.isArray( jsonZoo.animals ), "animals is an Array" );
 			equal( jsonZoo.animals.length, 2 );
+			equal( jsonBear.id, 1, "animal's id has been included in the JSON" );
 			equal( jsonBear.species, 'bear', "animal's species has been included in the JSON" );
 			ok( !jsonBear.name, "animal's name has not been included in the JSON" );
 
@@ -1387,7 +1438,7 @@ $(document).ready(function() {
 				jsonTiger = tiger.toJSON();
 
 			ok( _.isObject( jsonTiger.livesIn ) && !_.isArray( jsonTiger.livesIn ), "zoo is an Object" );
-			ok( jsonTiger.livesIn.id === 0, "zoo.id is included in the JSON" );
+			equal( jsonTiger.livesIn.id, 0, "zoo.id is included in the JSON" );
 			equal( jsonTiger.livesIn.name, 'Artis', "zoo.name is included in the JSON" );
 			ok( !jsonTiger.livesIn.city, "zoo.city is not included in the JSON" );
 		});
