@@ -379,7 +379,7 @@ alert( lion.get( 'livesIn' ).get( 'name' ) + ', ' + artis.get( 'animals' ).lengt
 			</p>
 		</section>
 
-<pre class="language-javascript"><code class="language-javascript"><!--
+<pre class="language-javascript"><code class="language-javascript" id="example-job"><!--
 -->Person = Backbone.RelationalModel.extend({
 	relations: [{
 		type: 'HasMany',
@@ -1214,29 +1214,66 @@ User = Backbone.RelationalModel.extend();
 
 	<section id="under-the-hood">
 		<h2 >Under the Hood</h2>
+		<h3>The model Store</h3>
 		<p>
-			Each <strong>Backbone.RelationalModel</strong> registers itself with <strong>Backbone.Relational.Store</strong> upon
-			creation, and is removed from the <q>store</q> when destroyed. When creating or updating an
+			Each <strong>Backbone.RelationalModel</strong> registers itself with <strong>Backbone.Relational.Store</strong>
+			upon creation, and is removed from the <q>store</q> when destroyed. When creating or updating an
 			attribute that is a key in a relation, removed related objects are notified of their
 			removal, and new related objects are looked up in the Store.
 		</p>
 		<p>
 			Backbone-relational only allows the existence of one model instance for each model type <q>id</q>.
 			This check is there to enforce there will only be one version of a model with a certain id at any given time
-			(which is also the reason for the existence of Backbone.Relational.Store). This is necessary to enforce consistency
-			and integrity of relations.
+			(which is also the reason for the existence of Backbone.Relational.Store). This is necessary to enforce
+			consistency	and integrity of relations.
 		</p>
 		<p>
-			If we were to allow multiple versions, inadvertently manipulating or performing a save, destroy or whatever on another
-			version of that model (which is still around on the client, and can for example still be bound to one or more views in your application,
-			either on purpose or inadvertently) would save it's state to the server, killing it's relations, and the server response would
-			set the same (incorrect) data on the 'current' version of the model on the client. By then, you'd be in trouble.
+			If multiple versions were allowed, inadvertently manipulating or performing a save or destroy
+			on another version of that model (which is still around on the client, and can for example still be bound
+			to one or more views in your application, either on purpose or inadvertently) would save it's state to the
+			server, killing it's relations, and the server response would set the same (incorrect) data on the 'current'
+			version of the model on the client. By then, you'd be in trouble.
 		</p>
 		<p>
-			Therefore, Backbone-relational simply does not allow this situation to occur. This is much safer than putting the burden on the
-			developer to always make sure every older version of a model is completely decoupled from every other part of your application.
-			It might be annoying to get an error every now and then, and sometimes inconvenient to have to use the factory method <q>findOrCreate</q>,
-			but it's much better than subtle bugs that can lead to major data loss later on in the life cycle of your application.
+			Therefore, Backbone-relational simply does not allow this situation to occur. This is much safer than
+			putting the burden on the developer to always make sure every older version of a model is completely
+			decoupled from every other part of your application.
+			It might be annoying to get an error every now and then, and sometimes inconvenient to have to use the
+			factory method <q>findOrCreate</q>, but it's much better than subtle bugs that can lead to major data loss
+			later on in the life cycle of your application.
+		</p>
+		<h3>Event queuing</h3>
+		<p>
+			Most of Backbone's default events are queued by Backbone-relational. This can complicate debugging since
+			it 'breaks' the call stack, but is a necessary part of the abstraction offered by it.
+		</p>
+		<p>
+			The event queuing kicks in every time (nested) relations need to be updated as the result of calling a
+			Backbone method that modifies a model's attributes: on creation, and on <q>set</q>, <q>unset</q>, and <q>clear</q>.
+		</p>
+		<p>
+			The basic problem is that when manipulating relations, you only want the events to fire once ALL relations
+			have been updated; also those on models one, two, or more relations away. For example, when	you have an
+			event listener on <q>add</q>, you want to be able to use the model you receive as the first argument
+			and it's relations fully instead of getting raw JS objects:
+		</p>
+
+<pre class="language-javascript"><code class="language-javascript runnable" data-setup="#example-job"><!--
+-->var p = new Person( { id: 'p1', name: 'Larry Page' } );
+
+p.on( 'add:jobs', function( job ) {
+	// Here, you want the correct person and company to be set on job, instead of plain js.
+	alert( job.get( 'person' ).get( 'name' ) + ' @ ' + job.get( 'company' ).get( 'name' ) );
+});
+
+p.get( 'jobs' ).add( { company: { name: 'Google' }, person: p.id } );
+</code></pre>
+
+		<p>
+			To achieve this, Backbone's events are prevented from firing <i>immediately</i> when <q>add</q>
+			is called, but are delayed until the all (nested) relations have reached a stable state again. Events are
+			then fired at the first available opportunity; as soon as the last model updating its relations unblocks
+			the <q>Backbone.Relational.eventQueue</q>.
 		</p>
 	</section>
 </div>
