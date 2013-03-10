@@ -1413,6 +1413,16 @@
 					else if ( related instanceof Backbone.Model ) {
 						value = related.get( includeInJSON );
 					}
+
+					// Add 'unfound' ids if only includeInJSON is the `idAttribute`
+					if ( includeInJSON === rel.relatedModel.prototype.idAttribute ) {
+						if ( rel instanceof Backbone.HasMany ) {
+							value = value.concat( rel.keyIds );
+						}
+						else if  ( rel instanceof Backbone.HasOne ) {
+							value = value || rel.keyId;
+						}
+					}
 				}
 				else if ( _.isArray( includeInJSON ) ) {
 					if ( related instanceof Backbone.Collection ) {

@@ -1023,7 +1023,7 @@ $(document).ready(function() {
 			ok( _.isArray( agentJSON.customers ) );
 			equal( agentJSON.customers.length, 2, "2 customers in agentJSON; it serializes the `idAttribute`" );
 
-			var c1 = new Agent( { id: 'c1' } );
+			var c1 = new Customer( { id: 'c1' } );
 			equal( agent.get( 'customers' ).length, 1, '1 customer in agent' );
 
 			agentJSON = agent.toJSON();
