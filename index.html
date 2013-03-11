@@ -1122,6 +1122,10 @@ User = Backbone.RelationalModel.extend();
 			</small>
 		</h4>
 		<ul>
+			<li>
+				<a href="https://github.com/PaulUithol/Backbone-relational/issues/191">#191</a>: if <q>includeInJSON</q>
+				is equal to the model's <q>idAttribute</q>, "missing" models will be included in the JSON to avoid data loss.
+			</li>
 		</ul>
 
 		<h4>0.8.0
@@ -1136,19 +1140,23 @@ User = Backbone.RelationalModel.extend();
 				General performance improvements, refactored <q>HasMany.onChange</q> to eliminate unnecessary events.
 			</li>
 			<li>
-				Implement the <q>add</q>, <q>merge</q> and <q>remove</q> options on <q>Collection.add</q> when working with RelationalModels.
+				Implemented the <q>add</q>, <q>merge</q> and <q>remove</q> options on <q>Collection.add</q> when working with RelationalModels.
 				This also works when using <a href="#RelationalModel-set"><q>set</q></a> to change the key on nested relations.
 			</li>
 			<li>
-				The <a href="#RelationalModel-findOrCreate"><q>findOrCreate</q></a> option <q>update</q> is renamed to <q>merge</q>,
-				since it's behavior corresponds with <q>merge</q> on <q>Collection.add</q> (and not with <q>update</q> on <q>Collection.reset</q>).
+				The <q>update</q> option on <a href="#RelationalModel-findOrCreate"><q>findOrCreate</q></a> has been
+				renamed to <q>merge</q>, since it's behavior corresponds with <q>merge</q> on <q>Collection.add</q>
+				(and not with <q>update</q> on <q>Collection.reset</q>).
 			</li>
 			<li>
 				The <q>update:&lt;key&gt;</q> event has been removed, in favor of handling everything using "standard"
 				<q>change:&lt;key&gt;</q> events.
 			</li>
-			<li>`findOrCreate` now takes a `parse` options, analogous to the `Backbone.Model` constructor. It defaults to `false`.</li>
-			<li>Add a <a href="#relations-parse"><q>parse</q></a> option to relations.</li>
+			<li>
+				<a href="#RelationalModel-findOrCreate"><q>findOrCreate</q></a> now takes a <q>parse</q> option,
+				analogous to the Backbone.Model constructor. It defaults to <q>false</q>.
+			</li>
+			<li>Added a <a href="#relations-parse"><q>parse</q></a> option to relations.</li>
 		</ul>
 		
 		<h4>0.7.1
@@ -1161,7 +1169,7 @@ User = Backbone.RelationalModel.extend();
 		<ul>
 			<li>Compatible with Backbone >= 0.9.10</li>
 			<li>Implemented the <a href="#relations-autoFetch"><q>autoFetch</q></a> property for relations.</li>
-			<li>Adding <q>update</q> option to <a href="#RelationalModel-findOrCreate"><q>findOrCreate</q></a>.</li>
+			<li>Added the <q>update</q> option to <a href="#RelationalModel-findOrCreate"><q>findOrCreate</q></a>.</li>
 		</ul>
 		
 		<h4>0.7.0
@@ -1173,6 +1181,10 @@ User = Backbone.RelationalModel.extend();
 		</h4>
 		<ul>
 			<li>Compatible with Backbone >= 0.9.9</li>
+			<li>
+				<a href="https://github.com/PaulUithol/Backbone-relational/issues/180">#180</a>: no longer allow
+				multiple instances of RelationalModels with the same type, and the same <q>id</q>.
+			</li>
 		</ul>
 		
 		<h4>0.6.0
@@ -1182,6 +1194,24 @@ User = Backbone.RelationalModel.extend();
 				<a href="https://raw.github.com/PaulUithol/Backbone-relational/0.6.0/backbone-relational.js">download</a>
 			</small>
 		</h4>
+		<ul>
+			<li>
+				<a href="https://github.com/PaulUithol/Backbone-relational/issues/60">#60</a>: <q>keySource</q> option
+				added to relations.
+			</li>
+			<li>
+				<q>keyDestination</q> option added to relations.
+			</li>
+			<li>
+				<q>collectionOptions</q> option added to relations.
+			</li>
+			<li>
+				Added support for super/sub models.
+			</li>
+			<li>
+				Added <q>Backbone.Store.addModelScope</q>.
+			</li>
+		</ul>
 		
 		<h4>0.5.0
 			<small>
@@ -1190,6 +1220,20 @@ User = Backbone.RelationalModel.extend();
 				<a href="https://raw.github.com/PaulUithol/Backbone-relational/0.5.0/backbone-relational.js">download</a>
 			</small>
 		</h4>
+		<ul>
+			<li>
+				Update nested models properly on <q>Collection.add</q>.
+			</li>
+			<li>
+				<q>collectionKey</q> options added to relations.
+			</li>
+			<li>
+				Support new Backbone syntax for <q>set</q> (with separate key, value arguments).
+			</li>
+			<li>
+				Initialize reverseRelations on definition, instead of on creation of the first model.
+			</li>
+		</ul>
 		
 		<h4>0.4.0
 			<small>
@@ -1198,6 +1242,20 @@ User = Backbone.RelationalModel.extend();
 				<a href="https://raw.github.com/PaulUithol/Backbone-relational/0.4.0/backbone-relational.js">download</a>
 			</small>
 		</h4>
+		<ul>
+			<li>
+				<q>update&lt;key&gt;</q> event added
+			</li>
+			<li>
+				Override <q>Backbone.Collection._add</q> and <q>Backbone.Collection._remove</q> so relations update properly.
+			</li>
+			<li>
+				Queue <q>change</q> and <q>change&lt;key&gt;</q> events, so they won't fire before relations are updated.
+			</li>
+			<li>
+				Added the <q>Backbone.RelationalModel.updateRelations</q> method.
+			</li>
+		</ul>
 
 		<h4>First commit
 			<small>
