@@ -150,6 +150,14 @@
 		},
 
 		/**
+		 * Remove a scope.
+		 * @param {Object} scope
+		 */
+		removeModelScope: function( scope ) {
+			this._modelScopes = _.without( this._modelScopes, scope );
+		},
+
+		/**
 		 * Add a set of subModelTypes to the store, that can be used to resolve the '_superModel'
 		 * for a model later in 'setupSuperModel'.
 		 *
@@ -1414,7 +1422,7 @@
 						value = related.get( includeInJSON );
 					}
 
-					// Add 'unfound' ids if only includeInJSON is the `idAttribute`
+					// Add ids for 'unfound' models if includeInJSON is equal to (only) the relatedModel's `idAttribute`
 					if ( includeInJSON === rel.relatedModel.prototype.idAttribute ) {
 						if ( rel instanceof Backbone.HasMany ) {
 							value = value.concat( rel.keyIds );

@@ -630,6 +630,25 @@ $(document).ready(function() {
 			ok( people.at(0).iam() == "I am a student" );
 		});
 
+		test( "removeModelScope", function() {
+			var models = {};
+			Backbone.Relational.store.addModelScope( models );
+
+			models.Page = Backbone.RelationalModel.extend();
+
+			ok( Backbone.Relational.store.getObjectByName( 'Page' ) === models.Page );
+			ok( Backbone.Relational.store.getObjectByName( 'Person' ) === window.Person );
+
+			Backbone.Relational.store.removeModelScope( models );
+
+			ok( !Backbone.Relational.store.getObjectByName( 'Page' ) );
+			ok( Backbone.Relational.store.getObjectByName( 'Person' ) === window.Person );
+
+			Backbone.Relational.store.removeModelScope( window );
+
+			ok( !Backbone.Relational.store.getObjectByName( 'Person' ) );
+		});
+
 		test( "`eventQueue` is unblocked again after a duplicate id error", 3, function() {
 			var node = new Node( { id: 1 } );
 
