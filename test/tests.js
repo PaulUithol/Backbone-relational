@@ -1389,6 +1389,107 @@ $(document).ready(function() {
 			
 			ok( dog.get( 'fleas' ).at( 0 ) === flea, "Dog has a working fleas relation." );
 		});
+
+		test( "Overriding of supermodel relations", function() {
+			var models = {};
+			Backbone.Relational.store.addModelScope( models );
+
+			models.URL = Backbone.RelationalModel.extend({});
+
+			models.File = Backbone.RelationalModel.extend({
+				subModelTypes: {
+					'video': 'Video',
+					'publication': 'Publication'
+				},
+
+				relations: [{
+					type: Backbone.HasOne,
+					key: 'url',
+					relatedModel: models.URL
+				}]
+			});
+
+			models.Video = models.File.extend({});
+
+			// Publication redefines the `url` relation
+			models.Publication = Backbone.RelationalModel.extend({
+				relations: [{
+					type: Backbone.HasMany,
+					key: 'url',
+					relatedModel: models.URL
+				}]
+			});
+
+			models.Project = Backbone.RelationalModel.extend({
+				relations: [{
+					type: Backbone.HasMany,
+					key: 'files',
+					relatedModel: models.File,
+					reverseRelation: {
+						key: 'project'
+					}
+				}]
+			});
+
+			equal( models.File.prototype.relations.length, 2, "2 relations on File" );
+			equal( models.Video.prototype.relations.length, 1, "1 relation on Video" );
+			equal( models.Publication.prototype.relations.length, 1, "1 relation on Publication" );
+
+			// Instantiating the superModel should instantiate the modelHierarchy, and copy relations over to subModels
+			var file = new models.File();
+
+			equal( models.File.prototype.relations.length, 2, "2 relations on File" );
+			equal( models.Video.prototype.relations.length, 2, "2 relations on Video" );
+			equal( models.Publication.prototype.relations.length, 2, "2 relations on Publication" );
+
+			var projectDecription = {
+				name: 'project1',
+
+				files: [
+					{
+						name: 'file1 - video subclass',
+						type: 'video',
+						url: {
+							location: 'http://www.myurl.com/file1.avi'
+						}
+					},
+					{
+						name: 'file2 - file baseclass',
+						url: {
+							location: 'http://www.myurl.com/file2.jpg'
+						}
+					},
+					{
+						name: 'file3 - publication',
+						type: 'publication',
+						url: [
+							{ location: 'http://www.myurl.com/file3.pdf' },
+							{ location: 'http://www.anotherurl.com/file3.doc' }
+						]
+					}
+				]
+			};
+
+			var project = new models.Project( projectDecription ),
+				files = project.get( 'files' ),
+				file1 = files.at( 0 ),
+				file2 = files.at( 1 ),
+				file3 = files.at( 2 );
+
+			equal( models.File.prototype.relations.length, 2, "2 relations on File" );
+			equal( models.Video.prototype.relations.length, 2, "2 relations on Video" );
+			equal( models.Publication.prototype.relations.length, 2, "2 relations on Publication" );
+
+			equal( _.size( file1._relations ), 2 );
+			equal( _.size( file2._relations ), 2 );
+			equal( _.size( file3._relations ), 2 );
+
+			ok( file1.get( 'url' ) instanceof Backbone.Model, '`url` on Video is a model' );
+			ok( file1.getRelation( 'url' ) instanceof Backbone.HasOne, '`url` relation on Video is HasOne' );
+
+			ok( file3.get( 'url' ) instanceof Backbone.Collection, '`url` on Publication is a collection' );
+			ok( file3.getRelation( 'url' ) instanceof Backbone.HasMany, '`url` relation on Publication is HasMany' );
+		});
 	
 		test( "toJSON includes the type", function() {
 			var scope = {};

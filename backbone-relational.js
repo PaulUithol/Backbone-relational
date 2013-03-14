@@ -1561,17 +1561,15 @@
 				// inherited automatically (due to a redefinition of 'relations').
 				// Otherwise, make sure we don't get here again for this type by making '_superModel' false so we fail
 				// the isUndefined/isNull check next time.
-				if ( this._superModel ) {
-					//
-					if ( this._superModel.prototype.relations ) {
-						var supermodelRelationsExist = _.any( this.prototype.relations || [], function( rel ) {
-							return rel.model && rel.model !== this;
+				if ( this._superModel && this._superModel.prototype.relations ) {
+					// Find relations that exist on the `_superModel`, but not yet on this model.
+					var inheritedRelations = _.select( this._superModel.prototype.relations || [], function( superRel ) {
+						return !_.any( this.prototype.relations || [], function( rel ) {
+							return superRel.relatedModel === rel.relatedModel && superRel.key === rel.key;
 						}, this );
+					}, this );
 
-						if ( !supermodelRelationsExist ) {
-							this.prototype.relations = this._superModel.prototype.relations.concat( this.prototype.relations );
-						}
-					}
+					this.prototype.relations = inheritedRelations.concat( this.prototype.relations );
 				}
 				else {
 					this._superModel = false;
