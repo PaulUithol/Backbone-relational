@@ -424,6 +424,9 @@
 		*/
 		update: function( model ) {
 			var coll = this.getCollection( model );
+			var other = coll.get( model );
+			if (other && other !== model)
+				model.trigger('collision', other);
 			coll._onModelEvent( 'change:' + model.idAttribute, model, coll );
 		},
 
