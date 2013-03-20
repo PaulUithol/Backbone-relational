@@ -899,7 +899,7 @@
 					related = this._prepareCollection();
 				}
 
-				related.update( toAdd, _.defaults( { merge: false, parse: false }, options ) );
+				related.set( toAdd, _.defaults( { merge: false, parse: false }, options ) );
 			}
 
 			return related;
