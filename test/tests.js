@@ -1084,6 +1084,7 @@ $(document).ready(function() {
 			}, { parse: true } );
 			var animal = zoo.get( 'animals' ).first();
 
+			ok( animal.get( 'livesIn' ) );
 			ok( animal.get( 'livesIn' ) instanceof Zoo );
 			ok( animal.get( 'livesIn' ).get( 'animals' ).get( animal ) === animal );
 
@@ -1103,6 +1104,7 @@ $(document).ready(function() {
 				}
 			}, { parse: true } );
 
+			ok( animal.get( 'livesIn' ) );
 			ok( animal.get( 'livesIn' ) instanceof Zoo );
 			ok( animal.get( 'livesIn' ).get( 'animals' ).get( animal ) === animal );
 
