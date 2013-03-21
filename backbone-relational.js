@@ -899,7 +899,15 @@
 					related = this._prepareCollection();
 				}
 
-				related.update( toAdd, _.defaults( { merge: false, parse: false }, options ) );
+				// Backbone 1.0.0 has "Renamed Collection's "update" to set, for
+                                // parallelism with the similar model.set(), and contrast with reset."
+                                // (ref: http://backbonejs.org/#changelog).
+                                if (parseInt(Backbone.VERSION.split("."))[0] == 0) {  // for Backbone < 1.0.0
+                                  related.update( toAdd, _.defaults( { merge: false, parse: false }, options ) );
+                                }
+                                else {
+                                  related.set( toAdd, _.defaults( { merge: false, parse: false }, options ) );
+                                }
 			}
 
 			return related;
