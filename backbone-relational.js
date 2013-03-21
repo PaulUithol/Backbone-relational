@@ -812,7 +812,7 @@
 			if ( _.isString( this.collectionType ) ) {
 				this.collectionType = Backbone.Relational.store.getObjectByName( this.collectionType );
 			}
-			if ( !( this.collectionType.prototype instanceof Backbone.Collection ) ) {
+			if ( this.collectionType !== Backbone.Collection && !( this.collectionType.prototype instanceof Backbone.Collection ) ) {
 				throw new Error( '`collectionType` must inherit from Backbone.Collection' );
 			}
 
@@ -899,7 +899,7 @@
 					related = this._prepareCollection();
 				}
 
-				related.update( toAdd, _.defaults( { merge: false, parse: false }, options ) );
+				related.set( toAdd, _.defaults( { merge: false, parse: false }, options ) );
 			}
 
 			return related;

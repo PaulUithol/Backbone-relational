@@ -463,12 +463,12 @@ $(document).ready(function() {
 			ok( iRelModel instanceof Backbone.RelationalModel );
 		});
 
-		test('update', 1, function() {
+		test('Collection#set', 1, function() {
 			var a = new Backbone.Model({id: 3, label: 'a'} ),
 				b = new Backbone.Model({id: 2, label: 'b'} ),
 				col = new Backbone.Collection([a]);
 
-			col.update([a,b], {add: true, merge: false, remove: true});
+			col.set([a,b], {add: true, merge: false, remove: true});
 			ok( col.length == 2 );
 		});
 
@@ -1084,6 +1084,7 @@ $(document).ready(function() {
 			}, { parse: true } );
 			var animal = zoo.get( 'animals' ).first();
 
+			ok( animal.get( 'livesIn' ) );
 			ok( animal.get( 'livesIn' ) instanceof Zoo );
 			ok( animal.get( 'livesIn' ).get( 'animals' ).get( animal ) === animal );
 
@@ -1103,6 +1104,7 @@ $(document).ready(function() {
 				}
 			}, { parse: true } );
 
+			ok( animal.get( 'livesIn' ) );
 			ok( animal.get( 'livesIn' ) instanceof Zoo );
 			ok( animal.get( 'livesIn' ).get( 'animals' ).get( animal ) === animal );
 
@@ -3487,7 +3489,7 @@ $(document).ready(function() {
 
 			// This shouldn't do much at all
 			var options = { add: false, merge: false, remove: false };
-			coll.update( [ dolphin, { id: 2, name: 'Silverback' } ], options );
+			coll.set( [ dolphin, { id: 2, name: 'Silverback' } ], options );
 
 			ok( coll.length === 2 );
 			ok( coll.get( 2 ) === gorilla, "`gorilla` is left in coll" );
@@ -3495,7 +3497,7 @@ $(document).ready(function() {
 
 			// This should remove `giraffe`, add `hippo`, leave `dolphin`, and update `gorilla`.
 			options = { add: true, merge: true, remove: true };
-			coll.update( [ 4, dolphin, { id: 2, name: 'Silverback' } ], options );
+			coll.set( [ 4, dolphin, { id: 2, name: 'Silverback' } ], options );
 
 			ok( coll.length === 3 );
 			ok( !coll.get( 1 ), "`giraffe` removed from coll" );
