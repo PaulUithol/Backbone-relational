@@ -886,7 +886,9 @@
 					}
 					else {
 						// If `merge` is true, update models here, instead of during update.
-						model = this.relatedModel.findOrCreate( attributes, _.extend( { merge: true }, options, { create: this.options.createModels } ) );
+						model = this.relatedModel.findOrCreate( attributes,
+							_.extend( { merge: true }, options, { create: this.options.createModels } )
+						);
 					}
 
 					model && toAdd.push( model );
@@ -899,6 +901,8 @@
 					related = this._prepareCollection();
 				}
 
+				// By now, both `merge` and `parse` will already have been executed for models if they were specified.
+				// Disable them to prevent additional calls.
 				related.set( toAdd, _.defaults( { merge: false, parse: false }, options ) );
 			}
 
@@ -1012,7 +1016,7 @@
 			var dit = this;
 			model.queue( function() {
 				if ( dit.related && !dit.related.get( model ) ) {
-					dit.related.add( model, options );
+					dit.related.add( model, _.defaults( { merge: false, parse: false }, options ) );
 				}
 			});
 		},
