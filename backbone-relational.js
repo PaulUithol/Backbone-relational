@@ -1659,14 +1659,14 @@
 
 
 	/**
-	 * Override Backbone.Collection.add, so we'll create objects from attributes where required,
+	 * Override Backbone.Collection.set, so we'll create objects from attributes where required,
 	 * and update the existing models. Also, trigger 'relational:add'.
 	 */
-	var add = Backbone.Collection.prototype.__add = Backbone.Collection.prototype.add;
-	Backbone.Collection.prototype.add = function( models, options ) {
+	var set = Backbone.Collection.prototype.__set = Backbone.Collection.prototype.set;
+	Backbone.Collection.prototype.set = function( models, options ) {
 		// Short-circuit if this Collection doesn't hold RelationalModels
 		if ( !( this.model.prototype instanceof Backbone.RelationalModel ) ) {
-			return add.apply( this, arguments );
+			return set.apply( this, arguments );
 		}
 
 		models = _.isArray( models ) ? models.slice() : [ models ];
@@ -1697,7 +1697,7 @@
 		}, this );
 
 		// Add 'models' in a single batch, so the original add will only be called once (and thus 'sort', etc).
-		add.call( this, toAdd, options );
+		set.call( this, toAdd, options );
 
 		_.each( newModels, function( model ) {
 			// Fire a `relational:add` event for any model in `newModels` that has actually been added to the collection.
