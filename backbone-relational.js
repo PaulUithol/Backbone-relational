@@ -898,8 +898,8 @@
 				else {
 					related = this._prepareCollection();
 				}
-
-				related.update( toAdd, _.defaults( { merge: false, parse: false }, options ) );
+				// Collection#update was renamed to Collection#set in Backbone 1.0.0
+				(related.set || related.update)( toAdd, _.defaults( { merge: false, parse: false }, options ) );
 			}
 
 			return related;
