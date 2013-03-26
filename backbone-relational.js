@@ -1016,7 +1016,7 @@
 			var dit = this;
 			model.queue( function() {
 				if ( dit.related && !dit.related.get( model ) ) {
-					dit.related.add( model, _.defaults( { merge: false, parse: false }, options ) );
+					dit.related.add( model, _.defaults( { parse: false }, options ) );
 				}
 			});
 		},
@@ -1673,9 +1673,13 @@
 			return set.apply( this, arguments );
 		}
 
-		models = _.isArray( models ) ? models.slice() : [ models ];
-		// Set default options to the same values as `add` uses, so `findOrCreate` will also respect those.
-		options = _.extend( { merge: false }, options );
+		if ( options.parse ) {
+			models = this.parse( models, options );
+		}
+
+		if ( !_.isArray( models ) ) {
+			models = models ? [ models ] : [];
+		}
 
 		var newModels = [],
 			toAdd = [];
@@ -1701,7 +1705,8 @@
 		}, this );
 
 		// Add 'models' in a single batch, so the original add will only be called once (and thus 'sort', etc).
-		set.call( this, toAdd, options );
+		// If `parse` was specified, the collection and contained models have been parsed now.
+		set.call( this, toAdd, _.defaults( { parse: false }, options ) );
 
 		_.each( newModels, function( model ) {
 			// Fire a `relational:add` event for any model in `newModels` that has actually been added to the collection.
