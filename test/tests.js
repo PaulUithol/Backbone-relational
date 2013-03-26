@@ -801,7 +801,6 @@ $(document).ready(function() {
 
 	module( "Backbone.RelationalModel", { setup: initObjects } );
 		
-		
 		test( "Return values: set returns the Model", function() {
 			var personId = 'person-10';
 			var person = new Person({
@@ -1114,6 +1113,38 @@ $(document).ready(function() {
 			Zoo.prototype.parse = Animal.prototype.parse = Backbone.RelationalModel.prototype.parse;
 		});
 
+		test( "`Collection#parse` with RelationalModel simple case", function() {
+			var Contact = Backbone.RelationalModel.extend({
+				parse: function( response ) {
+					response.bar = response.foo * 2;
+					return response;
+				}
+			});
+			var Contacts = Backbone.Collection.extend({
+				model: Contact,
+				url: '/contacts',
+				parse: function( response ) {
+					return response.items;
+				}
+			});
+
+			var contacts = new Contacts();
+			contacts.fetch({
+				// fake response for testing
+				response: {
+					status: 200,
+					responseText: { items: [ { foo: 1 }, { foo: 2 } ] }
+				}
+			});
+
+			equal( contacts.length, 2, 'Collection response was fetched properly' );
+			var contact = contacts.first();
+			ok( contact , 'Collection has a non-null item' );
+			ok( contact instanceof Contact, '... of the type type' );
+			equal( contact.get('foo'), 1, '... with correct fetched value' );
+			equal( contact.get('bar'), 2, '... with correct parsed value' );
+		});
+
 		test( "By default, `parse` should only get called on top-level objects; not for nested models and collections", function() {
 			var companyData = {
 				'data': {
@@ -1167,8 +1198,6 @@ $(document).ready(function() {
 
 			// simulate what would happen if company.fetch() was called.
 			company.fetch();
-			//company.set(company.parse(companyData)); // passes, but this isn't how 'fetch' works
-			//company.set(company.parse(companyData, { parse: true }), { parse: true }); // fails (internally this is what 'fetch' does)
 
 			ok( parseCalled === 2, 'parse called 2 times? ' + parseCalled );
 
