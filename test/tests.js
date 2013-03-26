@@ -1166,20 +1166,13 @@ $(document).ready(function() {
 			});
 
 			var Company = Backbone.RelationalModel.extend({
+				urlRoot: '/company/',
 				relations: [{
 					type: Backbone.HasMany,
 					key: 'contacts',
 					relatedModel: Contact,
 					collectionType: Contacts
-				}],
-
-				sync: function( method, model, options ) {
-					// fake a 'sync'
-					var success = options.success;
-					var resp = _.clone( companyData );
-					if (success) success(model, resp, options);
-					model.trigger('sync', model, resp, options);
-				}
+				}]
 			});
 
 			var parseCalled = 0;
@@ -1197,7 +1190,13 @@ $(document).ready(function() {
 			ok( parseCalled === 1, 'parse called 1 time? ' + parseCalled );
 
 			// simulate what would happen if company.fetch() was called.
-			company.fetch();
+			company.fetch({
+				parse: true,
+				response: {
+					status: 200,
+					responseText: _.clone( companyData )
+				}
+			});
 
 			ok( parseCalled === 2, 'parse called 2 times? ' + parseCalled );
 
