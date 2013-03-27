@@ -1229,15 +1229,22 @@
 			var setUrl,
 				requests = [],
 				rel = this.getRelation( key ),
-				keys = rel && ( rel.keyIds || [ rel.keyId ] ),
-				toFetch = keys && _.select( keys || [], function( id ) {
-					return ( id || id === 0 ) && ( refresh || !Backbone.Relational.store.find( rel.relatedModel, id ) );
-				}, this );
+				idsToFetch = rel && ( rel.keyIds || ( ( rel.keyId || rel.keyId === 0 ) ? [ rel.keyId ] : [] ) );
 
-			if ( toFetch && toFetch.length ) {
+			// On `refresh`, add the ids for current models in the relation to `idsToFetch`
+			if ( refresh ) {
+				var models = rel.related instanceof Backbone.Collection ? rel.related.models : [ rel.related ];
+				_.each( models, function( model ) {
+					if ( model.id || model.id === 0 ) {
+						idsToFetch.push( model.id );
+					}
+				});
+			}
+
+			if ( idsToFetch && idsToFetch.length ) {
 				// Find (or create) a model for each one that is to be fetched
 				var created = [],
-					models = _.map( toFetch, function( id ) {
+					models = _.map( idsToFetch, function( id ) {
 						var model = Backbone.Relational.store.find( rel.relatedModel, id );
 						
 						if ( !model ) {
