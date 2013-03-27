@@ -696,6 +696,11 @@
 				related = this.relatedModel.findOrCreate( this.keyContents, opts );
 			}
 
+			// Nullify `keyId` if we have a related model; in case it was already part of the relation
+			if ( this.related ) {
+				this.keyId = null;
+			}
+
 			return related;
 		},
 
@@ -905,6 +910,9 @@
 				// Disable them to prevent additional calls.
 				related.set( toAdd, _.defaults( { merge: false, parse: false }, options ) );
 			}
+
+			// Remove entries from `keyIds` that were already part of the relation (and are thus 'unchanged')
+			this.keyIds = _.difference( this.keyIds, _.pluck( related.models, 'id' ) );
 
 			return related;
 		},

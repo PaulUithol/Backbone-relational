@@ -1047,12 +1047,23 @@ $(document).ready(function() {
 			agentJSON = agent.toJSON();
 			equal( agentJSON.customers.length, 2, "2 customers in agentJSON; `idAttribute` for 1 missing, other existing" );
 
-			c1.destroy();
+			//c1.destroy();
+
+			//agentJSON = agent.toJSON();
+			//equal( agentJSON.customers.length, 1, "1 customer in agentJSON; `idAttribute` for 1 missing, other destroyed" );
+
+			agent.set( 'customers', [ 'c1', 'c3' ] );
+			var c3 = new Customer( { id: 'c3' } );
 
 			agentJSON = agent.toJSON();
-			equal( agentJSON.customers.length, 1, "1 customer in agentJSON; `idAttribute` for 1 missing, other destroyed" );
+			equal( agentJSON.customers.length, 2, "2 customers in agentJSON; 'c1' already existed, 'c3' created" );
 
-			// Person -> User; `idAttribute` on a HasMany
+			agent.get( 'customers' ).remove( c1 );
+
+			agentJSON = agent.toJSON();
+			equal( agentJSON.customers.length, 1, "1 customer in agentJSON; 'c1' removed, 'c3' still in there" );
+
+			// Person -> User; `idAttribute` on a HasOne
 			var person = new Person({ id: 'p1', user: 'u1' } ),
 				personJSON = person.toJSON();
 
@@ -1061,6 +1072,10 @@ $(document).ready(function() {
 			var u1 = new User( { id: 'u1' } );
 			personJSON = person.toJSON();
 			ok( u1.get( 'person' ) === person );
+			equal( personJSON.user_id, 'u1', "`user_id` gets set in JSON" );
+
+			person.set( 'user', 'u1' );
+			personJSON = person.toJSON();
 			equal( personJSON.user_id, 'u1', "`user_id` gets set in JSON" );
 
 			u1.destroy();
