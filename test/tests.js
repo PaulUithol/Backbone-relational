@@ -2163,11 +2163,12 @@ $(document).ready(function() {
 		});
 
 		test( "Setting id on objects with reverse relations updates related collection correctly", function() {
-			var zoo1 = new Zoo({ id: 2 });
+			var zoo1 = new Zoo();
 
 			ok( zoo1.get( 'animals' ).size() === 0, "zoo has no animals" );
 
-			var lion = new Animal({ livesIn: 2 });
+			var lion = new Animal( { livesIn: 2 } );
+			zoo1.set( 'id', 2 );
 
 			ok( lion.get( 'livesIn' ) === zoo1, "zoo1 connected to lion" );
 			ok( zoo1.get( 'animals' ).length === 1, "zoo1 has one Animal" );

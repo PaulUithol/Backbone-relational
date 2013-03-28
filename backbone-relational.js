@@ -421,10 +421,14 @@
 		/**
 		 * Explicitly update a model's id in its store collection
 		 * @param {Backbone.RelationalModel} model
-		*/
+		 */
 		update: function( model ) {
 			var coll = this.getCollection( model );
+			// This triggers updating the lookup indices kept in a collection
 			coll._onModelEvent( 'change:' + model.idAttribute, model, coll );
+
+			// Trigger an event on model so related models (having the model's new id in their keyContents) can add it.
+			model.trigger( 'relational:change:id', model, coll );
 		},
 
 		/**
@@ -527,7 +531,7 @@
 
 			// When 'relatedModel' are created or destroyed, check if it affects this relation.
 			this.listenTo( this.instance, 'destroy', this.destroy )
-				.listenTo( this.relatedCollection, 'relational:add', this.tryAddRelated )
+				.listenTo( this.relatedCollection, 'relational:add relational:change:id', this.tryAddRelated )
 				.listenTo( this.relatedCollection, 'relational:remove', this.removeRelated )
 		}
 	};
@@ -1342,7 +1346,8 @@
 				attributes[ key ] = value;
 			}
 
-			var result = Backbone.Model.prototype.set.apply( this, arguments );
+			var prevId = this.id,
+				result = Backbone.Model.prototype.set.apply( this, arguments );
 			
 			// Ideal place to set up relations :)
 			try {
@@ -1353,8 +1358,8 @@
 
 					this.initializeRelations( options );
 				}
-				// Update the 'idAttribute' in Backbone.store if; we don't want it to miss an 'id' update due to {silent:true}
-				else if ( attributes && this.idAttribute in attributes ) {
+				// Update the 'idAttribute'; we don't want the store to miss an 'id' update (due to {silent:true})
+				else if ( attributes && this.idAttribute in attributes && prevId !== attributes[ this.idAttribute ] ) {
 					Backbone.Relational.store.update( this );
 				}
 
