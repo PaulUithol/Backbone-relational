@@ -663,6 +663,23 @@ $(document).ready(function() {
 
 			ok( Backbone.Relational.eventQueue.isBlocked() === false );
 		});
+
+		test( "Don't allow setting a duplicate `id`", 4, function() {
+			var a = new Zoo(); // This object starts with no id.
+			var b = new Zoo( { 'id': 42 } );  // This object starts with an id of 42.
+
+			equal( b.id, 42 );
+
+			try {
+				a.set( 'id', 42 );
+			}
+			catch( error ) {
+				ok( true, "Duplicate id error thrown" );
+			}
+
+			ok( !a.id, "a.id=" + a.id );
+			equal( b.id, 42 );
+		});
 		
 		test( "Models are created from objects, can then be found, destroyed, cannot be found anymore", function() {
 			var houseId = 'house-10';

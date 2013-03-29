@@ -375,7 +375,7 @@
 		},
 
 		/**
-		 *
+		 * Find a specific model of a certain `type` in the store
 		 * @param type
 		 * @param {String|Number|Object|Backbone.RelationalModel} item
 		 */
@@ -404,17 +404,28 @@
 			var coll = this.getCollection( model );
 
 			if ( coll ) {
-				if ( coll.get( model ) ) {
-					if ( Backbone.Relational.showWarnings && typeof console !== 'undefined' ) {
-						console.warn( 'Duplicate id! Old RelationalModel=%o, new RelationalModel=%o', coll.get( model ), model );
-					}
-					throw new Error( "Cannot instantiate more than one Backbone.RelationalModel with the same id per type!" );
-				}
-
 				var modelColl = model.collection;
 				coll.add( model );
 				this.listenTo( model, 'destroy', this.unregister, this );
 				model.collection = modelColl;
+			}
+		},
+
+		/**
+		 * Check if the given model may use the given `id`
+		 * @param model
+		 * @param [id]
+		 */
+		checkId: function( model, id ) {
+			var coll = this.getCollection( model ),
+				duplicate = coll && coll.get( id );
+
+			if ( duplicate && model !== duplicate ) {
+				if ( Backbone.Relational.showWarnings && typeof console !== 'undefined' ) {
+					console.warn( 'Duplicate id! Old RelationalModel=%o, new RelationalModel=%o', duplicate, model );
+				}
+
+				throw new Error( "Cannot instantiate more than one Backbone.RelationalModel with the same id per type!" );
 			}
 		},
 
@@ -1346,20 +1357,23 @@
 				attributes[ key ] = value;
 			}
 
-			var prevId = this.id,
-				result = Backbone.Model.prototype.set.apply( this, arguments );
-			
-			// Ideal place to set up relations :)
 			try {
+				var id = this.id,
+					newId = attributes && this.idAttribute in attributes && attributes[ this.idAttribute ];
+
+				// Check if we're not setting a duplicate id before actually calling `set`.
+				Backbone.Relational.store.checkId( this, newId );
+
+				var result = Backbone.Model.prototype.set.apply( this, arguments );
+
+				// Ideal place to set up relations, if this is the first time we're here for this model
 				if ( !this._isInitialized && !this.isLocked() ) {
 					this.constructor.initializeModelHierarchy();
-
 					Backbone.Relational.store.register( this );
-
 					this.initializeRelations( options );
 				}
-				// Update the 'idAttribute'; we don't want the store to miss an 'id' update (due to {silent:true})
-				else if ( attributes && this.idAttribute in attributes && prevId !== attributes[ this.idAttribute ] ) {
+				// The store should know about an `id` update asap
+				else if ( newId && newId !== id ) {
 					Backbone.Relational.store.update( this );
 				}
 
