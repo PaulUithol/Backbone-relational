@@ -3400,6 +3400,44 @@ $(document).ready(function() {
 			ok( parent.get( 'parent' ) === grandchild, 'circular reference from `grandchild` to `parent` works' );
 		});
 
+		test( "Deep reverse relation starting from a collection, with existing model", function() {
+			new Node( { id: 1 } );
+
+			var nodes = new NodeList();
+			nodes.set([
+				{
+					id: 1,
+					children: [
+						{
+							id: 2,
+							children: [
+								{
+									id: 3,
+									children: [ 1 ]
+								}
+							]
+						}
+					]
+				}
+			]);
+
+			var parent = nodes.first();
+			ok( parent, 'first item accessible after resetting collection' );
+
+			ok( parent.collection === nodes, '`parent.collection` is set to `nodes`' );
+
+			var child = parent.get( 'children' ).first();
+			ok( child, '`child` can be retrieved from `parent`' );
+			ok( child.get( 'parent' ), 'reverse relation from `child` to `parent` works');
+
+			var grandchild = child.get( 'children' ).first();
+			ok( grandchild, '`grandchild` can be retrieved from `child`' );
+
+			ok( grandchild.get( 'parent' ), 'reverse relation from `grandchild` to `child` works');
+
+			ok( grandchild.get( 'children' ).first() === parent, 'reverse relation from `grandchild` to `child` works');
+			ok( parent.get( 'parent' ) === grandchild, 'circular reference from `grandchild` to `parent` works' );
+		});
 
 	module( "Backbone.Collection", { setup: reset } );
 	
