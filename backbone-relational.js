@@ -1693,7 +1693,7 @@
 			return set.apply( this, arguments );
 		}
 
-		if ( options.parse ) {
+		if ( options && options.parse ) {
 			models = this.parse( models, options );
 		}
 
