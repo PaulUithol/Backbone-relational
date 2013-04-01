@@ -1077,7 +1077,7 @@
 				var dit = this,
 					collection = this.collection =  options.collection;
 
-				// Prevent this option from cascading down to related models; they shouldn't go into this `if` clause.
+				// Prevent `collection` from cascading down to nested models; they shouldn't go into this `if` clause.
 				delete options.collection;
 
 				this._deferProcessing = true;
@@ -1647,6 +1647,9 @@
 			// If not, create an instance (unless 'options.create' is false).
 			if ( _.isObject( attributes ) ) {
 				if ( model && options.merge !== false ) {
+					// Make sure `options.collection` doesn't cascade to nested models
+					delete options.collection;
+
 					model.set( parsedAttributes, options );
 				}
 				else if ( !model && options.create !== false ) {
@@ -1676,7 +1679,7 @@
 			model = attrs;
 		}
 		else {
-			options || (options = {});
+			options || ( options = {} );
 			options.collection = this;
 			
 			if ( typeof this.model.findOrCreate !== 'undefined' ) {

@@ -3413,7 +3413,7 @@ $(document).ready(function() {
 
 			ok( grandchild.get( 'parent' ), 'reverse relation from `grandchild` to `child` works');
 
-			ok( grandchild.get( 'children' ).first() === parent, 'reverse relation from `grandchild` to `child` works');
+			ok( grandchild.get( 'children' ).first() === parent, 'reverse relation from `grandchild` to `parent` works');
 			ok( parent.get( 'parent' ) === grandchild, 'circular reference from `grandchild` to `parent` works' );
 		});
 
@@ -3439,9 +3439,7 @@ $(document).ready(function() {
 			]);
 
 			var parent = nodes.first();
-			ok( parent, 'first item accessible after resetting collection' );
-
-			ok( parent.collection === nodes, '`parent.collection` is set to `nodes`' );
+			ok( parent && parent.id === 1, 'first item accessible after resetting collection' );
 
 			var child = parent.get( 'children' ).first();
 			ok( child, '`child` can be retrieved from `parent`' );
@@ -3452,7 +3450,7 @@ $(document).ready(function() {
 
 			ok( grandchild.get( 'parent' ), 'reverse relation from `grandchild` to `child` works');
 
-			ok( grandchild.get( 'children' ).first() === parent, 'reverse relation from `grandchild` to `child` works');
+			ok( grandchild.get( 'children' ).first() === parent, 'reverse relation from `grandchild` to `parent` works');
 			ok( parent.get( 'parent' ) === grandchild, 'circular reference from `grandchild` to `parent` works' );
 		});
 
