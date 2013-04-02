@@ -1121,9 +1121,22 @@ User = Backbone.RelationalModel.extend();
 			</small>
 		</h4>
 		<ul>
+			<li>Supports Backbone 1.0.0</li>
 			<li>
-				<a href="https://github.com/PaulUithol/Backbone-relational/issues/191">#191</a>: if <q>includeInJSON</q>
+				<a href="https://github.com/PaulUithol/Backbone-relational/issues/191"><q>#191</q></a>: if <q>includeInJSON</q>
 				is equal to the model's <q>idAttribute</q>, "missing" models will be included in the JSON to avoid data loss.
+			</li>
+			<li>
+				<a href="https://github.com/PaulUithol/Backbone-relational/issues/201"><q>#201</q></a>:
+				add `Backbone.Store.removeModelScope` method
+			</li>
+			<li>
+				<a href="https://github.com/PaulUithol/Backbone-relational/issues/273"><q>#273</q></a>:
+				improve merging of relations between super/subModels.
+			</li>
+			<li>
+				<a href="https://github.com/PaulUithol/Backbone-relational/issues/295"><q>#295</q></a>:
+				check (and error on) duplicate ids when explicitly setting the <q>idAttribute</q>.
 			</li>
 		</ul>
 
@@ -1181,7 +1194,7 @@ User = Backbone.RelationalModel.extend();
 		<ul>
 			<li>Compatible with Backbone >= 0.9.9</li>
 			<li>
-				<a href="https://github.com/PaulUithol/Backbone-relational/issues/180">#180</a>: no longer allow
+				<a href="https://github.com/PaulUithol/Backbone-relational/issues/180"><q>#180</q></a>: no longer allow
 				multiple instances of RelationalModels with the same type, and the same <q>id</q>.
 			</li>
 		</ul>
@@ -1195,7 +1208,7 @@ User = Backbone.RelationalModel.extend();
 		</h4>
 		<ul>
 			<li>
-				<a href="https://github.com/PaulUithol/Backbone-relational/issues/60">#60</a>: <q>keySource</q> option
+				<a href="https://github.com/PaulUithol/Backbone-relational/issues/60"><q>#60</q></a>: <q>keySource</q> option
 				added to relations.
 			</li>
 			<li>

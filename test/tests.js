@@ -3454,6 +3454,7 @@ $(document).ready(function() {
 			ok( parent.get( 'parent' ) === grandchild, 'circular reference from `grandchild` to `parent` works' );
 		});
 
+
 	module( "Backbone.Collection", { setup: reset } );
 	
 	
