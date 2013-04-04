@@ -1671,6 +1671,7 @@ $(document).ready(function() {
 			ok( person.get( 'normal' ) === true, "getting normal attributes works as usual" );
 			ok( person.get( 'user.name' ) === "John", "attributes of nested models can be get via dot notation: nested.attribute");
 			ok(oldCompany.get( 'ceo.name' ) === undefined, "no dotNotation when not enabled");
+			ok( person.get( 'user.fake.attribute') === undefined, "undefined when path doesn't exist");
 			raises( function() {
 				person.get( 'user.over' );
 			}, "getting ambiguous nested attributes raises an exception");
