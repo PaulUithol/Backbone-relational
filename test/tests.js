@@ -1099,6 +1099,30 @@ $(document).ready(function() {
 			personJSON = person.toJSON();
 			ok( !u1.get( 'person' ) );
 			equal( personJSON.user_id, null, "`user_id` does not get set in JSON anymore" );
+
+			// Case when `idAttribute` is single item of array
+			var Child = Backbone.RelationalModel.extend({});
+
+			var Parent = Backbone.RelationalModel.extend({
+				relations: [
+					{
+						key: 'child',
+						type: Backbone.HasOne,
+						relatedModel: Child,
+						includeInJSON: [Backbone.RelationalModel.prototype.idAttribute]
+					}
+				]
+			});
+
+			var inst = new Parent({
+				id: 'p1',
+				key: 'value',
+				child: 'c1'
+			});
+
+			var instJSON = inst.toJSON();
+
+			equal( instJSON.child, 'c1', "`child` gets set in JSON" );
 		});
 
 		test( "`parse` gets called through `findOrCreate`", function() {
