@@ -1329,11 +1329,15 @@
 			// Go through all splits and return the final result
 			var splits = attr.split( '.' );
 			var result = _.reduce(splits, function( model, split ) {
-				if ( !( model instanceof Backbone.Model ) ) {
-					throw new Error( 'Attribute must be an instanceof Backbone.Model. Is: ' + model + ', currentSplit: ' + split );
+				if ( model instanceof Backbone.Model ) {
+					return Backbone.Model.prototype.get.call( model, split );
 				}
-
-				return Backbone.Model.prototype.get.call( model, split );
+				else if ( model instanceof Backbone.Collection ) {
+					return Backbone.Collection.prototype.at.call( model, split )
+				}
+				else {
+					throw new Error( 'Attribute must be an instanceof Backbone.Model or Backbone.Collection. Is: ' + model + ', currentSplit: ' + split );
+				}
 			}, this );
 
 			if ( originalResult !== undefined && result !== undefined ) {
