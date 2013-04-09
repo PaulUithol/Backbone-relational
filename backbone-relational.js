@@ -1360,11 +1360,15 @@
 					// Return undefined if the path cannot be expanded
 					return undefined;
 				}
-				if ( !( model instanceof Backbone.Model ) ) {
-					throw new Error( 'Attribute must be an instanceof Backbone.Model. Is: ' + model + ', currentSplit: ' + split );
+				else if ( model instanceof Backbone.Model ) {
+					return Backbone.Model.prototype.get.call( model, split );
 				}
-
-				return Backbone.Model.prototype.get.call( model, split );
+				else if ( model instanceof Backbone.Collection ) {
+					return Backbone.Collection.prototype.at.call( model, split )
+				}
+				else {
+					throw new Error( 'Attribute must be an instanceof Backbone.Model or Backbone.Collection. Is: ' + model + ', currentSplit: ' + split );
+				}
 			}, this );
 
 			if ( originalResult !== undefined && result !== undefined ) {
