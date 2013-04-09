@@ -297,8 +297,29 @@ $(document).ready(function() {
 		}
 	});
 
+	window.Country = Backbone.RelationalModel.extend();
+	window.CountryCollection = Backbone.Collection.extend({
+		model: Country
+	});
+
 	window.Address = Backbone.RelationalModel.extend({
 		urlRoot: '/address/',
+
+		relations: [{
+				type: Backbone.HasOne,
+				key: 'country',
+				keySource: 'country_id',
+				relatedModel: 'Country'
+			}
+		],
+
+		initialize: function(attributes, options) {
+			// initialize an empty object if we don't already have one
+			// as an alternative to fetchRelated()
+			if ( attributes.country_id && !this.get('country') ) {
+				this.set('country', Country.findOrCreate( { id: attributes.country_id } ));
+			}
+		},
 
 		toString: function() {
 			return 'Address (' + this.id + ')';
@@ -1236,6 +1257,48 @@ $(document).ready(function() {
 			equal( contacts.length, 2, '... with correct length' );
 			ok( contact && contact.id === '1', 'contact exists' );
 			ok( contact === contacts.first(), '... and same model instances' );
+		});
+
+		test( "object gets related object linked properly when loaded using Collection#set", function() {
+			var countries = new CountryCollection();
+
+			// create address
+			var address = new Address({
+				id: 'address-1',
+				country_id: 'US'
+			});
+			var country = address.get( 'country' );
+			ok( country, 'address country exists' );
+			ok( country.id, '... with valid id' );
+			ok( !country.has('name'), '... without a name yet' );
+			ok( country instanceof Country, '... and is instanceof Country' );
+
+			// then countries fetch completes... if using SET
+			countries.set( [ { id: 'US', name: 'United States' } ] );
+			var country2 = address.get( 'country' );
+			ok( country === country2, 'after reset, address country is the same instance' );
+			equal( country.get('name'), 'United States', '... but now it has all the attributes' );
+		});
+
+		test( "object gets related object linked properly when loaded using Collection#reset", function() {
+			var countries = new CountryCollection();
+
+			// create address
+			var address = new Address({
+				id: 'address-1',
+				country_id: 'US'
+			});
+			var country = address.get( 'country' );
+			ok( country, 'address country exists' );
+			ok( country.id, '... with valid id' );
+			ok( !country.has('name'), '... without a name yet' );
+			ok( country instanceof Country, '... and is instanceof Country' );
+
+			// then countries fetch completes... if using RESET
+			countries.reset( [ { id: 'US', name: 'United States' } ] );
+			var country2 = address.get( 'country' );
+			ok( country === country2, 'after reset, address country is the same instance' );
+			equal( country.get('name'), 'United States', '... but now it has all the attributes' );
 		});
 
 		test( "constructor.findOrCreate", function() {
