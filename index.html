@@ -100,6 +100,7 @@
 
 	<ul>
 		<li><a href="#Store-addModelScope">addModelScope</a></li>
+		<li><a href="#Store-removeModelScope">removeModelScope</a></li>
 		<li><a href="#Store-reset">reset</a></li>
 	</ul>
 
@@ -968,8 +969,17 @@ MyModel.setup()
 			addModelScope<code>Backbone.Relational.store.addModelScope( scope&lt;object&gt; )</code>
 		</h4>
 		<p>
-			When working in an environment without a shared global scope (like <q>window</q> is in a browser), you'll need
-			to tell the <q>store</q> where your models are defined, so it can resolve them to create and maintain relations. 
+			Add a namespace on which models and collections are defined. This is especially useful when working in an
+			environment without a shared global scope (like <q>window</q> is in a browser), where you'll need to tell
+			the <q>store</q> where your models are defined, so it can resolve them to create and maintain relations.
+		</p>
+
+		<h4 class="code" id="Store-removeModelScope">
+			removeModelScope<code>Backbone.Relational.store.removeModelScope()</code>
+		</h4>
+		<p>
+			Remove a scope. This allows you to remove a scope you added previously, or to remove the default 'global'
+			scope (<q>window</q> in the browser) scope to prevent Backbone-relational from resolving objects on it.
 		</p>
 
 		<h4 class="code" id="Store-reset">
@@ -1128,7 +1138,7 @@ User = Backbone.RelationalModel.extend();
 			</li>
 			<li>
 				<a href="https://github.com/PaulUithol/Backbone-relational/issues/201"><q>#201</q></a>:
-				add `Backbone.Store.removeModelScope` method
+				add <q>Backbone.Store.removeModelScope</q> method
 			</li>
 			<li>
 				<a href="https://github.com/PaulUithol/Backbone-relational/issues/273"><q>#273</q></a>:
