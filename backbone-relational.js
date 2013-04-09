@@ -1447,6 +1447,10 @@
 					includeInJSON = rel.options.includeInJSON,
 					value = null;
 
+				if ( _.isArray( includeInJSON ) && includeInJSON.length == 1) {
+					includeInJSON = includeInJSON[0];
+				}
+
 				if ( includeInJSON === true ) {
 					if ( related && _.isFunction( related.toJSON ) ) {
 						value = related.toJSON( options );
