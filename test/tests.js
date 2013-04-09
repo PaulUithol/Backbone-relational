@@ -3613,6 +3613,22 @@ $(document).ready(function() {
 			equal( lion.get( 'name' ), 'Simba' );
 		});
 
+		test( "reset should use `merge: true` by default", function() {
+			var nodeList = new NodeList();
+
+			nodeList.add( [ { id: 1 }, { id: 2, parent: 1 } ] );
+
+			var node1 = nodeList.get( 1 ),
+				node2 = nodeList.get( 2 );
+
+			ok( node2.get( 'parent' ) === node1 );
+			ok( !node1.get( 'parent' ) );
+
+			nodeList.reset( [ { id: 1, parent: 2 } ] );
+
+			ok( node1.get( 'parent' ) === node2 );
+		});
+
 		test( "add/remove/update (with `add`, `remove` and `merge` options)", function() {
 			var coll = new AnimalCollection();
 

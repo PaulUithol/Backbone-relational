@@ -1792,6 +1792,7 @@
 	 */
 	var reset = Backbone.Collection.prototype.__reset = Backbone.Collection.prototype.reset;
 	Backbone.Collection.prototype.reset = function( models, options ) {
+		options = _.extend( { merge: true }, options );
 		reset.call( this, models, options );
 
 		if ( this.model.prototype instanceof Backbone.RelationalModel ) {
