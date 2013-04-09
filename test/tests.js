@@ -1324,6 +1324,33 @@ $(document).ready(function() {
 			equal( changedAttrs.color, 'red', '... with correct properties in "changedAttributes"' );
 		});
 
+		test( 'change events should not fire on new items in Collection#set', function() {
+			var changeEvents = 0;
+			var Foo = Backbone.RelationalModel.extend({
+				initialize: function(options) {
+					this.on( 'change', function(name) { changeEvents++; } );
+					this.on( 'change:id', function(name) { changeEvents++; } );
+					this.on( 'change:name', function(name) { changeEvents++; } );
+					this.on( 'all', function(name) {
+						if ( name.indexOf('change') === 0 ) {
+							changeEvents++;
+						}
+					});
+				}
+			});
+			var Foos = Backbone.Collection.extend({
+				model: Foo
+			});
+
+			var foos = new Foos();
+			foos.set( [{
+				id: 'foo-1',
+				name: 'foo'
+			}] );
+
+			equal( changeEvents, 0, 'no change events should be triggered' );
+		});
+
 	
 	module( "Backbone.RelationalModel inheritance (`subModelTypes`)", { setup: reset } );
 
