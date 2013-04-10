@@ -3561,9 +3561,13 @@ $(document).ready(function() {
 			ok( node2.get( 'parent' ) === node1 );
 			ok( !node1.get( 'parent' ) );
 
+			var changes = 0;
+			node1.on( 'change:parent', function() { changes++; } );
+
 			nodeList.reset( [ { id: 1, parent: 2 } ] );
 
 			ok( node1.get( 'parent' ) === node2 );
+			equal( changes, 1, 'Merge should trigger appropriate change events' );
 		});
 
 		test( "add/remove/update (with `add`, `remove` and `merge` options)", function() {
