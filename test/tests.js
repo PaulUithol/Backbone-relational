@@ -3975,6 +3975,23 @@ $(document).ready(function() {
 			ok( changeEventsTriggered == 1, "Exactly one change event was triggered (triggered " + changeEventsTriggered + " events)" );
 		});
 
+		test( "triggers appropriate change events even when callbacks have triggered set with an unchanging value", function() {
+			var house = new House({
+				id: 'house-100',
+				location: 'in the middle of the street',
+			});
+
+			var changeEventsTriggered = 0;
+
+			house.on('change:location', function() {
+			  house.set({location: 'somewhere else'});
+			}).on( 'change', function () {
+			  changeEventsTriggered++;
+			});
+			house.set({location: 'somewhere else'});
+
+			ok(changeEventsTriggered > 0);
+		  });
 
 	module( "Performance", { setup: reset } );
 
