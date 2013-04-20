@@ -2902,6 +2902,27 @@ $(document).ready(function() {
 			equal( indexes[1], 1, "Second item has index 1" );
 		});
 
+
+        test( "Sort event should be fired after the add event that caused it, even when using 'set'", function() {
+            var zoo = new Zoo();
+            var animals = zoo.get('animals');
+            var events = [];
+
+            animals.comparator = 'id';
+
+            animals.on('add', function() { events.push('add'); });
+            animals.on('sort', function() { events.push('sort'); });
+
+            zoo.set('animals' , [
+                {id : 'lion-2'},
+                {id : 'lion-1'}
+            ]);
+
+            equal(animals.at(0).id, 'lion-1');
+            deepEqual(events, ['add', 'sort', 'add', 'sort']);
+        });
+
+
 		test( "The 'collectionKey' options is used to create references on generated Collections back to its RelationalModel", function() {
 			var zoo = new Zoo({
 				animals: [ 'lion-1', 'zebra-1' ]
