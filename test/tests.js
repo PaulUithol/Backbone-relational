@@ -1273,7 +1273,6 @@ $(document).ready(function() {
 
 			equal( person.get( 'name' ), 'dude' );
 			equal( person1.get( 'name' ), 'dude' );
-
 		});
 
 		test( "change events in relation can use changedAttributes properly", function() {
@@ -1325,30 +1324,48 @@ $(document).ready(function() {
 		});
 
 		test( 'change events should not fire on new items in Collection#set', function() {
-			var changeEvents = 0;
-			var Foo = Backbone.RelationalModel.extend({
+			var modelChangeEvents = 0,
+				collectionChangeEvents = 0;
+
+			var Animal2 = Animal.extend({
 				initialize: function(options) {
-					this.on( 'change', function(name) { changeEvents++; } );
-					this.on( 'change:id', function(name) { changeEvents++; } );
-					this.on( 'change:name', function(name) { changeEvents++; } );
-					this.on( 'all', function(name) {
-						if ( name.indexOf('change') === 0 ) {
-							changeEvents++;
+					this.on( 'all', function( name, event ) {
+						console.log( 'Animal2: %o', arguments );
+						if ( name.indexOf( 'change' ) === 0 ) {
+							modelChangeEvents++;
 						}
 					});
 				}
 			});
-			var Foos = Backbone.Collection.extend({
-				model: Foo
+
+			var AnimalCollection2 = AnimalCollection.extend({
+				model: Animal2,
+
+				initialize: function(options) {
+					this.on( 'all', function( name, event ) {
+						console.log( 'AnimalCollection2: %o', arguments );
+						if ( name.indexOf('change') === 0 ) {
+							collectionChangeEvents++;
+						}
+					});
+				}
 			});
 
-			var foos = new Foos();
-			foos.set( [{
-				id: 'foo-1',
-				name: 'foo'
+			var zoo = new Zoo( { id: 'zoo-1' } );
+
+			var coll = new AnimalCollection2();
+			coll.set( [{
+				id: 'animal-1',
+				livesIn: 'zoo-1'
 			}] );
 
-			equal( changeEvents, 0, 'no change events should be triggered' );
+			equal( collectionChangeEvents, 0, 'no change event should be triggered on the collection' );
+
+			modelChangeEvents = collectionChangeEvents = 0;
+
+			coll.at( 0 ).set( 'name', 'Willie' );
+
+			equal( modelChangeEvents, 2, 'change event should be triggered' );
 		});
 
 	
