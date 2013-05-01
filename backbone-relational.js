@@ -1827,7 +1827,7 @@
 			return trigger.apply( this, arguments );
 		}
 
-		if ( eventName === 'add' || eventName === 'remove' || eventName === 'reset' ) {
+		if ( eventName === 'add' || eventName === 'remove' || eventName === 'reset' || eventName === 'sort' ) {
 			var dit = this,
 				args = arguments;
 			
