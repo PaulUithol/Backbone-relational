@@ -814,6 +814,21 @@ $(document).ready(function() {
 			delete window.Primate;
 			delete window.Carnivore;
 		});
+
+		test( "findOrCreate does not modify attributes hash if parse is used, prior to creating new model", function () {
+			var model = Backbone.RelationalModel.extend({
+				parse: function( response ) {
+					response.id = response.id + 'something';
+					return response;
+				}
+			});
+			var attributes = {id: 42, foo: "bar"};
+			var testAttributes = {id: 42, foo: "bar"};
+
+			model.findOrCreate( attributes, { parse: true, merge: false, create: false } );
+
+			ok( _.isEqual( attributes, testAttributes ), "attributes hash should not be modified" );
+		});
 		
 
 	module( "Backbone.RelationalModel", { setup: initObjects } );
