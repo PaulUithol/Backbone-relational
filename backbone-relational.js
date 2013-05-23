@@ -298,7 +298,9 @@
 				rootModel = rootModel._superModel;
 			}
 			
-			var coll = _.findWhere( this._collections, { model: rootModel } );
+			var coll = _.find( this._collections, function(item) {
+			  return item.model === rootModel;	
+			});
 			
 			if ( !coll && create !== false ) {
 				coll = this._createCollection( rootModel );
