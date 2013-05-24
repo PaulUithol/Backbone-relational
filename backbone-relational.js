@@ -86,10 +86,18 @@
 			}
 		},
 
+		// This only runs when the queue is not blocked. This function needs to
+		// lock otherwise a handler on one model might .set() a value on itself
+		// or another model which will result in multiple process() loops
+		// running at once. It looks harmless since it uses shift() but it
+		// results in allowing the second queued process running before the
+		// first has completed.
 		process: function() {
+			this.acquire()
 			while ( this._queue && this._queue.length ) {
 				this._queue.shift()();
 			}
+			this.release()
 		},
 
 		block: function() {
