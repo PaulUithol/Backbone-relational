@@ -449,6 +449,7 @@
 		 */
 		unregister: function( model, collection, options ) {
 			this.stopListening( model, 'destroy', this.unregister );
+			this.stopListening( model, 'relational:unregister', this.unregister );
 			var coll = this.getCollection( model );
 			coll && coll.remove( model, options );
 		},
