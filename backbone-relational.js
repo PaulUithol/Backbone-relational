@@ -407,6 +407,7 @@
 				var modelColl = model.collection;
 				coll.add( model );
 				this.listenTo( model, 'destroy', this.unregister, this );
+				this.listenTo( model, 'relational:unregister', this.unregister, this );
 				model.collection = modelColl;
 			}
 		},
