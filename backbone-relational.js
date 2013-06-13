@@ -1569,22 +1569,41 @@
 		 * @return {Backbone.Model}
 		 */
 		build: function( attributes, options ) {
-			var model = this;
-
 			// 'build' is a possible entrypoint; it's possible no model hierarchy has been determined yet.
 			this.initializeModelHierarchy();
 
 			// Determine what type of (sub)model should be built if applicable.
-			// Lookup the proper subModelType in 'this._subModels'.
-			if ( this._subModels && this.prototype.subModelTypeAttribute in attributes ) {
-				var subModelTypeAttribute = attributes[ this.prototype.subModelTypeAttribute ];
-				var subModelType = this._subModels[ subModelTypeAttribute ];
-				if ( subModelType ) {
-					model = subModelType;
-				}
-			}
+			var model = this._findSubModelType(this, attributes) || this;
 			
 			return new model( attributes, options );
+		},
+
+		/**
+		 * Determines what type of (sub)model should be built if applicable.
+		 * Looks up the proper subModelType in 'this._subModels', recursing into
+		 * types until a match is found.  Returns the applicable 'Backbone.Model'
+		 * or null if no match is found.
+		 * @param {Backbone.Model} type
+		 * @param {Object} attributes
+		 * @return {Backbone.Model}
+		 */
+		_findSubModelType: function (type, attributes) {
+			if ( type._subModels && type.prototype.subModelTypeAttribute in attributes ) {
+				var subModelTypeAttribute = attributes[type.prototype.subModelTypeAttribute];
+				var subModelType = type._subModels[subModelTypeAttribute];
+				if ( subModelType ) {
+					return subModelType;
+				} else {
+					// Recurse into subModelTypes to find a match
+					for ( subModelTypeAttribute in type._subModels ) {
+						subModelType = this._findSubModelType(type._subModels[subModelTypeAttribute], attributes);
+						if ( subModelType ) {
+							return subModelType;
+						}
+					}
+				}
+			}
+			return null;
 		},
 
 		/**

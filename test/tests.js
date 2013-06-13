@@ -1396,7 +1396,12 @@ $(document).ready(function() {
 					'carnivore': 'Carnivore'
 				}
 			});
-			scope.Primate = scope.Mammal.extend();
+			scope.Primate = scope.Mammal.extend({
+				subModelTypes: {
+					'human': 'Human'
+				}
+			});
+			scope.Human = scope.Primate.extend();
 			scope.Carnivore = scope.Mammal.extend();
 
 			var MammalCollection = AnimalCollection.extend({
@@ -1405,11 +1410,13 @@ $(document).ready(function() {
 
 			var mammals = new MammalCollection( [
 				{ id: 5, species: 'chimp', type: 'primate' },
-				{ id: 6, species: 'panther', type: 'carnivore' }
+				{ id: 6, species: 'panther', type: 'carnivore' },
+				{ id: 7, species: 'person', type: 'human' }
 			]);
 
 			ok( mammals.at( 0 ) instanceof scope.Primate );
 			ok( mammals.at( 1 ) instanceof scope.Carnivore );
+			ok( mammals.at( 2 ) instanceof scope.Human );
 		});
 
 		test( "Object building based on type, when used in relations" , function() {
@@ -1422,8 +1429,13 @@ $(document).ready(function() {
 					'dog': 'Dog'
 				}
 			});
-			var Dog = scope.Dog = PetAnimal.extend();
+			var Dog = scope.Dog = PetAnimal.extend({
+				subModelTypes: {
+					'poodle': 'Poodle'
+				}
+			});
 			var Cat = scope.Cat = PetAnimal.extend();
+			var Poodle = scope.Poodle = Dog.extend();
 
 			var PetPerson = scope.PetPerson = Backbone.RelationalModel.extend({
 				relations: [{
@@ -1445,21 +1457,30 @@ $(document).ready(function() {
 					{
 						type: 'cat',
 						name: 'Whiskers'
+					},
+					{
+						type: 'poodle',
+						name: 'Mitsy'
 					}
 				]
 			});
 
 			ok( petPerson.get( 'pets' ).at( 0 ) instanceof Dog );
 			ok( petPerson.get( 'pets' ).at( 1 ) instanceof Cat );
+			ok( petPerson.get( 'pets' ).at( 2 ) instanceof Poodle );
 
-			petPerson.get( 'pets' ).add({
+			petPerson.get( 'pets' ).add([{
 				type: 'dog',
 				name: 'Spot II'
-			});
+			},{
+				type: 'poodle',
+				name: 'Mitsy II'
+			}]);
 			
-			ok( petPerson.get( 'pets' ).at( 2 ) instanceof Dog );
+			ok( petPerson.get( 'pets' ).at( 3 ) instanceof Dog );
+			ok( petPerson.get( 'pets' ).at( 4 ) instanceof Poodle );
 		});
-		
+
 		test( "Automatic sharing of 'superModel' relations" , function() {
 			var scope = {};
 			Backbone.Relational.store.addModelScope( scope );
@@ -1484,6 +1505,10 @@ $(document).ready(function() {
 			scope.Flea = Backbone.RelationalModel.extend({});
 
 			scope.Dog = scope.PetAnimal.extend({
+				subModelTypes: {
+					'poodle': 'Poodle'
+				},
+
 				relations: [{
 					type: Backbone.HasMany,
 					key:	'fleas',
@@ -1493,22 +1518,33 @@ $(document).ready(function() {
 					}
 				}]
 			});
+			scope.Poodle = scope.Dog.extend();
 			
 			var dog = new scope.Dog({
 				name: 'Spot'
 			});
+
+			var poodle = new scope.Poodle({
+				name: 'Mitsy'
+			});
 			
 			var person = new scope.PetPerson({
-				pets: [ dog ]
+				pets: [ dog, poodle ]
 			});
 
 			ok( dog.get( 'owner' ) === person, "Dog has a working owner relation." );
+			ok( poodle.get( 'owner' ) === person, "Poodle has a working owner relation." );
 
 			var flea = new scope.Flea({
 				host: dog
 			});
+
+			var flea2 = new scope.Flea({
+				host: poodle
+			});
 			
 			ok( dog.get( 'fleas' ).at( 0 ) === flea, "Dog has a working fleas relation." );
+			ok( poodle.get( 'fleas' ).at( 0 ) === flea2, "Poodle has a working fleas relation." );
 		});
 
 		test( "Overriding of supermodel relations", function() {
