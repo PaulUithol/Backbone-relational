@@ -407,6 +407,7 @@
 				var modelColl = model.collection;
 				coll.add( model );
 				this.listenTo( model, 'destroy', this.unregister, this );
+				this.listenTo( model, 'relational:unregister', this.unregister, this );
 				model.collection = modelColl;
 			}
 		},
@@ -448,6 +449,7 @@
 		 */
 		unregister: function( model, collection, options ) {
 			this.stopListening( model, 'destroy', this.unregister );
+			this.stopListening( model, 'relational:unregister', this.unregister );
 			var coll = this.getCollection( model );
 			coll && coll.remove( model, options );
 		},
