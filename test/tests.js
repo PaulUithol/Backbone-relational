@@ -1290,6 +1290,15 @@ $(document).ready(function() {
 			equal( person1.get( 'name' ), 'dude' );
 		});
 
+		test( "constructor.find", function() {
+			var personColl = Backbone.Relational.store.getCollection( person1 ),
+			origPersonCollSize = personColl.length;
+
+			// Look for a non-existent person
+			person = Person.find( { id: 5001 } );
+			ok( !person );
+		});
+
 		test( "change events in relation can use changedAttributes properly", function() {
 			var scope = {};
 			Backbone.Relational.store.addModelScope( scope );
