@@ -86,9 +86,21 @@
 			}
 		},
 
+		// Some of the queued events may trigger other blocking events. By
+		// copying the queue here it allows queued events to process closer to
+		// the natural order.
+		//
+		// queue events [ 'A', 'B', 'C' ]
+		// A handler of 'B' triggers 'D' and 'E'
+		// By copying `this._queue` this executes:
+		// [ 'A', 'B', 'D', 'E', 'C' ]
+		// The same order the would have executed if they didn't have to be
+		// delayed and queued.
 		process: function() {
-			while ( this._queue && this._queue.length ) {
-				this._queue.shift()();
+			var queue = this._queue;
+			this._queue = [];
+			while ( queue && queue.length ) {
+				queue.shift()();
 			}
 		},
 
