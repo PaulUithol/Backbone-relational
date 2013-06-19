@@ -1663,8 +1663,9 @@
 			// If not, create an instance (unless 'options.create' is false).
 			if ( _.isObject( attributes ) ) {
 				if ( model && options.merge !== false ) {
-					// Make sure `options.collection` doesn't cascade to nested models
+					// Make sure `options.collection` and `options.url` doesn't cascade to nested models
 					delete options.collection;
+					delete options.url;
 
 					model.set( parsedAttributes, options );
 				}
