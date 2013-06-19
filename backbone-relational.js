@@ -1662,6 +1662,22 @@
 			}
 
 			return model;
+		},
+
+		/**
+		 * Find an instance of `this` type in 'Backbone.Relational.store'.
+		 * - If `attributes` is a string or a number, `find` will just query the `store` and return a model if found.
+		 * - If `attributes` is an object and is found in the store, the model will be updated with `attributes` unless `options.update` is `false`.
+		 * @param {Object|String|Number} attributes Either a model's id, or the attributes used to create or update a model.
+		 * @param {Object} [options]
+		 * @param {Boolean} [options.merge=true]
+		 * @param {Boolean} [options.parse=false]
+		 * @return {Backbone.RelationalModel}
+		 */
+		find: function( attributes, options ) {
+			options || ( options = {} );
+			options.create = false;
+			return this.findOrCreate( attributes, options );
 		}
 	});
 	_.extend( Backbone.RelationalModel.prototype, Backbone.Semaphore );
