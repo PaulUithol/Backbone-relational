@@ -1547,6 +1547,72 @@ $(document).ready(function() {
 			ok( poodle.get( 'fleas' ).at( 0 ) === flea2, "Poodle has a working fleas relation." );
 		});
 
+		test( "Initialization and sharing of 'superModel' reverse relations from child model" , function() {
+			var scope = {};
+			Backbone.Relational.store.addModelScope( scope );
+			scope.PetAnimal = Backbone.RelationalModel.extend({
+				subModelTypes: {
+					'dog': 'Dog'
+				}
+			});
+	
+			// Define the 'owner' as a reverse-relation 
+			scope.PetPerson = Backbone.RelationalModel.extend({
+				relations: [{
+					type: Backbone.HasMany,
+					key:  'pets',
+					relatedModel: scope.PetAnimal,
+					reverseRelation: {
+						type: Backbone.HasOne,
+						key: 'owner'
+					}
+				}]
+			});
+	
+			scope.Flea = Backbone.RelationalModel.extend({});
+			scope.Dog = scope.PetAnimal.extend({
+				subModelTypes: {
+					'poodle': 'Poodle'
+				},
+				relations: [{
+					type: Backbone.HasMany,
+					key:	'fleas',
+					relatedModel: scope.Flea,
+					reverseRelation: {
+						key: 'host'
+					}
+				}]
+			});
+			scope.Poodle = scope.Dog.extend();
+	
+			// Initialize the models starting from the deepest descendant and working your way up to the root parent class. 
+			var poodle = new scope.Poodle({
+				name: 'Mitsy'
+			});
+			
+			var dog = new scope.Dog({
+				name: 'Spot'
+			});
+			
+			var person = new scope.PetPerson({
+				pets: [ dog, poodle ]
+			});
+	
+			ok( dog.get( 'owner' ) === person, "Dog has a working owner relation." );
+			ok( poodle.get( 'owner' ) === person, "Poodle has a working owner relation." );
+	
+			var flea = new scope.Flea({
+				host: dog
+			});
+	
+			var flea2 = new scope.Flea({
+				host: poodle
+			});
+			
+			ok( dog.get( 'fleas' ).at( 0 ) === flea, "Dog has a working fleas relation." );
+			ok( poodle.get( 'fleas' ).at( 0 ) === flea2, "Poodle has a working fleas relation." );
+		});
+
 		test( "Overriding of supermodel relations", function() {
 			var models = {};
 			Backbone.Relational.store.addModelScope( models );
