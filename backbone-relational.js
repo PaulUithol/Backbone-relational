@@ -1610,39 +1610,51 @@
 		 *
 		 */
 		initializeModelHierarchy: function() {
-			// If we're here for the first time, try to determine if this modelType has a 'superModel'.
-			if ( _.isUndefined( this._superModel ) || _.isNull( this._superModel ) ) {
-				Backbone.Relational.store.setupSuperModel( this );
-
-				// If a superModel has been found, copy relations from the _superModel if they haven't been
-				// inherited automatically (due to a redefinition of 'relations').
-				// Otherwise, make sure we don't get here again for this type by making '_superModel' false so we fail
-				// the isUndefined/isNull check next time.
-				if ( this._superModel ) {
-					// Before we attempt to retrieve the inherited relations we need to initialize the superModel's hierarchy.
-					this._superModel.initializeModelHierarchy(); 
-					if ( this._superModel.prototype.relations ) {
-						// Find relations that exist on the `_superModel`, but not yet on this model.
-						var inheritedRelations = _.select( this._superModel.prototype.relations || [], function( superRel ) {
-							return !_.any( this.prototype.relations || [], function( rel ) {
-								return superRel.relatedModel === rel.relatedModel && superRel.key === rel.key;
-							}, this );
-						}, this );
+			// Inherit any relations that have been defined in the parent model.
+			this.inheritRelations();
 	
-						this.prototype.relations = inheritedRelations.concat( this.prototype.relations );
-					}
-				}
-				else {
-					this._superModel = false;
-				}
-			}
-
-			// If we came here through 'build' for a model that has 'subModelTypes', and not all of them have been resolved yet, try to resolve each.
-			if ( this.prototype.subModelTypes && _.keys( this.prototype.subModelTypes ).length !== _.keys( this._subModels ).length ) {
-				_.each( this.prototype.subModelTypes || [], function( subModelTypeName ) {
+			// If we came here through 'build' for a model that has 'subModelTypes' then try to initialize the ones that
+			// haven't been resolved yet.
+			if ( this.prototype.subModelTypes ) {
+				var resolvedSubModels = _.keys(this._subModels);
+				var unresolvedSubModels = _.omit(this.prototype.subModelTypes, resolvedSubModels);
+				_.each( unresolvedSubModels, function( subModelTypeName ) {
 					var subModelType = Backbone.Relational.store.getObjectByName( subModelTypeName );
 					subModelType && subModelType.initializeModelHierarchy();
 				});
+			}
+		},
+		
+		inheritRelations: function() {
+			// Bail out if we've been here before.
+			if (!_.isUndefined( this._superModel ) && !_.isNull( this._superModel )) { 
+				return; 
+			}
+			// Try to initialize the _superModel.
+			Backbone.Relational.store.setupSuperModel( this );
+	
+			// If a superModel has been found, copy relations from the _superModel if they haven't been inherited automatically 
+			// (due to a redefinition of 'relations').
+			if ( this._superModel ) {
+				// The _superModel needs a chance to initialize its own inherited relations before we attempt to inherit relations 
+				// from the _superModel. You don't want to call 'initializeModelHierarchy' because that could cause sub-models of
+				// this class to inherit their relations before this class has had chance to inherit it's relations.
+				this._superModel.inheritRelations();
+				if ( this._superModel.prototype.relations ) {
+					// Find relations that exist on the '_superModel', but not yet on this model.
+					var inheritedRelations = _.select( this._superModel.prototype.relations || [], function( superRel ) {
+						return !_.any( this.prototype.relations || [], function( rel ) {
+							return superRel.relatedModel === rel.relatedModel && superRel.key === rel.key;
+						}, this );
+					}, this );
+	
+					this.prototype.relations = inheritedRelations.concat( this.prototype.relations );
+				}
+			}
+			// Otherwise, make sure we don't get here again for this type by making '_superModel' false so we fail the 
+			// isUndefined/isNull check next time.
+			else {
+				this._superModel = false;
 			}
 		},
 

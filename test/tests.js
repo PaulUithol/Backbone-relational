@@ -1547,26 +1547,13 @@ $(document).ready(function() {
 			ok( poodle.get( 'fleas' ).at( 0 ) === flea2, "Poodle has a working fleas relation." );
 		});
 
-		test( "Initialization and sharing of 'superModel' reverse relations from child model" , function() {
+		test( "Initialization and sharing of 'superModel' reverse relations from a 'leaf' child model" , function() {
 			var scope = {};
 			Backbone.Relational.store.addModelScope( scope );
 			scope.PetAnimal = Backbone.RelationalModel.extend({
 				subModelTypes: {
 					'dog': 'Dog'
 				}
-			});
-	
-			// Define the 'owner' as a reverse-relation 
-			scope.PetPerson = Backbone.RelationalModel.extend({
-				relations: [{
-					type: Backbone.HasMany,
-					key:  'pets',
-					relatedModel: scope.PetAnimal,
-					reverseRelation: {
-						type: Backbone.HasOne,
-						key: 'owner'
-					}
-				}]
 			});
 	
 			scope.Flea = Backbone.RelationalModel.extend({});
@@ -1584,6 +1571,19 @@ $(document).ready(function() {
 				}]
 			});
 			scope.Poodle = scope.Dog.extend();
+	
+			// Define the PetPerson after defining all of the Animal models. Include the 'owner' as a reverse-relation. 
+			scope.PetPerson = Backbone.RelationalModel.extend({
+				relations: [{
+					type: Backbone.HasMany,
+					key:  'pets',
+					relatedModel: scope.PetAnimal,
+					reverseRelation: {
+						type: Backbone.HasOne,
+						key: 'owner'
+					}
+				}]
+			});
 	
 			// Initialize the models starting from the deepest descendant and working your way up to the root parent class. 
 			var poodle = new scope.Poodle({
@@ -1611,6 +1611,61 @@ $(document).ready(function() {
 			
 			ok( dog.get( 'fleas' ).at( 0 ) === flea, "Dog has a working fleas relation." );
 			ok( poodle.get( 'fleas' ).at( 0 ) === flea2, "Poodle has a working fleas relation." );
+		});
+
+		test( "Initialization and sharing of 'superModel' reverse relations by adding to a polymorphic HasMany" , function() {
+			var scope = {};
+			Backbone.Relational.store.addModelScope( scope );
+			scope.PetAnimal = Backbone.RelationalModel.extend({
+				// The order in which these are defined matters for this regression test. 
+				subModelTypes: {
+					'dog': 'Dog',
+					'fish': 'Fish'
+				}
+			});
+			
+			// This looks unnecessary but it's for this regression test there has to be multiple subModelTypes.
+			scope.Fish = scope.PetAnimal.extend({});
+	
+			scope.Flea = Backbone.RelationalModel.extend({});
+			scope.Dog = scope.PetAnimal.extend({
+				subModelTypes: {
+					'poodle': 'Poodle'
+				},
+				relations: [{
+					type: Backbone.HasMany,
+					key:	'fleas',
+					relatedModel: scope.Flea,
+					reverseRelation: {
+						key: 'host'
+					}
+				}]
+			});
+			scope.Poodle = scope.Dog.extend({});
+	
+			// Define the PetPerson after defining all of the Animal models. Include the 'owner' as a reverse-relation. 
+			scope.PetPerson = Backbone.RelationalModel.extend({
+				relations: [{
+					type: Backbone.HasMany,
+					key:  'pets',
+					relatedModel: scope.PetAnimal,
+					reverseRelation: {
+						type: Backbone.HasOne,
+						key: 'owner'
+					}
+				}]
+			});
+	
+			// We need to initialize a model through the root-parent-model's build method by adding raw-attributes for a 
+			// leaf-child-class to a polymorphic HasMany.
+			var person = new scope.PetPerson({
+				pets: [{
+					type: 'poodle',
+					name: 'Mitsy'
+				}]
+			});
+			var poodle = person.get('pets').first();
+			ok( poodle.get( 'owner' ) === person, "Poodle has a working owner relation." );
 		});
 
 		test( "Overriding of supermodel relations", function() {
