@@ -18,7 +18,7 @@
 		_ = require( 'underscore' );
 		Backbone = require( 'backbone' );
 		exports = Backbone;
-		typeof module === 'undefined' || (module.exports = exports);
+		typeof module === 'undefined' || ( module.exports = exports );
 	}
 	else {
 		_ = window._;
@@ -1081,6 +1081,7 @@
 		_isInitialized: false,
 		_deferProcessing: false,
 		_queue: null,
+		_attributeChangeFired: false, // Keeps track of `change` event firing under some conditions (like nested `set`s)
 
 		subModelTypeAttribute: 'type',
 		subModelTypes: null,
@@ -1145,7 +1146,9 @@
 					// Determine if the `change` event is still valid, now that all relations are populated
 					var changed = true;
 					if ( eventName === 'change' ) {
-						changed = dit.hasChanged();
+						// `hasChanged` may have gotten reset by nested calls to `set`.
+						changed = dit.hasChanged() || dit._attributeChangeFired;
+						dit._attributeChangeFired = false;
 					}
 					else {
 						var attr = eventName.slice( 7 ),
@@ -1154,7 +1157,7 @@
 						if ( rel ) {
 							// If `attr` is a relation, `change:attr` get triggered from `Relation.onChange`.
 							// These take precedence over `change:attr` events triggered by `Model.set`.
-							// The relation set a fourth attribute to `true`. If this attribute is present,
+							// The relation sets a fourth attribute to `true`. If this attribute is present,
 							// continue triggering this event; otherwise, it's from `Model.set` and should be stopped.
 							changed = ( args[ 4 ] === true );
 
@@ -1168,6 +1171,9 @@
 							else if ( !rel.changed ) {
 								delete dit.changed[ attr ];
 							}
+						}
+						else if ( changed ) {
+							dit._attributeChangeFired = true;
 						}
 					}
 

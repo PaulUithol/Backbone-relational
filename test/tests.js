@@ -3906,7 +3906,7 @@ $(document).ready(function() {
 
 			ok( change === 1, 'change event should fire' );
 			ok( changeAnimals === 1, 'change:animals event should fire' );
-			ok( animalChange === 0, 'no animals:change event should fire' );
+			ok( animalChange === 1, 'no animals:change event should fire' );
 
 			// Change an animal
 			change = changeAnimals = animalChange = 0;
@@ -3930,7 +3930,7 @@ $(document).ready(function() {
 
 			ok( change === 1, 'change event should fire' );
 			ok( changeAnimals === 1, 'change:animals event should fire' );
-			ok( animalChange === 0, 'no animals:change event should fire' );
+			ok( animalChange === 1, 'animals:change event should fire' );
 
 			// Remove an `animal`
 			change = changeAnimals = animalChange = 0;
@@ -3953,7 +3953,7 @@ $(document).ready(function() {
 			animals.add( 'a2' );
 
 			ok( change === 0, 'change event not should fire' );
-//			ok( changeAnimals === 1, 'change:animals event should fire (should it??)' );
+			ok( changeAnimals === 0, 'no change:animals event should fire' );
 			ok( animalChange === 0, 'no animals:change event should fire' );
 
 			// Update an animal directly
@@ -3969,7 +3969,7 @@ $(document).ready(function() {
 			animals.remove( 'a2' );
 
 			ok( change === 0, 'no change event should fire' );
-//			ok( changeAnimals === 1, 'change:animals event should fire (should it??)' );
+			ok( changeAnimals === 0, 'no change:animals event should fire' );
 			ok( animalChange === 0, 'no animals:change event should fire' );
 		});
 
@@ -4041,19 +4041,42 @@ $(document).ready(function() {
 		test( "triggers appropriate change events even when callbacks have triggered set with an unchanging value", function() {
 			var house = new House({
 				id: 'house-100',
-				location: 'in the middle of the street',
+				location: 'in the middle of the street'
 			});
 
 			var changeEventsTriggered = 0;
 
-			house.on('change:location', function() {
-			  house.set({location: 'somewhere else'});
-			}).on( 'change', function () {
-			  changeEventsTriggered++;
-			});
-			house.set({location: 'somewhere else'});
+			house
+				.on('change:location', function() {
+					house.set({location: 'somewhere else'});
+				})
+				.on( 'change', function () {
+					changeEventsTriggered++;
+				});
 
-			ok(changeEventsTriggered > 0);
+			house.set( { location: 'somewhere else' } );
+
+			ok( changeEventsTriggered === 1, 'one change triggered for `house`' );
+
+			var person = new Person({
+				id: 1
+			});
+
+			changeEventsTriggered = 0;
+
+			person
+				.on('change:livesIn', function() {
+					console.log( arguments );
+					house.set({livesIn: house});
+				})
+				.on( 'change', function () {
+					console.log( arguments );
+					changeEventsTriggered++;
+				});
+
+			person.set({livesIn: house});
+
+			ok( changeEventsTriggered === 2, 'one change each triggered for `house` and `person`' );
 		  });
 
 	module( "Performance", { setup: reset } );
