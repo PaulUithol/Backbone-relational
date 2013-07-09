@@ -1261,7 +1261,7 @@
 			var setUrl,
 				requests = [],
 				rel = this.getRelation( key ),
-				idsToFetch = rel && ( rel.keyIds || ( ( rel.keyId || rel.keyId === 0 ) ? [ rel.keyId ] : [] ) );
+				idsToFetch = rel && ( ( rel.keyIds && rel.keyIds.slice(0) ) || ( ( rel.keyId || rel.keyId === 0 ) ? [ rel.keyId ] : [] ) );
 
 			// On `refresh`, add the ids for current models in the relation to `idsToFetch`
 			if ( refresh ) {
