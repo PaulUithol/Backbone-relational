@@ -1346,7 +1346,10 @@
 			// Go through all splits and return the final result
 			var splits = attr.split( '.' );
 			var result = _.reduce(splits, function( model, split ) {
-				if (_.isNull(model) || _.isUndefined(model)) { return; }  // Return undefined if the path cannot be expanded
+				if (_.isNull(model) || _.isUndefined(model)) {
+					// Return undefined if the path cannot be expanded
+					return undefined;
+				}
 				if ( !( model instanceof Backbone.Model ) ) {
 					throw new Error( 'Attribute must be an instanceof Backbone.Model. Is: ' + model + ', currentSplit: ' + split );
 				}
