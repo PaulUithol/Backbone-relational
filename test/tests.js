@@ -1113,12 +1113,31 @@ $(document).ready(function() {
 			u1.destroy();
 			personJSON = person.toJSON();
 			ok( !u1.get( 'person' ) );
-			equal( personJSON.user_id, null, "`user_id` does not get set in JSON anymore" );
+			equal( personJSON.user_id, 'u1', "`user_id` still gets set in JSON" );
 
             person = new Person({user : new User({ id : 'u2' })})
             equal(person.toJSON().user_id, 'u2')
             person.set({user : 'unfetched_user_id'})
             equal(person.toJSON().user_id, 'unfetched_user_id')
+		});
+
+		test( "`toJSON` should include ids for unregistered models (if `includeInJSON` is `idAttribute`)", function() {
+	
+			// Person -> User; `idAttribute` on a HasOne
+			var person = new Person({ id: 'p1', user: 'u1' } ),
+				personJSON = person.toJSON();
+
+			equal( personJSON.user_id, 'u1', "`user_id` gets set in JSON even though no user obj exists" );
+
+			var u1 = new User( { id: 'u1' } );
+			personJSON = person.toJSON();
+			ok( u1.get( 'person' ) === person );
+			equal( personJSON.user_id, 'u1', "`user_id` gets set in JSON after matching user obj is created" );
+
+			Backbone.Relational.store.unregister(u1);
+
+			personJSON = person.toJSON();
+			equal( personJSON.user_id, 'u1', "`user_id` gets set in JSON after user was unregistered from store" );
 		});
 
 		test( "`parse` gets called through `findOrCreate`", function() {

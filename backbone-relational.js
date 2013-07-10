@@ -1486,6 +1486,7 @@
 						}
 						else if  ( rel instanceof Backbone.HasOne ) {
 							value = value || rel.keyId;
+							if (!value && _.isString(rel.keyContents)) value = rel.keyContents;
 						}
 					}
 				}
