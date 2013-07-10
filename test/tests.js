@@ -1064,7 +1064,7 @@ $(document).ready(function() {
 
 			var a1 = new Animal( { id: 'a1' } );
 			zooJSON = zoo.toJSON();
-			equal( zooJSON.animals.length, 1, "0 animals in zooJSON; it serializes an array of attributes" );
+			equal( zooJSON.animals.length, 1, "1 animals in zooJSON; it serializes an array of attributes" );
 
 			// Agent -> Customer; `idAttribute` on a HasMany
 			var agent = new Agent({ id: 'a1', customers: [ 'c1', 'c2' ] } ),
