@@ -1484,7 +1484,7 @@
 						value = related.pluck( includeInJSON );
 					}
 					else if ( related instanceof Backbone.Model ) {
-						value = related.get( includeInJSON );
+						value = related.attributes[ includeInJSON ];
 					}
 
 					// Add ids for 'unfound' models if includeInJSON is equal to (only) the relatedModel's `idAttribute`
@@ -1503,7 +1503,7 @@
 						related.each( function( model ) {
 							var curJson = {};
 							_.each( includeInJSON, function( key ) {
-								curJson[ key ] = model.get( key );
+								curJson[ key ] = model.attributes[ key ];
 							});
 							value.push( curJson );
 						});
@@ -1511,7 +1511,7 @@
 					else if ( related instanceof Backbone.Model ) {
 						value = {};
 						_.each( includeInJSON, function( key ) {
-							value[ key ] = related.get( key );
+							value[ key ] = related.attributes[ key ];
 						});
 					}
 				}
