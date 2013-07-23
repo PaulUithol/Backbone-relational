@@ -4236,6 +4236,89 @@ $(document).ready(function() {
 			ok( changeEventsTriggered === 2, 'one change each triggered for `house` and `person`' );
 		  });
 
+	module( "Regression", { setup: reset } );
+
+
+		test( "Catching case", function() {
+			var SubModel = Backbone.RelationalModel.extend({
+				idAttribute: 'id'
+			});
+
+			var Model = Backbone.RelationalModel.extend({
+				idAttribute: 'id',
+
+				relations: [{
+					type: Backbone.HasOne,
+					key: 'submodel',
+					keySource: 'sub_data',
+					relatedModel: SubModel,
+					includeInJSON: false
+				}]
+			});
+
+			var inst = new Model( {'id': 123} );
+
+			// set called from fetch
+			inst.set({
+				'id': 123,
+				'some_field': 'some_value',
+				'sub_data': {
+					'id': 321,
+					'key': 'value'
+				},
+				'to_unset': 'unset value'
+			});
+
+			ok( inst.get('submodel').get('key') == 'value', "value of submodule.key should be 'value'" );
+			inst.set({'to_unset': ''}, {'unset': true});
+			ok( inst.get('submodel').get('key') == 'value', "after unset value of submodule.key should be still 'value'" );
+		});
+
+		test( "Source of problem", function() {
+			var SubModel = Backbone.RelationalModel.extend({
+				idAttribute: 'id'
+			});
+
+			var Model = Backbone.RelationalModel.extend({
+				idAttribute: 'id',
+
+				relations: [{
+					type: Backbone.HasOne,
+					key: 'submodel',
+					keySource: 'sub_data',
+					relatedModel: SubModel,
+					includeInJSON: false
+				}]
+			});
+
+			var inst = new Model({
+				'id': 123,
+				'some_field': 'some_value',
+				'sub_data': {
+					'id': 321,
+					'key': 'value'
+				},
+				'to_unset': 'unset value'
+			});
+
+			ok( typeof inst.get('sub_data') == 'undefined', "keySource field should be removed from model" );
+			ok( typeof inst.get('submodel') != 'undefined', "key field should be added..." );
+			ok( inst.get('submodel') instanceof SubModel , "... and should be model instance" );
+
+			// set called from fetch
+			inst.set({
+				'sub_data': {
+					'id': 321,
+					'key': 'value2'
+				},
+			});
+
+			ok( typeof inst.get('sub_data') == 'undefined',  "keySource field should be removed from model" );
+			ok( typeof inst.get('submodel') != 'undefined',  "key field should be present..." );
+			ok( inst.get('submodel').get('key') == 'value2', "... and should be updated" );
+		});
+
+
 	module( "Performance", { setup: reset } );
 
 
