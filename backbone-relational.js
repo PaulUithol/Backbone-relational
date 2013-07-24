@@ -1352,7 +1352,7 @@
 			// Go through all splits and return the final result
 			var splits = attr.split( '.' );
 			var result = _.reduce(splits, function( model, split ) {
-				if (_.isNull(model) || _.isUndefined(model)) {
+				if ( _.isNull(model) || _.isUndefined( model ) ) {
 					// Return undefined if the path cannot be expanded
 					return undefined;
 				}
@@ -1413,30 +1413,6 @@
 				Backbone.Relational.eventQueue.unblock();
 			}
 			
-			return result;
-		},
-
-		unset: function( attribute, options ) {
-			Backbone.Relational.eventQueue.block();
-
-			var result = Backbone.Model.prototype.unset.apply( this, arguments );
-			this.updateRelations( options );
-
-			// Try to run the global queue holding external events
-			Backbone.Relational.eventQueue.unblock();
-
-			return result;
-		},
-
-		clear: function( options ) {
-			Backbone.Relational.eventQueue.block();
-			
-			var result = Backbone.Model.prototype.clear.apply( this, arguments );
-			this.updateRelations( options );
-
-			// Try to run the global queue holding external events
-			Backbone.Relational.eventQueue.unblock();
-
 			return result;
 		},
 
@@ -1844,7 +1820,7 @@
 			return remove.apply( this, arguments );
 		}
 
-		models = _.isArray( models ) ? models.slice() : [ models ];
+		models = _.isArray( models ) ? models.slice( 0 ) : [ models ];
 		options || ( options = {} );
 
 		var toRemove = [];
