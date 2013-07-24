@@ -545,7 +545,7 @@
 
 			// Explicitly clear 'keySource', to prevent a leaky abstraction if 'keySource' differs from 'key'.
 			if ( this.keySource !== this.key ) {
-				this.instance.unset( this.keySource, { silent: true } );
+				delete this.instance.attributes[ this.keySource ];
 			}
 
 			// Add this Relation to instance._relations
@@ -1211,10 +1211,15 @@
 		updateRelations: function( options ) {
 			if ( this._isInitialized && !this.isLocked() ) {
 				_.each( this._relations, function( rel ) {
-					// Update from data in `rel.keySource` if set, or `rel.key` otherwise
+					// Update from data in `rel.keySource` if data got set in there, or `rel.key` otherwise
 					var val = this.attributes[ rel.keySource ] || this.attributes[ rel.key ];
 					if ( rel.related !== val ) {
 						this.trigger( 'relational:change:' + rel.key, this, val, options || {} );
+					}
+
+					// Explicitly clear 'keySource', to prevent a leaky abstraction if 'keySource' differs from 'key'.
+					if ( rel.keySource !== rel.key ) {
+						delete rel.instance.attributes[ rel.keySource ];
 					}
 				}, this );
 			}
