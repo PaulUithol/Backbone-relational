@@ -1831,7 +1831,7 @@
 
 		//console.debug('calling remove on coll=%o; models=%o, options=%o', this, models, options );
 		_.each( models, function( model ) {
-			model = this.get( model ) || this.get( model.cid );
+			model = this.get( model ) || ( model && this.get( model.cid ) );
 			model && toRemove.push( model );
 		}, this );
 

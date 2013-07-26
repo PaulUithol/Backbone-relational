@@ -3971,6 +3971,20 @@ $(document).ready(function() {
 			ok( !a.get( 'species' ), "`a` hasn't gotten merged" );
 		});
 
+		test( "pop", function() {
+			var zoo = new Zoo({
+				    animals: [ { name: 'a' } ]
+				}),
+				animals = zoo.get( 'animals' );
+
+			var a = animals.pop(),
+				b = animals.pop();
+
+			console.log( a, a.get( 'name' ), b );
+			ok( a && a.get( 'name' ) === 'a' );
+			ok( typeof b === 'undefined' );
+		});
+
 
 	module( "Events", { setup: reset } );
 
