@@ -2491,6 +2491,45 @@ $(document).ready(function() {
 			ok( b2.get( 'a' ).id == 'a2' );
 		});
 
+		test( "Can retrieve relations if it's a property or a method", function () {
+			window.Zoo.prototype._relations = window.Zoo.prototype.relations;
+			window.Zoo.prototype.relations = function () {
+				return [
+					{
+						type: Backbone.HasMany,
+						key: 'animals',
+						relatedModel: 'Animal',
+						includeInJSON: [ 'id', 'species' ],
+						collectionType: 'AnimalCollection',
+						collectionOptions: function( instance ) { return { 'url': 'zoo/' + instance.cid + '/animal/' } },
+						reverseRelation: {
+							key: 'livesIn',
+							includeInJSON: [ 'id', 'name' ]
+						}
+					},
+					{ // A simple HasMany without reverse relation
+						type: Backbone.HasMany,
+						key: 'visitors',
+						relatedModel: 'Visitor'
+					}
+				];
+			};
+
+			var animals = new AnimalCollection([
+				{ id: 1, species: 'Lion' },
+				{ id: 2 ,species: 'Zebra' }
+			]);
+
+			var zoo = new Zoo( { animals: animals } );
+
+			equal( zoo.get( 'animals' ), animals, "The 'animals' collection has been set as the zoo's animals" );
+			equal( zoo.get( 'animals' ).length, 2, "Two animals in 'zoo'" );
+
+			zoo.destroy();
+			window.Zoo.prototype.relations = window.Zoo.prototype._relations;
+			delete window.Zoo.prototype._relations;
+		});
+
 
 	module( "Backbone.HasOne", { setup: initObjects } );
 

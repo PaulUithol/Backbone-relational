@@ -1188,7 +1188,7 @@
 			this.acquire(); // Setting up relations often also involve calls to 'set', and we only want to enter this function once
 			this._relations = {};
 
-			_.each( this.relations || [], function( rel ) {
+			_.each( _.result(this, 'relations') || [], function( rel ) {
 				Backbone.Relational.store.initializeRelation( this, rel, options );
 			}, this );
 
