@@ -515,6 +515,13 @@
 		this.relatedModel = this.options.relatedModel;
 		if ( _.isString( this.relatedModel ) ) {
 			this.relatedModel = Backbone.Relational.store.getObjectByName( this.relatedModel );
+		} else if(this.relatedModel.prototype instanceof Backbone.Model === false) {
+			// This makes it possible to pass a function that will be called when the relations are build
+			// Useful for requirejs circular dependencies e.g.:
+			//     relatedModel: function() {
+			//	       return require('model')
+			//     }
+			this.relatedModel = this.options.relatedModel.call();
 		}
 
 		if ( !this.checkPreconditions() ) {
