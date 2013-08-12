@@ -10,10 +10,17 @@ header, nav, section, article, aside, footer, hgroup {
 	src: local('Museo Slab 500'), local('MuseoSlab-500'), url('../fonts/Museo_Slab_500.woff') format('woff'), url('../fonts/Museo_Slab_500.otf') format('opentype');
 }
 
+@font-face {
+  font-family: 'PT Sans';
+  font-style: normal;
+  font-weight: 400;
+  src: local('PT Sans'), local('PTSans-Regular'), url('../fonts/PT_Sans.woff') format('woff');
+}
+
 body {
-	font-size: 15px;
+	font-size: 16px;
 	line-height: 1.5em;
-	font-family:  "Helvetica Neue", "Lucida Grande", "Lucida Sans Unicode", Helvetica, Arial, sans-serif;
+	font-family: "PT Sans", "Helvetica Neue", "Lucida Grande", "Lucida Sans Unicode", Helvetica, Arial, sans-serif;
 	background: #f4f4f4;
 }
 

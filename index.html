@@ -26,7 +26,7 @@
 <body>
 <div id="sidebar">
 	<a class="toc_title" href="#">
-		Backbone-relational.js <span class="version">(0.8.0)</span>
+		Backbone-relational.js <span class="version">(0.8.5)</span>
 	</a>
 
 	<ul>
@@ -80,6 +80,7 @@
 		<li><a href="#RelationalModel-setup">setup</a></li>
 		<li><a href="#RelationalModel-build">build</a></li>
 		<li><a href="#RelationalModel-findOrCreate">findOrCreate</a></li>
+		<li><a href="#RelationalModel-find">find</a></li>
 	</ul>
 	<ul>
 		<li><a href="#RelationalModel-events"><strong>Catalog of Events</strong></a></li>
@@ -100,6 +101,7 @@
 
 	<ul>
 		<li><a href="#Store-addModelScope">addModelScope</a></li>
+		<li><a href="#Store-removeModelScope">removeModelScope</a></li>
 		<li><a href="#Store-reset">reset</a></li>
 	</ul>
 
@@ -149,7 +151,7 @@
 
 		<table>
 			<tr>
-				<td><a class="punch" href="https://raw.github.com/PaulUithol/Backbone-relational/0.8.0/backbone-relational.js">Latest Release (0.8.0)</a></td>
+				<td><a class="punch" href="https://raw.github.com/PaulUithol/Backbone-relational/0.8.5/backbone-relational.js">Latest Release (0.8.5)</a></td>
 				<td class="text"><i>~60kb, Full source, lots of comments</i></td>
 			</tr>
 			<tr>
@@ -160,7 +162,7 @@
 		<p>
 			Backbone-relational depends on <a href="http://backbonejs.org/">Backbone.js</a> <small>(>= 1.0.0)</small>,
 			which itself requires <a href="http://underscorejs.org">Underscore.js</a> <small>(> 1.4.4)</small> and
-			<a href="http://jquery.com">jQuery</a> <small>(> 1.4.2)</small> or
+			<a href="http://jquery.com">jQuery</a> <small>(> 1.7.0)</small> or
 			<a href="http://zeptojs.com/">Zepto</a>.
 		</p>
 	</section>
@@ -292,7 +294,7 @@
 			relations<code>relation[]</code>
 		</h4>
 		<p>
-			Each <strong>Backbone.RelationalModel</strong> can contain an array of relation definitions. Each relation supports a number of
+			A <strong>Backbone.RelationalModel</strong> may contain an array of relation definitions. Each relation supports a number of
 			options, of which <a href="#relations-relatedModel"><q>relatedModel</q></a>, <a href="#relations-key"><q>key</q></a> and
 			<a href="#relations-type"><q>type</q></a> are mandatory. A relation could look like the following:
 		</p>
@@ -908,6 +910,23 @@ MyModel.setup()
 			</p>
 		</section>
 
+		<section id="RelationalModel-find">
+			<h4 class="code">
+				find
+				<code>relationalModel.findOrCreate(attributes&lt;string|number|object&gt;, [options&lt;object&gt;])</code>
+			</h4>
+			<p>
+				Returns: <q>Backbone.RelationalModel</q> A model instance.
+			</p>
+			<p>
+				A shortcut for <a href="#RelationalModel-findOrCreate"><q>findOrCreate</q></a> that uses <q>create: false</q>.
+				Accepts the same options as <q>findOrCreate</q> (except for <q>create</q>).
+			</p>
+			<p class="warning">
+				Note: this is a static method. It operate on the model type itself, not on an instance.
+			</p>
+		</section>
+
 		<section id="RelationalModel-events">
 			<h4>
 				Catalog of Events
@@ -968,8 +987,17 @@ MyModel.setup()
 			addModelScope<code>Backbone.Relational.store.addModelScope( scope&lt;object&gt; )</code>
 		</h4>
 		<p>
-			When working in an environment without a shared global scope (like <q>window</q> is in a browser), you'll need
-			to tell the <q>store</q> where your models are defined, so it can resolve them to create and maintain relations. 
+			Add a namespace on which models and collections are defined. This is especially useful when working in an
+			environment without a shared global scope (like <q>window</q> is in a browser), where you'll need to tell
+			the <q>store</q> where your models are defined, so it can resolve them to create and maintain relations.
+		</p>
+
+		<h4 class="code" id="Store-removeModelScope">
+			removeModelScope<code>Backbone.Relational.store.removeModelScope()</code>
+		</h4>
+		<p>
+			Remove a scope. This allows you to remove a scope you added previously, or to remove the default 'global'
+			scope (<q>window</q> in the browser) scope to prevent Backbone-relational from resolving objects on it.
 		</p>
 
 		<h4 class="code" id="Store-reset">
@@ -1116,19 +1144,64 @@ User = Backbone.RelationalModel.extend();
 		<h4>Master
 			<small>
 				<span class="date">(future)</span> &ndash;
-				<a href="https://github.com/PaulUithol/Backbone-relational/compare/0.8.0...master">diff</a> &ndash;
+				<a href="https://github.com/PaulUithol/Backbone-relational/compare/0.8.6...master">diff</a> &ndash;
 				<a href="https://raw.github.com/PaulUithol/Backbone-relational/master/backbone-relational.js">download</a>
+			</small>
+		</h4>
+		<ul>
+		</ul>
+
+		<h4>0.8.6
+			<small>
+				<span class="date">(tbd)</span> &ndash;
+				<a href="https://github.com/PaulUithol/Backbone-relational/compare/0.8.5...0.8.6">diff</a> &ndash;
+				<a href="https://raw.github.com/PaulUithol/Backbone-relational/master/backbone-relational.js">download</a>
+			</small>
+		</h4>
+		<ul>
+			<li>
+				<a href="https://github.com/PaulUithol/Backbone-relational/pull/322"><q>#322</q></a>:
+				Remove <q>keySource</q> after a <q>set</q> as well.
+			</li>
+			<li>
+				<a href="https://github.com/PaulUithol/Backbone-relational/pull/345"><q>#345</q></a>:
+				Add <a href="#RelationalModel-find"><q>find</q></a>, a shortcut to <q>findOrCreate</q> with <q>create: false</q>
+			</li>
+			<li>
+				<a href="https://github.com/PaulUithol/Backbone-relational/pull/345"><q>#345</q></a>:
+				Add lodash compatibility (doesn't have an explicit <q>findWhere</q>).
+			</li>
+			<li>
+				<a href="https://github.com/PaulUithol/Backbone-relational/pull/349"><q>#349</q></a>:
+				Event ordering: maintain the originally intended order when process gets called more than once.
+			</li>
+			<li>
+				<a href="https://github.com/PaulUithol/Backbone-relational/pull/362"><q>#362</q></a>:
+				Add support for deep <q>subModelType</q> hierarchies.
+			</li>
+			<li>
+				<a href="https://github.com/PaulUithol/Backbone-relational/pull/380"><q>#380</q></a>:
+				AFix <q>pop</q> on an empty collection.
+			</li>
+		</ul>
+
+		<h4>0.8.5
+			<small>
+				<span class="date">(10 April 2013)</span> &ndash;
+				<a href="https://github.com/PaulUithol/Backbone-relational/compare/0.8.0...0.8.5">diff</a> &ndash;
+				<a href="https://raw.github.com/PaulUithol/Backbone-relational/0.8.5/backbone-relational.js">download</a>
 			</small>
 		</h4>
 		<ul>
 			<li>Supports Backbone 1.0.0</li>
 			<li>
-				<a href="https://github.com/PaulUithol/Backbone-relational/issues/191"><q>#191</q></a>: if <q>includeInJSON</q>
-				is equal to the model's <q>idAttribute</q>, "missing" models will be included in the JSON to avoid data loss.
+				<a href="https://github.com/PaulUithol/Backbone-relational/issues/191"><q>#191</q></a>:
+				if <q>includeInJSON</q>	is equal to the model's <q>idAttribute</q>, "missing" models will be included
+				in the JSON to avoid data loss.
 			</li>
 			<li>
 				<a href="https://github.com/PaulUithol/Backbone-relational/issues/201"><q>#201</q></a>:
-				add `Backbone.Store.removeModelScope` method
+				add <q>Backbone.Store.removeModelScope</q> method
 			</li>
 			<li>
 				<a href="https://github.com/PaulUithol/Backbone-relational/issues/273"><q>#273</q></a>:
@@ -1137,6 +1210,10 @@ User = Backbone.RelationalModel.extend();
 			<li>
 				<a href="https://github.com/PaulUithol/Backbone-relational/issues/295"><q>#295</q></a>:
 				check (and error on) duplicate ids when explicitly setting the <q>idAttribute</q>.
+			</li>
+			<li>
+				<a href="https://github.com/PaulUithol/Backbone-relational/issues/320"><q>#320</q></a>:
+				use <q>merge: true</q> by default on <q>Collection.reset</q>.
 			</li>
 		</ul>
 
