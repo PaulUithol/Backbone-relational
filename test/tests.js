@@ -1354,7 +1354,7 @@ $(document).ready(function() {
 			var Animal2 = Animal.extend({
 				initialize: function(options) {
 					this.on( 'all', function( name, event ) {
-						console.log( 'Animal2: %o', arguments );
+						//console.log( 'Animal2: %o', arguments );
 						if ( name.indexOf( 'change' ) === 0 ) {
 							modelChangeEvents++;
 						}
@@ -1367,7 +1367,7 @@ $(document).ready(function() {
 
 				initialize: function(options) {
 					this.on( 'all', function( name, event ) {
-						console.log( 'AnimalCollection2: %o', arguments );
+						//console.log( 'AnimalCollection2: %o', arguments );
 						if ( name.indexOf('change') === 0 ) {
 							collectionChangeEvents++;
 						}
@@ -2720,34 +2720,36 @@ $(document).ready(function() {
 					{
 						type: Backbone.HasMany,
 						key: 'animals',
-						relatedModel: 'Animal',
+						relatedModel: function() {
+							return Animal; // or `require` it from somewhere
+						},
 						includeInJSON: [ 'id', 'species' ],
-						collectionType: 'AnimalCollection',
+						collectionType: function() {
+							return AnimalCollection; // or `require` it from somewhere
+						},
 						collectionOptions: function( instance ) { return { 'url': 'zoo/' + instance.cid + '/animal/' } },
 						reverseRelation: {
 							key: 'livesIn',
 							includeInJSON: [ 'id', 'name' ]
 						}
-					},
-					{ // A simple HasMany without reverse relation
-						type: Backbone.HasMany,
-						key: 'visitors',
-						relatedModel: 'Visitor'
 					}
 				];
 			};
 
-			var animals = new AnimalCollection([
+			var animalData = [
 				{ id: 1, species: 'Lion' },
 				{ id: 2 ,species: 'Zebra' }
-			]);
+			];
 
-			var zoo = new Zoo( { animals: animals } );
+			var zoo = new Zoo( { animals: animalData } ),
+				animals = zoo.get( 'animals' );
 
-			equal( zoo.get( 'animals' ), animals, "The 'animals' collection has been set as the zoo's animals" );
-			equal( zoo.get( 'animals' ).length, 2, "Two animals in 'zoo'" );
+			ok( animals instanceof AnimalCollection );
+			equal( animals.length, 2, "Two animals in 'zoo'" );
+			ok( animals.at( 0 ) instanceof Animal );
 
 			zoo.destroy();
+
 			window.Zoo.prototype.relations = window.Zoo.prototype._relations;
 			delete window.Zoo.prototype._relations;
 		});
@@ -4037,7 +4039,6 @@ $(document).ready(function() {
 			var a = animals.pop(),
 				b = animals.pop();
 
-			console.log( a, a.get( 'name' ), b );
 			ok( a && a.get( 'name' ) === 'a' );
 			ok( typeof b === 'undefined' );
 		});
@@ -4340,11 +4341,11 @@ $(document).ready(function() {
 
 			person
 				.on('change:livesIn', function() {
-					console.log( arguments );
+					//console.log( arguments );
 					house.set({livesIn: house});
 				})
 				.on( 'change', function () {
-					console.log( arguments );
+					//console.log( arguments );
 					changeEventsTriggered++;
 				});
 

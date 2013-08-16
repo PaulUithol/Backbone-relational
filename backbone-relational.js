@@ -512,7 +512,12 @@
 		this.keyDestination = this.options.keyDestination || this.keySource || this.key;
 
 		this.model = this.options.model || this.instance.constructor;
+
 		this.relatedModel = this.options.relatedModel;
+
+		if ( _.isFunction( this.relatedModel ) && !( this.relatedModel.prototype instanceof Backbone.RelationalModel ) ) {
+			this.relatedModel = _.result( this, 'relatedModel' );
+		}
 		if ( _.isString( this.relatedModel ) ) {
 			this.relatedModel = Backbone.Relational.store.getObjectByName( this.relatedModel );
 		}
@@ -845,6 +850,9 @@
 			
 			// Handle a custom 'collectionType'
 			this.collectionType = this.options.collectionType;
+			if ( _.isFunction( this.collectionType ) && this.collectionType !== Backbone.Collection && !( this.collectionType.prototype instanceof Backbone.Collection ) ) {
+				this.collectionType = _.result( this, 'collectionType' );
+			}
 			if ( _.isString( this.collectionType ) ) {
 				this.collectionType = Backbone.Relational.store.getObjectByName( this.collectionType );
 			}
@@ -1194,7 +1202,7 @@
 			this.acquire(); // Setting up relations often also involve calls to 'set', and we only want to enter this function once
 			this._relations = {};
 
-			_.each( _.result(this, 'relations') || [], function( rel ) {
+			_.each( _.result( this, 'relations' ) || [], function( rel ) {
 				Backbone.Relational.store.initializeRelation( this, rel, options );
 			}, this );
 
