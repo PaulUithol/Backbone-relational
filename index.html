@@ -26,7 +26,7 @@
 <body>
 <div id="sidebar">
 	<a class="toc_title" href="#">
-		Backbone-relational.js <span class="version">(0.8.5)</span>
+		Backbone-relational.js <span class="version">(0.8.6)</span>
 	</a>
 
 	<ul>
@@ -151,8 +151,8 @@
 
 		<table>
 			<tr>
-				<td><a class="punch" href="https://raw.github.com/PaulUithol/Backbone-relational/0.8.5/backbone-relational.js">Latest Release (0.8.5)</a></td>
-				<td class="text"><i>~60kb, Full source, lots of comments</i></td>
+				<td><a class="punch" href="https://raw.github.com/PaulUithol/Backbone-relational/0.8.6/backbone-relational.js">Latest Release (0.8.6)</a></td>
+				<td class="text"><i>~66kb. Full source, uncompressed, lots of comments.</i></td>
 			</tr>
 			<tr>
 				<td><a class="punch" href="https://raw.github.com/PaulUithol/Backbone-relational/master/backbone-relational.js">Development Version</a></td>
@@ -284,6 +284,7 @@
 			<li><a href="#RelationalModel-setup">setup</a></li>
 			<li><a href="#RelationalModel-build">build</a></li>
 			<li><a href="#RelationalModel-findOrCreate">findOrCreate</a></li>
+			<li><a href="#RelationalModel-find">find</a></li>
 		</ul>
 
 		<h3 id="RelationalModel-properties">
@@ -1153,7 +1154,7 @@ User = Backbone.RelationalModel.extend();
 
 		<h4>0.8.6
 			<small>
-				<span class="date">(tbd)</span> &ndash;
+				<span class="date">(16 August 2013)</span> &ndash;
 				<a href="https://github.com/PaulUithol/Backbone-relational/compare/0.8.5...0.8.6">diff</a> &ndash;
 				<a href="https://raw.github.com/PaulUithol/Backbone-relational/master/backbone-relational.js">download</a>
 			</small>
@@ -1182,6 +1183,14 @@ User = Backbone.RelationalModel.extend();
 			<li>
 				<a href="https://github.com/PaulUithol/Backbone-relational/pull/380"><q>#380</q></a>:
 				AFix <q>pop</q> on an empty collection.
+			</li>
+			<li>
+				<a href="https://github.com/PaulUithol/Backbone-relational/pull/370"><q>#370</q></a>:
+				<q>relations</q> can now be a property or a function.
+			</li>
+			<li>
+				<a href="https://github.com/PaulUithol/Backbone-relational/commit/7f1dc51a820aa4a5e22303177cffbbc8e7c53d47"><q>7f1dc51</q></a>:
+				<q>relatedModel</q> and <q>collectionType</q> can now be defined as a function as well.
 			</li>
 		</ul>
 
