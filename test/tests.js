@@ -1114,6 +1114,11 @@ $(document).ready(function() {
 			personJSON = person.toJSON();
 			ok( !u1.get( 'person' ) );
 			equal( personJSON.user_id, null, "`user_id` does not get set in JSON anymore" );
+
+            person = new Person({user : new User({ id : 'u2' })})
+            equal(person.toJSON().user_id, 'u2')
+            person.set({user : 'unfetched_user_id'})
+            equal(person.toJSON().user_id, 'unfetched_user_id')
 		});
 
 		test( "`parse` gets called through `findOrCreate`", function() {
