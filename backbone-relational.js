@@ -733,7 +733,7 @@
 			}
 
 			// Nullify `keyId` if we have a related model; in case it was already part of the relation
-			if ( this.related ) {
+			if ( related ) {
 				this.keyId = null;
 			}
 
