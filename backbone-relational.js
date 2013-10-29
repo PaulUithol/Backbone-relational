@@ -1215,20 +1215,28 @@
 
 		/**
 		 * When new values are set, notify this model's relations (also if options.silent is set).
-		 * (Relation.setRelated locks this model before calling 'set' on it to prevent loops)
+		 * (called from `set`; Relation.setRelated locks this model before calling 'set' on it to prevent loops)
+		 * @param {Object} [changedAttrs]
+		 * @param {Object} [options]
 		 */
-		updateRelations: function( options ) {
+		updateRelations: function( changedAttrs, options ) {
 			if ( this._isInitialized && !this.isLocked() ) {
 				_.each( this._relations, function( rel ) {
-					// Update from data in `rel.keySource` if data got set in there, or `rel.key` otherwise
-					var val = this.attributes[ rel.keySource ] || this.attributes[ rel.key ];
-					if ( rel.related !== val ) {
-						this.trigger( 'relational:change:' + rel.key, this, val, options || {} );
+					if ( !changedAttrs || ( rel.keySource in changedAttrs || rel.key in changedAttrs ) ) {
+						// Fetch data in `rel.keySource` if data got set in there, or `rel.key` otherwise
+						var value = this.attributes[ rel.keySource ] || this.attributes[ rel.key ],
+							attr = changedAttrs && ( changedAttrs[ rel.keySource ] || changedAttrs[ rel.key ] );
+
+						// Update a relation if its value differs from this model's attributes, or it's been explicitly nullified.
+						// Which can also happen before the originally intended related model has been found (`val` is null).
+						if ( rel.related !== value || ( value === null && attr === null ) ) {
+							this.trigger( 'relational:change:' + rel.key, this, value, options || {} );
+						}
 					}
 
 					// Explicitly clear 'keySource', to prevent a leaky abstraction if 'keySource' differs from 'key'.
 					if ( rel.keySource !== rel.key ) {
-						delete rel.instance.attributes[ rel.keySource ];
+						delete this.attributes[ rel.keySource ];
 					}
 				}, this );
 			}
@@ -1424,7 +1432,7 @@
 				}
 
 				if ( attributes ) {
-					this.updateRelations( options );
+					this.updateRelations( attributes, options );
 				}
 			}
 			finally {
