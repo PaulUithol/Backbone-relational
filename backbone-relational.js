@@ -461,6 +461,8 @@
 		/**
 		 * Remove a 'model' from the store.
 		 * @param {Backbone.RelationalModel} model
+		 * @param {Backbone.Collection} [collection]
+		 * @param {Object} [options]
 		 */
 		unregister: function( model, collection, options ) {
 			this.stopListening( model );
@@ -1486,7 +1488,10 @@
 						}
 						else if  ( rel instanceof Backbone.HasOne ) {
 							value = value || rel.keyId;
-							if (!value && !_.isObject(rel.keyContents)) value = rel.keyContents || null;
+
+							if ( !value && !_.isObject( rel.keyContents ) ) {
+								value = rel.keyContents || null;
+							}
 						}
 					}
 				}

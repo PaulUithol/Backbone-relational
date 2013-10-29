@@ -1052,6 +1052,20 @@ $(document).ready(function() {
 			ok( json.children.length === 1 );
 		});
 
+		test("'toJSON' should return null for relations that are set to null, even when model is not fetched", function() {
+			var person = new Person( { user : 'u1' } );
+
+			equal( person.toJSON().user_id, 'u1' );
+			person.set( 'user', null );
+			equal( person.toJSON().user_id, null );
+
+			person = new Person( { user: new User( { id : 'u2' } ) } );
+
+			equal( person.toJSON().user_id, 'u2' );
+			person.set( { user: 'unfetched_user_id' } );
+			equal( person.toJSON().user_id, 'unfetched_user_id' );
+		});
+
 		test( "`toJSON` should include ids for 'unknown' or 'missing' models (if `includeInJSON` is `idAttribute`)", function() {
 			// See GH-191
 
@@ -1114,11 +1128,6 @@ $(document).ready(function() {
 			personJSON = person.toJSON();
 			ok( !u1.get( 'person' ) );
 			equal( personJSON.user_id, 'u1', "`user_id` still gets set in JSON" );
-
-            person = new Person({user : new User({ id : 'u2' })})
-            equal(person.toJSON().user_id, 'u2')
-            person.set({user : 'unfetched_user_id'})
-            equal(person.toJSON().user_id, 'unfetched_user_id')
 		});
 
 		test( "`toJSON` should include ids for unregistered models (if `includeInJSON` is `idAttribute`)", function() {
