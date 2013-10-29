@@ -1756,7 +1756,7 @@
 			model = attrs;
 		}
 		else {
-			options || ( options = {} );
+			options = options ? _.clone( options ) : {};
 			options.collection = this;
 			
 			if ( typeof this.model.findOrCreate !== 'undefined' ) {
@@ -1766,7 +1766,7 @@
 				model = new this.model( attrs, options );
 			}
 			
-			if ( model && model.isNew() && !model._validate( attrs, options ) ) {
+			if ( model && model.validationError ) {
 				this.trigger( 'invalid', this, attrs, options );
 				model = false;
 			}
@@ -1791,9 +1791,7 @@
 			models = this.parse( models, options );
 		}
 
-		if ( !_.isArray( models ) ) {
-			models = models ? [ models ] : [];
-		}
+		models = _.isArray( models ) ? models.slice() : ( models ? [ models ] : [] );
 
 		var newModels = [],
 			toAdd = [];
@@ -1820,7 +1818,7 @@
 
 		// Add 'models' in a single batch, so the original add will only be called once (and thus 'sort', etc).
 		// If `parse` was specified, the collection and contained models have been parsed now.
-		set.call( this, toAdd, _.defaults( { parse: false }, options ) );
+		var result = set.call( this, toAdd, _.defaults( { parse: false }, options ) );
 
 		_.each( newModels, function( model ) {
 			// Fire a `relational:add` event for any model in `newModels` that has actually been added to the collection.
@@ -1829,7 +1827,7 @@
 			}
 		}, this );
 		
-		return this;
+		return result;
 	};
 
 	/**
@@ -1842,7 +1840,7 @@
 			return remove.apply( this, arguments );
 		}
 
-		models = _.isArray( models ) ? models.slice( 0 ) : [ models ];
+		models = _.isArray( models ) ? models.slice() : [ models ];
 		options || ( options = {} );
 
 		var toRemove = [];
@@ -1853,15 +1851,13 @@
 			model && toRemove.push( model );
 		}, this );
 
-		if ( toRemove.length ) {
-			remove.call( this, toRemove, options );
+		var result = remove.call( this, toRemove, options );
 
-			_.each( toRemove, function( model ) {
-				this.trigger('relational:remove', model, this, options);
-			}, this );
-		}
+		_.each( toRemove, function( model ) {
+			this.trigger('relational:remove', model, this, options);
+		}, this );
 		
-		return this;
+		return result;
 	};
 
 	/**
@@ -1870,13 +1866,13 @@
 	var reset = Backbone.Collection.prototype.__reset = Backbone.Collection.prototype.reset;
 	Backbone.Collection.prototype.reset = function( models, options ) {
 		options = _.extend( { merge: true }, options );
-		reset.call( this, models, options );
+		var result = reset.call( this, models, options );
 
 		if ( this.model.prototype instanceof Backbone.RelationalModel ) {
 			this.trigger( 'relational:reset', this, options );
 		}
 
-		return this;
+		return result;
 	};
 
 	/**
@@ -1884,13 +1880,13 @@
 	 */
 	var sort = Backbone.Collection.prototype.__sort = Backbone.Collection.prototype.sort;
 	Backbone.Collection.prototype.sort = function( options ) {
-		sort.call( this, options );
+		var result = sort.call( this, options );
 
 		if ( this.model.prototype instanceof Backbone.RelationalModel ) {
 			this.trigger( 'relational:reset', this, options );
 		}
 
-		return this;
+		return result;
 	};
 
 	/**
