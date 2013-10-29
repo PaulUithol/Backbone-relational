@@ -1252,7 +1252,7 @@
 
 		/**
 		 * Get a specific relation.
-		 * @param key {string} The relation key to look for.
+		 * @param {string} key The relation key to look for.
 		 * @return {Backbone.Relation} An instance of 'Backbone.Relation', if a relation was found for 'key', or null.
 		 */
 		getRelation: function( key ) {
@@ -1269,23 +1269,24 @@
 
 		/**
 		 * Retrieve related objects.
-		 * @param key {string} The relation key to fetch models for.
-		 * @param [options] {Object} Options for 'Backbone.Model.fetch' and 'Backbone.sync'.
-		 * @param [refresh=false] {boolean} Fetch existing models from the server as well (in order to update them).
+		 * @param {string} key The relation key to fetch models for.
+		 * @param {Object} [options] Options for 'Backbone.Model.fetch' and 'Backbone.sync'.
+		 * @param {Boolean} [refresh=false] Fetch existing models from the server as well (in order to update them).
 		 * @return {jQuery.when[]} An array of request objects
 		 */
 		fetchRelated: function( key, options, refresh ) {
 			// Set default `options` for fetch
 			options = _.extend( { update: true, remove: false }, options );
 
-			var setUrl,
+			var models,
+				setUrl,
 				requests = [],
 				rel = this.getRelation( key ),
 				idsToFetch = rel && ( ( rel.keyIds && rel.keyIds.slice( 0 ) ) || ( ( rel.keyId || rel.keyId === 0 ) ? [ rel.keyId ] : [] ) );
 
 			// On `refresh`, add the ids for current models in the relation to `idsToFetch`
 			if ( refresh ) {
-				var models = rel.related instanceof Backbone.Collection ? rel.related.models : [ rel.related ];
+				models = rel.related instanceof Backbone.Collection ? rel.related.models : [ rel.related ];
 				_.each( models, function( model ) {
 					if ( model.id || model.id === 0 ) {
 						idsToFetch.push( model.id );
@@ -1295,19 +1296,19 @@
 
 			if ( idsToFetch && idsToFetch.length ) {
 				// Find (or create) a model for each one that is to be fetched
-				var created = [],
-					models = _.map( idsToFetch, function( id ) {
-						var model = Backbone.Relational.store.find( rel.relatedModel, id );
-						
-						if ( !model ) {
-							var attrs = {};
-							attrs[ rel.relatedModel.prototype.idAttribute ] = id;
-							model = rel.relatedModel.findOrCreate( attrs, options );
-							created.push( model );
-						}
+				var created = [];
+				models = _.map( idsToFetch, function( id ) {
+					var model = Backbone.Relational.store.find( rel.relatedModel, id );
 
-						return model;
-					}, this );
+					if ( !model ) {
+						var attrs = {};
+						attrs[ rel.relatedModel.prototype.idAttribute ] = id;
+						model = rel.relatedModel.findOrCreate( attrs, options );
+						created.push( model );
+					}
+
+					return model;
+				}, this );
 				
 				// Try if the 'collection' can provide a url to fetch a set of models in one request.
 				if ( rel.related instanceof Backbone.Collection && _.isFunction( rel.related.url ) ) {
@@ -1598,7 +1599,7 @@
 			this.initializeModelHierarchy();
 
 			// Determine what type of (sub)model should be built if applicable.
-			var model = this._findSubModelType(this, attributes) || this;
+			var model = this._findSubModelType( this, attributes ) || this;
 			
 			return new model( attributes, options );
 		},
@@ -1612,16 +1613,17 @@
 		 * @param {Object} attributes
 		 * @return {Backbone.Model}
 		 */
-		_findSubModelType: function (type, attributes) {
+		_findSubModelType: function( type, attributes ) {
 			if ( type._subModels && type.prototype.subModelTypeAttribute in attributes ) {
-				var subModelTypeAttribute = attributes[type.prototype.subModelTypeAttribute];
-				var subModelType = type._subModels[subModelTypeAttribute];
+				var subModelTypeAttribute = attributes[ type.prototype.subModelTypeAttribute ];
+				var subModelType = type._subModels[ subModelTypeAttribute ];
 				if ( subModelType ) {
 					return subModelType;
-				} else {
+				}
+				else {
 					// Recurse into subModelTypes to find a match
 					for ( subModelTypeAttribute in type._subModels ) {
-						subModelType = this._findSubModelType(type._subModels[subModelTypeAttribute], attributes);
+						subModelType = this._findSubModelType( type._subModels[ subModelTypeAttribute ], attributes );
 						if ( subModelType ) {
 							return subModelType;
 						}
@@ -1641,8 +1643,8 @@
 			// If we came here through 'build' for a model that has 'subModelTypes' then try to initialize the ones that
 			// haven't been resolved yet.
 			if ( this.prototype.subModelTypes ) {
-				var resolvedSubModels = _.keys(this._subModels);
-				var unresolvedSubModels = _.omit(this.prototype.subModelTypes, resolvedSubModels);
+				var resolvedSubModels = _.keys( this._subModels );
+				var unresolvedSubModels = _.omit( this.prototype.subModelTypes, resolvedSubModels );
 				_.each( unresolvedSubModels, function( subModelTypeName ) {
 					var subModelType = Backbone.Relational.store.getObjectByName( subModelTypeName );
 					subModelType && subModelType.initializeModelHierarchy();
