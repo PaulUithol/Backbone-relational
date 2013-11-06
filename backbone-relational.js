@@ -1724,7 +1724,7 @@
 					model.set( parsedAttributes, options );
 				}
 				else if ( !model && options.create !== false ) {
-					model = this.build( attributes, options );
+					model = this.build( parsedAttributes, options );
 				}
 			}
 
