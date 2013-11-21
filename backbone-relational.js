@@ -14,7 +14,7 @@
 	 * CommonJS shim
 	 **/
 	var _, Backbone, exports;
-	if ( typeof window === 'undefined' ) {
+	if ( typeof require === 'function' ) {
 		_ = require( 'underscore' );
 		Backbone = require( 'backbone' );
 		exports = Backbone;
