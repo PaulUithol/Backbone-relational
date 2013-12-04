@@ -691,6 +691,7 @@
 				this.setRelated( null );
 			}
 			else if ( this instanceof Backbone.HasMany ) {
+				this.related.reset( [], {silent: true} );
 				this.setRelated( this._prepareCollection() );
 			}
 			
