@@ -395,8 +395,8 @@
 		 * @param {String|Number|Object|Backbone.RelationalModel} item
 		 */
 		find: function( type, item ) {
-			var id = this.resolveIdForItem( type, item );
-			var coll = this.getCollection( type );
+			var id = this.resolveIdForItem( type, item ),
+				coll = this.getCollection( type );
 			
 			// Because the found object could be of any of the type's superModel
 			// types, only return it if it's actually of the type asked for.
@@ -1306,7 +1306,7 @@
 				// Find (or create) a model for each one that is to be fetched
 				var created = [];
 				models = _.map( idsToFetch, function( id ) {
-					var model = Backbone.Relational.store.find( rel.relatedModel, id );
+					var model = rel.relatedModel.findModel( id );
 
 					if ( !model ) {
 						var attrs = {};
@@ -1677,7 +1677,7 @@
 				this._superModel.inheritRelations();
 				if ( this._superModel.prototype.relations ) {
 					// Find relations that exist on the '_superModel', but not yet on this model.
-					var inheritedRelations = _.select( this._superModel.prototype.relations || [], function( superRel ) {
+					var inheritedRelations = _.filter( this._superModel.prototype.relations || [], function( superRel ) {
 						return !_.any( this.prototype.relations || [], function( rel ) {
 							return superRel.relatedModel === rel.relatedModel && superRel.key === rel.key;
 						}, this );
@@ -1695,9 +1695,9 @@
 
 		/**
 		 * Find an instance of `this` type in 'Backbone.Relational.store'.
-		 * - If `attributes` is a string or a number, `findOrCreate` will just query the `store` and return a model if found.
+		 * A new model is created with `attributes` (unless `options.create` is explicitly set to `false`) if no match is found.
+		 * - If `attributes` is a string or a number, `findOrCreate` will query the `store` and return a model if found.
 		 * - If `attributes` is an object and is found in the store, the model will be updated with `attributes` unless `options.update` is `false`.
-		 *   Otherwise, a new model is created with `attributes` (unless `options.create` is explicitly set to `false`).
 		 * @param {Object|String|Number} attributes Either a model's id, or the attributes used to create or update a model.
 		 * @param {Object} [options]
 		 * @param {Boolean} [options.create=true]
@@ -1710,8 +1710,9 @@
 			var parsedAttributes = ( _.isObject( attributes ) && options.parse && this.prototype.parse ) ?
 				this.prototype.parse( _.clone( attributes ) ) : attributes;
 
-			// Try to find an instance of 'this' model type in the store
-			var model = Backbone.Relational.store.find( this, parsedAttributes );
+			// If specified, use a custom `find` function to match up existing models to the given attributes.
+			// Otherwise, try to find an instance of 'this' model type in the store
+			var model = this.findModel( parsedAttributes );
 
 			// If we found an instance, update it with the data in 'item' (unless 'options.merge' is false).
 			// If not, create an instance (unless 'options.create' is false).
@@ -1733,7 +1734,7 @@
 
 		/**
 		 * Find an instance of `this` type in 'Backbone.Relational.store'.
-		 * - If `attributes` is a string or a number, `find` will just query the `store` and return a model if found.
+		 * - If `attributes` is a string or a number, `find` will query the `store` and return a model if found.
 		 * - If `attributes` is an object and is found in the store, the model will be updated with `attributes` unless `options.update` is `false`.
 		 * @param {Object|String|Number} attributes Either a model's id, or the attributes used to create or update a model.
 		 * @param {Object} [options]
@@ -1745,6 +1746,16 @@
 			options || ( options = {} );
 			options.create = false;
 			return this.findOrCreate( attributes, options );
+		},
+
+		/**
+		 * A hook to override the matching when updating (or creating) a model.
+		 * The default implementation is to look up the model by id in the store.
+		 * @param {Object} attributes
+		 * @returns {Backbone.RelationalModel}
+		 */
+		findModel: function( attributes ) {
+			return Backbone.Relational.store.find( this, attributes );
 		}
 	});
 	_.extend( Backbone.RelationalModel.prototype, Backbone.Semaphore );
