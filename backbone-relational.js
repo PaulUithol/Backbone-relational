@@ -1573,7 +1573,7 @@
 			}
 
 			// Initialize all reverseRelations that belong to this new model.
-			_.each( this.prototype.relations || [], function( rel ) {
+			_.each( _.result( this.prototype, 'relations' ) || [], function( rel ) {
 				if ( !rel.model ) {
 					rel.model = this;
 				}
@@ -1688,7 +1688,7 @@
 				if ( this._superModel.prototype.relations ) {
 					// Find relations that exist on the '_superModel', but not yet on this model.
 					var inheritedRelations = _.filter( this._superModel.prototype.relations || [], function( superRel ) {
-						return !_.any( this.prototype.relations || [], function( rel ) {
+						return !_.any( _.result( this.prototype, 'relations' ) || [], function( rel ) {
 							return superRel.relatedModel === rel.relatedModel && superRel.key === rel.key;
 						}, this );
 					}, this );
