@@ -466,6 +466,11 @@
 		 */
 		unregister: function( model, collection, options ) {
 			this.stopListening( model );
+
+			_.each( model.getRelations(), function( rel ) {
+				rel.stopListening();
+			});
+
 			var coll = this.getCollection( model );
 			coll && coll.remove( model, options );
 		},
