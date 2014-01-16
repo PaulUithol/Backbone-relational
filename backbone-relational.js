@@ -1569,6 +1569,9 @@
 
 			// Initialize all reverseRelations that belong to this new model.
 			_.each( this.prototype.relations || [], function( rel ) {
+				if ( !rel ) {
+					return;
+				}
 				if ( !rel.model ) {
 					rel.model = this;
 				}
