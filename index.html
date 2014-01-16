@@ -245,6 +245,12 @@
 <!-- -->&lt;script type="text/javascript" src="./js/backbone.js"&gt;&lt;/script&gt;
 <!-- -->&lt;script type="text/javascript" src="./js/backbone-relational.js"&gt;&lt;/script&gt;
 </code></pre>
+
+		<p class="warning larger">
+			Note for <strong>CoffeeScript</strong> users: due to the way the <q>extends</q> keyword is implemented in
+			CoffeeScript, you may have to make an extra call to <a href="#RelationalModel-setup"><q>setup</q></a> for
+			your models.
+		</p>
 	</section>
 
 	<section id="RelationalModel">
@@ -865,12 +871,25 @@ alert( 'chimp is an animal? ' + ( chimp instanceof Animal ) + '\n' +
 		</section>
 
 <pre class="language-javascript"><code class="language-javascript"><!--
--->class MyModel extends Backbone.RelationalModel
-	relations: [
-		// etc
-	]
+-->class Animal extends Backbone.RelationalModel
+    urlRoot: "/animal"
 
-MyModel.setup()
+class Mammal extends Animal
+    subModelTypes:
+        "primate": "Primate"
+        "carnivore": "Carnivore"
+
+    relations: [
+        # More relations
+    ]
+
+Mammal.setup()
+
+class Primate extends Mammal
+
+class Carnivore extends Mammal
+
+chimp = Mammal.build( { id: 3, species: "chimp", type: "primate" } )
 </code></pre>
 
 		<section id="RelationalModel-build">
@@ -1211,6 +1230,10 @@ User = Backbone.RelationalModel.extend();
 			</small>
 		</h4>
 		<ul>
+			<li>
+				<a href="https://github.com/PaulUithol/Backbone-relational/commit/8371089ac8bb92a00c2de38822fea7fa9f555b04"><q>8371089</q></a>:
+				Add <q>findModel</q>.
+			</li>
 		</ul>
 
 		<h4>0.8.6
