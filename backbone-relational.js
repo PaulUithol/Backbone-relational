@@ -8,20 +8,42 @@
  * Depends on Backbone (and thus on Underscore as well): https://github.com/documentcloud/backbone.
  *
  * Example:
- * Zoo = Backbone.RelationalModel.extend({
- *	relations: [{
- *		type: Backbone.HasMany,
- *		key: 'animals',
- *		relatedModel: 'Animal',
- *		collectionType: 'AnimalCollection',
- *		reverseRelation: {
- *			key: 'livesIn',
- *			includeInJSON: 'id'
- *			// 'relatedModel' is automatically set to 'Zoo'; the 'relationType' to 'HasOne'.
- *		}
- *	}]
- * });
  *
+	Zoo = Backbone.RelationalModel.extend( {
+	 relations: [ {
+	     type: Backbone.HasMany,
+	     key: 'animals',
+	     relatedModel: 'Animal',
+	     reverseRelation: {
+	         key: 'livesIn',
+	         includeInJSON: 'id'
+	         // 'relatedModel' is automatically set to 'Zoo'; the 'relationType' to 'HasOne'.
+	     }
+	 } ],
+
+	 toString: function() {
+	     return this.get( 'name' );
+	 }
+	} );
+
+	Animal = Backbone.RelationalModel.extend( {
+	 toString: function() {
+	     return this.get( 'species' );
+	 }
+	} );
+
+	// Creating the zoo will give it a collection with one animal in it: the monkey.
+	// The animal created after that has a relation `livesIn` that points to the zoo it's currently associated with.
+	// If you instantiate (or fetch) the zebra later, it will automatically be added.
+
+	var zoo = new Zoo( {
+	 name: 'Artis',
+	 animals: [ { id: 'monkey-1', species: 'Chimp' }, 'lion-1', 'zebra-1' ]
+	} );
+
+	var lion = new Animal( { id: 'lion-1', species: 'Lion' } ),
+	    monkey = zoo.get( 'animals' ).first(),
+	    sameZoo = lion.get( 'livesIn' );
  */
 ( function( undefined ) {
 	"use strict";
