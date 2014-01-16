@@ -844,6 +844,27 @@ $(document).ready(function() {
 			var result = person.set( { 'name': 'Hector' } );
 			ok( result === person, "Set returns the model" );
 		});
+
+		test( "Defining `relations` as a function", function() {
+			var Contact = Backbone.RelationalModel.extend();
+
+			var Company = Backbone.RelationalModel.extend({
+				urlRoot: '/company/',
+				relations: function() {
+					return [{
+						type: Backbone.HasMany,
+						key: 'contacts',
+						relatedModel: Contact
+					}];
+				}
+			});
+
+			// Call setup to test that method as well
+			//Company.setup();
+
+			var big = new Company( { name: 'Big', contacts: [ { name: 'Me' }, { name: 'You' } ] } );
+			ok( big.get( 'contacts' ) );
+		});
 		
 		test( "getRelations", function() {
 			var relations = person1.getRelations();
