@@ -1523,6 +1523,58 @@ $(document).ready(function() {
 			ok( petPerson.get( 'pets' ).at( 4 ) instanceof Poodle );
 		});
 
+		test( "Object building based on type in a custom field, when used in relations" , function() {
+			var scope = {};
+			Backbone.Relational.store.addModelScope( scope );
+
+			var Caveman = scope.Caveman = Backbone.RelationalModel.extend({
+				subModelTypes: {
+					'rubble': 'Rubble',
+					'flintstone': 'Flintstone'
+				},
+				subModelTypeAttribute: "caveman_type"
+			});
+			var Flintstone = scope.Flintstone = Caveman.extend();
+			var Rubble = scope.Rubble = Caveman.extend();
+
+			var Cartoon = scope.Cartoon = Backbone.RelationalModel.extend({
+				relations: [{
+					type: Backbone.HasMany,
+					key: 'cavemen',
+					relatedModel: Caveman
+				}]
+			});
+
+			var captainCaveman = new scope.Cartoon({
+				cavemen: [
+					{
+						type: 'rubble',
+						name: 'CaptainCaveman'
+					}
+				]
+			});
+
+			ok( !(captainCaveman.get( "cavemen" ).at( 0 ) instanceof Rubble) )
+
+			var theFlintstones = new scope.Cartoon({
+				cavemen: [
+					{
+						caveman_type: 'rubble',
+						name: 'Barney',
+
+					},
+					{
+						caveman_type: 'flintstone',
+						name: 'Wilma'
+					}
+				]
+			});
+
+			ok( theFlintstones.get( "cavemen" ).at( 0 ) instanceof Rubble )
+			ok( theFlintstones.get( "cavemen" ).at( 1 ) instanceof Flintstone )
+
+		});
+
 		test( "Automatic sharing of 'superModel' relations" , function() {
 			var scope = {};
 			Backbone.Relational.store.addModelScope( scope );
