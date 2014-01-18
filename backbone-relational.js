@@ -401,6 +401,21 @@
 			return coll;
 		},
 
+		_clearCollection: function (type) {
+  		var collection = this.getCollection(type.model, false),
+		  		model;
+
+		  if (!collection) {
+		    return;
+		  }
+
+		  while (model = collection.first()) {
+		    if (model) {
+		      this.unregister(model);
+		    }
+		  }
+		},
+
 		/**
 		 * Find the attribute that is to be used as the `id` on a given object
 		 * @param type
