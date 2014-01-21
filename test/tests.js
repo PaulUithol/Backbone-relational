@@ -844,6 +844,22 @@ $(document).ready(function() {
 			var result = person.set( { 'name': 'Hector' } );
 			ok( result === person, "Set returns the model" );
 		});
+
+		test( "clear", function() {
+			var person = new Person( { id: 'person-10' } );
+
+			ok( person === Person.findOrCreate( 'person-10' ) );
+
+			person.clear();
+
+			ok( !person.id );
+
+			ok( !Person.findOrCreate( 'person-10' ) );
+
+			person.set( { id: 'person-10' } );
+
+			ok( person === Person.findOrCreate( 'person-10' ) );
+		});
 		
 		test( "getRelations", function() {
 			var relations = person1.getRelations();
