@@ -459,7 +459,6 @@
 			if ( coll ) {
 				var modelColl = model.collection;
 				coll.add( model );
-				this.listenTo( model, 'destroy', this.unregister, this );
 				this.listenTo( model, 'relational:unregister', this.unregister, this );
 				model.collection = modelColl;
 			}
@@ -489,6 +488,11 @@
 		 */
 		update: function( model ) {
 			var coll = this.getCollection( model );
+
+			if ( !coll.contains( model ) ) {
+				this.register( model );
+			}
+
 			// This triggers updating the lookup indices kept in a collection
 			coll._onModelEvent( 'change:' + model.idAttribute, model, coll );
 
@@ -510,7 +514,12 @@
 			});
 
 			var coll = this.getCollection( model );
-			coll && coll.remove( model, options );
+			if ( coll.contains( model ) ) {
+				coll.remove( model, options );
+			}
+			else {
+				coll.trigger( 'relational:remove', model, coll );
+			}
 		},
 
 		/**
@@ -1232,6 +1241,10 @@
 					changed && Backbone.Model.prototype.trigger.apply( dit, args );
 				});
 			}
+			else if ( eventName === 'destroy' ) {
+				Backbone.Model.prototype.trigger.apply( this, arguments );
+				Backbone.Relational.store.unregister( this );
+			}
 			else {
 				Backbone.Model.prototype.trigger.apply( this, arguments );
 			}
@@ -1466,7 +1479,11 @@
 				// Ideal place to set up relations, if this is the first time we're here for this model
 				if ( !this._isInitialized && !this.isLocked() ) {
 					this.constructor.initializeModelHierarchy();
-					Backbone.Relational.store.register( this );
+
+					if ( newId || newId === 0 ) {
+						Backbone.Relational.store.register( this );
+					}
+
 					this.initializeRelations( options );
 				}
 				// The store should know about an `id` update asap

@@ -4472,12 +4472,26 @@ $(document).ready(function() {
 
 
 		test( "Creation and destruction", 0, function() {
+			var registerCount = 0,
+				unregisterCount = 0,
+				register = Backbone.Store.prototype.register,
+				unregister = Backbone.Store.prototype.unregister;
+
+			Backbone.Store.prototype.register = function( model ) {
+				registerCount++;
+				return register.apply( this, arguments );
+			};
+			Backbone.Store.prototype.unregister = function( model, coll, options ) {
+				unregisterCount++;
+				return unregister.apply( this, arguments );
+			};
+
 			var addHasManyCount = 0,
 				addHasOneCount = 0,
 				tryAddRelatedHasMany = Backbone.HasMany.prototype.tryAddRelated,
 				tryAddRelatedHasOne = Backbone.HasOne.prototype.tryAddRelated;
 
-			Backbone.HasMany.prototype.tryAddRelated = function( model, coll, options ) {
+			Backbone.Store.prototype.tryAddRelated = function( model, coll, options ) {
 				addHasManyCount++;
 				return tryAddRelatedHasMany.apply( this, arguments );
 			};
@@ -4517,15 +4531,15 @@ $(document).ready(function() {
 					reverseRelation: {
 						key: 'parent'
 					}
-				}]
-			});
-
-			var Parents = Backbone.Collection.extend({
-				model: Parent,
+				}],
 
 				toString: function() {
 					return this.get( 'name' );
 				}
+			});
+
+			var Parents = Backbone.Collection.extend({
+				model: Parent
 			});
 
 
@@ -4634,6 +4648,8 @@ $(document).ready(function() {
 
 			var secs = (new Date() - start) / 1000;
 			console.log( 'data loaded in %s, removeHasManyCount=%o, removeHasOneCount=%o', secs, removeHasManyCount, removeHasOneCount );
+
+			console.log( 'registerCount=%o, unregisterCount=%o', registerCount, unregisterCount );
 		});
 });
 
