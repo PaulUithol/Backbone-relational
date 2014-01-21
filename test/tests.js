@@ -4502,7 +4502,11 @@ $(document).ready(function() {
 
 
 			var Child = Backbone.RelationalModel.extend({
-				url: '/child/'
+				url: '/child/',
+
+				toString: function() {
+					return this.id;
+				}
 			});
 
 			var Parent = Backbone.RelationalModel.extend({
@@ -4517,7 +4521,11 @@ $(document).ready(function() {
 			});
 
 			var Parents = Backbone.Collection.extend({
-				model: Parent
+				model: Parent,
+
+				toString: function() {
+					return this.get( 'name' );
+				}
 			});
 
 
@@ -4595,7 +4603,8 @@ $(document).ready(function() {
 			start = new Date();
 
 			parents.each( function( parent ) {
-				parent.get( 'children' ).each( function( child ) {
+				var children = _.clone( parent.get( 'children' ).models );
+				_.each( children, function( child ) {
 					child.destroy();
 				});
 			});
