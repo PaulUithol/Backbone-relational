@@ -917,7 +917,7 @@ chimp = Mammal.build( { id: 3, species: "chimp", type: "primate" } )
 			</p>
 			<p>
 				Search for a model instance in the <a href="#Store">Backbone.Relational.store</a>, and return the model if found.
-				If no model is found, a new model will be created if <q>options.create</q> is <q>true</q>.
+				A new model will be created if no model is found, <q>attributes</q> is an object, and <q>options.create</q> is <q>true</q>.
 			</p>
 			<p>
 				Accepted <q>options</q>:
