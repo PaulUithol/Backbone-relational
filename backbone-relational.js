@@ -230,7 +230,7 @@
 		 */
 		setupSuperModel: function( modelType ) {
 			_.find( this._subModels, function( subModelDef ) {
-				return _.find( subModelDef.subModels || [], function( subModelTypeName, typeValue ) {
+				return _.each( subModelDef.subModels || [], function( subModelTypeName, typeValue ) {
 					var subModelType = this.getObjectByName( subModelTypeName );
 
 					if ( modelType === subModelType ) {

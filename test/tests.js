@@ -1435,7 +1435,8 @@ $(document).ready(function() {
 			scope.Mammal = Animal.extend({
 				subModelTypes: {
 					'primate': 'Primate',
-					'carnivore': 'Carnivore'
+					'carnivore': 'Carnivore',
+					'ape': 'Primate' // To check multiple keys for the same submodel; see GH-429
 				}
 			});
 			scope.Primate = scope.Mammal.extend({
@@ -1453,12 +1454,14 @@ $(document).ready(function() {
 			var mammals = new MammalCollection( [
 				{ id: 5, species: 'chimp', type: 'primate' },
 				{ id: 6, species: 'panther', type: 'carnivore' },
-				{ id: 7, species: 'person', type: 'human' }
+				{ id: 7, species: 'person', type: 'human' },
+				{ id: 8, species: 'gorilla', type: 'ape' }
 			]);
 
 			ok( mammals.at( 0 ) instanceof scope.Primate );
 			ok( mammals.at( 1 ) instanceof scope.Carnivore );
 			ok( mammals.at( 2 ) instanceof scope.Human );
+			ok( mammals.at( 3 ) instanceof scope.Primate );
 		});
 
 		test( "Object building based on type, when used in relations" , function() {
