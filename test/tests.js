@@ -3958,12 +3958,35 @@ $(document).ready(function() {
 			var reset = cars.reset( [ { name: 'E' }, { name: 'F' } ] );
 			ok( _.isArray( reset ), "Reset (an array of) two models" );
 			ok( reset.length === 2 );
+			ok( cars.length === 2 );
 
 			var e = cars.at(0),
 				f = cars.at(1);
 
 			ok( cars.set( e ) instanceof Car, "Set one model" );
 			ok( _.isArray( cars.set( [ e, f ] ) ), "Set (an array of) two models" );
+
+			// Check removing `[]`
+			var result = cars.remove( [] );
+			ok( _.isArray( result ) && !result.length, "Removing `[]` is a noop" );
+			ok( cars.length === 2 );
+
+			// Check removing `null`
+			result = cars.remove( null );
+			ok( _.isUndefined( result ), "Removing `null` is a noop" );
+			ok( cars.length === 2 );
+
+			// Check setting to `[]`
+			result = cars.set( [] );
+			ok( _.isArray( result ) && !result.length, "Set `[]` empties collection" );
+			ok( cars.length === 0 );
+
+			cars.set( [ e, f ] );
+			ok( cars.length === 2 );
+
+			// Check setting `null`
+			ok( _.isUndefined( cars.set( null ) ), "Set `null` empties collection" );
+			ok( cars.length === 0 );
 		});
 
 		test( "add/remove/set (with `add`, `remove` and `merge` options)", function() {
