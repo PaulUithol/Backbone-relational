@@ -3938,7 +3938,35 @@ $(document).ready(function() {
 			ok( node1.get( 'parent' ) === node2 );
 		});
 
-		test( "add/remove/update (with `add`, `remove` and `merge` options)", function() {
+		test( "Return values for add/remove/reset/set match plain Backbone's", function() {
+			var Car = Backbone.RelationalModel.extend(),
+				Cars = Backbone.Collection.extend( { model: Car } ),
+				cars = new Cars();
+
+			ok( cars.add( { name: 'A' } ) instanceof Car, "Add one model" );
+
+			var added = cars.add( [ { name: 'B' }, { name: 'C' } ] );
+			ok( _.isArray( added ), "Added (an array of) two models" );
+			ok( added.length === 2 );
+
+			ok( cars.remove( cars.at( 0 ) ) instanceof Car, "Remove one model" );
+			var removed = cars.remove( [ cars.at( 0 ), cars.at( 1 ) ] );
+			ok( _.isArray( removed ), "Remove (an array of) two models" );
+			ok( removed.length === 2 );
+
+			ok( cars.reset( { name: 'D' } ) instanceof Car, "Reset with one model" );
+			var reset = cars.reset( [ { name: 'E' }, { name: 'F' } ] );
+			ok( _.isArray( reset ), "Reset (an array of) two models" );
+			ok( reset.length === 2 );
+
+			var e = cars.at(0),
+				f = cars.at(1);
+
+			ok( cars.set( e ) instanceof Car, "Set one model" );
+			ok( _.isArray( cars.set( [ e, f ] ) ), "Set (an array of) two models" );
+		});
+
+		test( "add/remove/set (with `add`, `remove` and `merge` options)", function() {
 			var coll = new AnimalCollection();
 
 			/**
@@ -4021,7 +4049,7 @@ $(document).ready(function() {
 			equal( gorilla.get( 'name' ), 'Silverback' );
 		});
 
-		test( "add/remove/update on a relation (with `add`, `remove` and `merge` options)", function() {
+		test( "add/remove/set on a relation (with `add`, `remove` and `merge` options)", function() {
 			var zoo = new Zoo(),
 				animals = zoo.get( 'animals' ),
 				a = new Animal( { id: 'a' } ),

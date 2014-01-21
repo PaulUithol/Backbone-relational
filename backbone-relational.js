@@ -1855,10 +1855,12 @@
 			models = this.parse( models, options );
 		}
 
-		models = _.isArray( models ) ? models.slice() : ( models ? [ models ] : [] );
-
-		var newModels = [],
+		var singular = !_.isArray( models ),
+			newModels = [],
 			toAdd = [];
+
+		models = singular ? ( models ? [ models ] : [] ) : _.clone( models );
+		models = _.isArray( models ) ? models.slice() : ( models ? [ models ] : [] );
 
 		//console.debug( 'calling add on coll=%o; model=%o, options=%o', this, models, options );
 		_.each( models, function( model ) {
@@ -1882,7 +1884,10 @@
 
 		// Add 'models' in a single batch, so the original add will only be called once (and thus 'sort', etc).
 		// If `parse` was specified, the collection and contained models have been parsed now.
-		var result = set.call( this, toAdd, _.defaults( { parse: false }, options ) );
+		var result;
+		if ( toAdd.length ) {
+			result = set.call( this, singular ? toAdd[ 0 ] : toAdd, _.defaults( { parse: false }, options ) );
+		}
 
 		_.each( newModels, function( model ) {
 			// Fire a `relational:add` event for any model in `newModels` that has actually been added to the collection.
@@ -1904,10 +1909,11 @@
 			return remove.apply( this, arguments );
 		}
 
-		models = _.isArray( models ) ? models.slice() : [ models ];
-		options || ( options = {} );
+		var singular = !_.isArray( models ),
+			toRemove = [];
 
-		var toRemove = [];
+		models = singular ? ( models ? [ models ] : [] ) : _.clone( models );
+		options || ( options = {} );
 
 		//console.debug('calling remove on coll=%o; models=%o, options=%o', this, models, options );
 		_.each( models, function( model ) {
@@ -1915,7 +1921,10 @@
 			model && toRemove.push( model );
 		}, this );
 
-		var result = remove.call( this, toRemove, options );
+		var result;
+		if ( toRemove.length ) {
+			result = remove.call( this, singular ? toRemove[ 0 ] : toRemove, options );
+		}
 
 		_.each( toRemove, function( model ) {
 			this.trigger('relational:remove', model, this, options);
