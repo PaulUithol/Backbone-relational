@@ -722,11 +722,24 @@ $(document).ready(function() {
 		});
 		
 		
-		test( "Model.collection is the first collection a Model is added to by an end-user (not it's Backbone.Store collection!)", function() {
-			var person = new Person( { name: 'New guy' } );
+		test( "Model.collection is the first collection a Model is added to by an end-user (not its Backbone.Store collection!)", function() {
+			var person = new Person( { id: 5, name: 'New guy' } );
 			var personColl = new PersonCollection();
 			personColl.add( person );
 			ok( person.collection === personColl );
+		});
+
+		test( "Models don't get added to the store until the get an id", function() {
+			var storeColl = Backbone.Relational.store.getCollection( Node ),
+				node1 = new Node( { id: 1 } ),
+				node2 = new Node();
+
+			ok( storeColl.contains( node1 ) );
+			ok( !storeColl.contains( node2 ) );
+
+			node2.set( { id: 2 } );
+
+			ok( storeColl.contains( node1 ) );
 		});
 		
 		test( "All models can be found after adding them to a Collection via 'Collection.reset'", function() {

@@ -511,7 +511,7 @@
 			_.invoke( model.getRelations(), 'stopListening' );
 
 			var coll = this.getCollection( model );
-			if ( coll.contains( model ) ) {
+			if ( coll.get( model ) ) {
 				coll.remove( model, options );
 			}
 			else {
