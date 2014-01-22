@@ -459,7 +459,6 @@
 			if ( coll ) {
 				var modelColl = model.collection;
 				coll.add( model );
-				this.listenTo( model, 'relational:unregister', this.unregister, this );
 				model.collection = modelColl;
 			}
 		},
@@ -509,9 +508,7 @@
 		unregister: function( model, collection, options ) {
 			this.stopListening( model );
 
-			_.each( model.getRelations(), function( rel ) {
-				rel.stopListening();
-			});
+			_.invoke( model.getRelations(), 'stopListening' );
 
 			var coll = this.getCollection( model );
 			if ( coll.contains( model ) ) {
@@ -1177,6 +1174,7 @@
 			}
 
 			Backbone.Relational.store.processOrphanRelations();
+			Backbone.Relational.store.listenTo( this, 'relational:unregister', Backbone.Relational.store.unregister );
 
 			this._queue = new Backbone.BlockingQueue();
 			this._queue.block();
