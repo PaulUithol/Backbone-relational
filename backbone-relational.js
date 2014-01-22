@@ -690,10 +690,7 @@
 		 */
 		setRelated: function( related ) {
 			this.related = related;
-
-			this.instance.acquire();
 			this.instance.attributes[ this.key ] = related;
-			this.instance.release();
 		},
 
 		/**
