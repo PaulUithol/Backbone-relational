@@ -1196,9 +1196,10 @@ $(document).ready(function() {
 			ok( animal.get( 'livesIn' ) instanceof Zoo );
 			ok( animal.get( 'livesIn' ).get( 'animals' ).get( animal ) === animal );
 
-			// `parse` gets called once by `findOrCreate` directly when trying to lookup `1`,
-			// once when `build` (called from `findOrCreate`) calls the Zoo constructor with `{ parse: true}`.
-			ok( parseCalled === 2, 'parse called 2 times? ' + parseCalled );
+			// `parse` gets called by `findOrCreate` directly when trying to lookup `1`,
+			// and the parsed attributes are passed to `build` (called from `findOrCreate`) with `{ parse: false }`,
+			// rather than having `parse` called again by the Zoo constructor.
+			ok( parseCalled === 1, 'parse called 1 time? ' + parseCalled );
 
 			parseCalled = 0;
 
@@ -2266,7 +2267,7 @@ $(document).ready(function() {
 			ok( job && job.id === 'e1', 'job exists' );
 			ok( person && person.id === 'p1', 'person exists' );
 
-			ok( modelParseCalled === 7, 'model.parse called 7 times? ' + modelParseCalled );
+			ok( modelParseCalled === 4, 'model.parse called 4 times? ' + modelParseCalled );
 			ok( collParseCalled === 0, 'coll.parse called 0 times? ' + collParseCalled );
 		});
 		

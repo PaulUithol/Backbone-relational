@@ -1783,7 +1783,7 @@
 					model.set( parsedAttributes, options );
 				}
 				else if ( !model && options.create !== false ) {
-					model = this.build( attributes, options );
+					model = this.build( parsedAttributes, _.defaults( { parse: false }, options ) );
 				}
 			}
 
