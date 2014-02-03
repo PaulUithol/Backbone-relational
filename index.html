@@ -1065,7 +1065,7 @@ alert( JSON.stringify( zoo.toJSON(), null, 4 ) );
 		</p>
 
 		<h4 class="code" id="Store-addModelScope">
-			addModelScope<code>Backbone.Relational.store.addModelScope( scope&lt;object&gt; )</code>
+			addModelScope<code>Backbone.Relational.store.addModelScope(scope&lt;object&gt;)</code>
 		</h4>
 		<p>
 			Add a namespace on which models and collections are defined. This is especially useful when working in an
@@ -1087,6 +1087,15 @@ alert( JSON.stringify( zoo.toJSON(), null, 4 ) );
 		<p>
 			Reset the <q>store</q> to it's original state. This will disable relations for all models created up to this point,
 			remove added model scopes, and removed all internal store collections.
+		</p>
+
+		<h4 class="code" id="Store-unregister">
+			unregister<code>Backbone.Relational.store.unregister(type&lt;Backbone.RelationalModel|Backbone.RelationalModel.constructor|Backbone.Collection&gt;)</code>
+		</h4>
+		<p>
+			Unregister a single model or a collection. Unregistering a model will remove a model from any relations it's involved in.
+			Internally, unregister is called when a model has been destroyed. It can also be called explicitly to on models
+			you don't want Backbone-relational to consider for relations anymore, for example to free up models used as (temporary) search results.
 		</p>
 	</section>
 
@@ -1237,6 +1246,10 @@ User = Backbone.RelationalModel.extend();
 			<li>
 				<a href="https://github.com/PaulUithol/Backbone-relational/issues/419"><q>#419</q></a>:
 				Proper return values for single models on collection methods for Backbone 1.1.0
+			</li>
+			<li>
+				<a href="https://github.com/PaulUithol/Backbone-relational/commit/4113c69d3752fcac75f7a1959c77349dd4672afa"><q>4113c69</q></a>
+				`Backbone.Relational.store.unregister` now also acceps collections or a model type
 			</li>
 		</ul>
 
