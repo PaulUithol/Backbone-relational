@@ -649,6 +649,53 @@ $(document).ready(function() {
 			ok( !Backbone.Relational.store.getObjectByName( 'Person' ) );
 		});
 
+		test( "unregister", function() {
+			var animalStoreColl = Backbone.Relational.store.getCollection( Animal ),
+				animals = null,
+				animal = null;
+
+			// Single model
+			animal = new Animal( { id: 'a1' } );
+			ok( Backbone.Relational.store.find( Animal, 'a1' ) === animal );
+
+			Backbone.Relational.store.unregister( animal );
+			ok( Backbone.Relational.store.find( Animal, 'a1' ) === null );
+
+			animal = new Animal( { id: 'a2' } );
+			ok( Backbone.Relational.store.find( Animal, 'a2' ) === animal );
+
+			animal.trigger( 'relational:unregister', animal );
+			ok( Backbone.Relational.store.find( Animal, 'a2' ) === null );
+
+			ok( animalStoreColl.size() === 0 );
+
+			// Collection
+			animals = new AnimalCollection( [ { id: 'a3' }, { id: 'a4' } ] );
+			animal = animals.first();
+
+			ok( Backbone.Relational.store.find( Animal, 'a3' ) === animal );
+			ok( animalStoreColl.size() === 2 );
+
+			Backbone.Relational.store.unregister( animals );
+			ok( Backbone.Relational.store.find( Animal, 'a3' ) === null );
+
+			ok( animalStoreColl.size() === 0 );
+
+			// Store collection
+			animals = new AnimalCollection( [ { id: 'a5' }, { id: 'a6' } ] );
+			ok( animalStoreColl.size() === 2 );
+
+			Backbone.Relational.store.unregister( animalStoreColl );
+			ok( animalStoreColl.size() === 0 );
+
+			// Model type
+			animals = new AnimalCollection( [ { id: 'a7' }, { id: 'a8' } ] );
+			ok( animalStoreColl.size() === 2 );
+
+			Backbone.Relational.store.unregister( Animal );
+			ok( animalStoreColl.size() === 0 );
+		});
+
 		test( "`eventQueue` is unblocked again after a duplicate id error", 3, function() {
 			var node = new Node( { id: 1 } );
 
@@ -4588,11 +4635,14 @@ $(document).ready(function() {
 			});
 
 			var parents = new Parents();
+
 			parents.on('reset', function () {
 				var secs = (new Date() - start) / 1000;
 				console.log( 'data loaded in %s, addHasManyCount=%o, addHasOneCount=%o', secs, addHasManyCount, addHasOneCount );
 			});
 			parents.reset( preparedData );
+
+			//_.invoke( _.clone( parents.models ), 'destroy' );
 
 
 			/**
@@ -4604,11 +4654,14 @@ $(document).ready(function() {
 			var start = new Date();
 
 			var parents = new Parents();
+
 			parents.on('reset', function () {
 				var secs = (new Date() - start) / 1000;
 				console.log( 'data loaded in %s, addHasManyCount=%o, addHasOneCount=%o', secs, addHasManyCount, addHasOneCount );
 			});
 			parents.reset( data );
+
+			//_.invoke( _.clone( parents.models ), 'destroy' );
 
 
 			/**
@@ -4639,6 +4692,7 @@ $(document).ready(function() {
 			var secs = (new Date() - start) / 1000;
 			console.log( 'data loaded in %s, removeHasManyCount=%o, removeHasOneCount=%o', secs, removeHasManyCount, removeHasOneCount );
 
+			//_.invoke( _.clone( parents.models ), 'destroy' );
 
 			/**
 			 * Test 1 (again)
@@ -4660,7 +4714,7 @@ $(document).ready(function() {
 			parents.remove( parents.models );
 
 			var secs = (new Date() - start) / 1000;
-			console.log( 'data loaded in %s, removeHasManyCount=%o, removeHasOneCount=%o', secs, removeHasManyCount, removeHasOneCount );
+			console.log( 'data removed in %s, removeHasManyCount=%o, removeHasOneCount=%o', secs, removeHasManyCount, removeHasOneCount );
 
 			console.log( 'registerCount=%o, unregisterCount=%o', registerCount, unregisterCount );
 		});

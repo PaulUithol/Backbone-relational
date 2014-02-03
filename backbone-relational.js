@@ -488,6 +488,7 @@
 		update: function( model ) {
 			var coll = this.getCollection( model );
 
+			// Register a model if it isn't yet (which happens if it was created without an id).
 			if ( !coll.contains( model ) ) {
 				this.register( model );
 			}
@@ -500,22 +501,46 @@
 		},
 
 		/**
-		 * Remove a 'model' from the store.
-		 * @param {Backbone.RelationalModel} model
-		 * @param {Backbone.Collection} [collection]
-		 * @param {Object} [options]
+		 * Unregister from the store: a specific model, a collection, or a model type.
+		 * @param {Backbone.RelationalModel|Backbone.RelationalModel.constructor|Backbone.Collection} type
 		 */
-		unregister: function( model, collection, options ) {
-			this.stopListening( model );
+		unregister: function( type ) {
+			var coll,
+				models;
 
-			_.invoke( model.getRelations(), 'stopListening' );
-
-			var coll = this.getCollection( model );
-			if ( coll.get( model ) ) {
-				coll.remove( model, options );
+			if ( type instanceof Backbone.Model ) {
+				coll = this.getCollection( type );
+				models = [ type ];
+			}
+			else if ( type instanceof Backbone.Collection ) {
+				coll = this.getCollection( type.model );
+				models = _.clone( type.models );
 			}
 			else {
-				coll.trigger( 'relational:remove', model, coll );
+				coll = this.getCollection( type );
+				models = _.clone( coll.models );
+			}
+
+			_.each( models, function( model ) {
+				this.stopListening( model );
+				_.invoke( model.getRelations(), 'stopListening' );
+			}, this );
+
+
+			// If we've unregistered an entire store collection, reset the collection (which is much faster).
+			// Otherwise, remove each model one by one.
+			if ( _.contains( this._collections, type ) ) {
+				coll.reset( [] );
+			}
+			else {
+				_.each( models, function( model ) {
+					if ( coll.get( model ) ) {
+						coll.remove( model );
+					}
+					else {
+						coll.trigger( 'relational:remove', model, coll );
+					}
+				}, this );
 			}
 		},
 
@@ -525,6 +550,12 @@
 		 */
 		reset: function() {
 			this.stopListening();
+
+			// Unregister each collection to remove event listeners
+			_.each( this._collections, function( coll ) {
+				this.unregister( coll );
+			}, this );
+
 			this._collections = [];
 			this._subModels = [];
 			this._modelScopes = [ exports ];
@@ -1478,6 +1509,7 @@
 				if ( !this._isInitialized && !this.isLocked() ) {
 					this.constructor.initializeModelHierarchy();
 
+					// Only register models that have an id. A model will be registered when/if it gets an id later on.
 					if ( newId || newId === 0 ) {
 						Backbone.Relational.store.register( this );
 					}
