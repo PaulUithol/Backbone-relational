@@ -645,6 +645,7 @@
 
 			// When 'relatedModel' are created or destroyed, check if it affects this relation.
 			this.listenTo( this.instance, 'destroy', this.destroy )
+				.listenTo( this.instance, 'relational:unregister', this.destroy )
 				.listenTo( this.relatedCollection, 'relational:add relational:change:id', this.tryAddRelated )
 				.listenTo( this.relatedCollection, 'relational:remove', this.removeRelated )
 		}
@@ -767,6 +768,7 @@
 				this.setRelated( null );
 			}
 			else if ( this instanceof Backbone.HasMany ) {
+				this.related.reset( [], {silent: true} );
 				this.setRelated( this._prepareCollection() );
 			}
 
