@@ -2270,7 +2270,9 @@ $(document).ready(function() {
 
 				parse: function( resp, options ) {
 					modelParseCalled++;
-					return resp;
+					var data = _.clone( resp.model );
+					data.id = data.id.uri;
+					return data;
 				}
 			});
 
@@ -2289,6 +2291,10 @@ $(document).ready(function() {
 							model: {
 								id: { uri: 'e1' },
 								person: {
+									/*model: {
+										id: { uri: 'p1' },
+										jobs: [ 'e1', { model: { id: { uri: 'e3' } } } ]
+									}*/
 									id: 'p1',
 									jobs: [ 'e1', { model: { id: { uri: 'e3' } } } ]
 								}
@@ -2299,6 +2305,9 @@ $(document).ready(function() {
 								id: { uri: 'e2' },
 								person: {
 									id: 'p2'
+									/*model: {
+										id: { uri: 'p2' }
+									}*/
 								}
 							}
 						}
@@ -4225,9 +4234,10 @@ $(document).ready(function() {
 			var zoo = new Zoo(),
 				animal = new Animal();
 
-			var addEventsTriggered = 0,
-				removeEventsTriggered = 0,
-				changeEventsTriggered = 0;
+			var addAnimalEventsTriggered = 0,
+				removeAnimalEventsTriggered = 0,
+				changeEventsTriggered = 0,
+				changeLiveInEventsTriggered = 0;
 
 			zoo
 //				.on( 'change:animals', function( model, coll ) {
@@ -4235,18 +4245,31 @@ $(document).ready(function() {
 //				})
 				.on( 'add:animals', function( model, coll ) {
 					//console.log( 'add:animals; args=%o', arguments );
-					addEventsTriggered++;
+					addAnimalEventsTriggered++;
 				})
 				.on( 'remove:animals', function( model, coll ) {
 					//console.log( 'remove:animals; args=%o', arguments );
-					removeEventsTriggered++;
+					removeAnimalEventsTriggered++;
 				});
 
 			animal
+				.on( 'change', function( model, coll ) {
+					console.log( 'change; args=%o', arguments );
+					changeEventsTriggered++;
+				})
 				.on( 'change:livesIn', function( model, coll ) {
 					//console.log( 'change:livesIn; args=%o', arguments );
-					changeEventsTriggered++;
+					changeLiveInEventsTriggered++;
 				});
+
+			// Directly triggering an event on a model should always fire
+			addAnimalEventsTriggered = removeAnimalEventsTriggered = changeEventsTriggered = changeLiveInEventsTriggered = 0;
+
+			animal.trigger( 'change', this.model );
+			ok( changeEventsTriggered === 1 );
+			ok( changeLiveInEventsTriggered === 0 );
+
+			addAnimalEventsTriggered = removeAnimalEventsTriggered = changeEventsTriggered = changeLiveInEventsTriggered = 0;
 
 			// Should trigger `change:livesIn` and `add:animals`
 			animal.set( 'livesIn', zoo );
@@ -4254,30 +4277,35 @@ $(document).ready(function() {
 			zoo.set( 'id', 'z1' );
 			animal.set( 'id', 'a1' );
 
-			ok( addEventsTriggered === 1 );
-			ok( removeEventsTriggered === 0 );
-			ok( changeEventsTriggered === 1 );
+			ok( addAnimalEventsTriggered === 1 );
+			ok( removeAnimalEventsTriggered === 0 );
+			ok( changeEventsTriggered === 2 );
+			ok( changeLiveInEventsTriggered === 1 );
+			console.log( changeEventsTriggered );
 
 			// Doing this shouldn't trigger any `add`/`remove`/`update` events
 			zoo.set( 'animals', [ 'a1' ] );
 
-			ok( addEventsTriggered === 1 );
-			ok( removeEventsTriggered === 0 );
-			ok( changeEventsTriggered === 1 );
+			ok( addAnimalEventsTriggered === 1 );
+			ok( removeAnimalEventsTriggered === 0 );
+			ok( changeEventsTriggered === 2 );
+			ok( changeLiveInEventsTriggered === 1 );
 
 			// Doesn't cause an actual state change
 			animal.set( 'livesIn', 'z1' );
 
-			ok( addEventsTriggered === 1 );
-			ok( removeEventsTriggered === 0 );
-			ok( changeEventsTriggered === 1 );
+			ok( addAnimalEventsTriggered === 1 );
+			ok( removeAnimalEventsTriggered === 0 );
+			ok( changeEventsTriggered === 2 );
+			ok( changeLiveInEventsTriggered === 1 );
 
 			// Should trigger a `remove` on zoo and an `update` on animal
 			animal.set( 'livesIn', { id: 'z2' } );
 
-			ok( addEventsTriggered === 1 );
-			ok( removeEventsTriggered === 1 );
-			ok( changeEventsTriggered === 2 );
+			ok( addAnimalEventsTriggered === 1 );
+			ok( removeAnimalEventsTriggered === 1 );
+			ok( changeEventsTriggered === 3 );
+			ok( changeLiveInEventsTriggered === 2 );
 		});
 
 		test( "`reset` events", function() {
@@ -4356,7 +4384,7 @@ $(document).ready(function() {
 
 			ok( change === 1, 'change event should fire' );
 			ok( changeAnimals === 1, 'change:animals event should fire' );
-			ok( animalChange === 1, 'no animals:change event should fire' );
+			ok( animalChange === 1, 'animals:change event should fire' );
 
 			// Change an animal
 			change = changeAnimals = animalChange = 0;

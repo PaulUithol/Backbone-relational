@@ -1225,47 +1225,49 @@
 				var dit = this,
 					args = arguments;
 
-				Backbone.Relational.eventQueue.add( function() {
-					if ( !dit._isInitialized ) {
-						return;
-					}
+				if ( !Backbone.Relational.eventQueue.isLocked() ) {
+					// If we're not in a more complicated nested scenario, fire the change event right away
+					Backbone.Model.prototype.trigger.apply( dit, args );
+				}
+				else {
+					Backbone.Relational.eventQueue.add( function() {
+						// Determine if the `change` event is still valid, now that all relations are populated
+						var changed = true;
+						if ( eventName === 'change' ) {
+							// `hasChanged` may have gotten reset by nested calls to `set`.
+							changed = dit.hasChanged() || dit._attributeChangeFired;
+							dit._attributeChangeFired = false;
+						}
+						else {
+							var attr = eventName.slice( 7 ),
+								rel = dit.getRelation( attr );
 
-					// Determine if the `change` event is still valid, now that all relations are populated
-					var changed = true;
-					if ( eventName === 'change' ) {
-						// `hasChanged` may have gotten reset by nested calls to `set`.
-						changed = dit.hasChanged() || dit._attributeChangeFired;
-						dit._attributeChangeFired = false;
-					}
-					else {
-						var attr = eventName.slice( 7 ),
-							rel = dit.getRelation( attr );
+							if ( rel ) {
+								// If `attr` is a relation, `change:attr` get triggered from `Relation.onChange`.
+								// These take precedence over `change:attr` events triggered by `Model.set`.
+								// The relation sets a fourth attribute to `true`. If this attribute is present,
+								// continue triggering this event; otherwise, it's from `Model.set` and should be stopped.
+								changed = ( args[ 4 ] === true );
 
-						if ( rel ) {
-							// If `attr` is a relation, `change:attr` get triggered from `Relation.onChange`.
-							// These take precedence over `change:attr` events triggered by `Model.set`.
-							// The relation sets a fourth attribute to `true`. If this attribute is present,
-							// continue triggering this event; otherwise, it's from `Model.set` and should be stopped.
-							changed = ( args[ 4 ] === true );
-
-							// If this event was triggered by a relation, set the right value in `this.changed`
-							// (a Collection or Model instead of raw data).
-							if ( changed ) {
-								dit.changed[ attr ] = args[ 2 ];
+								// If this event was triggered by a relation, set the right value in `this.changed`
+								// (a Collection or Model instead of raw data).
+								if ( changed ) {
+									dit.changed[ attr ] = args[ 2 ];
+								}
+								// Otherwise, this event is from `Model.set`. If the relation doesn't report a change,
+								// remove attr from `dit.changed` so `hasChanged` doesn't take it into account.
+								else if ( !rel.changed ) {
+									delete dit.changed[ attr ];
+								}
 							}
-							// Otherwise, this event is from `Model.set`. If the relation doesn't report a change,
-							// remove attr from `dit.changed` so `hasChanged` doesn't take it into account.
-							else if ( !rel.changed ) {
-								delete dit.changed[ attr ];
+							else if ( changed ) {
+								dit._attributeChangeFired = true;
 							}
 						}
-						else if ( changed ) {
-							dit._attributeChangeFired = true;
-						}
-					}
 
-					changed && Backbone.Model.prototype.trigger.apply( dit, args );
-				});
+						changed && Backbone.Model.prototype.trigger.apply( dit, args );
+					});
+				}
 			}
 			else if ( eventName === 'destroy' ) {
 				Backbone.Model.prototype.trigger.apply( this, arguments );
