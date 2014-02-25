@@ -230,7 +230,7 @@
 		 */
 		setupSuperModel: function( modelType ) {
 			_.find( this._subModels, function( subModelDef ) {
-				return _.each( subModelDef.subModels || [], function( subModelTypeName, typeValue ) {
+				return _.filter( subModelDef.subModels || [], function( subModelTypeName, typeValue ) {
 					var subModelType = this.getObjectByName( subModelTypeName );
 
 					if ( modelType === subModelType ) {
@@ -243,7 +243,7 @@
 						modelType._subModelTypeAttribute = subModelDef.superModelType.prototype.subModelTypeAttribute;
 						return true;
 					}
-				}, this );
+				}, this ).length;
 			}, this );
 		},
 
