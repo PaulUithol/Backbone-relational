@@ -2076,7 +2076,7 @@ $(document).ready(function() {
 			ok( person.get( 'user.name' ) === "John", "attributes of nested models can be get via dot notation: nested.attribute");
 			ok(oldCompany.get( 'ceo.name' ) === undefined, "no dotNotation when not enabled");
 			ok( person.get( 'user.fake.attribute') === undefined, "undefined when path doesn't exist");
-			raises( function() {
+			throws( function() {
 				person.get( 'user.over' );
 			}, "getting ambiguous nested attributes raises an exception");
 			ok( person.get('roles.0') instanceof Role, "get by index works for nested collections");
@@ -2783,7 +2783,7 @@ $(document).ready(function() {
 			var companyA = new Company( dataCompanyA );
 
 			// Attempting to instantiate another model with the same data will throw an error
-			raises( function() { new Company( dataCompanyA ); }, "Can only instantiate one model for a given `id` (per model type)" );
+			throws( function() { new Company( dataCompanyA ); }, "Can only instantiate one model for a given `id` (per model type)" );
 
 			// init-ed a lead and its nested contacts are a collection
 			ok( companyA.get('employees') instanceof Backbone.Collection, "Company's employees should be a collection" );
