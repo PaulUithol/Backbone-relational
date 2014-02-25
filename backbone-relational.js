@@ -45,24 +45,21 @@
 		monkey = zoo.get( 'animals' ).first(),
 		sameZoo = lion.get( 'livesIn' );
  */
-( function( undefined ) {
-	"use strict";
-
-	/**
-	 * CommonJS shim
-	 **/
-	var _, Backbone, exports;
-	if ( typeof window === 'undefined' ) {
-		_ = require( 'underscore' );
-		Backbone = require( 'backbone' );
-		exports = Backbone;
-		typeof module === 'undefined' || ( module.exports = exports );
+( function( root, factory ) {
+	// Set up Backbone-relational for the environment. Start with AMD.
+	if ( typeof define === 'function' && define.amd ) {
+		define( [ 'exports', 'backbone', 'underscore' ], factory );
 	}
+	// Next for Node.js or CommonJS.
+	else if ( typeof exports !== 'undefined' ) {
+		factory( exports, require( 'backbone' ), require( 'underscore' ) );
+	}
+	// Finally, as a browser global. Use `root` here as it references `window`.
 	else {
-		_ = window._;
-		Backbone = window.Backbone;
-		exports = window;
+		factory( root, root.Backbone, root._ );
 	}
+} ( this, function( exports, Backbone, _ ) {
+	"use strict";
 
 	Backbone.Relational = {
 		showWarnings: true
@@ -2043,4 +2040,4 @@
 
 		return child;
 	};
-})();
+}));
