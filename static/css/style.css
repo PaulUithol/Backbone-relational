@@ -176,7 +176,7 @@ div#sidebar {
 	top: 0;
 	left: 0;
 	bottom: 0;
-	width: 230px;
+	width: 240px;
 	overflow-y: auto;
 	overflow-x: hidden;
 	-webkit-overflow-scrolling: touch;
@@ -243,6 +243,17 @@ div.run {
 p.warning {
 	font-size: 13px;
 	font-style: italic;
+}
+
+p.notice {
+	background-color: #ffeeaa;
+	border: 0 solid #eedd88;
+	border-left-width: 5px;
+	box-shadow: 0 0 6px rgba(0, 0, 0, 0.5);
+	color: #443;
+	font-size: 12px;
+	padding: 2px 6px 2px 15px;
+	margin: 1.5em 0 1.5em -1em;
 }
 
 a.punch {
@@ -365,10 +376,10 @@ code, pre, q {
 	pre {
 		box-shadow: 0 0 6px rgba(0, 0, 0, 0.5);
 		font-size: 12px;
-		padding: 2px 0 2px 15px;
+		padding: 2px 6px 2px 15px;
 		position: relative;
 		border: 0 solid #aaa;
-		border-left-width: .5em;
+		border-left-width: 5px;
 		margin: 1.5em 0 1.5em -1em;
 	}
 	pre code {

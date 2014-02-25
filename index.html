@@ -26,7 +26,7 @@
 <body>
 <div id="sidebar">
 	<a class="toc_title" href="#">
-		Backbone-relational.js <span class="version">(0.8.6)</span>
+		Backbone-relational.js <span class="version">(0.8.7)</span>
 	</a>
 
 	<ul>
@@ -81,6 +81,7 @@
 		<li><a href="#RelationalModel-build">build</a></li>
 		<li><a href="#RelationalModel-findOrCreate">findOrCreate</a></li>
 		<li><a href="#RelationalModel-find">find</a></li>
+		<li><a href="#RelationalModel-findModel">findModel</a></li>
 	</ul>
 	<ul>
 		<li><a href="#RelationalModel-events"><strong>Catalog of Events</strong></a></li>
@@ -140,18 +141,23 @@
 			Backbone-relational is hosted on <a href="https://github.com/PaulUithol/Backbone-relational">GitHub</a>,
 			and is available under the <a href="https://github.com/PaulUithol/Backbone-relational/blob/master/LICENSE.txt">MIT license</a>.
 		</p>
+		<p>
+			Thanks go out to <a href="http://progressiveplanning.com">Progressive Planning</a> for allowing me the time to
+			work on Backbone-relational!
+		</p>
 	</section>
 
 	<section id="downloads">
 		<h2>
 			Downloads &amp; Dependencies
-			<span style="padding-left: 7px; font-size:11px; font-weight: normal;" class="interface">(Right-click, and use
-			"Save As")</span>
+			<span style="padding-left: 7px; font-size:11px; font-weight: normal;" class="interface">
+				(Right-click, and use "Save As")
+			</span>
 		</h2>
 
 		<table>
 			<tr>
-				<td><a class="punch" href="https://raw.github.com/PaulUithol/Backbone-relational/0.8.6/backbone-relational.js">Latest Release (0.8.6)</a></td>
+				<td><a class="punch" href="https://raw.github.com/PaulUithol/Backbone-relational/0.8.7/backbone-relational.js">Latest Release (0.8.7)</a></td>
 				<td class="text"><i>~66kb. Full source, uncompressed, lots of comments.</i></td>
 			</tr>
 			<tr>
@@ -239,6 +245,12 @@
 <!-- -->&lt;script type="text/javascript" src="./js/backbone.js"&gt;&lt;/script&gt;
 <!-- -->&lt;script type="text/javascript" src="./js/backbone-relational.js"&gt;&lt;/script&gt;
 </code></pre>
+
+		<p class="notice">
+			Note for <strong>CoffeeScript</strong> users: due to the way the <q>extends</q> keyword is implemented in
+			CoffeeScript, you may have to make an extra call to <a href="#RelationalModel-setup"><q>setup</q></a> for
+			your models. See the <a href="#RelationalModel-setup"><q>setup</q></a> documentation for details.
+		</p>
 	</section>
 
 	<section id="RelationalModel">
@@ -854,17 +866,30 @@ alert( 'chimp is an animal? ' + ( chimp instanceof Animal ) + '\n' +
 				In this case, you should call <q>setup</q> manually after defining your subclass CoffeeScript-style. For example:
 			</p>
 			<p class="warning">
-				Note: this is a static method. It operate on the model type itself, not on an instance.
+				Note: this is a static method. It operates on the model type itself, not on an instance of it.
 			</p>
 		</section>
 
 <pre class="language-javascript"><code class="language-javascript"><!--
--->class MyModel extends Backbone.RelationalModel
-	relations: [
-		// etc
-	]
+-->class Animal extends Backbone.RelationalModel
+    urlRoot: "/animal"
 
-MyModel.setup()
+class Mammal extends Animal
+    subModelTypes:
+        "primate": "Primate"
+        "carnivore": "Carnivore"
+
+    relations: [
+        # More relations
+    ]
+
+Mammal.setup()
+
+class Primate extends Mammal
+
+class Carnivore extends Mammal
+
+chimp = Mammal.build( { id: 3, species: "chimp", type: "primate" } )
 </code></pre>
 
 		<section id="RelationalModel-build">
@@ -878,7 +903,7 @@ MyModel.setup()
 				Create an instance of a model, taking into account what submodels have been defined.
 			</p>
 			<p class="warning">
-				Note: this is a static method. It operate on the model type itself, not on an instance.
+				Note: this is a static method. It operates on the model type itself, not on an instance.
 			</p>
 		</section>
 
@@ -892,7 +917,7 @@ MyModel.setup()
 			</p>
 			<p>
 				Search for a model instance in the <a href="#Store">Backbone.Relational.store</a>, and return the model if found.
-				If no model is found, a new model will be created if <q>options.create</q> is <q>true</q>.
+				A new model will be created if no model is found, <q>attributes</q> is an object, and <q>options.create</q> is <q>true</q>.
 			</p>
 			<p>
 				Accepted <q>options</q>:
@@ -907,7 +932,7 @@ MyModel.setup()
 				as a function (<q>this</q> will not point to a model), instead of as a method.</dd>
 			</dl>
 			<p class="warning">
-				Note: this is a static method. It operate on the model type itself, not on an instance.
+				Note: this is a static method. It operates on the model type itself, not on an instance of it.
 			</p>
 		</section>
 
@@ -924,7 +949,62 @@ MyModel.setup()
 				Accepts the same options as <q>findOrCreate</q> (except for <q>create</q>).
 			</p>
 			<p class="warning">
-				Note: this is a static method. It operate on the model type itself, not on an instance.
+				Note: this is a static method. It operates on the model type itself, not on an instance of it.
+			</p>
+		</section>
+
+		<section id="RelationalModel-findModel">
+			<h4 class="code">
+				findModel
+				<code>relationalModel.findModel(attributes&lt;string|number|object&gt;)</code>
+			</h4>
+			<p>
+				Returns: <q>Backbone.RelationalModel</q> A model instance.
+			</p>
+			<p>
+				A hook to override the matching when updating (or creating) a model.
+				The default implementation is to look up the model by id in the store:
+				<q>return Backbone.Relational.store.find( this, attributes );</q>
+			</p>
+			<p>
+				Custom behavior is useful in cases where (a collection of) nested data gets saved to the server.
+				Consider saving the following model:
+			</p>
+
+<pre class="language-javascript"><code class="language-javascript runnable" data-setup="#example-zoo"><!--
+-->var zoo = new Zoo( { id: 1, name: 'Artis', animals: [
+	{ species: 'Giraffe' },
+	{ species: 'Camel' }
+] } );
+
+alert( JSON.stringify( zoo.toJSON(), null, 4 ) );
+</code></pre>
+			<p>
+				Normally, whatever you use as server-side logic will respond by creating two animals, and assigning them
+				an id. The response will be used by Backbone-relational to update existing models.
+				However, updating a model starts by looking up the local model with the same id; and in this case,
+				Backbone-relational does not know which local models corresponds to which created animal with an id.
+				A simple fix in this case would be to add a fallback option for the matching by using the animal's
+				species. Do note you'd want to use a more robust method usually, such as using a new model's <q>cid</q>.
+			</p>
+<pre class="language-javascript"><code class="language-javascript runnable" data-setup="#example-zoo"><!--
+-->Zoo.findModel = function( attributes ) {
+	// Try to find an instance of 'this' model type in the store
+	var model = Backbone.Relational.store.find( this, attributes );
+
+	if ( !model && _.isObject( attributes ) ) {
+		var coll = Backbone.Relational.store.getCollection( this );
+
+		model = coll.find( function( m ) {
+			return m.species === attributes.species;
+		});
+	}
+
+	return model;
+};
+</code></pre>
+			<p class="warning">
+				Note: this is a static method. It operates on the model type itself, not on an instance of it.
 			</p>
 		</section>
 
@@ -985,7 +1065,7 @@ MyModel.setup()
 		</p>
 
 		<h4 class="code" id="Store-addModelScope">
-			addModelScope<code>Backbone.Relational.store.addModelScope( scope&lt;object&gt; )</code>
+			addModelScope<code>Backbone.Relational.store.addModelScope(scope&lt;object&gt;)</code>
 		</h4>
 		<p>
 			Add a namespace on which models and collections are defined. This is especially useful when working in an
@@ -1007,6 +1087,15 @@ MyModel.setup()
 		<p>
 			Reset the <q>store</q> to it's original state. This will disable relations for all models created up to this point,
 			remove added model scopes, and removed all internal store collections.
+		</p>
+
+		<h4 class="code" id="Store-unregister">
+			unregister<code>Backbone.Relational.store.unregister(type&lt;Backbone.RelationalModel|Backbone.RelationalModel.constructor|Backbone.Collection&gt;)</code>
+		</h4>
+		<p>
+			Unregister a single model or a collection. Unregistering a model will remove a model from any relations it's involved in.
+			Internally, unregister is called when a model has been destroyed. It can also be called explicitly to on models
+			you don't want Backbone-relational to consider for relations anymore, for example to free up models used as (temporary) search results.
 		</p>
 	</section>
 
@@ -1145,18 +1234,52 @@ User = Backbone.RelationalModel.extend();
 		<h4>Master
 			<small>
 				<span class="date">(future)</span> &ndash;
-				<a href="https://github.com/PaulUithol/Backbone-relational/compare/0.8.6...master">diff</a> &ndash;
+				<a href="https://github.com/PaulUithol/Backbone-relational/compare/0.8.7...master">diff</a> &ndash;
 				<a href="https://raw.github.com/PaulUithol/Backbone-relational/master/backbone-relational.js">download</a>
 			</small>
 		</h4>
 		<ul>
+			<li>
+				<a href="https://github.com/PaulUithol/Backbone-relational/issues/411"><q>#411</q></a>:
+				Don't add models without an id to the store.
+			</li>
+			<li>
+				<a href="https://github.com/PaulUithol/Backbone-relational/issues/419"><q>#419</q></a>:
+				Proper return values for single models on collection methods for Backbone 1.1.0
+			</li>
+			<li>
+				<a href="https://github.com/PaulUithol/Backbone-relational/commit/4113c69d3752fcac75f7a1959c77349dd4672afa"><q>4113c69</q></a>
+				`Backbone.Relational.store.unregister` now also acceps collections or a model type
+			</li>
+		</ul>
+
+		<h4>0.8.7
+			<small>
+				<span class="date">(17 January 2014)</span> &ndash;
+				<a href="https://github.com/PaulUithol/Backbone-relational/compare/0.8.6...0.8.7">diff</a> &ndash;
+				<a href="https://raw.github.com/PaulUithol/Backbone-relational/0.8.7/backbone-relational.js">download</a>
+			</small>
+		</h4>
+		<ul>
+			<li>
+				<a href="https://github.com/PaulUithol/Backbone-relational/commit/8371089ac8bb92a00c2de38822fea7fa9f555b04"><q>8371089</q></a>:
+				Change return types for <q>Collection</q> methods to match Backbone 1.1.0
+			</li>
+			<li>
+				<a href="https://github.com/PaulUithol/Backbone-relational/pull/376"><q>#376</q></a>:
+				Include ids of unregistered models (not fetched or otherwise) in <q>toJSON</q>
+			</li>
+			<li>
+				<a href="https://github.com/PaulUithol/Backbone-relational/commit/8371089ac8bb92a00c2de38822fea7fa9f555b04"><q>8371089</q></a>:
+				Add <q>findModel</q>.
+			</li>
 		</ul>
 
 		<h4>0.8.6
 			<small>
 				<span class="date">(16 August 2013)</span> &ndash;
 				<a href="https://github.com/PaulUithol/Backbone-relational/compare/0.8.5...0.8.6">diff</a> &ndash;
-				<a href="https://raw.github.com/PaulUithol/Backbone-relational/master/backbone-relational.js">download</a>
+				<a href="https://raw.github.com/PaulUithol/Backbone-relational/0.8.6/backbone-relational.js">download</a>
 			</small>
 		</h4>
 		<ul>
@@ -1182,7 +1305,7 @@ User = Backbone.RelationalModel.extend();
 			</li>
 			<li>
 				<a href="https://github.com/PaulUithol/Backbone-relational/pull/380"><q>#380</q></a>:
-				AFix <q>pop</q> on an empty collection.
+				Fix <q>pop</q> on an empty collection.
 			</li>
 			<li>
 				<a href="https://github.com/PaulUithol/Backbone-relational/pull/370"><q>#370</q></a>:
