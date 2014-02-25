@@ -51,17 +51,17 @@
 	/**
 	 * CommonJS shim
 	 **/
-	var _, Backbone, exports;
-	if ( typeof window === 'undefined' ) {
+	var _, Backbone, defaultScope;
+	if ( typeof exports !== 'undefined' ) {
 		_ = require( 'underscore' );
 		Backbone = require( 'backbone' );
-		exports = Backbone;
-		typeof module === 'undefined' || ( module.exports = exports );
+		defaultScope = Backbone;
+		if ( typeof module !== 'undefined' ) module.exports = Backbone;
 	}
 	else {
 		_ = window._;
 		Backbone = window.Backbone;
-		exports = window;
+		defaultScope = window;
 	}
 
 	Backbone.Relational = {
@@ -173,7 +173,7 @@
 		this._reverseRelations = [];
 		this._orphanRelations = [];
 		this._subModels = [];
-		this._modelScopes = [ exports ];
+		this._modelScopes = [ defaultScope ];
 	};
 	_.extend( Backbone.Store.prototype, Backbone.Events, {
 		/**
@@ -558,7 +558,7 @@
 
 			this._collections = [];
 			this._subModels = [];
-			this._modelScopes = [ exports ];
+			this._modelScopes = [ defaultScope ];
 		}
 	});
 	Backbone.Relational.store = new Backbone.Store();
