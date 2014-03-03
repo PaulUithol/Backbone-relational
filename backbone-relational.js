@@ -9,7 +9,7 @@
  *
  * Example:
  *
-	Zoo = Backbone.RelationalModel.extend( {
+	Zoo = Backbone.RelationalModel.extend({
 		relations: [ {
 			type: Backbone.HasMany,
 			key: 'animals',
@@ -24,22 +24,22 @@
 		toString: function() {
 			return this.get( 'name' );
 		}
-	} );
+	});
 
-	Animal = Backbone.RelationalModel.extend( {
+	Animal = Backbone.RelationalModel.extend({
 		toString: function() {
 			return this.get( 'species' );
 		}
-	} );
+	});
 
 	// Creating the zoo will give it a collection with one animal in it: the monkey.
 	// The animal created after that has a relation `livesIn` that points to the zoo it's currently associated with.
 	// If you instantiate (or fetch) the zebra later, it will automatically be added.
 
-	var zoo = new Zoo( {
+	var zoo = new Zoo({
 		name: 'Artis',
 		animals: [ { id: 'monkey-1', species: 'Chimp' }, 'lion-1', 'zebra-1' ]
-	} );
+	});
 
 	var lion = new Animal( { id: 'lion-1', species: 'Lion' } ),
 		monkey = zoo.get( 'animals' ).first(),
@@ -58,7 +58,7 @@
 	else {
 		factory( root, root.Backbone, root._ );
 	}
-} ( this, function( exports, Backbone, _ ) {
+}( this, function( exports, Backbone, _ ) {
 	"use strict";
 
 	Backbone.Relational = {
@@ -346,8 +346,8 @@
 				rootModel = rootModel._superModel;
 			}
 
-			var coll = _.find( this._collections, function(item) {
-			  return item.model === rootModel;
+			var coll = _.find( this._collections, function( item ) {
+				return item.model === rootModel;
 			});
 
 			if ( !coll && create !== false ) {
@@ -744,10 +744,10 @@
 			var models = !_.isUndefined( model ) ? [ model ] : this.related && ( this.related.models || [ this.related ] );
 			_.each( models || [], function( related ) {
 				_.each( related.getRelations() || [], function( relation ) {
-						if ( this._isReverseRelation( relation ) ) {
-							reverseRelations.push( relation );
-						}
-					}, this );
+					if ( this._isReverseRelation( relation ) ) {
+						reverseRelations.push( relation );
+					}
+				}, this );
 			}, this );
 
 			return reverseRelations;
@@ -1080,7 +1080,7 @@
 		/**
 		 * When a model is added to a 'HasMany', trigger 'add' on 'this.instance' and notify reverse relations.
 		 * (should be 'HasOne', must set 'this.instance' as their related).
-		*/
+		 */
 		handleAddition: function( model, coll, options ) {
 			//console.debug('handleAddition called; args=%o', arguments);
 			options = options ? _.clone( options ) : {};
@@ -1112,7 +1112,7 @@
 
 			var dit = this;
 			!options.silent && Backbone.Relational.eventQueue.add( function() {
-				 dit.instance.trigger( 'remove:' + dit.key, model, dit.related, options );
+				dit.instance.trigger( 'remove:' + dit.key, model, dit.related, options );
 			});
 		},
 
@@ -1176,7 +1176,7 @@
 			// Example: event for "p.on( 'add:jobs' )" -> "p.get('jobs').add( { company: c.id, person: p.id } )".
 			if ( options && options.collection ) {
 				var dit = this,
-					collection = this.collection =  options.collection;
+					collection = this.collection = options.collection;
 
 				// Prevent `collection` from cascading down to nested models; they shouldn't go into this `if` clause.
 				delete options.collection;
@@ -1455,8 +1455,8 @@
 
 			// Go through all splits and return the final result
 			var splits = attr.split( '.' );
-			var result = _.reduce(splits, function( model, split ) {
-				if ( _.isNull(model) || _.isUndefined( model ) ) {
+			var result = _.reduce( splits, function( model, split ) {
+				if ( _.isNull( model ) || _.isUndefined( model ) ) {
 					// Return undefined if the path cannot be expanded
 					return undefined;
 				}
@@ -1581,7 +1581,7 @@
 						if ( rel instanceof Backbone.HasMany ) {
 							value = value.concat( rel.keyIds );
 						}
-						else if  ( rel instanceof Backbone.HasOne ) {
+						else if ( rel instanceof Backbone.HasOne ) {
 							value = value || rel.keyId;
 
 							if ( !value && !_.isObject( rel.keyContents ) ) {
@@ -1748,7 +1748,7 @@
 
 		inheritRelations: function() {
 			// Bail out if we've been here before.
-			if (!_.isUndefined( this._superModel ) && !_.isNull( this._superModel )) {
+			if ( !_.isUndefined( this._superModel ) && !_.isNull( this._superModel ) ) {
 				return;
 			}
 			// Try to initialize the _superModel.
@@ -1853,7 +1853,7 @@
 	 * (which sets the new properties on it if found), or instantiates a new model.
 	 */
 	Backbone.Collection.prototype.__prepareModel = Backbone.Collection.prototype._prepareModel;
-	Backbone.Collection.prototype._prepareModel = function ( attrs, options ) {
+	Backbone.Collection.prototype._prepareModel = function( attrs, options ) {
 		var model;
 
 		if ( attrs instanceof Backbone.Model ) {
@@ -1926,7 +1926,7 @@
 
 		// Add 'models' in a single batch, so the original add will only be called once (and thus 'sort', etc).
 		// If `parse` was specified, the collection and contained models have been parsed now.
-		toAdd =  singular ? ( toAdd.length ? toAdd[ 0 ] : null ) : toAdd;
+		toAdd = singular ? ( toAdd.length ? toAdd[ 0 ] : null ) : toAdd;
 		var result = set.call( this, toAdd, _.defaults( { parse: false }, options ) );
 
 		_.each( newModels, function( model ) {
@@ -1964,7 +1964,7 @@
 		var result = remove.call( this, singular ? ( toRemove.length ? toRemove[ 0 ] : null ) : toRemove, options );
 
 		_.each( toRemove, function( model ) {
-			this.trigger('relational:remove', model, this, options);
+			this.trigger( 'relational:remove', model, this, options );
 		}, this );
 
 		return result;
