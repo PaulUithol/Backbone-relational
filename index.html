@@ -575,7 +575,7 @@ Company = Backbone.RelationalModel.extend({
 				with <q>_id</q> or <q>_ids</q>. The behavior for <q>keySource</q> corresponds to the following rules:
 			</p>
 			<p>
-				When a relation is instantiated, the contents of the <q>keySource</q> are used as it's initial data. The
+				When a relation is instantiated, the contents of the <q>keySource</q> are used as its initial data. The
 				application uses the regular key attribute to interface with the relation and the models in it; the
 				<q>keySource</q> is not available as an attribute for the model. So you	may be provided with data containing
 				<q>animal_ids</q>, while you want to access this relation as <q>zoo.get('animals')</q>.
@@ -697,7 +697,7 @@ alert( JSON.stringify( farm.toJSON(), null, 4 ) );
 				Each subModel is considered to be a proper submodel of its superclass (the model type you're extending), with a
 				shared id pool. This means that when looking for an object of the supermodel's type, objects of a submodel's type
 				can be returned as well, as long as the id matches. In effect, any relations pointing to the supermodel will look
-				for instances of it's submodels as well.
+				for instances of its submodels as well.
 			</p>
 
 
@@ -1085,7 +1085,7 @@ alert( JSON.stringify( zoo.toJSON(), null, 4 ) );
 			reset<code>Backbone.Relational.store.reset()</code>
 		</h4>
 		<p>
-			Reset the <q>store</q> to it's original state. This will disable relations for all models created up to this point,
+			Reset the <q>store</q> to its original state. This will disable relations for all models created up to this point,
 			remove added model scopes, and removed all internal store collections.
 		</p>
 
@@ -1382,7 +1382,7 @@ User = Backbone.RelationalModel.extend();
 			</li>
 			<li>
 				The <q>update</q> option on <a href="#RelationalModel-findOrCreate"><q>findOrCreate</q></a> has been
-				renamed to <q>merge</q>, since it's behavior corresponds with <q>merge</q> on <q>Collection.add</q>
+				renamed to <q>merge</q>, since its behavior corresponds with <q>merge</q> on <q>Collection.add</q>
 				(and not with <q>update</q> on <q>Collection.reset</q>).
 			</li>
 			<li>
@@ -1525,8 +1525,8 @@ User = Backbone.RelationalModel.extend();
 		<p>
 			If multiple versions were allowed, inadvertently manipulating or performing a save or destroy
 			on another version of that model (which is still around on the client, and can for example still be bound
-			to one or more views in your application, either on purpose or inadvertently) would save it's state to the
-			server, killing it's relations, and the server response would set the same (incorrect) data on the 'current'
+			to one or more views in your application, either on purpose or inadvertently) would save its state to the
+			server, killing its relations, and the server response would set the same (incorrect) data on the 'current'
 			version of the model on the client. By then, you'd be in trouble.
 		</p>
 		<p>
@@ -1550,7 +1550,7 @@ User = Backbone.RelationalModel.extend();
 			The basic problem is that when manipulating relations, you only want the events to fire once ALL relations
 			have been updated; also those on models one, two, or more relations away. For example, when	you have an
 			event listener on <q>add</q>, you want to be able to use the model you receive as the first argument
-			and it's relations fully instead of getting raw JS objects:
+			and its relations fully instead of getting raw JS objects:
 		</p>
 
 <pre class="language-javascript"><code class="language-javascript runnable" data-setup="#example-job"><!--
