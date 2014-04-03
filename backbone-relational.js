@@ -1612,6 +1612,13 @@
 					delete json[ rel.key ];
 				}
 
+				// In case of `wait: true`, Backbone will simply push whatever's passed into `save` into attributes.
+				// We'll want to get this information into the JSON, even if it doesn't conform to our normal
+				// expectations of what's contained in it (no model/collection for a relation, etc).
+				if ( value === null && options && options.wait ) {
+					value = related;
+				}
+
 				if ( includeInJSON ) {
 					json[ rel.keyDestination ] = value;
 				}

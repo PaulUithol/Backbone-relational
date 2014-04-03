@@ -15,6 +15,7 @@ if ( !window.console ) {
 
 $(document).ready(function() {
 	window.requests = [];
+
 	Backbone.ajax = function( request ) {
 		// If a `response` has been defined, execute it.
 		// If status < 299, trigger 'success'; otherwise, trigger 'error'
@@ -318,10 +319,10 @@ $(document).ready(function() {
 				key: 'address',
 				relatedModel: 'Address',
 				autoFetch: {
-					success: function(model, response){
+					success: function( model, response ) {
 						response.successOK = true;
 					},
-					error: function(model, response){
+					error: function( model, response ) {
 						response.errorOK = true;
 					}
 				}
@@ -906,7 +907,7 @@ $(document).ready(function() {
 			ok( result === person, "Set returns the model" );
 		});
 
-		test( "clear", function() {
+		test( "`clear`", function() {
 			var person = new Person( { id: 'person-10' } );
 
 			ok( person === Person.findOrCreate( 'person-10' ) );
@@ -1109,7 +1110,7 @@ $(document).ready(function() {
 			equal( requests.length, 0, "No requests to fetch the customers has been made as autoFetch was set to false" );
 		});
 
-		test( "clone", function() {
+		test( "`clone`", function() {
 			var user = person1.get( 'user' );
 
 			// HasOne relations should stay with the original model
@@ -1117,6 +1118,102 @@ $(document).ready(function() {
 
 			ok( newPerson.get( 'user' ) === null );
 			ok( person1.get( 'user' ) === user );
+		});
+
+		test( "`save` (with `wait`)", function() {
+			var node1 = new Node({ id: '1', parent: '3', name: 'First node' } ),
+				node2 = new Node({ id: '2', name: 'Second node' });
+
+			// Set node2's parent to node1 in a request with `wait: true`
+			var request = node2.save( 'parent', node1, { wait: true } ),
+				json = JSON.parse( request.data );
+
+			ok( _.isObject( json.parent ) );
+			equal( json.parent.id, '1' );
+			equal( node2.get( 'parent' ), null );
+
+			request.success();
+
+			equal( node2.get( 'parent' ), node1 );
+
+			// Save a new node as node2's parent, only specified as JSON in the call to save
+			request = node2.save( 'parent', { id: '3', parent: '2', name: 'Third node' }, { wait: true } );
+			json = JSON.parse( request.data );
+
+			ok( _.isObject( json.parent ) );
+			equal( json.parent.id, '3' );
+			equal( node2.get( 'parent' ), node1 );
+
+			request.success();
+
+			var node3 = node2.get( 'parent' );
+
+			ok( node3 instanceof Node );
+			equal( node3.id, '3' );
+
+			// Try to reset node2's parent to node1, but fail the request
+			request = node2.save( 'parent', node1, { wait: true } );
+			request.error();
+
+			equal( node2.get( 'parent' ), node3 );
+
+			// See what happens for different values of `includeInJSON`...
+			// For `Person.user`, just the `idAttribute` should be serialized to the keyDestination `user_id`
+			var user1 = person1.get( 'user' );
+			request = person1.save( 'user', null, { wait: true } );
+			json = JSON.parse( request.data );
+			console.log( request, json );
+
+			equal( person1.get( 'user' ), user1 );
+
+			request.success( json );
+
+			equal( person1.get( 'user' ), null );
+
+			request = person1.save( 'user', user1, { wait: true } );
+			json = JSON.parse( request.data );
+
+			equal( json.user_id, user1.id );
+			equal( person1.get( 'user' ), null );
+
+			request.success( json );
+
+			equal( person1.get( 'user' ), user1 );
+
+			// Save a collection with `wait: true`
+			var zoo = new Zoo( { id: 'z1' } ),
+				animal1 = new Animal( { id: 'a1', species: 'Goat', name: 'G' } ),
+				coll = new Backbone.Collection( [ { id: 'a2', species: 'Rabbit', name: 'R' }, animal1 ] );
+
+			request = zoo.save( 'animals', coll, { wait: true } );
+			json = JSON.parse( request.data );
+			console.log( request, json );
+
+			ok( zoo.get( 'animals' ).length === 0 );
+
+			request.success( json );
+
+			ok( zoo.get( 'animals' ).length === 2 );
+			console.log( animal1 );
+		});
+
+		test( "`Collection.create` (with `wait`)", function() {
+			var nodeColl = new NodeList(),
+				nodesAdded = 0;
+
+			nodeColl.on( 'add', function( model, collection, options ) {
+				nodesAdded++;
+			});
+
+			nodeColl.create({ id: '3', parent: '2', name: 'Third node' }, { wait: true });
+			ok( nodesAdded === 0 );
+			requests[ requests.length - 1 ].success();
+			ok( nodesAdded === 1 );
+
+			nodeColl.create({ id: '4', name: 'Third node' }, { wait: true });
+			ok( nodesAdded === 1 );
+			requests[ requests.length - 1 ].error();
+			ok( nodesAdded === 1 );
 		});
 		
 		test( "`toJSON`: simple cases", function() {
