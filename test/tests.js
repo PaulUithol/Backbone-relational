@@ -3454,7 +3454,8 @@ $(document).ready(function() {
             ]);
 
             equal(animals.at(0).id, 'lion-1');
-            deepEqual(events, ['add', 'sort', 'add', 'sort']);
+          equal(animals.at(1).id, 'lion-2');
+            deepEqual(events, ['add', 'add', 'sort']);
         });
 
 

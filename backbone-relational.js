@@ -634,6 +634,28 @@
 			// Add this Relation to instance._relations
 			this.instance._relations[ this.key ] = this;
 
+      if(this.model.__modelId == null) {
+        if(window.__modelId == null) {
+          window.__modelId = 0;
+        }
+        this.model.__modelId = window.__modelId++;
+      }
+
+      var reverseIndexKey = this.model.__modelId + ":" + this.key;
+      if(this.relatedCollection._reverseIndexes == null) this.relatedCollection._reverseIndexes = {};
+      this.reverseIndex = this.relatedCollection._reverseIndexes[reverseIndexKey];
+      if(this.reverseIndex == null) {
+        this.reverseIndex = this.relatedCollection._reverseIndexes[reverseIndexKey] = {};
+        this.relatedCollection.on("relational:add relational:change:id", _.bind(function(model, coll, opts){
+          var id = model.get(model.idAttribute);
+          if(id != null) {
+            _.forEach(this.reverseIndex[id], function(obj) {
+              obj._relations[this.key].tryAddRelated(model, coll, opts);
+            }, this);
+          }
+        }, this));
+      }
+
 			this.initialize( opts );
 
 			if ( this.options.autoFetch ) {
@@ -642,7 +664,6 @@
 
 			// When 'relatedModel' are created or destroyed, check if it affects this relation.
 			this.listenTo( this.instance, 'destroy', this.destroy )
-				.listenTo( this.relatedCollection, 'relational:add relational:change:id', this.tryAddRelated )
 				.listenTo( this.relatedCollection, 'relational:remove', this.removeRelated )
 		}
 	};
@@ -784,6 +805,11 @@
 			var related = this.findRelated( opts );
 			this.setRelated( related );
 
+      if(this.keyId != null) {
+        var index = this.reverseIndex[this.keyId] || (this.reverseIndex[this.keyId] = {});
+        index[this.instance.cid] = this.instance;
+      }
+
 			// Notify new 'related' object of the new relation.
 			_.each( this.getReverseRelations(), function( relation ) {
 				relation.addRelated( this.instance, opts );
@@ -847,12 +873,23 @@
 				this.setKeyContents( attr );
 				var related = this.findRelated( options );
 				this.setRelated( related );
+        var id = this.related != null ? this.related.get(this.related.idAttribute) : null;
+        if(this.reverseIndex != null && this.related !=  null && id != null) {
+          var reverseIndex = this.reverseIndex[id] || (this.reverseIndex[id] = {});
+          reverseIndex[this.instance.cid] = this.instance;
+        }
 			}
 
 			// Notify old 'related' object of the terminated relation
 			if ( oldRelated && this.related !== oldRelated ) {
 				_.each( this.getReverseRelations( oldRelated ), function( relation ) {
-					relation.removeRelated( this.instance, null, options );
+          var id = this.instance.get(this.instance.idAttribute);
+          if(this.reverseIndex != null && id != null) {
+            var reverseIndex = relation.reverseIndex[id] ||
+              (relation.reverseIndex[id] = {});
+            delete reverseIndex[relation.instance.cid];
+          }
+          relation.removeRelated( this.instance, null, options );
 				}, this );
 			}
 
@@ -860,7 +897,12 @@
 			// that can be necessary for bi-directional relations if 'this.instance' was created after 'this.related'.
 			// In that case, 'this.instance' will already know 'this.related', but the reverse might not exist yet.
 			_.each( this.getReverseRelations(), function( relation ) {
-				relation.addRelated( this.instance, options );
+        var id = this.instance.get(this.instance.idAttribute);
+        if(id != null && relation.reverseIndex != null) {
+          var reverseIndex = relation.reverseIndex[id] || (relation.reverseIndex[id] = {});
+          reverseIndex[relation.instance.cid] = this.instance;
+        }
+        relation.addRelated( this.instance, options );
 			}, this );
 
 			// Fire the 'change:<key>' event if 'related' was updated
@@ -935,6 +977,11 @@
 			if ( this.collectionType !== Backbone.Collection && !( this.collectionType.prototype instanceof Backbone.Collection ) ) {
 				throw new Error( '`collectionType` must inherit from Backbone.Collection' );
 			}
+
+      _.forEach(this.keyIds, function(id) {
+        var index = this.reverseIndex[id] || (this.reverseIndex[id] = {});
+        index[this.instance.cid] = this.instance;
+      }, this);
 
 			var related = this.findRelated( opts );
 			this.setRelated( related );
@@ -1051,6 +1098,7 @@
 					}
 				}, this );
 			}
+
 		},
 
 		/**
@@ -1059,11 +1107,26 @@
 		 */
 		onChange: function( model, attr, options ) {
 			options = options ? _.clone( options ) : {};
+
+      if(this.reverseIndex != null) {
+        _.forEach(this.keyIds, function (keyId) {
+          var index = this.reverseIndex[keyId];
+          delete index[this.instance.cid];
+        }, this);
+      }
+
 			this.setKeyContents( attr );
 			this.changed = false;
 
 			var related = this.findRelated( options );
 			this.setRelated( related );
+
+      if(this.reverseIndex != null && this.keyIds != null) {
+        _.forEach(this.keyIds, function (keyId) {
+          var index = this.reverseIndex[keyId] || (this.reverseIndex[keyId] = {});
+          index[this.instance.cid] = this.instance;
+        }, this);
+      }
 
 			if ( !options.silent ) {
 				var dit = this;
