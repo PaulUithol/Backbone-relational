@@ -883,10 +883,13 @@ alert( 'chimp is an animal? ' + ( chimp instanceof Animal ) + '\n' +
 				the method that Backbone-relational overrides to set up relations as you're defining your <q>Backbone.RelationalModel</q> subclass.
 			</p>
 			<p>
-				In this case, you should call <q>setup</q> manually after defining your subclass CoffeeScript-style. For example:
+				In this case, you should call <q>setup</q> manually after defining your subclass CoffeeScript-style. If your class extends a model of your own instead of <q>Backbone.RelationalModel</q> directly, you need to pass the superclass as an argument. For example:
 			</p>
 			<p class="warning">
 				Note: this is a static method. It operates on the model type itself, not on an instance of it.
+			</p>
+			<p class="warning">
+				Inside the CoffeeScript class definition, <q>this</q> and <q>@</q> refer to the class being defined, so <q>@setup()</q> at the end of the <q>Mammal</q> class definition is equivalent to the static method call <q>Mammal.setup()</q>.
 			</p>
 		</section>
 
@@ -896,20 +899,30 @@ alert( 'chimp is an animal? ' + ( chimp instanceof Animal ) + '\n' +
 
 class Mammal extends Animal
     subModelTypes:
-        "primate": "Primate"
+        "primate":   "Primate"
         "carnivore": "Carnivore"
 
+    relations: [
+        # Relations
+    ]
+
+    @setup()
+
+class Primate extends Mammal
     relations: [
         # More relations
     ]
 
-Mammal.setup()
-
-class Primate extends Mammal
+    @setup Mammal
 
 class Carnivore extends Mammal
+    @setup Mammal
 
-chimp = Mammal.build( { id: 3, species: "chimp", type: "primate" } )
+chimp = Mammal.build
+    id:      3
+    species: "chimp"
+    type:    "primate"
+
 </code></pre>
 
 		<section id="RelationalModel-build">
