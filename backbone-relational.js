@@ -261,6 +261,10 @@
 			});
 
 			if ( !exists && relation.model && relation.type ) {
+				// we need the model hierarchy in _addRelation,
+				// but it's possible it hasn't been determined yet.
+				relation.model.initializeModelHierarchy();
+ 
 				this._reverseRelations.push( relation );
 				this._addRelation( relation.model, relation );
 				this.retroFitRelation( relation );
@@ -340,7 +344,10 @@
 			if ( type instanceof Backbone.RelationalModel ) {
 				type = type.constructor;
 			}
-
+ 
+			// it's possible no model hierarchy has been determined yet.
+			type.initializeModelHierarchy();
+			
 			var rootModel = type;
 			while ( rootModel._superModel ) {
 				rootModel = rootModel._superModel;
@@ -760,16 +767,16 @@
 		destroy: function() {
 			this.stopListening();
 
+			_.each( this.getReverseRelations(), function( relation ) {
+				relation.removeRelated( this.instance );
+			}, this );
+
 			if ( this instanceof Backbone.HasOne ) {
 				this.setRelated( null );
 			}
 			else if ( this instanceof Backbone.HasMany ) {
 				this.setRelated( this._prepareCollection() );
 			}
-
-			_.each( this.getReverseRelations(), function( relation ) {
-				relation.removeRelated( this.instance );
-			}, this );
 		}
 	});
 
