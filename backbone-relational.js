@@ -1934,7 +1934,7 @@
 		// Add 'models' in a single batch, so the original add will only be called once (and thus 'sort', etc).
 		// If `parse` was specified, the collection and contained models have been parsed now.
 		toAdd = singular ? ( toAdd.length ? toAdd[ 0 ] : null ) : toAdd;
-		var result = set.call( this, toAdd, _.defaults( { parse: false }, options ) );
+		var result = set.call( this, toAdd, _.defaults( { parse: false, merge: false }, options ) );
 
 		_.each( newModels, function( model ) {
 			// Fire a `relational:add` event for any model in `newModels` that has actually been added to the collection.

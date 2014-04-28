@@ -4845,5 +4845,156 @@ $(document).ready(function() {
 
 			console.log( 'registerCount=%o, unregisterCount=%o', registerCount, unregisterCount );
 		});
+
+    module("Nested relations with HasMany");
+
+        test( "Separate requests for each object in the relation", function() {
+            var LeafModel = Backbone.RelationalModel.extend({
+                    idAttribute: 'resource_uri'
+                }),
+                MiddleModel = Backbone.RelationalModel.extend({
+                    idAttribute: 'resource_uri',
+                    relations: [
+                        {
+                            type: Backbone.HasOne,
+                            key: 'leaf',
+                            relatedModel: LeafModel,
+                            includeInJSON: 'resource_uri'
+                        }
+                    ]
+                }),
+                MiddleCollection = Backbone.Collection.extend({
+                    model: MiddleModel
+                }),
+                TopModel = Backbone.RelationalModel.extend({
+                    idAttribute: 'resource_uri',
+                    relations: [
+                        {
+                            type: Backbone.HasMany,
+                            key: 'middle',
+                            relatedModel: MiddleModel,
+                            includeInJSON: 'resource_uri',
+                            collectionType: MiddleCollection
+                        }
+                    ]
+                });
+
+            var top = TopModel.build({
+                    resource_uri: 'top/1',
+                    middle: ['middle/1'],
+                    label: 'top object'
+                });
+
+            equal( top.get('label'), 'top object', "Top object is initialized" );
+
+            var requests = top.fetchRelated('middle', {
+                    response: {
+                        status: 200,
+                        responseText: {
+                            resource_uri: 'middle/1',
+                            label: 'middle object',
+                            leaf: 'leaf/1'
+                        }
+                    }
+                });
+
+            equal( requests.length, 1, "A request has been made" );
+
+            var middle_coll = top.get('middle');
+            equal( middle_coll.length, 1, "Middle collection contains 1 item");
+
+            var middle = middle_coll.get('middle/1');
+            equal( middle.get('label'), "middle object", "Middle object was initialized" );
+
+            requests = middle.fetchRelated('leaf', {
+                response: {
+                    status: 200,
+                    responseText: {
+                        resource_uri: 'leaf/1',
+                        label: 'leaf object'
+                    }
+                }
+            });
+
+            equal( requests.length, 1, "A request has been made" );
+
+            equal( middle.get('leaf').get('label'), "leaf object", "Leaf object was initialized" );
+        });
+
+        test( "One request for the relation", function() {
+            var LeafModel = Backbone.RelationalModel.extend({
+                    idAttribute: 'resource_uri'
+                }),
+                MiddleModel = Backbone.RelationalModel.extend({
+                    idAttribute: 'resource_uri',
+                    relations: [
+                        {
+                            type: Backbone.HasOne,
+                            key: 'leaf',
+                            relatedModel: LeafModel,
+                            includeInJSON: 'resource_uri'
+                        }
+                    ]
+                }),
+                MiddleCollection = Backbone.Collection.extend({
+                    model: MiddleModel,
+                    url: function(models) { return models && '/middle/set/'; }
+                }),
+                TopModel = Backbone.RelationalModel.extend({
+                    idAttribute: 'resource_uri',
+                    relations: [
+                        {
+                            type: Backbone.HasMany,
+                            key: 'middle',
+                            relatedModel: MiddleModel,
+                            includeInJSON: 'resource_uri',
+                            collectionType: MiddleCollection
+                        }
+                    ]
+                });
+
+            var top = TopModel.build({
+                    resource_uri: 'top/1',
+                    middle: ['middle/1'],
+                    label: 'top object'
+                });
+
+            equal( top.get('label'), 'top object', "Top object was initialized" );
+
+            var requests = top.fetchRelated('middle', {
+                    response: {
+                        status: 200,
+                        responseText: [{
+                            resource_uri: 'middle/1',
+                            label: 'middle object',
+                            leaf: 'leaf/1'
+                        }]
+                    }
+            });
+
+            equal( requests.length, 1, "A request has been made" );
+
+            var middle_coll = top.get('middle');
+            equal( middle_coll.length, 1, "Middle collection contains 1 item");
+
+            var middle = middle_coll.get('middle/1');
+            equal( middle.get('label'), "middle object", "Middle object was initialized" );
+
+            requests = middle.fetchRelated('leaf', {
+                response: {
+                    status: 200,
+                    responseText: {
+                        resource_uri: 'leaf/1',
+                        label: 'leaf object'
+                    }
+                }
+            });
+
+            // The following two assertions fail, as `leaf` was not fetched (requests is empty)
+            equal( requests.length, 1, "A request has been made" );
+
+            equal( middle.get('leaf').get('label'), "leaf object", "Leaf object was initialized" );
+        });
+
 });
 
