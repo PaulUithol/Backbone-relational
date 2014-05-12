@@ -643,7 +643,7 @@
 			// When 'relatedModel' are created or destroyed, check if it affects this relation.
 			this.listenTo( this.instance, 'destroy', this.destroy )
 				.listenTo( this.relatedCollection, 'relational:add relational:change:id', this.tryAddRelated )
-				.listenTo( this.relatedCollection, 'relational:remove', this.removeRelated )
+				.listenTo( this.relatedCollection, 'relational:remove', this.removeRelated );
 		}
 	};
 	// Fix inheritance :\
@@ -1001,8 +1001,10 @@
 				var toAdd = [];
 
 				_.each( this.keyContents, function( attributes ) {
+					var model = null;
+
 					if ( attributes instanceof this.relatedModel ) {
-						var model = attributes;
+						model = attributes;
 					}
 					else {
 						// If `merge` is true, update models here, instead of during update.
@@ -1464,7 +1466,7 @@
 					return Backbone.Model.prototype.get.call( model, split );
 				}
 				else if ( model instanceof Backbone.Collection ) {
-					return Backbone.Collection.prototype.at.call( model, split )
+					return Backbone.Collection.prototype.at.call( model, split );
 				}
 				else {
 					throw new Error( 'Attribute must be an instanceof Backbone.Model or Backbone.Collection. Is: ' + model + ', currentSplit: ' + split );
@@ -1482,7 +1484,9 @@
 			Backbone.Relational.eventQueue.block();
 
 			// Duplicate backbone's behavior to allow separate key/value parameters, instead of a single 'attributes' object
-			var attributes;
+			var attributes,
+				result;
+
 			if ( _.isObject( key ) || key == null ) {
 				attributes = key;
 				options = value;
@@ -1499,7 +1503,7 @@
 				// Check if we're not setting a duplicate id before actually calling `set`.
 				Backbone.Relational.store.checkId( this, newId );
 
-				var result = Backbone.Model.prototype.set.apply( this, arguments );
+				result = Backbone.Model.prototype.set.apply( this, arguments );
 
 				// Ideal place to set up relations, if this is the first time we're here for this model
 				if ( !this._isInitialized && !this.isLocked() ) {
