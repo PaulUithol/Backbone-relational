@@ -441,12 +441,12 @@ $(document).ready(function() {
 				iRelModel = new RelModel();
 
 			// Both are functions, so their `constructor` is `Function`
-			ok( Backbone.Model.constructor == Backbone.RelationalModel.constructor );
+			ok( Backbone.Model.constructor === Backbone.RelationalModel.constructor );
 
-			ok( Backbone.Model != Backbone.RelationalModel );
-			ok( Backbone.Model == Backbone.Model.prototype.constructor );
-			ok( Backbone.RelationalModel == Backbone.RelationalModel.prototype.constructor );
-			ok( Backbone.Model.prototype.constructor != Backbone.RelationalModel.prototype.constructor );
+			ok( Backbone.Model !== Backbone.RelationalModel );
+			ok( Backbone.Model === Backbone.Model.prototype.constructor );
+			ok( Backbone.RelationalModel === Backbone.RelationalModel.prototype.constructor );
+			ok( Backbone.Model.prototype.constructor !== Backbone.RelationalModel.prototype.constructor );
 
 			ok( Model.prototype instanceof Backbone.Model );
 			ok( !( Model.prototype instanceof Backbone.RelationalModel ) );
@@ -471,7 +471,7 @@ $(document).ready(function() {
 				col = new Backbone.Collection([a]);
 
 			col.set([a,b], {add: true, merge: false, remove: true});
-			ok( col.length == 2 );
+			ok( col.length === 2 );
 		});
 
 
@@ -629,7 +629,7 @@ $(document).ready(function() {
 
 			var people = new ns.People.PersonCollection([{name: "Bob", type: "Student"}]);
 
-			ok( people.at(0).iam() == "I am a student" );
+			ok( people.at(0).iam() === "I am a student" );
 		});
 
 		test( "removeModelScope", function() {
@@ -1535,7 +1535,7 @@ $(document).ready(function() {
 			var animal = new scope.Dog( { type: 'dog', id: '238902', color: 'blue' } );
 			equal( animal.get('color'), 'blue', 'animal starts out blue' );
 
-			var changes = 0, changedAttrs;
+			var changes = 0, changedAttrs = null;
 			animal.on('change', function(model, options) {
 				changes++;
 				changedAttrs = model.changedAttributes();
@@ -1732,13 +1732,13 @@ $(document).ready(function() {
 				]
 			});
 
-			ok( !(captainCaveman.get( "cavemen" ).at( 0 ) instanceof Rubble) )
+			ok( !(captainCaveman.get( "cavemen" ).at( 0 ) instanceof Rubble) );
 
 			var theFlintstones = new scope.Cartoon({
 				cavemen: [
 					{
 						caveman_type: 'rubble',
-						name: 'Barney',
+						name: 'Barney'
 
 					},
 					{
@@ -1748,8 +1748,8 @@ $(document).ready(function() {
 				]
 			});
 
-			ok( theFlintstones.get( "cavemen" ).at( 0 ) instanceof Rubble )
-			ok( theFlintstones.get( "cavemen" ).at( 1 ) instanceof Flintstone )
+			ok( theFlintstones.get( "cavemen" ).at( 0 ) instanceof Rubble );
+			ok( theFlintstones.get( "cavemen" ).at( 1 ) instanceof Flintstone );
 
 		});
 
@@ -2274,7 +2274,7 @@ $(document).ready(function() {
 
 			ok( typeof inst.get('sub_data') === 'undefined',  "keySource field should be removed from model" );
 			ok( typeof inst.get('submodel') !== 'undefined',  "key field should be present..." );
-			ok( inst.get('submodel').get('key') == 'value2', "... and should be updated" );
+			ok( inst.get('submodel').get('key') === 'value2', "... and should be updated" );
 		});
 
 		test( "'keyDestination' saves to 'key'", function() {
@@ -2929,36 +2929,55 @@ $(document).ready(function() {
 			equal( agent.get( 'customers' ).length, 0 );
 		});
 
-		test( "If keySource is used don't remove a model that is present in the key attribute", function() {
+		test( "If keySource is used, don't remove a model that is present in the key attribute", function() {
 			var ForumPost = Backbone.RelationalModel.extend({
 				// Normally would set something here, not needed for test
-			});
-			var ForumPostCollection = Backbone.Collection.extend({
-			    model: ForumPost
 			});
 			var Forum = Backbone.RelationalModel.extend({
 				relations: [{
 					type: Backbone.HasMany,
 					key: 'posts',
 					relatedModel: ForumPost,
-					collectionType: ForumPostCollection,
 					reverseRelation: {
 						key: 'forum',
 						keySource: 'forum_id'
 					}
 				}]
 			});
-			var TestPost = new ForumPost({
+
+			var testPost = new ForumPost({
 				id: 1, 
-				title: "Hello World",
-				forum: {id: 1, title: "Cupcakes"}
+				title: 'Hello World',
+				forum: { id: 1, title: 'Cupcakes' }
 			});
 
-			var TestForum = Forum.findOrCreate(1);
+			var testForum = Forum.findOrCreate( 1 );
 
-			notEqual( TestPost.get('forum'), null, "The post's forum is not null" );
-			equal( TestPost.get('forum').get('title'), "Cupcakes", "The post's forum title is Cupcakes" );
-			equal( TestForum.get('title'), "Cupcakes", "A forum of id 1 has the title cupcakes" );
+			notEqual( testPost.get( 'forum' ), null, "The post's forum is not null" );
+			equal( testPost.get( 'forum' ).get( 'title' ), "Cupcakes", "The post's forum title is Cupcakes" );
+			equal( testForum.get( 'title' ), "Cupcakes", "A forum of id 1 has the title cupcakes" );
+
+			var testPost2 = new ForumPost({
+				id: 3,
+				title: 'Hello World',
+				forum: { id: 2, title: 'Donuts' },
+				forum_id: 3
+			});
+
+			notEqual( testPost2.get( 'forum' ), null, "The post's forum is not null" );
+			equal( testPost2.get( 'forum' ).get( 'title' ), "Donuts", "The post's forum title is Donuts" );
+			deepEqual( testPost2.getRelation( 'forum' ).keyContents, { id: 2, title: 'Donuts' }, 'The expected forum is 2' );
+			equal( testPost2.getRelation( 'forum' ).keyId, null, "There's no expected forum anymore" );
+
+			var testPost3 = new ForumPost({
+				id: 4,
+				title: 'Hello World',
+				forum: null,
+				forum_id: 3
+			});
+
+			equal( testPost3.get( 'forum' ), null, "The post's forum is null" );
+			equal( testPost3.getRelation( 'forum' ).keyId, 3, 'Forum is expected to have id=3' );
 		});
 
 		// GH-187
@@ -2977,12 +2996,12 @@ $(document).ready(function() {
 			var b1 = new B();
 			b1.set( 'a', a1 );
 			ok( b1.get( 'a' ) instanceof A );
-			ok( b1.get( 'a' ).id == 'a1' );
+			ok( b1.get( 'a' ).id === 'a1' );
 
 			var a2 = new A({ id: 'a2' });
 			var b2 = new B({ a: a2 });
 			ok( b2.get( 'a' ) instanceof A );
-			ok( b2.get( 'a' ).id == 'a2' );
+			ok( b2.get( 'a' ).id === 'a2' );
 		});
 
 
@@ -3850,9 +3869,9 @@ $(document).ready(function() {
 		test( "Reverse relations found for models that have not been instantiated and run .setup() manually", function() {
 			// Generated from CoffeeScript code:
 			// 	 class View extends Backbone.RelationalModel
-			// 	 
+			//
 			// 	 View.setup()
-			// 	 
+			//
 			// 	 class Property extends Backbone.RelationalModel
 			// 	   relations: [
 			// 	     type: Backbone.HasOne
@@ -3862,7 +3881,7 @@ $(document).ready(function() {
 			// 	       type: Backbone.HasMany
 			// 	       key: 'properties'
 			// 	   ]
-			// 	 
+			//
 			// 	 Property.setup()
 			
 			var Property, View,
@@ -4266,35 +4285,35 @@ $(document).ready(function() {
 			// The default is to call `Collection.update` without specifying options explicitly;
 			// the defaults are { add: true, merge: true, remove: true }.
 			zoo.set( 'animals', [ a ] );
-			ok( animals.length == 1, 'animals.length=' + animals.length + ' == 1?' );
+			ok( animals.length === 1, 'animals.length=' + animals.length + ' == 1?' );
 
 			zoo.set( 'animals', [ a, b ], { add: false, merge: true, remove: true } );
-			ok( animals.length == 1, 'animals.length=' + animals.length + ' == 1?' );
+			ok( animals.length === 1, 'animals.length=' + animals.length + ' == 1?' );
 
 			zoo.set( 'animals', [ b ], { add: false, merge: false, remove: true } );
-			ok( animals.length == 0, 'animals.length=' + animals.length + ' == 0?' );
+			ok( animals.length === 0, 'animals.length=' + animals.length + ' == 0?' );
 
 			zoo.set( 'animals', [ { id: 'a', species: 'a' } ], { add: false, merge: true, remove: false } );
-			ok( animals.length == 0, 'animals.length=' + animals.length + ' == 0?' );
+			ok( animals.length === 0, 'animals.length=' + animals.length + ' == 0?' );
 			ok( a.get( 'species' ) === 'a', "`a` not added, but attributes did get merged" );
 
 			zoo.set( 'animals', [ { id: 'b', species: 'b' } ], { add: true, merge: false, remove: false } );
-			ok( animals.length == 1, 'animals.length=' + animals.length + ' == 1?' );
+			ok( animals.length === 1, 'animals.length=' + animals.length + ' == 1?' );
 			ok( !b.get( 'species' ), "`b` added, but attributes did not get merged" );
 
 			zoo.set( 'animals', [ { id: 'c', species: 'c' } ], { add: true, merge: false, remove: true } );
-			ok( animals.length == 1, 'animals.length=' + animals.length + ' == 1?' );
+			ok( animals.length === 1, 'animals.length=' + animals.length + ' == 1?' );
 			ok( !animals.get( 'b' ), "b removed from animals" );
 			ok( animals.get( 'c' ) === c, "c added to animals" );
 			ok( !c.get( 'species' ), "`c` added, but attributes did not get merged" );
 
 			zoo.set( 'animals', [ a, { id: 'b', species: 'b' } ] );
-			ok( animals.length == 2, 'animals.length=' + animals.length + ' == 2?' );
+			ok( animals.length === 2, 'animals.length=' + animals.length + ' == 2?' );
 			ok( b.get( 'species' ) === 'b', "`b` added, attributes got merged" );
 			ok( !animals.get( 'c' ), "c removed from animals" );
 
 			zoo.set( 'animals', [ { id: 'c', species: 'c' } ], { add: true, merge: true, remove: false } );
-			ok( animals.length == 3, 'animals.length=' + animals.length + ' == 3?' );
+			ok( animals.length === 3, 'animals.length=' + animals.length + ' == 3?' );
 			ok( c.get( 'species' ) === 'c', "`c` added, attributes got merged" );
 		});
 
@@ -4314,7 +4333,7 @@ $(document).ready(function() {
 
 		test( "pop", function() {
 			var zoo = new Zoo({
-				    animals: [ { name: 'a' } ]
+					animals: [ { name: 'a' } ]
 				}),
 				animals = zoo.get( 'animals' );
 
@@ -4575,7 +4594,7 @@ $(document).ready(function() {
 
 			house.set( house.toJSON() );
 
-			ok( eventsTriggered === 0, "No add / remove events were triggered" )
+			ok( eventsTriggered === 0, "No add / remove events were triggered" );
 		});
 
 		test( "triggers appropriate add / remove / change events on bulk assignment", function() {
@@ -4609,9 +4628,9 @@ $(document).ready(function() {
 
 			house.set( { occupants : [ { id : 'person-5', nickname : 'Jane'}, { id : 'person-7' }, { id : 'person-8', nickname : 'Phil' } ] } );
 
-			ok( addEventsTriggered == 1, "Exactly one add event was triggered (triggered " + addEventsTriggered + " events)" );
-			ok( removeEventsTriggered == 1, "Exactly one remove event was triggered (triggered " + removeEventsTriggered + " events)" );
-			ok( changeEventsTriggered == 1, "Exactly one change event was triggered (triggered " + changeEventsTriggered + " events)" );
+			ok( addEventsTriggered === 1, "Exactly one add event was triggered (triggered " + addEventsTriggered + " events)" );
+			ok( removeEventsTriggered === 1, "Exactly one remove event was triggered (triggered " + removeEventsTriggered + " events)" );
+			ok( changeEventsTriggered === 1, "Exactly one change event was triggered (triggered " + changeEventsTriggered + " events)" );
 		});
 
 		test( "triggers appropriate change events even when callbacks have triggered set with an unchanging value", function() {
@@ -4653,7 +4672,7 @@ $(document).ready(function() {
 			person.set({livesIn: house});
 
 			ok( changeEventsTriggered === 2, 'one change each triggered for `house` and `person`' );
-		  });
+		});
 
 	module( "Performance", { setup: reset } );
 
@@ -4793,7 +4812,7 @@ $(document).ready(function() {
 
 			/**
 			 * Test 2 (again)
- 			 */
+			 */
 			Backbone.Relational.store.reset();
 			addHasManyCount = addHasOneCount = removeHasManyCount = removeHasOneCount = 0;
 			console.log('loading test 2...');

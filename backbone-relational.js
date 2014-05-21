@@ -182,7 +182,7 @@
 		initializeRelation: function( model, relation, options ) {
 			var type = !_.isString( relation.type ) ? relation.type : Backbone[ relation.type ] || this.getObjectByName( relation.type );
 			if ( type && type.prototype instanceof Backbone.Relation ) {
-				new type( model, relation, options ); // Also pushes the new Relation into `model._relations`
+				var rel = new type( model, relation, options ); // Also pushes the new Relation into `model._relations`
 			}
 			else {
 				Backbone.Relational.showWarnings && typeof console !== 'undefined' && console.warn( 'Relation=%o; missing or invalid relation type!', relation );
@@ -326,7 +326,7 @@
 					return;
 				}
 
-				new relation.type( model, relation );
+				var rel = new relation.type( model, relation );
 			}, this );
 		},
 
@@ -619,7 +619,7 @@
 
 		if ( instance ) {
 			var contentKey = this.keySource;
-			if ( contentKey !== this.key && typeof this.instance.get( this.key ) === 'object' ) {
+			if ( contentKey !== this.key && _.isObject( this.instance.get( this.key ) ) ) {
 				contentKey = this.key;
 			}
 
