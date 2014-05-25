@@ -72,6 +72,7 @@
 	<ul>
 		<li><a href="#RelationalModel-getRelation">getRelation</a></li>
 		<li><a href="#RelationalModel-getRelations">getRelations</a></li>
+		<li><a href="#RelationalModel-getIdsToFetch">getIdsToFetch</a></li>
 		<li><a href="#RelationalModel-fetchRelated">fetchRelated</a></li>
 		<li><a href="#RelationalModel-set">set</a></li>
 		<li><a href="#RelationalModel-toJSON">toJSON</a></li>
@@ -297,6 +298,7 @@
 			<li><a href="#RelationalModel-build">build</a></li>
 			<li><a href="#RelationalModel-findOrCreate">findOrCreate</a></li>
 			<li><a href="#RelationalModel-find">find</a></li>
+			<li><a href="#RelationalModel-findModel">findModel</a></li>
 		</ul>
 
 		<h3 id="RelationalModel-properties">
@@ -777,12 +779,21 @@ alert( 'chimp is an animal? ' + ( chimp instanceof Animal ) + '\n' +
 			</p>
 		</section>
 
-		<section id="RelationalModel-fetchRelated">
+		<section id="RelationalModel-getIdsToFetch">
 			<h4 class="code">
-				fetchRelated<code>relationalModel.fetchRelated(key&lt;string&gt;, [options&lt;object&gt;], [update&lt;boolean&gt;])</code>
+				getRelations<code>relationModel.getIdsToFetch(key&lt;string|Backbone.Relation&gt;, )</code>
 			</h4>
 			<p>
-				Returns: <q>deferred[]</q> An array of request objects.
+				Returns: <q>Array</q> A list of the ids that will be fetched when calling `fetchRelated`.
+			</p>
+		</section>
+
+		<section id="RelationalModel-fetchRelated">
+			<h4 class="code">
+				fetchRelated<code>relationalModel.fetchRelated(key&lt;string&gt;, [options&lt;object&gt;], [refresh&lt;boolean&gt;])</code>
+			</h4>
+			<p>
+				Returns: <q>deferred[]</q> An array of (zero or more) request objects.
 			</p>
 			<p>
 				Fetch models from the server that were referenced in the model's attributes, but have not been found/created yet.
@@ -939,7 +950,7 @@ chimp = Mammal.build( { id: 3, species: "chimp", type: "primate" } )
 		<section id="RelationalModel-find">
 			<h4 class="code">
 				find
-				<code>relationalModel.findOrCreate(attributes&lt;string|number|object&gt;, [options&lt;object&gt;])</code>
+				<code>relationalModel.find(attributes&lt;string|number|object&gt;, [options&lt;object&gt;])</code>
 			</h4>
 			<p>
 				Returns: <q>Backbone.RelationalModel</q> A model instance.
@@ -1238,6 +1249,11 @@ User = Backbone.RelationalModel.extend();
 				<a href="https://raw.github.com/PaulUithol/Backbone-relational/master/backbone-relational.js">download</a>
 			</small>
 		</h4>
+		<ul>
+			<li>
+				Add `getIdsToFetch` to `Backbone.RelationalModel`.
+			</li>
+		</ul>
 
 		<h4>0.8.8
 			<small>

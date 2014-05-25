@@ -955,6 +955,9 @@ $(document).ready(function() {
 				resource_uri: 'person-10',
 				user: 'user-10'
 			});
+
+			var idsToFetch = person.getIdsToFetch( 'user' );
+			deepEqual( idsToFetch, [ 'user-10' ] );
 			
 			var requests = person.fetchRelated( 'user', { error: function() {
 					errorCount++;
@@ -987,6 +990,9 @@ $(document).ready(function() {
 			var zoo = new Zoo({
 				animals: [ { id: 'monkey-1' }, 'lion-1', 'zebra-1' ]
 			});
+
+			var idsToFetch = zoo.getIdsToFetch( 'animals' );
+			deepEqual( idsToFetch, [ 'lion-1', 'zebra-1' ] );
 			
 			//
 			// Case 1: separate requests for each model
@@ -996,7 +1002,7 @@ $(document).ready(function() {
 			equal( requests.length, 2, "Two requests have been made (a separate one for each animal)" );
 			equal( zoo.get( 'animals' ).length, 3, "Three animals in the zoo" );
 			
-			// Triggering the 'error' callback for a request should destroy the model
+			// Triggering the 'error' callback for one request should destroy the model
 			requests[ 0 ].error();
 			// Trigger the 'success' callback on the `destroy` call to fire the 'destroy' event
 			_.last( window.requests ).success();

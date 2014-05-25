@@ -1358,12 +1358,36 @@
 			return _.values( this._relations );
 		},
 
+
+		/**
+		 * Get a list of ids that will be fetched on a call to `fetchRelated`.
+		 * @param {string|Backbone.Relation} key The relation key to fetch models for.
+		 * @param [refresh=false] Add ids for models that are already in the relation, refreshing them?
+		 * @return {Array} An array of ids that need to be fetched.
+		 */
+		getIdsToFetch: function( key, refresh ) {
+			var rel = key instanceof Backbone.Relation ? key : this.getRelation( key ),
+				ids = rel ? ( rel.keyIds && rel.keyIds.slice( 0 ) ) || ( ( rel.keyId || rel.keyId === 0 ) ? [ rel.keyId ] : [] ) : [];
+
+			// On `refresh`, add the ids for current models in the relation to `idsToFetch`
+			if ( refresh ) {
+				var models = rel.related && ( rel.related.models || [ rel.related ] );
+				_.each( models, function( model ) {
+					if ( model.id || model.id === 0 ) {
+						ids.push( model.id );
+					}
+				});
+			}
+
+			return ids;
+		},
+
 		/**
 		 * Retrieve related objects.
 		 * @param {string} key The relation key to fetch models for.
 		 * @param {Object} [options] Options for 'Backbone.Model.fetch' and 'Backbone.sync'.
 		 * @param {Boolean} [refresh=false] Fetch existing models from the server as well (in order to update them).
-		 * @return {jQuery.when[]} An array of request objects
+		 * @return {jQuery.when[]} An array of request objects.
 		 */
 		fetchRelated: function( key, options, refresh ) {
 			// Set default `options` for fetch
@@ -1373,17 +1397,7 @@
 				setUrl,
 				requests = [],
 				rel = this.getRelation( key ),
-				idsToFetch = rel && ( ( rel.keyIds && rel.keyIds.slice( 0 ) ) || ( ( rel.keyId || rel.keyId === 0 ) ? [ rel.keyId ] : [] ) );
-
-			// On `refresh`, add the ids for current models in the relation to `idsToFetch`
-			if ( refresh ) {
-				models = rel.related instanceof Backbone.Collection ? rel.related.models : [ rel.related ];
-				_.each( models, function( model ) {
-					if ( model.id || model.id === 0 ) {
-						idsToFetch.push( model.id );
-					}
-				});
-			}
+				idsToFetch = rel && this.getIdsToFetch( rel, refresh );
 
 			if ( idsToFetch && idsToFetch.length ) {
 				// Find (or create) a model for each one that is to be fetched
