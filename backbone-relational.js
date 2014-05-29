@@ -396,7 +396,7 @@
 			// Type should inherit from Backbone.RelationalModel.
 			if ( type.prototype instanceof Backbone.RelationalModel ) {
 				coll = new Backbone.Collection();
-				coll.cid = _.uniqueId( 'c' );
+				coll.cid = _.uniqueId( 'r' );
 				coll.model = type;
 
 				this._collections.push( coll );
@@ -500,8 +500,8 @@
 			// This triggers updating the lookup indices kept in a collection
 			coll._onModelEvent( 'change:' + model.idAttribute, model, coll );
 
-			// Trigger an event on model so related models (having the model's new id in their keyContents) can add it.
-			model.trigger( 'relational:change:id', model, coll );
+			// Trigger an event so related models (having the model's new id in their keyContents) can add it.
+			coll.trigger( 'relational:change:id', model, coll );
 		},
 
 		/**
@@ -642,21 +642,33 @@
 			// Add this Relation to instance._relations
 			this.instance._relations[ this.key ] = this;
 
-			var reverseIndexKey = Backbone.Relational.store.getCollection( this.model ).cid + ":" + this.key;
-			if ( this.relatedCollection._reverseIndexes == null ) {
+			if ( !this.relatedCollection._reverseIndexes ) {
 				this.relatedCollection._reverseIndexes = {};
 			}
 
+			if ( !this.relatedCollection._relations ) {
+				this.relatedCollection._relations = [];
+			}
+
+			var reverseIndexKey = Backbone.Relational.store.getCollection( this.model ).cid + ":" + this.key;
 			this.reverseIndex = this.relatedCollection._reverseIndexes[ reverseIndexKey ];
+
+			this.relatedCollection._relations.push( this );
 
 			if ( !this.reverseIndex ) {
 				this.reverseIndex = this.relatedCollection._reverseIndexes[ reverseIndexKey ] = {};
-				this.relatedCollection.on( 'relational:add relational:change:id', function( model, coll, opts ) {
+				this.relatedCollection.on( 'relational:add relational:change:id', function( model, coll, options ) {
 					if ( model.id || model.id === 0 ) {
 						_.each( this.reverseIndex[ model.id ], function( obj ) {
-							obj._relations[ this.key ].tryAddRelated( model, coll, opts );
+							obj._relations[ this.key ].tryAddRelated( model, coll, options );
 						}, this );
 					}
+				}, this );
+
+				this.relatedCollection.on( 'relational:remove', function( model, coll, options ) {
+					_.each( this.relatedCollection._relations, function( rel ) {
+						rel.removeRelated( model );
+					}, this );
 				}, this );
 			}
 
@@ -666,9 +678,8 @@
 				this.instance.fetchRelated( this.key, _.isObject( this.options.autoFetch ) ? this.options.autoFetch : {} );
 			}
 
-			// When 'relatedModel' are created or destroyed, check if it affects this relation.
-			this.listenTo( this.instance, 'destroy', this.destroy )
-				.listenTo( this.relatedCollection, 'relational:remove', this.removeRelated );
+			// When 'instance' is destroyed, clean up its relations.
+			this.listenTo( this.instance, 'destroy', this.destroy );
 		}
 	};
 	// Fix inheritance :\
@@ -791,6 +802,9 @@
 			else if ( this instanceof Backbone.HasMany ) {
 				this.setRelated( this._prepareCollection() );
 			}
+
+			var idx = _.indexOf( this.relatedCollection._relations, this );
+			idx > -1 && this.relatedCollection._relations.splice( idx, 1 );
 
 			_.each( this.getReverseRelations(), function( relation ) {
 				relation.removeRelated( this.instance );
