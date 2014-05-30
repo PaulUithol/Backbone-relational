@@ -646,14 +646,12 @@
 				this.relatedCollection._reverseIndexes = {};
 			}
 
-			if ( !this.relatedCollection._relations ) {
-				this.relatedCollection._relations = [];
+			if ( !this.relatedCollection._activeRelations ) {
+				this.relatedCollection._activeRelations = [];
 			}
 
 			var reverseIndexKey = Backbone.Relational.store.getCollection( this.model ).cid + ":" + this.key;
 			this.reverseIndex = this.relatedCollection._reverseIndexes[ reverseIndexKey ];
-
-			this.relatedCollection._relations.push( this );
 
 			if ( !this.reverseIndex ) {
 				this.reverseIndex = this.relatedCollection._reverseIndexes[ reverseIndexKey ] = {};
@@ -666,7 +664,7 @@
 				}, this );
 
 				this.relatedCollection.on( 'relational:remove', function( model, coll, options ) {
-					_.each( this.relatedCollection._relations, function( rel ) {
+					_.each( this.relatedCollection._activeRelations, function( rel ) {
 						rel.removeRelated( model );
 					}, this );
 				}, this );
@@ -753,6 +751,16 @@
 		 * @param {Backbone.Model|Backbone.Collection} related
 		 */
 		setRelated: function( related ) {
+			if ( related instanceof Backbone.Model || ( related instanceof Backbone.Collection && related.length ) ) {
+				if ( !_.contains( this.relatedCollection._activeRelations, this ) ) {
+					this.relatedCollection._activeRelations.push( this );
+				}
+			}
+			else {
+				var idx = _.indexOf( this.relatedCollection._activeRelations, this );
+				idx > -1 && this.relatedCollection._activeRelations.splice( idx, 1 );
+			}
+
 			this.related = related;
 			this.instance.attributes[ this.key ] = related;
 		},
@@ -802,9 +810,6 @@
 			else if ( this instanceof Backbone.HasMany ) {
 				this.setRelated( this._prepareCollection() );
 			}
-
-			var idx = _.indexOf( this.relatedCollection._relations, this );
-			idx > -1 && this.relatedCollection._relations.splice( idx, 1 );
 
 			_.each( this.getReverseRelations(), function( relation ) {
 				relation.removeRelated( this.instance );
@@ -1165,6 +1170,12 @@
 				relation.addRelated( this.instance, options );
 			}, this );
 
+			if ( !this.related || this.related.length === 1 ) {
+				if ( !_.contains( this.relatedCollection._activeRelations, this ) ) {
+					this.relatedCollection._activeRelations.push( this );
+				}
+			}
+
 			// Only trigger 'add' once the newly added model is initialized (so, has its relations set up)
 			var dit = this;
 			!options.silent && Backbone.Relational.eventQueue.add( function() {
@@ -1184,6 +1195,11 @@
 			_.each( this.getReverseRelations( model ), function( relation ) {
 				relation.removeRelated( this.instance, null, options );
 			}, this );
+
+			if ( this.related.length === 0 ) {
+				var idx = _.indexOf( this.relatedCollection._activeRelations, this );
+				idx > -1 && this.relatedCollection._activeRelations.splice( idx, 1 );
+			}
 
 			var dit = this;
 			!options.silent && Backbone.Relational.eventQueue.add( function() {
