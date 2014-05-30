@@ -892,7 +892,7 @@
 				var related = this.findRelated( options );
 				this.setRelated( related );
 
-				if ( this.reverseIndex && this.related && ( this.related.id || this.related.id === 0 ) ) {
+				if ( this.related && ( this.related.id || this.related.id === 0 ) ) {
 					var reverseIndex = this.reverseIndex[ this.related.id ] || ( this.reverseIndex[ this.related.id ] = {} );
 					reverseIndex[ this.instance.cid ] = this.instance;
 				}
@@ -901,7 +901,7 @@
 			// Notify old 'related' object of the terminated relation
 			if ( oldRelated && this.related !== oldRelated ) {
 				_.each( this.getReverseRelations( oldRelated ), function( relation ) {
-					if ( relation.reverseIndex && this.instance && ( this.instance.id || this.instance.id === 0 ) ) {
+					if ( this.instance && ( this.instance.id || this.instance.id === 0 ) ) {
 						var reverseIndex = relation.reverseIndex[ this.instance.id ] || ( relation.reverseIndex[ this.instance.id ] = {} );
 						delete reverseIndex[ relation.instance.cid ];
 					}
@@ -913,7 +913,7 @@
 			// that can be necessary for bi-directional relations if 'this.instance' was created after 'this.related'.
 			// In that case, 'this.instance' will already know 'this.related', but the reverse might not exist yet.
 			_.each( this.getReverseRelations(), function( relation ) {
-				if ( relation.reverseIndex && this.instance && ( this.instance.id || this.instance.id === 0 ) ) {
+				if ( this.instance && ( this.instance.id || this.instance.id === 0 ) ) {
 					var reverseIndex = relation.reverseIndex[ this.instance.id ] || ( relation.reverseIndex[ this.instance.id ] = {} );
 					reverseIndex[ relation.instance.cid ] = this.instance;
 				}
@@ -1124,12 +1124,10 @@
 		onChange: function( model, attr, options ) {
 			options = options ? _.clone( options ) : {};
 
-			if ( this.reverseIndex ) {
-				_.each( this.keyIds, function( keyId ) {
-					var index = this.reverseIndex[ keyId ];
-					delete index[ this.instance.cid ];
-				}, this );
-			}
+			_.each( this.keyIds, function( keyId ) {
+				var index = this.reverseIndex[ keyId ];
+				delete index[ this.instance.cid ];
+			}, this );
 
 			this.setKeyContents( attr );
 			this.changed = false;
@@ -1137,12 +1135,10 @@
 			var related = this.findRelated( options );
 			this.setRelated( related );
 
-			if ( this.reverseIndex ) {
-				_.each( this.keyIds, function( keyId ) {
-					var index = this.reverseIndex[ keyId ] || ( this.reverseIndex[ keyId ] = {} );
-					index[ this.instance.cid ] = this.instance;
-				}, this );
-			}
+			_.each( this.keyIds, function( keyId ) {
+				var index = this.reverseIndex[ keyId ] || ( this.reverseIndex[ keyId ] = {} );
+				index[ this.instance.cid ] = this.instance;
+			}, this );
 
 			if ( !options.silent ) {
 				var dit = this;
