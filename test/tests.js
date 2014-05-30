@@ -3479,7 +3479,7 @@ $(document).ready(function() {
             ]);
 
             equal(animals.at(0).id, 'lion-1');
-            deepEqual(events, ['add', 'sort', 'add', 'sort']);
+            deepEqual(events, ['add', 'add', 'sort']);
         });
 
 
