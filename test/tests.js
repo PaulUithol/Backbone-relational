@@ -2145,50 +2145,6 @@ $(document).ready(function() {
 			ok( person.get( 'user' ).get( 'resource_uri' ) == null );
 		});
 
-		test("'dotNotation' is true", function(){
-			var Role = Backbone.RelationalModel.extend({});
-			var Roles = Backbone.Collection.extend({
-				model: Role
-			});
-			var NewUser = Backbone.RelationalModel.extend({});
-			var NewPerson = Backbone.RelationalModel.extend({
-				dotNotation: true,
-				relations: [{
-					type: Backbone.HasOne,
-					key: 'user',
-					relatedModel: NewUser
-				},
-				{
-					type: Backbone.HasMany,
-					key: 'roles',
-					relatedModel: Role,
-					collectionType: Roles
-				}]
-			});
-			
-			var person = new NewPerson({
-				"normal": true,
-				"user.over": 2,
-				user: {name: "John", "over" : 1},
-				roles: [
-					{name: 'publisher'},
-					{name: 'moderator'}
-				]
-			});
-			
-			ok( person.get( 'normal' ) === true, "getting normal attributes works as usual" );
-			ok( person.get( 'user.name' ) === "John", "attributes of nested models can be get via dot notation: nested.attribute");
-			ok(oldCompany.get( 'ceo.name' ) === undefined, "no dotNotation when not enabled");
-			ok( person.get( 'user.fake.attribute') === undefined, "undefined when path doesn't exist");
-			throws( function() {
-				person.get( 'user.over' );
-			}, "getting ambiguous nested attributes raises an exception");
-			ok( person.get('roles.0') instanceof Role, "get by index works for nested collections");
-			ok( person.get('roles.0.name') === "publisher", "attributes of models of nested collections can be get via dot notation: nested.0.attribute");
-			ok( person.get('roles.100') === undefined, "undefined when index is out of bounds");
-			ok( person.get('roles.100.name') === undefined, "attributes of out-of-bounds models of nested collections are undefined");
-		});
-
 		test( "Relations load from both `keySource` and `key`", function() {
 			var Property = Backbone.RelationalModel.extend({
 				idAttribute: 'property_id'

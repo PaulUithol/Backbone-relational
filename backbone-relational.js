@@ -1461,39 +1461,6 @@
 			return requests;
 		},
 
-		get: function( attr ) {
-			var originalResult = Backbone.Model.prototype.get.call( this, attr );
-
-			// Use `originalResult` get if dotNotation not enabled or not required because no dot is in `attr`
-			if ( !this.dotNotation || attr.indexOf( '.' ) === -1 ) {
-				return originalResult;
-			}
-
-			// Go through all splits and return the final result
-			var splits = attr.split( '.' );
-			var result = _.reduce( splits, function( model, split ) {
-				if ( _.isNull( model ) || _.isUndefined( model ) ) {
-					// Return undefined if the path cannot be expanded
-					return undefined;
-				}
-				else if ( model instanceof Backbone.Model ) {
-					return Backbone.Model.prototype.get.call( model, split );
-				}
-				else if ( model instanceof Backbone.Collection ) {
-					return Backbone.Collection.prototype.at.call( model, split );
-				}
-				else {
-					throw new Error( 'Attribute must be an instanceof Backbone.Model or Backbone.Collection. Is: ' + model + ', currentSplit: ' + split );
-				}
-			}, this );
-
-			if ( originalResult !== undefined && result !== undefined ) {
-				throw new Error( "Ambiguous result for '" + attr + "'. direct result: " + originalResult + ", dotNotation: " + result );
-			}
-
-			return originalResult || result;
-		},
-
 		set: function( key, value, options ) {
 			Backbone.Relational.eventQueue.block();
 
