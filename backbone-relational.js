@@ -1343,11 +1343,11 @@
 
 		/**
 		 * Get a specific relation.
-		 * @param {string} key The relation key to look for.
-		 * @return {Backbone.Relation} An instance of 'Backbone.Relation', if a relation was found for 'key', or null.
+		 * @param {string} attr The relation key to look for.
+		 * @return {Backbone.Relation} An instance of 'Backbone.Relation', if a relation was found for 'attr', or null.
 		 */
-		getRelation: function( key ) {
-			return this._relations[ key ];
+		getRelation: function( attr ) {
+			return this._relations[ attr ];
 		},
 
 		/**
@@ -1361,12 +1361,12 @@
 
 		/**
 		 * Get a list of ids that will be fetched on a call to `fetchRelated`.
-		 * @param {string|Backbone.Relation} key The relation key to fetch models for.
+		 * @param {string|Backbone.Relation} attr The relation key to fetch models for.
 		 * @param [refresh=false] Add ids for models that are already in the relation, refreshing them?
 		 * @return {Array} An array of ids that need to be fetched.
 		 */
-		getIdsToFetch: function( key, refresh ) {
-			var rel = key instanceof Backbone.Relation ? key : this.getRelation( key ),
+		getIdsToFetch: function( attr, refresh ) {
+			var rel = attr instanceof Backbone.Relation ? attr : this.getRelation( attr ),
 				ids = rel ? ( rel.keyIds && rel.keyIds.slice( 0 ) ) || ( ( rel.keyId || rel.keyId === 0 ) ? [ rel.keyId ] : [] ) : [];
 
 			// On `refresh`, add the ids for current models in the relation to `idsToFetch`
@@ -1384,19 +1384,19 @@
 
 		/**
 		 * Retrieve related objects.
-		 * @param {string} key The relation key to fetch models for.
+		 * @param {string} attr The relation key to fetch models for.
 		 * @param {Object} [options] Options for 'Backbone.Model.fetch' and 'Backbone.sync'.
 		 * @param {Boolean} [refresh=false] Fetch existing models from the server as well (in order to update them).
 		 * @return {jQuery.Deferred} A jQuery promise object
 		 */
-		fetchRelated: function( key, options, refresh ) {
+		fetchRelated: function( attr, options, refresh ) {
 			// Set default `options` for fetch
 			options = _.extend( { update: true, remove: false }, options );
 
 			var models,
 				setUrl,
 				requests = [],
-				rel = this.getRelation( key ),
+				rel = this.getRelation( attr ),
 				idsToFetch = rel && this.getIdsToFetch( rel, refresh );
 
 			if ( idsToFetch && idsToFetch.length ) {
