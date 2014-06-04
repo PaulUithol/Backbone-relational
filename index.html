@@ -70,10 +70,11 @@
 		<li><a href="#RelationalModel-subModelTypeAttribute">subModelTypeAttribute</a></li>
 	</ul>
 	<ul>
+		<li><a href="#RelationalModel-fetchRelated">fetchRelated</a></li>
+		<li><a href="#RelationalModel-getAsync">getAsync</a></li>
+		<li><a href="#RelationalModel-getIdsToFetch">getIdsToFetch</a></li>
 		<li><a href="#RelationalModel-getRelation">getRelation</a></li>
 		<li><a href="#RelationalModel-getRelations">getRelations</a></li>
-		<li><a href="#RelationalModel-getIdsToFetch">getIdsToFetch</a></li>
-		<li><a href="#RelationalModel-fetchRelated">fetchRelated</a></li>
 		<li><a href="#RelationalModel-set">set</a></li>
 		<li><a href="#RelationalModel-toJSON">toJSON</a></li>
 	</ul>
@@ -282,9 +283,11 @@
 		</p>
 
 		<ul class="small">
+			<li><a href="#RelationalModel-fetchRelated">fetchRelated</a></li>
+			<li><a href="#RelationalModel-getAsync">getAsync</a></li>
+			<li><a href="#RelationalModel-getIdsToFetch">getIdsToFetch</a></li>
 			<li><a href="#RelationalModel-getRelation">getRelation</a></li>
 			<li><a href="#RelationalModel-getRelations">getRelations</a></li>
-			<li><a href="#RelationalModel-fetchRelated">fetchRelated</a></li>
 			<li><a href="#RelationalModel-set">set</a></li>
 			<li><a href="#RelationalModel-toJSON">toJSON</a></li>
 		</ul>
@@ -761,36 +764,9 @@ alert( 'chimp is an animal? ' + ( chimp instanceof Animal ) + '\n' +
 			Instance methods
 		</h3>
 
-		<section id="RelationalModel-getRelation">
-			<h4 class="code">
-				getRelation<code>relationModel.getRelation(name&lt;string&gt;)</code>
-			</h4>
-			<p>
-				Returns: <q>Backbone.Relation</q> A single initialized relation on the model.
-			</p>
-		</section>
-
-		<section id="RelationalModel-getRelations">
-			<h4 class="code">
-				getRelations<code>relationModel.getRelations()</code>
-			</h4>
-			<p>
-				Returns: <q>Backbone.Relation[]</q> The set of initialized relations on the model.
-			</p>
-		</section>
-
-		<section id="RelationalModel-getIdsToFetch">
-			<h4 class="code">
-				getRelations<code>relationModel.getIdsToFetch(key&lt;string|Backbone.Relation&gt;, )</code>
-			</h4>
-			<p>
-				Returns: <q>Array</q> A list of the ids that will be fetched when calling `fetchRelated`.
-			</p>
-		</section>
-
 		<section id="RelationalModel-fetchRelated">
 			<h4 class="code">
-				fetchRelated<code>relationalModel.fetchRelated(key&lt;string&gt;, [options&lt;object&gt;], [refresh&lt;boolean&gt;])</code>
+				fetchRelated<code>relationalModel.fetchRelated(attr&lt;string&gt;, [options&lt;object&gt;], [refresh&lt;boolean&gt;])</code>
 			</h4>
 			<p>
 				Returns: <q>jQuery.Deferred</q> A <a href="http://api.jquery.com/category/deferred-object/">jQuery promise</a>
@@ -809,6 +785,43 @@ alert( 'chimp is an animal? ' + ( chimp instanceof Animal ) + '\n' +
 				should have an overridden <a href="http://backbonejs.org/#Collection-url"><q>url</q></a>
 				method that allows it to construct a url for an array of models. See <a href="#example-person">this example</a>
 				or <a href="https://github.com/PaulUithol/backbone-tastypie">Backbone-tastypie</a> for an example.
+			</p>
+		</section>
+
+		<section id="RelationalModel-getAsync">
+			<h4 class="code">
+				getAsync<code>relationalModel.getAsync(attr&lt;string&gt;, [options&lt;object&gt;], [refresh&lt;boolean&gt;])</code>
+			</h4>
+			<p>
+				Get an attribute's value asynchronously. If available, the local value will be returned.
+				If <q>attr</q> is a relation and one or more of its models are not available, they will be fetched.
+			</p>
+		</section>
+
+		<section id="RelationalModel-getIdsToFetch">
+			<h4 class="code">
+				getRelations<code>relationModel.getIdsToFetch(attr&lt;string|Backbone.Relation&gt;, )</code>
+			</h4>
+			<p>
+				Returns: <q>Array</q> A list of the ids that will be fetched when calling <q>getAsync</q>.
+			</p>
+		</section>
+
+		<section id="RelationalModel-getRelation">
+			<h4 class="code">
+				getRelation<code>relationModel.getRelation(attr&lt;string&gt;)</code>
+			</h4>
+			<p>
+				Returns: <q>Backbone.Relation</q> A single initialized relation on the model.
+			</p>
+		</section>
+
+		<section id="RelationalModel-getRelations">
+			<h4 class="code">
+				getRelations<code>relationModel.getRelations()</code>
+			</h4>
+			<p>
+				Returns: <q>Backbone.Relation[]</q> The set of initialized relations on the model.
 			</p>
 		</section>
 
@@ -1253,11 +1266,14 @@ User = Backbone.RelationalModel.extend();
 		<ul>
 			<li>
 				<a href="https://github.com/PaulUithol/Backbone-relational/commit/42b158d8ad5697a955a2c1e615824109dfc52234"><q>42b158d</q></a>
-				Add `getIdsToFetch` to `Backbone.RelationalModel`.
+				Add <q>getIdsToFetch</q> to <q>Backbone.RelationalModel</q>.
 			</li>
 			<li>
 				<a href="https://github.com/PaulUithol/Backbone-relational/commit/b7e71237d1218eec41ce69e1cf56e5eecdc96bef"><q>b7e7123</q></a>
 				<q>fetchRelated</q> now return a single promise, instead of an array of request objects.
+			</li>
+			<li>
+				Add <q>getAsync</q> to <q>Backbone.RelationalModel</q>.
 			</li>
 		</ul>
 

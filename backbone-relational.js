@@ -1461,6 +1461,24 @@
 			return $.when.apply( null, requests );
 		},
 
+		getAsync: function( attr, options ) {
+			var dit = this,
+				dfd = new $.Deferred();
+
+			this.fetchRelated( attr, options )
+				.done( function() {
+					dfd.resolveWith( dit, [ Backbone.Model.prototype.get.call( dit, attr ) ] );
+				})
+				.fail( function() {
+					dfd.rejectWith( dit, arguments );
+				})
+				.progress( function() {
+					dfd.notifyWith( dit, arguments );
+				});
+
+			return dfd.promise();
+		},
+
 		set: function( key, value, options ) {
 			Backbone.Relational.eventQueue.block();
 
