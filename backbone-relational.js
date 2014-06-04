@@ -1387,7 +1387,7 @@
 		 * @param {string} key The relation key to fetch models for.
 		 * @param {Object} [options] Options for 'Backbone.Model.fetch' and 'Backbone.sync'.
 		 * @param {Boolean} [refresh=false] Fetch existing models from the server as well (in order to update them).
-		 * @return {jQuery.when[]} An array of request objects.
+		 * @return {jQuery.Deferred} A jQuery promise object
 		 */
 		fetchRelated: function( key, options, refresh ) {
 			// Set default `options` for fetch
@@ -1458,7 +1458,7 @@
 				}
 			}
 
-			return requests;
+			return $.when.apply( null, requests );
 		},
 
 		set: function( key, value, options ) {
