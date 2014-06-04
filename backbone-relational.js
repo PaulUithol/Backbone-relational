@@ -1462,21 +1462,13 @@
 		},
 
 		getAsync: function( attr, options ) {
-			var dit = this,
-				dfd = new $.Deferred();
+			var dit = this;
 
-			this.fetchRelated( attr, options )
-				.done( function() {
-					dfd.resolveWith( dit, [ Backbone.Model.prototype.get.call( dit, attr ) ] );
-				})
-				.fail( function() {
-					dfd.rejectWith( dit, arguments );
-				})
-				.progress( function() {
-					dfd.notifyWith( dit, arguments );
-				});
-
-			return dfd.promise();
+			return this.fetchRelated( attr, options ).then(
+				function() {
+					return Backbone.Model.prototype.get.call( dit, attr );
+				}
+			);
 		},
 
 		set: function( key, value, options ) {
