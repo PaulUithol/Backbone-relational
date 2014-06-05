@@ -90,7 +90,6 @@ $(document).ready(function() {
 				relatedModel: 'Animal',
 				includeInJSON: [ 'id', 'species' ],
 				collectionType: 'AnimalCollection',
-				collectionOptions: function( instance ) { return { 'url': 'zoo/' + instance.cid + '/animal/' } },
 				reverseRelation: {
 					key: 'livesIn',
 					includeInJSON: [ 'id', 'name' ]
@@ -110,7 +109,15 @@ $(document).ready(function() {
 
 	window.Animal = Backbone.RelationalModel.extend({
 		urlRoot: '/animal/',
-		
+
+		relations: [
+			{ // A simple HasOne without reverse relation
+				type: Backbone.HasOne,
+				key: 'favoriteFood',
+				relatedModel: 'Food'
+			}
+		],
+
 		// For validation testing. Wikipedia says elephants are reported up to 12.000 kg. Any more, we must've weighted wrong ;).
 		validate: function( attrs ) {
 			if ( attrs.species === 'elephant' && attrs.weight && attrs.weight > 12000 ) {
@@ -124,13 +131,10 @@ $(document).ready(function() {
 	});
 
 	window.AnimalCollection = Backbone.Collection.extend({
-		model: Animal,
-		
-		initialize: function( models, options ) {
-			options || (options = {});
-			this.url = options.url;
-		}
+		model: Animal
 	});
+
+	window.Food = Backbone.RelationalModel.extend();
 
 	window.Visitor = Backbone.RelationalModel.extend();
 
@@ -298,6 +302,15 @@ $(document).ready(function() {
 		}
 	});
 
+	window.CustomerCollection = Backbone.Collection.extend({
+		model: Customer,
+
+		initialize: function( models, options ) {
+			options || (options = {});
+			this.url = options.url;
+		}
+	});
+
 	window.Address = Backbone.RelationalModel.extend({
 		urlRoot: '/address/',
 
@@ -311,6 +324,10 @@ $(document).ready(function() {
 			{
 				type: Backbone.HasMany,
 				key: 'customers',
+				collectionType: 'CustomerCollection',
+				collectionOptions: function( instance ) {
+					return { 'url': 'shop/' + instance.id + '/customers/' };
+				},
 				relatedModel: 'Customer',
 				autoFetch: true
 			},
@@ -1054,7 +1071,7 @@ $(document).ready(function() {
 
 			// Re-fetch the existing model
 			window.requests = [];
-			request = zoo.fetchRelated( 'animals', null, true );
+			request = zoo.fetchRelated( 'animals', { refresh: true } );
 
 			equal( window.requests.length, 1 );
 			equal( _.last( window.requests ).url, '/animal/set/monkey-1/' );
@@ -2289,8 +2306,8 @@ $(document).ready(function() {
 		});
 		
 		test( "'collectionOptions' sets the options on the created HasMany Collections", function() {
-			var zoo = new Zoo();
-			ok( zoo.get("animals").url === "zoo/" + zoo.cid + "/animal/");
+			var shop = new Shop({ id: 1 });
+			equal( shop.get( 'customers' ).url, 'shop/' + shop.id + '/customers/' );
 		});
 
 		test( "`parse` with deeply nested relations", function() {
