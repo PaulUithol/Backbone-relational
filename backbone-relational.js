@@ -637,7 +637,7 @@
 			this.initialize( opts );
 
 			if ( this.options.autoFetch ) {
-				this.instance.fetchRelated( this.key, _.isObject( this.options.autoFetch ) ? this.options.autoFetch : {} );
+				this.instance.getAsync( this.key, _.isObject( this.options.autoFetch ) ? this.options.autoFetch : {} );
 			}
 
 			// When 'relatedModel' are created or destroyed, check if it affects this relation.
@@ -1360,7 +1360,7 @@
 
 
 		/**
-		 * Get a list of ids that will be fetched on a call to `fetchRelated`.
+		 * Get a list of ids that will be fetched on a call to `getAsync`.
 		 * @param {string|Backbone.Relation} attr The relation key to fetch models for.
 		 * @param [refresh=false] Add ids for models that are already in the relation, refreshing them?
 		 * @return {Array} An array of ids that need to be fetched.
@@ -1383,21 +1383,24 @@
 		},
 
 		/**
-		 * Retrieve related objects.
+		 * Get related objects. Returns a single promise, which can either resolve immediately (if the related model[s])
+		 * are already present locally, or after fetching the contents of the requested attribute.
 		 * @param {string} attr The relation key to fetch models for.
 		 * @param {Object} [options] Options for 'Backbone.Model.fetch' and 'Backbone.sync'.
-		 * @param {Boolean} [refresh=false] Fetch existing models from the server as well (in order to update them).
-		 * @return {jQuery.Deferred} A jQuery promise object
+		 * @param {Boolean} [options.refresh=false] Fetch existing models from the server as well (in order to update them).
+		 * @return {jQuery.Deferred} A jQuery promise object. When resolved, its `done` callback will be called with
+		 *  contents of `attr`.
 		 */
-		fetchRelated: function( attr, options, refresh ) {
+		getAsync: function( attr, options ) {
 			// Set default `options` for fetch
-			options = _.extend( { update: true, remove: false }, options );
+			options = _.extend( { update: true, remove: false, refresh: false }, options );
 
-			var models,
+			var dit = this,
+				models,
 				setUrl,
 				requests = [],
 				rel = this.getRelation( attr ),
-				idsToFetch = rel && this.getIdsToFetch( rel, refresh );
+				idsToFetch = rel && this.getIdsToFetch( rel, options.refresh );
 
 			if ( idsToFetch && idsToFetch.length ) {
 				// Find (or create) a model for each one that is to be fetched
@@ -1458,13 +1461,7 @@
 				}
 			}
 
-			return $.when.apply( null, requests );
-		},
-
-		getAsync: function( attr, options ) {
-			var dit = this;
-
-			return this.fetchRelated( attr, options ).then(
+			return $.when.apply( null, requests ).then(
 				function() {
 					return Backbone.Model.prototype.get.call( dit, attr );
 				}

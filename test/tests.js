@@ -16,21 +16,13 @@ if ( !window.console ) {
 $(document).ready(function() {
 	window.requests = [];
 
-	Backbone.ajax = function( request ) {
-		// If a `response` has been defined, execute it.
-		// If status < 299, trigger 'success'; otherwise, trigger 'error'
-		if ( request.response && request.response.status ) {
-			var response = request.response;
+	Backbone.ajax = function( settings ) {
+		var callbackContext = settings.context || this,
+			dfd = new $.Deferred();
 
-			// Define a `getResponseHeader` function on `response`; used in some tests.
-			// See https://developer.mozilla.org/en-US/docs/DOM/XMLHttpRequest#getResponseHeader%28%29
-			response.getResponseHeader = function( headerName ) {
-				return response.headers && response.headers[ headerName ] || null;
-			};
+		dfd = _.extend( settings, dfd );
 
-			// Add the request before triggering callbacks that may get us in here again
-			window.requests.push( request );
-
+		dfd.respond = function( status, responseText ) {
 			/**
 			 * Trigger success/error with arguments like jQuery would:
 			 * // Success/Error
@@ -40,18 +32,26 @@ $(document).ready(function() {
 			 *   deferred.rejectWith( callbackContext, [ jqXHR, statusText, error ] );
 			 * }
 			 */
-			if ( response.status >= 200 && response.status < 300 || response.status === 304 ) {
-				request.success( response.responseText, 'success', response );
+			if ( status >= 200 && status < 300 || status === 304 ) {
+				_.isFunction( settings.success ) && settings.success( responseText, 'success', dfd );
+				dfd.resolveWith( callbackContext, [ responseText, 'success', dfd ] );
 			}
 			else {
-				request.error( response, 'error', 'Internal Server Error' );
+				_.isFunction( settings.error ) && settings.error( responseText, 'error', 'Internal Server Error' );
+				dfd.rejectWith( callbackContext, [ dfd, 'error', 'Internal Server Error' ] );
 			}
-		}
-		else {
-			window.requests.push( request );
+		};
+
+		// Add the request before triggering callbacks that may get us in here again
+		window.requests.push( dfd );
+
+		// If a `response` has been defined, execute it.
+		// If status < 299, trigger 'success'; otherwise, trigger 'error'
+		if ( settings.response && settings.response.status ) {
+			dfd.respond( settings.response.status, settings.response.responseText );
 		}
 
-		return request;
+		return dfd;
 	};
 	
 	Backbone.Model.prototype.url = function() {
@@ -134,7 +134,9 @@ $(document).ready(function() {
 		model: Animal
 	});
 
-	window.Food = Backbone.RelationalModel.extend();
+	window.Food = Backbone.RelationalModel.extend({
+		urlRoot: '/food/'
+	});
 
 	window.Visitor = Backbone.RelationalModel.extend();
 
@@ -965,7 +967,7 @@ $(document).ready(function() {
 			ok( person1.getRelation( 'nope' ) == null );
 		});
 		
-		test( "fetchRelated on a HasOne relation", function() {
+		test( "getAsync on a HasOne relation", function() {
 			var errorCount = 0;
 			var person = new Person({
 				id: 'person-10',
@@ -976,7 +978,7 @@ $(document).ready(function() {
 			var idsToFetch = person.getIdsToFetch( 'user' );
 			deepEqual( idsToFetch, [ 'user-10' ] );
 			
-			var request = person.fetchRelated( 'user', { error: function() {
+			var request = person.getAsync( 'user', { error: function() {
 					errorCount++;
 				}
 			});
@@ -998,11 +1000,11 @@ $(document).ready(function() {
 				resource_uri: 'person-11'
 			});
 			
-			request = person2.fetchRelated( 'user' );
+			request = person2.getAsync( 'user' );
 			equal( window.requests.length, 1, "No request was made" );
 		});
 		
-		test( "fetchRelated on a HasMany relation", function() {
+		test( "getAsync on a HasMany relation", function() {
 			var errorCount = 0;
 			var zoo = new Zoo({
 				animals: [ { id: 'monkey-1' }, 'lion-1', 'zebra-1' ]
@@ -1015,7 +1017,7 @@ $(document).ready(function() {
 			// Case 1: separate requests for each model
 			//
 			window.requests = [];
-			var request = zoo.fetchRelated( 'animals', { error: function() { errorCount++; } } );
+			var request = zoo.getAsync( 'animals', { error: function() { errorCount++; } } );
 
 			ok( _.isObject( request ) && request.always && request.done && request.fail );
 			equal( window.requests.length, 2, "Two requests have been made (a separate one for each animal)" );
@@ -1045,9 +1047,9 @@ $(document).ready(function() {
 			
 			equal( zoo.get( 'animals' ).length, 1 );
 
-			// `fetchRelated` creates two placeholder models for the ids present in the relation.
+			// `getAsync` creates two placeholder models for the ids present in the relation.
 			window.requests = [];
-			request = zoo.fetchRelated( 'animals', { error: function() { errorCount++; } } );
+			request = zoo.getAsync( 'animals', { error: function() { errorCount++; } } );
 			
 			ok( _.isObject( request ) && request.always && request.done && request.fail );
 			equal( window.requests.length, 1 );
@@ -1064,14 +1066,14 @@ $(document).ready(function() {
 			
 			// Try to re-fetch; nothing left to get though
 			window.requests = [];
-			request = zoo.fetchRelated( 'animals' );
+			request = zoo.getAsync( 'animals' );
 			
 			equal( window.requests.length, 0 );
 			equal( zoo.get( 'animals' ).length, 1 );
 
 			// Re-fetch the existing model
 			window.requests = [];
-			request = zoo.fetchRelated( 'animals', { refresh: true } );
+			request = zoo.getAsync( 'animals', { refresh: true } );
 
 			equal( window.requests.length, 1 );
 			equal( _.last( window.requests ).url, '/animal/set/monkey-1/' );
@@ -1080,6 +1082,39 @@ $(document).ready(function() {
 			// An error while refreshing an existing model shouldn't affect it
 			window.requests[ 0 ].error();
 			equal( zoo.get( 'animals' ).length, 1 );
+		});
+
+		test( "getAsync", 8, function() {
+			var zoo = Zoo.findOrCreate( { id: 'z-1', animals: [ 'cat-1' ] } );
+
+			zoo.on( 'add:animals', function( animal ) {
+				console.log( 'add:animals=%o', animal );
+				animal.on( 'change:favoriteFood', function( model, food ) {
+					console.log( '%s eats %s', animal.get( 'name' ), food.get( 'name' ) );
+				});
+			});
+
+			zoo.getAsync( 'animals' ).done( function( animals ) {
+				ok( animals instanceof AnimalCollection );
+				ok( animals.length === 1 );
+
+				var cat = zoo.get( 'animals' ).at( 0 );
+				equal( cat.get( 'name' ), 'Tiger' );
+
+				cat.getAsync( 'favoriteFood' ).done( function( food ) {
+					equal( food.get( 'name' ), 'Cheese', 'Favorite food is cheese' );
+				});
+			});
+
+			equal( zoo.get( 'animals' ).length, 1 );
+			equal( window.requests.length, 1 );
+			equal( _.last( window.requests ).url, '/animal/cat-1' );
+
+			// Declare success
+			_.last( window.requests ).respond( 200, { id: 'cat-1', name: 'Tiger', favoriteFood: 'f-2' } );
+			equal( window.requests.length, 2 );
+
+			_.last( window.requests ).respond( 200, { id: 'f-2', name: 'Cheese' } );
 		});
 
 		test( "autoFetch a HasMany relation", function() {

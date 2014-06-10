@@ -70,7 +70,6 @@
 		<li><a href="#RelationalModel-subModelTypeAttribute">subModelTypeAttribute</a></li>
 	</ul>
 	<ul>
-		<li><a href="#RelationalModel-fetchRelated">fetchRelated</a></li>
 		<li><a href="#RelationalModel-getAsync">getAsync</a></li>
 		<li><a href="#RelationalModel-getIdsToFetch">getIdsToFetch</a></li>
 		<li><a href="#RelationalModel-getRelation">getRelation</a></li>
@@ -133,18 +132,21 @@
 		</p>
 		<p>
 			You can try to keep updating both sides of a relation manually for every action, and individually call
-			<a href="http://backbonejs.org/#Model-save">save()</a> or <a href="http://backbonejs.org/#Model-fetch">fetch()</a>
+			<q><a href="http://backbonejs.org/#Model-save">save</a></q> or <q><a href="http://backbonejs.org/#Model-fetch">fetch</a></q>
 			on each of the changed models to sync with the server, but that quickly turns into a tedious process and
 			results in multiple requests.
-			Instead, we can configure relationships between our models, and sync the model and all of its related models with a single
-			<a href="http://backbonejs.org/#Model-save">save()</a> or <a href="http://backbonejs.org/#Model-fetch">fetch()</a>.
+		</p>
+		<p>
+			Using Backbone-relational, we can configure relationships between our models, and sync the model and all of its related models with a single
+			call to <q><a href="http://backbonejs.org/#Model-save">save</a></q>, <q><a href="#RelationalModel-getAsync">getAsync</a></q> or <q><a href="http://backbonejs.org/#Model-fetch">fetch()</a></q>
+			after setting up a model's <q><a href="#RelationalModel-relations">relations</a></q>.
 		</p>
 		<p>
 			Backbone-relational is hosted on <a href="https://github.com/PaulUithol/Backbone-relational">GitHub</a>,
 			and is available under the <a href="https://github.com/PaulUithol/Backbone-relational/blob/master/LICENSE.txt">MIT license</a>.
 		</p>
 		<p>
-			Thanks go out to <a href="http://progressiveplanning.com">Progressive Planning</a> for allowing me the time to
+			Thanks to <a href="http://progressiveplanning.com">Progressive Planning</a> for allowing me the time to
 			work on Backbone-relational!
 		</p>
 	</section>
@@ -160,7 +162,7 @@
 		<table>
 			<tr>
 				<td><a class="punch" href="https://raw.github.com/PaulUithol/Backbone-relational/0.8.8/backbone-relational.js">Latest Release (0.8.8)</a></td>
-				<td class="text"><i>~66kb. Full source, uncompressed, lots of comments.</i></td>
+				<td class="text"><i>~70kb. Full source, uncompressed, lots of comments.</i></td>
 			</tr>
 			<tr>
 				<td><a class="punch" href="https://raw.github.com/PaulUithol/Backbone-relational/master/backbone-relational.js">Development Version</a></td>
@@ -200,11 +202,11 @@
 				Control how relations are serialized using the <a href="#relations-includeInJSON"><q>includeInJSON</q></a> option.
 			</li>
 			<li>
-				Automatically convert nested objects in a model's attributes into model instances using the
-				<a href="#relations-createModels"><q>createModels</q></a> option.
+				Automatically convert nested objects in a model's attributes into model instances (using the
+				<a href="#relations-createModels"><q>createModels</q></a> option, which is <q>true</q> by default).
 			</li>
 			<li>
-				Lazily retrieve a set of related models through the <a href="#RelationalModel-fetchRelated"><q>fetchRelated</q></a>
+				Lazily retrieve a set of related models through the <a href="#RelationalModel-getAsync"><q>getAsync</q></a>
 				method.
 			</li>
 			<li>
@@ -283,7 +285,6 @@
 		</p>
 
 		<ul class="small">
-			<li><a href="#RelationalModel-fetchRelated">fetchRelated</a></li>
 			<li><a href="#RelationalModel-getAsync">getAsync</a></li>
 			<li><a href="#RelationalModel-getIdsToFetch">getIdsToFetch</a></li>
 			<li><a href="#RelationalModel-getRelation">getRelation</a></li>
@@ -473,9 +474,9 @@ Company = Backbone.RelationalModel.extend({
 			</p>
 			<p>
 				If this property is set to <q>true</q>, when a model is instantiated the related model is
-				automatically fetched using <a href="#RelationalModel-fetchRelated"><q>fetchRelated</q></a>. The
+				automatically fetched using <a href="#RelationalModel-getAsync"><q>getAsync</q></a>. The
 				value of the property can also be an object. In that case the object is passed to
-				<a href="#RelationalModel-fetchRelated"><q>fetchRelated</q></a> as the options parameter.
+				<a href="#RelationalModel-getAsync"><q>getAsync</q></a> as the options parameter.
 			</p>
 			<p>
 				Note that <q>autoFetch</q> operates independently from other `fetch` operations,
@@ -520,7 +521,7 @@ Company = Backbone.RelationalModel.extend({
 			<p>
 				Determine the type of collections used for a HasMany relation. If you define a
 				url(models&lt;Backbone.Model[]&gt;) function on the specified collection, this enables
-				<a href="#RelationalModel-fetchRelated"><q>fetchRelated</q></a> to fetch all missing models in one request,
+				<a href="#RelationalModel-getAsync"><q>getAsync</q></a> to fetch all missing models in one request,
 				instead of firing a separate request for each.
 			</p>
 
@@ -764,37 +765,31 @@ alert( 'chimp is an animal? ' + ( chimp instanceof Animal ) + '\n' +
 			Instance methods
 		</h3>
 
-		<section id="RelationalModel-fetchRelated">
-			<h4 class="code">
-				fetchRelated<code>relationalModel.fetchRelated(attr&lt;string&gt;, [options&lt;object&gt;], [refresh&lt;boolean&gt;])</code>
-			</h4>
-			<p>
-				Returns: <q>jQuery.Deferred</q> A <a href="http://api.jquery.com/category/deferred-object/">jQuery promise</a>
-			</p>
-			<p>
-				Fetch the models in a relation from the server. By default, only those models are fetched that were referenced in the attributes,
-				but have not been found/created yet. This can be used specifically for lazy-loading scenarios.
-				Setting <q>refresh</q> to true will fetch all model(s) from the server. In that case, any model that already
-				exists will be updated with the retrieved data.
-				The <q>options</q> object specifies options to be passed to <a href="http://backbonejs.org/#Sync">Backbone.Sync</a>.
-			</p>
-			<p>
-				By default, a separate request will be fired for each model that is to be fetched from the server (if `key` references a collection).
-				However, if your server/API supports it, you can fetch the set of models in one request by specifying a
-				collectionType for the relation you call fetchRelated on. The <a href="#relations-collectionType"><q>collectionType</q></a>
-				should have an overridden <a href="http://backbonejs.org/#Collection-url"><q>url</q></a>
-				method that allows it to construct a url for an array of models. See <a href="#example-person">this example</a>
-				or <a href="https://github.com/PaulUithol/backbone-tastypie">Backbone-tastypie</a> for an example.
-			</p>
-		</section>
-
 		<section id="RelationalModel-getAsync">
 			<h4 class="code">
 				getAsync<code>relationalModel.getAsync(attr&lt;string&gt;, [options&lt;object&gt;], [refresh&lt;boolean&gt;])</code>
 			</h4>
 			<p>
+				Returns: <q>jQuery.Deferred</q> A <a href="http://api.jquery.com/category/deferred-object/">jQuery promise</a>
+			</p>
+			<p>
 				Get an attribute's value asynchronously. If available, the local value will be returned.
 				If <q>attr</q> is a relation and one or more of its models are not available, they will be fetched.
+			</p>
+			<p>
+				This can be used specifically for lazy-loading scenarios.
+				Only models are referenced in the attributes but have not been found/created yet are fetched.
+				Setting <q>options.refresh</q> to true will fetch all model(s) from the server.
+				In that case, any model that already exists will be updated with the retrieved data.
+				The <q>options</q> object specifies options to be passed to <a href="http://backbonejs.org/#Sync">Backbone.Sync</a>.
+			</p>
+			<p>
+				By default, a separate request will be fired for each model that is to be fetched from the server (if `key` references a collection).
+				However, if your server/API supports it, you can fetch the set of models in one request by specifying a
+				collectionType for the relation you call getAsync on. The <a href="#relations-collectionType"><q>collectionType</q></a>
+				should have an overridden <a href="http://backbonejs.org/#Collection-url"><q>url</q></a>
+				method that allows it to construct a url for an array of models. See <a href="#example-person">this example</a>
+				or <a href="https://github.com/PaulUithol/backbone-tastypie">Backbone-tastypie</a> for an example.
 			</p>
 		</section>
 
@@ -1168,7 +1163,7 @@ alert( JSON.stringify( paul.get('user').toJSON(), null, '\t' ) );
 </code></pre>
 <pre class="language-javascript nomargin"><code id="example-person-run2" class="language-javascript runnable" data-setup="#example-person-run1"><!--
 -->// Load occupants 'person-2' and 'person-5', which don't exist yet, from the server
-ourHouse.fetchRelated( 'occupants' );
+ourHouse.getAsync( 'occupants' );
 
 // Use the `add` and `remove` events to listen for additions/removals on a HasMany relation.
 // Here, we listen for changes to `ourHouse.occupants`.
@@ -1270,10 +1265,12 @@ User = Backbone.RelationalModel.extend();
 			</li>
 			<li>
 				<a href="https://github.com/PaulUithol/Backbone-relational/commit/b7e71237d1218eec41ce69e1cf56e5eecdc96bef"><q>b7e7123</q></a>
-				<q>fetchRelated</q> now return a single promise, instead of an array of request objects.
+				<q>getAsync</q> (the successor of <q>fetchRelated</q>) now return a single promise, instead of an array of request objects.
 			</li>
 			<li>
-				Add <q>getAsync</q> to <q>Backbone.RelationalModel</q>.
+				<a href="https://github.com/PaulUithol/Backbone-relational/issues/467"><q>#467</q></a>:
+				Improve lazy loading implemenatation. Add <q>getAsync</q> to <q>Backbone.RelationalModel</q>, which always
+				return a single promise that resolves with the attribute's content, and remove <q>fetchRelated</q>.
 			</li>
 		</ul>
 
