@@ -400,17 +400,7 @@ alert( lion.get( 'livesIn' ).get( 'name' ) + ', ' + artis.get( 'animals' ).lengt
 		</section>
 
 <pre class="language-javascript"><code class="language-javascript" id="example-job"><!--
--->Person = Backbone.RelationalModel.extend({
-	relations: [{
-		type: 'HasMany',
-		key: 'jobs',
-		relatedModel: 'Job',
-		reverseRelation: {
-			key: 'person'
-		}
-	}]
-});
-
+-->
 // A link object between 'Person' and 'Company'
 Job = Backbone.RelationalModel.extend({
 	defaults: {
@@ -419,11 +409,22 @@ Job = Backbone.RelationalModel.extend({
 	}
 })
 
+Person = Backbone.RelationalModel.extend({
+	relations: [{
+		type: 'HasMany',
+		key: 'jobs',
+		relatedModel: Job,
+		reverseRelation: {
+			key: 'person'
+		}
+	}]
+});
+
 Company = Backbone.RelationalModel.extend({
 	relations: [{
 		type: 'HasMany',
 		key: 'employees',
-		relatedModel: 'Job',
+		relatedModel: Job,
 		reverseRelation: {
 			key: 'company'
 		}
