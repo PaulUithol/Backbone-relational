@@ -1632,8 +1632,8 @@
 		 * @returns {Backbone.RelationalModel.constructor}
 		 */
 		setup: function( superModel ) {
-			// We don't want to share a relations array with a parent, as this will cause problems with reverse
-			// relations. Since `relations` may also be a property or function, only use slice if we have an array.
+			// We don't want to share a relations array with a parent (like Backbone doesn't inherit events or options),
+			// as this will cause problems with reverse relations.
 			this.prototype.relations = ( this.prototype.relations || [] ).slice( 0 );
 
 			this._subModels = {};
