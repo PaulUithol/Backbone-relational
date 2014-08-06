@@ -1433,8 +1433,9 @@
 								var args = arguments;
 								_.each( created, function( model ) {
 									model.trigger( 'destroy', model, model.collection, options );
-									options.error && options.error.apply( model, args );
 								});
+								
+								options.error && options.error.apply(models, args);
 							},
 							url: setUrl
 						},
@@ -1450,8 +1451,8 @@
 								error: function() {
 									if ( _.contains( created, model ) ) {
 										model.trigger( 'destroy', model, model.collection, options );
-										options.error && options.error.apply( model, arguments );
 									}
+									options.error && options.error.apply( models, arguments );
 								}
 							},
 							options
