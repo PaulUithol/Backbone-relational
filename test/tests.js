@@ -1062,7 +1062,7 @@ $(document).ready(function() {
 			equal( window.requests.length, 1, "An error occured when fetching, but no DELETE requests are made to the server while handling local cleanup." );
 			
 			equal( zoo.get( 'animals' ).length, 1, "Both animals are destroyed" );
-			equal( errorCount, 2, "The error callback executed successfully for both models" );
+			equal( errorCount, 1, "The error callback executed successfully" );
 			
 			// Try to re-fetch; nothing left to get though
 			window.requests = [];
