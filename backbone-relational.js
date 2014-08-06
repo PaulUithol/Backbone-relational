@@ -1887,10 +1887,13 @@
 	 * and update the existing models. Also, trigger 'relational:add'.
 	 */
 	var set = Backbone.Collection.prototype.__set = Backbone.Collection.prototype.set;
+	var BackboneModel = Backbone.Model;
+	var _prepareModelSuper = Backbone.Collection.prototype._prepareModel;
+	
 	Backbone.Collection.prototype.set = function( models, options ) {
 		// Short-circuit if this Collection doesn't hold RelationalModels
 		if ( !( this.model.prototype instanceof Backbone.RelationalModel ) ) {
-			return set.apply( this, arguments );
+			return set.call( this, models, options );
 		}
 
 		if ( options && options.parse ) {
@@ -1902,39 +1905,43 @@
 			toAdd = [];
 
 		models = singular ? ( models ? [ models ] : [] ) : _.clone( models );
+		var l = models.length;
+		var i = 0;
+		var model = null;
+		
 
 		//console.debug( 'calling add on coll=%o; model=%o, options=%o', this, models, options );
-		_.each( models, function( model ) {
-			if ( !( model instanceof Backbone.Model ) ) {
-				model = Backbone.Collection.prototype._prepareModel.call( this, model, options );
+		for ( i = 0; i < l; i++ ) {
+			model = models[i];
+			if ( !( model instanceof BackboneModel ) ) {
+				model = _prepareModelSuper.call( this, model, options );
 			}
-
 			if ( model ) {
 				toAdd.push( model );
-
 				if ( !( this.get( model ) || this.get( model.cid ) ) ) {
 					newModels.push( model );
 				}
 				// If we arrive in `add` while performing a `set` (after a create, so the model gains an `id`),
 				// we may get here before `_onModelEvent` has had the chance to update `_byId`.
-				else if ( model.id != null ) {
-					this._byId[ model.id ] = model;
+				else if ( model.id !== null && model.id !== undefined ) {
+					this._byId[model.id] = model;
 				}
 			}
-		}, this );
-
+		}
+		model = null;
 		// Add 'models' in a single batch, so the original add will only be called once (and thus 'sort', etc).
 		// If `parse` was specified, the collection and contained models have been parsed now.
 		toAdd = singular ? ( toAdd.length ? toAdd[ 0 ] : null ) : toAdd;
 		var result = set.call( this, toAdd, _.defaults( { parse: false }, options ) );
 
-		_.each( newModels, function( model ) {
+		l = newModels.length;
+		for ( i = 0; i < l; i++ ) {
+			model = newModels[i];
 			// Fire a `relational:add` event for any model in `newModels` that has actually been added to the collection.
 			if ( this.get( model ) || this.get( model.cid ) ) {
 				this.trigger( 'relational:add', model, this, options );
 			}
-		}, this );
-
+		}
 		return result;
 	};
 
@@ -1945,7 +1952,7 @@
 	Backbone.Collection.prototype.remove = function( models, options ) {
 		// Short-circuit if this Collection doesn't hold RelationalModels
 		if ( !( this.model.prototype instanceof Backbone.RelationalModel ) ) {
-			return remove.apply( this, arguments );
+			return remove.call( this, models, options );
 		}
 
 		var singular = !_.isArray( models ),
@@ -2033,7 +2040,7 @@
 
 	// Override .extend() to automatically call .setup()
 	Backbone.RelationalModel.extend = function( protoProps, classProps ) {
-		var child = Backbone.Model.extend.apply( this, arguments );
+		var child = Backbone.Model.extend.call( this, protoProps, classProps );
 
 		child.setup( this );
 
