@@ -1396,60 +1396,78 @@
 			options = _.extend( { update: true, remove: false, refresh: false }, options );
 
 			var dit = this,
-				models,
-				setUrl,
 				requests = [],
 				rel = this.getRelation( attr ),
-				idsToFetch = rel && this.getIdsToFetch( rel, options.refresh );
+				idsToFetch = rel && this.getIdsToFetch( rel, options.refresh ),
+				coll = rel.related instanceof Backbone.Collection ? rel.related : rel.relatedCollection;
 
 			if ( idsToFetch && idsToFetch.length ) {
-				// Find (or create) a model for each one that is to be fetched
-				var created = [];
-				models = _.map( idsToFetch, function( id ) {
-					var model = rel.relatedModel.findModel( id );
+				var models = [],
+					createdModels = [],
+					setUrl,
+					createModels = function() {
+						// Find (or create) a model for each one that is to be fetched
+						models = _.map( idsToFetch, function( id ) {
+							var model = rel.relatedModel.findModel( id );
 
-					if ( !model ) {
-						var attrs = {};
-						attrs[ rel.relatedModel.prototype.idAttribute ] = id;
-						model = rel.relatedModel.findOrCreate( attrs, options );
-						created.push( model );
-					}
+							if ( !model ) {
+								var attrs = {};
+								attrs[ rel.relatedModel.prototype.idAttribute ] = id;
+								model = rel.relatedModel.findOrCreate( attrs, options );
+								createdModels.push( model );
+							}
 
-					return model;
-				}, this );
+							return model;
+						}, this );
+					};
 
 				// Try if the 'collection' can provide a url to fetch a set of models in one request.
-				if ( rel.related instanceof Backbone.Collection && _.isFunction( rel.related.url ) ) {
-					setUrl = rel.related.url( models );
-				}
-
-				// An assumption is that when 'Backbone.Collection.url' is a function, it can handle building of set urls.
+				// This assumes that when 'Backbone.Collection.url' is a function, it can handle building of set urls.
 				// To make sure it can, test if the url we got by supplying a list of models to fetch is different from
 				// the one supplied for the default fetch action (without args to 'url').
-				if ( setUrl && setUrl !== rel.related.url() ) {
+				if ( coll instanceof Backbone.Collection && _.isFunction( coll.url ) ) {
+					var defaultUrl = coll.url();
+					setUrl = coll.url( idsToFetch );
+
+					if ( setUrl === defaultUrl ) {
+						createModels();
+						setUrl = coll.url( models );
+
+						if ( setUrl === defaultUrl ) {
+							setUrl = null;
+						}
+					}
+				}
+
+				if ( setUrl ) {
+					// Do a single request to fetch all models
 					var opts = _.defaults(
 						{
 							error: function() {
-								var args = arguments;
-								_.each( created, function( model ) {
+								_.each( createdModels, function( model ) {
 									model.trigger( 'destroy', model, model.collection, options );
 								});
 								
-								options.error && options.error.apply(models, args);
+								options.error && options.error.apply( models, arguments );
 							},
 							url: setUrl
 						},
 						options
 					);
 
-					requests = [ rel.related.fetch( opts ) ];
+					requests = [ coll.fetch( opts ) ];
 				}
 				else {
+					// Make a request per model to fetch
+					if  ( !models.length ) {
+						createModels();
+					}
+
 					requests = _.map( models, function( model ) {
 						var opts = _.defaults(
 							{
 								error: function() {
-									if ( _.contains( created, model ) ) {
+									if ( _.contains( createdModels, model ) ) {
 										model.trigger( 'destroy', model, model.collection, options );
 									}
 									options.error && options.error.apply( models, arguments );
@@ -1632,8 +1650,8 @@
 		 * @returns {Backbone.RelationalModel.constructor}
 		 */
 		setup: function( superModel ) {
-			// We don't want to share a relations array with a parent (like Backbone doesn't inherit events or options),
-			// as this will cause problems with reverse relations.
+			// We don't want to share a relations array with a parent, as this will cause problems with reverse
+			// relations. Since `relations` may also be a property or function, only use slice if we have an array.
 			this.prototype.relations = ( this.prototype.relations || [] ).slice( 0 );
 
 			this._subModels = {};
@@ -1927,7 +1945,7 @@
 		// Add 'models' in a single batch, so the original add will only be called once (and thus 'sort', etc).
 		// If `parse` was specified, the collection and contained models have been parsed now.
 		toAdd = singular ? ( toAdd.length ? toAdd[ 0 ] : null ) : toAdd;
-		var result = set.call( this, toAdd, _.defaults( { parse: false }, options ) );
+		var result = set.call( this, toAdd, _.defaults( { merge: false, parse: false }, options ) );
 
 		_.each( newModels, function( model ) {
 			// Fire a `relational:add` event for any model in `newModels` that has actually been added to the collection.
