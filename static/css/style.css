@@ -373,6 +373,9 @@ code, pre, q {
 	code {
 		margin-left: 20px;
 	}
+		h4 code {
+			white-space: pre-wrap;
+		}
 	pre {
 		box-shadow: 0 0 6px rgba(0, 0, 0, 0.5);
 		font-size: 12px;

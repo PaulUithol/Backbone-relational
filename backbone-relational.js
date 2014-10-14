@@ -594,12 +594,19 @@
 
 		this.relatedModel = this.options.relatedModel;
 
+		// No 'relatedModel' is interpreted as self-referential
+		if ( _.isUndefined( this.relatedModel ) ) {
+			this.relatedModel = this.model;
+		}
+
+		// Otherwise, try to resolve the given value to an object
 		if ( _.isFunction( this.relatedModel ) && !( this.relatedModel.prototype instanceof Backbone.RelationalModel ) ) {
 			this.relatedModel = _.result( this, 'relatedModel' );
 		}
 		if ( _.isString( this.relatedModel ) ) {
 			this.relatedModel = Backbone.Relational.store.getObjectByName( this.relatedModel );
 		}
+
 
 		if ( !this.checkPreconditions() ) {
 			return;

@@ -267,7 +267,7 @@
 			<strong>Backbone.RelationalModel</strong> in order to function. <strong>Backbone.RelationalModel</strong>
 			introduces a couple of new methods, events and properties. It's important to know which are properties,
 			which are methods of an	instance, and which operate on the type itself.
-			These three subcategories are detailed below.
+			These three categories are detailed below.
 		</p>
 
 		<p>
@@ -314,8 +314,9 @@
 		</h4>
 		<p>
 			A <strong>Backbone.RelationalModel</strong> may contain an array of relation definitions. Each relation supports a number of
-			options, of which <a href="#relations-relatedModel"><q>relatedModel</q></a>, <a href="#relations-key"><q>key</q></a> and
-			<a href="#relations-type"><q>type</q></a> are mandatory. A relation could look like the following:
+			options, of which <a href="#relations-key"><q>key</q></a> and <a href="#relations-type"><q>type</q></a> are mandatory.
+			You'll also need to specifiy <a href="#relations-relatedModel"><q>relatedModel</q></a> if you want to reference another model.
+			A relation could look like the following:
 		</p>
 
 <pre class="language-javascript"><code id="example-zoo" class="language-javascript runnable"><!--
@@ -363,13 +364,18 @@ alert( lion.get( 'livesIn' ).get( 'name' ) + ', ' + artis.get( 'animals' ).lengt
 			<p>
 				Required. A string that references an attribute name on <a href="#relations-relatedModel"><q>relatedModel</q></a>.
 			</p>
+		</section>
 
-			<h4 class="code" id="relations-relatedModel">
+		<section id="relations-relatedModel">
+			<h4 class="code">
 				relatedModel<code>relation.relatedModel</code>
 			</h4>
 			<p>
-				Required. A string that can be resolved to an object on the global scope, or a reference to a
+				A string that can be resolved to an object on the global scope, or a reference to a
 				<strong>Backbone.RelationalModel</strong>. Also see <a href="#Store-addModelScope"><q>addModelScope</q></a>.
+			</p>
+			<p>
+				If omitted, the relation will be self-referential.
 			</p>
 		</section>
 

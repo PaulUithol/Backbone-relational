@@ -278,7 +278,6 @@ $(document).ready(function() {
 		relations: [{
 				type: Backbone.HasOne,
 				key: 'parent',
-				relatedModel: 'Node',
 				reverseRelation: {
 					key: 'children'
 				}
@@ -2501,13 +2500,14 @@ $(document).ready(function() {
 				relations: [
 					{
 						type: Backbone.HasOne,
-						key: 'listProperties'
+						key: 'parentView'
 					}
 				]
 			});
 			
 			view = new View();
-			ok( _.size( view._relations ) === 0 );
+			ok( _.size( view._relations ) === 1 );
+			ok( view.getRelation( 'parentView' ).relatedModel === View, "No 'relatedModel' makes it self-referential" );
 		});
 		
 		test( "'type' can be a string or an object reference", function() {
@@ -4383,6 +4383,37 @@ $(document).ready(function() {
 
 			ok( a && a.get( 'name' ) === 'a' );
 			ok( typeof b === 'undefined' );
+		});
+
+		test( "Adding a new model doesn't `merge` it onto itself", function() {
+			var TreeModel = Backbone.RelationalModel.extend({
+				relations: [
+					{
+						key: 'parent',
+						type: Backbone.HasOne
+					}
+				],
+
+				initialize: function( options ) {
+					if ( coll ) {
+						coll.add( this );
+					}
+				}
+			});
+
+			var TreeCollection = Backbone.Collection.extend({
+				model: TreeModel
+			});
+
+			// Using `set` to add a new model, since this is what would be called when `fetch`ing model(s)
+			var coll = new TreeCollection(),
+				model = coll.set( { id: 'm2', name: 'new model', parent: 'm1' } );
+
+			ok( model instanceof TreeModel );
+			ok( coll.size() === 1, "One model in coll" );
+
+			equal( model.get( 'parent' ), null );
+			deepEqual( model.getIdsToFetch( 'parent' ), [ 'm1' ] );
 		});
 
 
