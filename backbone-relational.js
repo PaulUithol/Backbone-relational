@@ -1400,7 +1400,7 @@
 		 */
 		getAsync: function( attr, options ) {
 			// Set default `options` for fetch
-			options = _.extend( { update: true, remove: false, refresh: false }, options );
+			options = _.extend( { add: true, remove: false, refresh: false }, options );
 
 			var dit = this,
 				requests = [],
@@ -1846,7 +1846,7 @@
 		/**
 		 * Find an instance of `this` type in 'Backbone.Relational.store'.
 		 * - If `attributes` is a string or a number, `find` will query the `store` and return a model if found.
-		 * - If `attributes` is an object and is found in the store, the model will be updated with `attributes` unless `options.update` is `false`.
+		 * - If `attributes` is an object and is found in the store, the model will be updated with `attributes` unless `options.merge` is `false`.
 		 * @param {Object|String|Number} attributes Either a model's id, or the attributes used to create or update a model.
 		 * @param {Object} [options]
 		 * @param {Boolean} [options.merge=true]
