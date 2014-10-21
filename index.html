@@ -676,7 +676,7 @@ alert( JSON.stringify( farm.toJSON(), null, 4 ) );
 			<p>
 				If the relation should be bidirectional, specify the details for the reverse relation here. It's only mandatory
 				to supply a <a href="#relations-key"><q>key</q></a>; <a href="#relations-relatedModel"><q>relatedModel</q></a> is automatically
-				set. The default type for a <q>reverseRelation</q> is HasMany for a
+				set. The default <a href="#relations-type"><q>type</q></a> for a <q>reverseRelation</q> is HasMany for a
 				HasOne relation (which can be overridden to HasOne in order to create a one-to-one relation), and HasOne for a
 				HasMany relation. In this case, you cannot create a <q>reverseRelation</q> with
 				type HasMany as well; please see Many-to-many relations on how to model these type of relations.
