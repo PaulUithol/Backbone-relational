@@ -1808,7 +1808,7 @@
 		 * Find an instance of `this` type in 'Backbone.Relational.store'.
 		 * A new model is created if no matching model is found, `attributes` is an object, and `options.create` is true.
 		 * - If `attributes` is a string or a number, `findOrCreate` will query the `store` and return a model if found.
-		 * - If `attributes` is an object and is found in the store, the model will be updated with `attributes` unless `options.update` is `false`.
+		 * - If `attributes` is an object and is found in the store, the model will be updated with `attributes` unless `options.merge` is `false`.
 		 * @param {Object|String|Number} attributes Either a model's id, or the attributes used to create or update a model.
 		 * @param {Object} [options]
 		 * @param {Boolean} [options.create=true]
