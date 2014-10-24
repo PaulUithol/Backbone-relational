@@ -1915,7 +1915,7 @@
 	var set = Backbone.Collection.prototype.__set = Backbone.Collection.prototype.set;
 	Backbone.Collection.prototype.set = function( models, options ) {
 		// Short-circuit if this Collection doesn't hold RelationalModels
-		if ( !( this.model.prototype instanceof Backbone.RelationalModel ) ) {
+		if ( !this.model || !( this.model.prototype instanceof Backbone.RelationalModel ) ) {
 			return set.apply( this, arguments );
 		}
 
@@ -1970,7 +1970,7 @@
 	var remove = Backbone.Collection.prototype.__remove = Backbone.Collection.prototype.remove;
 	Backbone.Collection.prototype.remove = function( models, options ) {
 		// Short-circuit if this Collection doesn't hold RelationalModels
-		if ( !( this.model.prototype instanceof Backbone.RelationalModel ) ) {
+		if ( !this.model || !( this.model.prototype instanceof Backbone.RelationalModel ) ) {
 			return remove.apply( this, arguments );
 		}
 
@@ -2003,7 +2003,7 @@
 		options = _.extend( { merge: true }, options );
 		var result = reset.call( this, models, options );
 
-		if ( this.model.prototype instanceof Backbone.RelationalModel ) {
+		if ( this.model && this.model.prototype instanceof Backbone.RelationalModel ) {
 			this.trigger( 'relational:reset', this, options );
 		}
 
@@ -2017,7 +2017,7 @@
 	Backbone.Collection.prototype.sort = function( options ) {
 		var result = sort.call( this, options );
 
-		if ( this.model.prototype instanceof Backbone.RelationalModel ) {
+		if ( this.model && this.model.prototype instanceof Backbone.RelationalModel ) {
 			this.trigger( 'relational:reset', this, options );
 		}
 
@@ -2031,7 +2031,7 @@
 	var trigger = Backbone.Collection.prototype.__trigger = Backbone.Collection.prototype.trigger;
 	Backbone.Collection.prototype.trigger = function( eventName ) {
 		// Short-circuit if this Collection doesn't hold RelationalModels
-		if ( !( this.model.prototype instanceof Backbone.RelationalModel ) ) {
+		if ( !this.model || !( this.model.prototype instanceof Backbone.RelationalModel ) ) {
 			return trigger.apply( this, arguments );
 		}
 
