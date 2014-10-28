@@ -1592,6 +1592,9 @@
 					}
 					else if ( related instanceof Backbone.Model ) {
 						value = related.get( includeInJSON );
+					} else if ( related && ( includeInJSON === rel.relatedModel.prototype.idAttribute )) {
+						// related may contains raw data (like ID or list of IDs if HasMany)
+						value = related;
 					}
 
 					// Add ids for 'unfound' models if includeInJSON is equal to (only) the relatedModel's `idAttribute`
