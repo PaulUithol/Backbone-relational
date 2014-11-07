@@ -1494,7 +1494,7 @@
 				}
 			}
 
-			return $.when.apply( null, requests ).then(
+			return Backbone.$.when.apply( null, requests ).then(
 				function() {
 					return Backbone.Model.prototype.get.call( dit, attr );
 				}
