@@ -26,7 +26,7 @@
 <body>
 <div id="sidebar">
 	<a class="toc_title" href="#">
-		Backbone-relational.js <span class="version">(0.8.8)</span>
+		Backbone-relational.js <span class="version">(0.9.0)</span>
 	</a>
 
 	<ul>
@@ -161,7 +161,7 @@
 
 		<table>
 			<tr>
-				<td><a class="punch" href="https://raw.github.com/PaulUithol/Backbone-relational/0.8.8/backbone-relational.js">Latest Release (0.8.8)</a></td>
+				<td><a class="punch" href="https://raw.github.com/PaulUithol/Backbone-relational/0.9.0/backbone-relational.js">Latest Release (0.9.0)</a></td>
 				<td class="text"><i>~70kb. Full source, uncompressed, lots of comments.</i></td>
 			</tr>
 			<tr>
@@ -170,8 +170,8 @@
 		</table>
 
 		<p>
-			Backbone-relational depends on <a href="http://backbonejs.org/">Backbone.js</a> <small>(>= 1.0.0)</small>,
-			which itself requires <a href="http://underscorejs.org">Underscore.js</a> <small>(> 1.4.4)</small> and
+			Backbone-relational depends on <a href="http://backbonejs.org/">Backbone.js</a> <small>(>= 1.1.2)</small>,
+			which itself requires <a href="http://underscorejs.org">Underscore.js</a> <small>(> 1.5.0)</small> and
 			<a href="http://jquery.com">jQuery</a> <small>(> 1.7.0)</small> or
 			<a href="http://zeptojs.com/">Zepto</a>.
 		</p>
@@ -267,7 +267,7 @@
 			<strong>Backbone.RelationalModel</strong> in order to function. <strong>Backbone.RelationalModel</strong>
 			introduces a couple of new methods, events and properties. It's important to know which are properties,
 			which are methods of an	instance, and which operate on the type itself.
-			These three subcategories are detailed below.
+			These three categories are detailed below.
 		</p>
 
 		<p>
@@ -314,8 +314,9 @@
 		</h4>
 		<p>
 			A <strong>Backbone.RelationalModel</strong> may contain an array of relation definitions. Each relation supports a number of
-			options, of which <a href="#relations-relatedModel"><q>relatedModel</q></a>, <a href="#relations-key"><q>key</q></a> and
-			<a href="#relations-type"><q>type</q></a> are mandatory. A relation could look like the following:
+			options, of which <a href="#relations-key"><q>key</q></a> and <a href="#relations-type"><q>type</q></a> are mandatory.
+			You'll also need to specifiy <a href="#relations-relatedModel"><q>relatedModel</q></a> if you want to reference another model.
+			A relation could look like the following:
 		</p>
 
 <pre class="language-javascript"><code id="example-zoo" class="language-javascript runnable"><!--
@@ -363,13 +364,18 @@ alert( lion.get( 'livesIn' ).get( 'name' ) + ', ' + artis.get( 'animals' ).lengt
 			<p>
 				Required. A string that references an attribute name on <a href="#relations-relatedModel"><q>relatedModel</q></a>.
 			</p>
+		</section>
 
-			<h4 class="code" id="relations-relatedModel">
+		<section id="relations-relatedModel">
+			<h4 class="code">
 				relatedModel<code>relation.relatedModel</code>
 			</h4>
 			<p>
-				Required. A string that can be resolved to an object on the global scope, or a reference to a
+				A string that can be resolved to an object on the global scope, or a reference to a
 				<strong>Backbone.RelationalModel</strong>. Also see <a href="#Store-addModelScope"><q>addModelScope</q></a>.
+			</p>
+			<p>
+				If omitted, the relation will be self-referential.
 			</p>
 		</section>
 
@@ -417,7 +423,7 @@ Job = Backbone.RelationalModel.extend({
 		'startDate': null,
 		'endDate': null
 	}
-})
+});
 
 Company = Backbone.RelationalModel.extend({
 	relations: [{
@@ -670,7 +676,7 @@ alert( JSON.stringify( farm.toJSON(), null, 4 ) );
 			<p>
 				If the relation should be bidirectional, specify the details for the reverse relation here. It's only mandatory
 				to supply a <a href="#relations-key"><q>key</q></a>; <a href="#relations-relatedModel"><q>relatedModel</q></a> is automatically
-				set. The default type for a <q>reverseRelation</q> is HasMany for a
+				set. The default <a href="#relations-type"><q>type</q></a> for a <q>reverseRelation</q> is HasMany for a
 				HasOne relation (which can be overridden to HasOne in order to create a one-to-one relation), and HasOne for a
 				HasMany relation. In this case, you cannot create a <q>reverseRelation</q> with
 				type HasMany as well; please see Many-to-many relations on how to model these type of relations.
@@ -1254,7 +1260,15 @@ User = Backbone.RelationalModel.extend();
 		<h4>Master
 			<small>
 				<span class="date">(future)</span> &ndash;
-				<a href="https://github.com/PaulUithol/Backbone-relational/compare/0.8.8...master">diff</a> &ndash;
+				<a href="https://github.com/PaulUithol/Backbone-relational/compare/0.9.0...master">diff</a> &ndash;
+				<a href="https://raw.github.com/PaulUithol/Backbone-relational/master/backbone-relational.js">download</a>
+			</small>
+		</h4>
+
+		<h4>0.9.0
+			<small>
+				<span class="date">(25 October 2014)</span> &ndash;
+				<a href="https://github.com/PaulUithol/Backbone-relational/compare/0.8.8...0.9.0">diff</a> &ndash;
 				<a href="https://raw.github.com/PaulUithol/Backbone-relational/master/backbone-relational.js">download</a>
 			</small>
 		</h4>
