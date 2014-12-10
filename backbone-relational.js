@@ -363,6 +363,10 @@
 		 * @return {Object}
 		 */
 		getObjectByName: function( name ) {
+			if (name.prototype instanceof Backbone.RelationalModel) {
+				return name;
+			}
+
 			var parts = name.split( '.' ),
 				type = null;
 
