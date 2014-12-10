@@ -918,8 +918,6 @@ $(document).ready(function() {
 
 			mammals.reset([{type: 'primate'}, {type: 'carnivore'}, {type: 'unknown'}]);
 
-			console.log(mammals);
-
 			strictEqual( mammals.at(0).get('title'), 'Primate', '{type: "primate"} must have {title: "Primate"}' );
 			strictEqual( mammals.at(1).get('title'), 'Carnivore', '{type: "carnivore"} must have {title: "Carnivore"}' );
 			strictEqual( mammals.at(2).get('title'), 'Mammal', 'Not existing subModel `type` must have {title: "Mammal"}' );
