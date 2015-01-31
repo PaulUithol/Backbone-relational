@@ -1684,6 +1684,46 @@ $(document).ready(function() {
 			equal( modelChangeEvents, 2, 'change event should be triggered' );
 		});
 
+		test( "getAsync should work for case where child is referenced in parent only", function() {
+			var A = Backbone.RelationalModel.extend({
+				urlRoot: ' ',
+				sync: function(method, model, options) {
+					if (model.get('id') == 'error') {
+						options.error();
+						return;
+					}
+
+					var data = {
+						id: model.attributes.id,
+						name: 'name-' + model.attributes.id
+					};
+
+					options.success(data);
+				}
+			});
+
+			var B = Backbone.RelationalModel.extend({
+				relations: [{
+					type: Backbone.HasMany,
+					key: 'aas',
+					relatedModel: A,
+					autoFetch: true
+				}]
+			});
+
+			var b = new B({
+				aas: ['1', '2', '3']
+			});
+
+			equal( b.get('aas').length, 3, 'all models specified should load' );
+
+			var b2 = new B({
+				aas: ['1', 'error', '3']
+			});
+
+			equal( b2.get('aas').length, 2, 'errored model should be removed from collection' );
+		});
+
 	
 	module( "Backbone.RelationalModel inheritance (`subModelTypes`)", { setup: reset } );
 
