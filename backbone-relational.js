@@ -1433,6 +1433,8 @@
 
 							return model;
 						}, this );
+
+						coll.add(createdModels);
 					};
 
 				// Try if the 'collection' can provide a url to fetch a set of models in one request.
