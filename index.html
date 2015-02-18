@@ -5,10 +5,10 @@
 	<meta http-equiv="X-UA-Compatible" content="chrome=1">
 	<meta name="viewport" content="width=device-width">
 	<link rel="icon" href="static/images/favicon.ico">
-	
+
 	<link href="http://fonts.googleapis.com/css?family=Arimo" rel="stylesheet" type="text/css">
 	<link rel="stylesheet" type="text/css" href="static/css/style.css">
-	
+
 	<title>Backbone-relational.js</title>
 
 	<!--[if lt IE 9]>
@@ -773,7 +773,7 @@ alert( 'chimp is an animal? ' + ( chimp instanceof Animal ) + '\n' +
 
 		<section id="RelationalModel-getAsync">
 			<h4 class="code">
-				getAsync<code>relationalModel.getAsync(attr&lt;string&gt;, [options&lt;object&gt;], [refresh&lt;boolean&gt;])</code>
+				getAsync<code>relationalModel.getAsync(attr&lt;string&gt;, [options&lt;object&gt;]</code>
 			</h4>
 			<p>
 				Returns: <q>jQuery.Deferred</q> A <a href="http://api.jquery.com/category/deferred-object/">jQuery promise</a>
@@ -801,7 +801,7 @@ alert( 'chimp is an animal? ' + ( chimp instanceof Animal ) + '\n' +
 
 		<section id="RelationalModel-getIdsToFetch">
 			<h4 class="code">
-				getRelations<code>relationModel.getIdsToFetch(attr&lt;string|Backbone.Relation&gt;, )</code>
+				getIdsToFetch<code>relationModel.getIdsToFetch(attr&lt;string|Backbone.Relation&gt;, [refresh&lt;boolean&gt;])</code>
 			</h4>
 			<p>
 				Returns: <q>Array</q> A list of the ids that will be fetched when calling <q>getAsync</q>.
@@ -1058,7 +1058,7 @@ alert( JSON.stringify( zoo.toJSON(), null, 4 ) );
 			</ul>
 		</section>
 	</section>
-		
+
 	<section id="Relation">
 		<h2 >Backbone.Relation</h2>
 		<p>
@@ -1134,7 +1134,7 @@ alert( JSON.stringify( zoo.toJSON(), null, 4 ) );
 		<p>
 			A basic working example to get you started:
 		</p>
-		
+
 <pre class="language-javascript"><code id="example-person-run1" class="language-javascript runnable" data-setup="#example-person"><!--
 -->var paul = new Person({
 	id: 'person-1',
@@ -1444,7 +1444,7 @@ User = Backbone.RelationalModel.extend();
 			</li>
 			<li>Added a <a href="#relations-parse"><q>parse</q></a> option to relations.</li>
 		</ul>
-		
+
 		<h4>0.7.1
 			<small>
 				<span class="date">17 Januari 2013</span> &ndash;
@@ -1457,7 +1457,7 @@ User = Backbone.RelationalModel.extend();
 			<li>Implemented the <a href="#relations-autoFetch"><q>autoFetch</q></a> property for relations.</li>
 			<li>Added the <q>update</q> option to <a href="#RelationalModel-findOrCreate"><q>findOrCreate</q></a>.</li>
 		</ul>
-		
+
 		<h4>0.7.0
 			<small>
 				<span class="date">18 December 2012</span> &ndash;
@@ -1472,7 +1472,7 @@ User = Backbone.RelationalModel.extend();
 				multiple instances of RelationalModels with the same type, and the same <q>id</q>.
 			</li>
 		</ul>
-		
+
 		<h4>0.6.0
 			<small>
 				<span class="date">02 August 2012</span> &ndash;
@@ -1498,7 +1498,7 @@ User = Backbone.RelationalModel.extend();
 				Added <q>Backbone.Store.addModelScope</q>.
 			</li>
 		</ul>
-		
+
 		<h4>0.5.0
 			<small>
 				<span class="date">17 February 2012</span> &ndash;
@@ -1520,7 +1520,7 @@ User = Backbone.RelationalModel.extend();
 				Initialize reverseRelations on definition, instead of on creation of the first model.
 			</li>
 		</ul>
-		
+
 		<h4>0.4.0
 			<small>
 				<span class="date">23 July 2011</span> &ndash;
