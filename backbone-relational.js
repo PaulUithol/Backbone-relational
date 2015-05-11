@@ -1827,7 +1827,7 @@
 		findOrCreate: function( attributes, options ) {
 			options || ( options = {} );
 			var parsedAttributes = ( _.isObject( attributes ) && options.parse && this.prototype.parse ) ?
-				this.prototype.parse( _.clone( attributes ) ) : attributes;
+				this.prototype.parse( _.clone( attributes ), options ) : attributes;
 
 			// If specified, use a custom `find` function to match up existing models to the given attributes.
 			// Otherwise, try to find an instance of 'this' model type in the store
