@@ -1494,11 +1494,15 @@
 				}
 			}
 
-			return $.when.apply( null, requests ).then(
+			return this.deferArray(requests).then(
 				function() {
 					return Backbone.Model.prototype.get.call( dit, attr );
 				}
 			);
+		},
+		
+		deferArray: function(deferArray) {
+			return Backbone.$.when.apply(null, deferArray);
 		},
 
 		set: function( key, value, options ) {
