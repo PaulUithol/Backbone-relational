@@ -1022,9 +1022,8 @@
 					}
 					else {
 						// If `merge` is true, update models here, instead of during update.
-						model = this.relatedModel.findOrCreate( attributes,
-							_.extend( { merge: true }, options, { create: this.options.createModels } )
-						);
+						model = ( _.isObject( attributes ) && options.parse && this.relatedModel.prototype.parse ) ?
+							this.relatedModel.prototype.parse( _.clone( attributes ), options ) : attributes;
 					}
 
 					model && toAdd.push( model );
@@ -1037,9 +1036,9 @@
 					related = this._prepareCollection();
 				}
 
-				// By now, both `merge` and `parse` will already have been executed for models if they were specified.
-				// Disable them to prevent additional calls.
-				related.set( toAdd, _.defaults( { merge: false, parse: false }, options ) );
+				// By now, `parse` will already have been executed just above for models if specified.
+				// Disable to prevent additional calls.
+				related.set( toAdd, _.defaults( { parse: false }, options ) );
 			}
 
 			// Remove entries from `keyIds` that were already part of the relation (and are thus 'unchanged')
@@ -1238,7 +1237,7 @@
 				var dit = this,
 					args = arguments;
 
-				if ( !Backbone.Relational.eventQueue.isLocked() ) {
+				if ( !Backbone.Relational.eventQueue.isBlocked() ) {
 					// If we're not in a more complicated nested scenario, fire the change event right away
 					Backbone.Model.prototype.trigger.apply( dit, args );
 				}
@@ -1831,7 +1830,7 @@
 		findOrCreate: function( attributes, options ) {
 			options || ( options = {} );
 			var parsedAttributes = ( _.isObject( attributes ) && options.parse && this.prototype.parse ) ?
-				this.prototype.parse( _.clone( attributes ) ) : attributes;
+				this.prototype.parse( _.clone( attributes ), options ) : attributes;
 
 			// If specified, use a custom `find` function to match up existing models to the given attributes.
 			// Otherwise, try to find an instance of 'this' model type in the store

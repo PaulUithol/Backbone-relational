@@ -1716,6 +1716,7 @@ $(document).ready(function() {
 			deepEqual( children.pluck('id'), ['foo1', 'foo2'], 'children are in the right order' );
 		});
 
+
 	module( "Backbone.RelationalModel inheritance (`subModelTypes`)", { setup: reset } );
 
 		test( "Object building based on type, when using explicit collections" , function() {
@@ -3545,7 +3546,7 @@ $(document).ready(function() {
             ]);
 
             equal(animals.at(0).id, 'lion-1');
-            deepEqual(events, ['add', 'sort', 'add', 'sort']);
+            deepEqual(events, ['add', 'add', 'sort']);
         });
 
 
@@ -3648,8 +3649,8 @@ $(document).ready(function() {
 			
 			equal( addedModels, 0, "A new visitor should not be forced to go to the zoo!" );
 		});
-		
-		
+
+
 	module( "Reverse relations", { setup: initObjects } );
 	
 	
@@ -4444,6 +4445,11 @@ $(document).ready(function() {
 			ok( coll.size() === 1, "One model in coll" );
 
 			equal( model.get( 'parent' ), null );
+			equal( model.get( 'name' ), 'new model' );
+			deepEqual( model.getIdsToFetch( 'parent' ), [ 'm1' ] );
+
+			model = coll.set( { id: 'm2', name: 'updated model', parent: 'm1' } );
+			equal( model.get( 'name' ), 'updated model' );
 			deepEqual( model.getIdsToFetch( 'parent' ), [ 'm1' ] );
 		});
 
