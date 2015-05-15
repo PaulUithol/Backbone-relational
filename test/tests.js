@@ -1684,7 +1684,38 @@ $(document).ready(function() {
 			equal( modelChangeEvents, 2, 'change event should be triggered' );
 		});
 
-	
+		test( "Model's collection children should be in the proper order during fetch w/remove: false", function() {
+			var Child = Backbone.RelationalModel.extend();
+			var Parent = Backbone.RelationalModel.extend( {
+				relations: [ {
+					type: Backbone.HasMany,
+					key: 'children',
+					relatedModel: Child
+				} ]
+			} );
+
+			// initialize a child... there's no good reason why this should affect the test passing
+			Child.findOrCreate( { id: 'foo1' } );
+
+			// simulate a fetch of the parent with nested children
+			var parent = Parent.findOrCreate( { id: 'the-parent' } );
+			var children = parent.get( 'children' );
+			equal( children.length, 0 );
+			parent.set({
+				id: 'the-parent',
+				children: [
+					{ id: 'foo1' },
+					{ id: 'foo2' }
+				]
+			}, {
+				remove: false // maybe necessary in case you have other relations with isNew models, etc.
+			});
+
+			// check order of parent's children
+			equal( children.length, 2, 'parent is fetched with children' );
+			deepEqual( children.pluck('id'), ['foo1', 'foo2'], 'children are in the right order' );
+		});
+
 	module( "Backbone.RelationalModel inheritance (`subModelTypes`)", { setup: reset } );
 
 		test( "Object building based on type, when using explicit collections" , function() {
