@@ -1039,7 +1039,11 @@
 
 				// By now, both `merge` and `parse` will already have been executed for models if they were specified.
 				// Disable them to prevent additional calls.
-				related.set( toAdd, _.defaults( { merge: false, parse: false }, options ) );
+				if (this.options.reset) {
+					related.reset( toAdd, _.defaults( { parse: false }, options ) );
+				} else {
+					related.set( toAdd, _.defaults( { merge: false, parse: false }, options ) );
+				}
 			}
 
 			// Remove entries from `keyIds` that were already part of the relation (and are thus 'unchanged')
