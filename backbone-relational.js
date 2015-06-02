@@ -1038,7 +1038,7 @@
 
 				// By now, `parse` will already have been executed just above for models if specified.
 				// Disable to prevent additional calls.
-				related.set( toAdd, _.defaults( options, { parse: false } ) );
+				related.set( toAdd, _.defaults( options || {}, { parse: false } ) );
 			}
 
 			// Remove entries from `keyIds` that were already part of the relation (and are thus 'unchanged')
@@ -1847,7 +1847,7 @@
 					model.set( parsedAttributes, options );
 				}
 				else if ( !model && options.create !== false ) {
-					model = this.build( parsedAttributes, _.defaults( options, { parse: false } ) );
+					model = this.build( parsedAttributes, _.defaults( options || {}, { parse: false } ) );
 				}
 			}
 
@@ -1963,7 +1963,7 @@
 		// Add 'models' in a single batch, so the original add will only be called once (and thus 'sort', etc).
 		// If `parse` was specified, the collection and contained models have been parsed now.
 		toAdd = singular ? ( toAdd.length ? toAdd[ 0 ] : null ) : toAdd;
-		var result = set.call( this, toAdd, _.defaults( options, { merge: false, parse: false } ) );
+		var result = set.call( this, toAdd, _.defaults( options || {}, { merge: false, parse: false } ) );
 
 		for ( i = 0; i < newModels.length; i++ ) {
 			model = newModels[i];
