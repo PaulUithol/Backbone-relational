@@ -1460,7 +1460,7 @@
 								_.each( createdModels, function( model ) {
 									model.trigger( 'destroy', model, model.collection, options );
 								});
-								
+
 								options.error && options.error.apply( models, arguments );
 							},
 							url: setUrl
@@ -1499,7 +1499,7 @@
 				}
 			);
 		},
-		
+
 		deferArray: function(deferArray) {
 			return Backbone.$.when.apply(null, deferArray);
 		},
@@ -1847,7 +1847,7 @@
 					model.set( parsedAttributes, options );
 				}
 				else if ( !model && options.create !== false ) {
-					model = this.build( parsedAttributes, _.defaults( { parse: false }, options ) );
+					model = this.build( parsedAttributes, _.defaults( options, { parse: false } ) );
 				}
 			}
 
