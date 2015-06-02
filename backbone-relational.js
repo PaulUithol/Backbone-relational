@@ -1038,7 +1038,7 @@
 
 				// By now, `parse` will already have been executed just above for models if specified.
 				// Disable to prevent additional calls.
-				related.set( toAdd, _.defaults( { parse: false }, options ) );
+				related.set( toAdd, _.defaults( options, { parse: false } ) );
 			}
 
 			// Remove entries from `keyIds` that were already part of the relation (and are thus 'unchanged')
@@ -1154,7 +1154,7 @@
 			var dit = this;
 			model.queue( function() {
 				if ( dit.related && !dit.related.get( model ) ) {
-					dit.related.add( model, _.defaults( { parse: false }, options ) );
+					dit.related.add( model, _.defaults( options, { parse: false } ) );
 				}
 			});
 		},
