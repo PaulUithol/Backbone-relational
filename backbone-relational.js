@@ -1977,20 +1977,16 @@
 	};
 
 	/**
-	 * Override 'Backbone.Collection.remove' to trigger 'relational:remove'.
+	 * Override 'Backbone.Collection._removeModels' to trigger 'relational:remove'.
 	 */
-	var remove = Backbone.Collection.prototype.__remove = Backbone.Collection.prototype.remove;
-	Backbone.Collection.prototype.remove = function( models, options ) {
+	var _removeModels = Backbone.Collection.prototype.___removeModels = Backbone.Collection.prototype._removeModels;
+	Backbone.Collection.prototype._removeModels = function( models, options ) {
 		// Short-circuit if this Collection doesn't hold RelationalModels
 		if ( !( this.model.prototype instanceof Backbone.RelationalModel ) ) {
-			return remove.call( this, models, options );
+			return _removeModels.call( this, models, options );
 		}
 
-		var singular = !_.isArray( models ),
-			toRemove = [];
-
-		models = singular ? ( models ? [ models ] : [] ) : _.clone( models );
-		options || ( options = {} );
+		var toRemove = [];
 
 		//console.debug('calling remove on coll=%o; models=%o, options=%o', this, models, options );
 		_.each( models, function( model ) {
@@ -1998,7 +1994,7 @@
 			model && toRemove.push( model );
 		}, this );
 
-		var result = remove.call( this, singular ? ( toRemove.length ? toRemove[ 0 ] : null ) : toRemove, options );
+		var result = _removeModels.call( this, toRemove, options );
 
 		_.each( toRemove, function( model ) {
 			this.trigger( 'relational:remove', model, this, options );

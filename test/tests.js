@@ -4244,25 +4244,27 @@ $(document).ready(function() {
 
 			// Check removing `[]`
 			var result = cars.remove( [] );
-			ok( _.isArray( result ) && !result.length, "Removing `[]` is a noop" );
-			ok( cars.length === 2 );
+			console.log( result );
+			ok( result === false, "Removing `[]` is a noop (results in 'false', no models removed)" );
+			ok( cars.length === 2, "Still 2 cars" );
 
 			// Check removing `null`
 			result = cars.remove( null );
+			console.log( result );
 			ok( _.isUndefined( result ), "Removing `null` is a noop" );
-			ok( cars.length === 2 );
+			ok( cars.length === 2, "Still 2 cars" );
 
 			// Check setting to `[]`
 			result = cars.set( [] );
 			ok( _.isArray( result ) && !result.length, "Set `[]` empties collection" );
-			ok( cars.length === 0 );
+			ok( cars.length === 0, "All cars gone" );
 
 			cars.set( [ e, f ] );
-			ok( cars.length === 2 );
+			ok( cars.length === 2, "2 cars again" );
 
 			// Check setting `null`
 			ok( _.isUndefined( cars.set( null ) ), "Set `null` empties collection" );
-			ok( cars.length === 0 );
+			ok( cars.length === 0, "All cars gone" );
 		});
 
 		test( "add/remove/set (with `add`, `remove` and `merge` options)", function() {
@@ -4271,7 +4273,7 @@ $(document).ready(function() {
 			/**
 			 * Add
 			 */
-			coll.add( { id: 1, species: 'giraffe' } );
+			coll.add( { id: '1', species: 'giraffe' } );
 
 			ok( coll.length === 1 );
 
