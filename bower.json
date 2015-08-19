@@ -2,8 +2,8 @@
   "name": "backbone-relational",
   "main": "backbone-relational.js",
   "dependencies": {
-    "underscore": ">=1.5.0",
-    "backbone": ">=1.1.2"
+    "underscore": ">=1.7.0",
+    "backbone": ">=1.2.1"
   },
   "ignore": ["static", "test", ".html"]
 }
