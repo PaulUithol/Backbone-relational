@@ -4244,13 +4244,11 @@ $(document).ready(function() {
 
 			// Check removing `[]`
 			var result = cars.remove( [] );
-			console.log( result );
 			ok( result === false, "Removing `[]` is a noop (results in 'false', no models removed)" );
 			ok( cars.length === 2, "Still 2 cars" );
 
 			// Check removing `null`
 			result = cars.remove( null );
-			console.log( result );
 			ok( _.isUndefined( result ), "Removing `null` is a noop" );
 			ok( cars.length === 2, "Still 2 cars" );
 
@@ -4264,6 +4262,7 @@ $(document).ready(function() {
 
 			// Check setting `null`
 			ok( _.isUndefined( cars.set( null ) ), "Set `null` empties collection" );
+			console.log( cars, cars.length );
 			ok( cars.length === 0, "All cars gone" );
 		});
 
