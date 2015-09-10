@@ -898,6 +898,31 @@ $(document).ready(function() {
 			delete window.Carnivore;
 		});
 
+		test( "Inheritance with `subModelTypes` with class references and restore from json", function() {
+			var Mammal = Animal.extend({
+				subModelTypes: {},
+				defaults: {title: 'Mammal'}
+			});
+
+			var Primate = Mammal.extend({defaults: {title: 'Primate'}});
+			var Carnivore = Mammal.extend({defaults: {title: 'Carnivore'}});
+
+			Mammal.prototype.subModelTypes['primate'] = Primate;
+			Mammal.prototype.subModelTypes['carnivore'] = Carnivore;
+
+			var Mammals = Backbone.Collection.extend({
+				model: Mammal
+			});
+
+			var mammals = new Mammals();
+
+			mammals.reset([{type: 'primate'}, {type: 'carnivore'}, {type: 'unknown'}]);
+
+			strictEqual( mammals.at(0).get('title'), 'Primate', '{type: "primate"} must have {title: "Primate"}' );
+			strictEqual( mammals.at(1).get('title'), 'Carnivore', '{type: "carnivore"} must have {title: "Carnivore"}' );
+			strictEqual( mammals.at(2).get('title'), 'Mammal', 'Not existing subModel `type` must have {title: "Mammal"}' );
+		});
+
 		test( "findOrCreate does not modify attributes hash if parse is used, prior to creating new model", function () {
 			var model = Backbone.RelationalModel.extend({
 				parse: function( response ) {
