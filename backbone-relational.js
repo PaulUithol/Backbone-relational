@@ -305,10 +305,10 @@
 		 * @private
 		 */
 		_addRelation: function( type, relation ) {
-			if ( !type.prototype.relations ) {
-				type.prototype.relations = [];
-			}
-			type.prototype.relations.push( relation );
+			var relations = _.result(type.prototype, 'relations') || [];
+			relations.push(relation);
+
+			type.prototype.relations = function () { return relations } ;
 
 			_.each( type._subModels || [], function( subModel ) {
 				this._addRelation( subModel, relation );
@@ -1300,7 +1300,7 @@
 			this.acquire(); // Setting up relations often also involve calls to 'set', and we only want to enter this function once
 			this._relations = {};
 
-			_.each( this.relations || [], function( rel ) {
+			_.each( _.result(this, 'relations') || [], function( rel ) {
 				Backbone.Relational.store.initializeRelation( this, rel, options );
 			}, this );
 
@@ -1460,7 +1460,7 @@
 								_.each( createdModels, function( model ) {
 									model.trigger( 'destroy', model, model.collection, options );
 								});
-								
+
 								options.error && options.error.apply( models, arguments );
 							},
 							url: setUrl
@@ -1499,7 +1499,7 @@
 				}
 			);
 		},
-		
+
 		deferArray: function(deferArray) {
 			return Backbone.$.when.apply(null, deferArray);
 		},
@@ -1669,7 +1669,8 @@
 		setup: function( superModel ) {
 			// We don't want to share a relations array with a parent, as this will cause problems with reverse
 			// relations. Since `relations` may also be a property or function, only use slice if we have an array.
-			this.prototype.relations = ( this.prototype.relations || [] ).slice( 0 );
+			var relations = ( _.result(this.prototype, 'relations') || [] ).slice( 0 );
+			this.prototype.relations = function () { return relations };
 
 			this._subModels = {};
 			this._superModel = null;
@@ -1684,7 +1685,7 @@
 			}
 
 			// Initialize all reverseRelations that belong to this new model.
-			_.each( this.prototype.relations || [], function( rel ) {
+			_.each( _.result(this.prototype, 'relations') || [], function( rel ) {
 				if ( !rel.model ) {
 					rel.model = this;
 				}
@@ -1799,13 +1800,15 @@
 				this._superModel.inheritRelations();
 				if ( this._superModel.prototype.relations ) {
 					// Find relations that exist on the '_superModel', but not yet on this model.
-					var inheritedRelations = _.filter( this._superModel.prototype.relations || [], function( superRel ) {
-						return !_.any( this.prototype.relations || [], function( rel ) {
+					var inheritedRelations = _.filter( _.result(this._superModel.prototype, 'relations') || [], function( superRel ) {
+						return !_.any( _.result(this.prototype, 'relations') || [], function( rel ) {
 							return superRel.relatedModel === rel.relatedModel && superRel.key === rel.key;
 						}, this );
 					}, this );
 
-					this.prototype.relations = inheritedRelations.concat( this.prototype.relations );
+					var relations = inheritedRelations.concat( _.result(this.prototype, 'relations') );
+
+					this.prototype.relations = function () { return relations; };
 				}
 			}
 			// Otherwise, make sure we don't get here again for this type by making '_superModel' false so we fail the
