@@ -1755,6 +1755,46 @@ $(document).ready(function() {
 			ok( mammals.at( 3 ) instanceof scope.Primate );
 		});
 
+		test( "Object building based on type in a custom field, when using explicit collections" , function() {
+			var scope = {};
+			Backbone.Relational.store.addModelScope( scope );
+
+			scope.Mammal = Animal.extend({
+				subModelTypes: {
+					'primate': 'Primate',
+					'carnivore': 'Carnivore'
+				}
+			});
+			scope.Primate = scope.Mammal.extend();
+			scope.Carnivore = scope.Mammal.extend({
+				subModelTypeAttribute: 'family',
+				subModelTypes: {
+					'feline': 'Feline',
+					'canid': 'Canid'
+				}
+			});
+
+			scope.Feline = scope.Carnivore.extend();
+			scope.Canid = scope.Carnivore.extend();
+
+			var MammalCollection = AnimalCollection.extend({
+				model: scope.Mammal
+			});
+
+			var mammals = new MammalCollection( [
+				{ id: 5, species: 'chimp', type: 'primate' },
+				{ id: 6, species: 'panther', type: 'carnivore' },
+				{ id: 9, species: 'coyote', type: 'carnivore', family: 'canid' },
+				{ id: 10, species: 'leopard', type: 'carnivore', family: 'feline'}
+			]);
+
+			ok( mammals.at( 0 ) instanceof scope.Primate );
+			ok( mammals.at( 1 ) instanceof scope.Carnivore );
+			ok( mammals.at( 2 ) instanceof scope.Canid );
+			ok( mammals.at( 3 ) instanceof scope.Feline );
+		});
+
+
 		test( "Object building based on type, when used in relations" , function() {
 			var scope = {};
 			Backbone.Relational.store.addModelScope( scope );
