@@ -226,8 +226,8 @@
 		 * @param {Backbone.RelationalModel} modelType
 		 */
 		setupSuperModel: function( modelType ) {
-			_.find( this._subModels, function( subModelDef ) {
-				return _.filter( subModelDef.subModels || [], function( subModelTypeName, typeValue ) {
+			_.each( this._subModels, function( subModelDef ) {
+				return _.each( subModelDef.subModels || [], function( subModelTypeName, typeValue ) {
 					var subModelType = this.getObjectByName( subModelTypeName );
 
 					if ( modelType === subModelType ) {
@@ -238,9 +238,8 @@
 						modelType._superModel = subModelDef.superModelType;
 						modelType._subModelTypeValue = typeValue;
 						modelType._subModelTypeAttribute = subModelDef.superModelType.prototype.subModelTypeAttribute;
-						return true;
 					}
-				}, this ).length;
+				}, this );
 			}, this );
 		},
 
@@ -438,7 +437,7 @@
 			if ( coll ) {
 				var obj = coll.get( id );
 
-				if ( obj instanceof type ) {
+				if ( obj && obj._isSubModelInstanceOf( type )) {
 					return obj;
 				}
 			}
@@ -735,7 +734,7 @@
 		 * @return {Boolean}
 		 */
 		_isReverseRelation: function( relation ) {
-			return relation.instance instanceof this.relatedModel && this.reverseRelation.key === relation.key &&
+			return relation.instance && relation.instance._isSubModelInstanceOf(this.relatedModel) && this.reverseRelation.key === relation.key &&
 				this.key === relation.reverseRelation.key;
 		},
 
@@ -1293,6 +1292,24 @@
 		},
 
 		/**
+		 * Determine if the current object is an instance of a given Model or of one of its SubModels
+		 * @param {Backbone.RelationalModel} type
+		 * @return {Boolean}
+		 */
+		_isSubModelInstanceOf: function( type ) {
+			if ( this instanceof type ) {
+				return true;
+			}
+			return _.filter( type.prototype.subModelTypes || [], function( subModelTypeName, typeValue ) {
+				var subModelType = Backbone.Relational.store.getObjectByName( subModelTypeName );
+
+				if ( this._isSubModelInstanceOf(subModelType) ) {
+					return true;
+				}
+			}, this).length;
+		},
+
+		/**
 		 * Initialize Relations present in this.relations; determine the type (HasOne/HasMany), then creates a new instance.
 		 * Invoked in the first call so 'set' (which is made from the Backbone.Model constructor).
 		 */
@@ -1728,9 +1745,10 @@
 			this.initializeModelHierarchy();
 
 			// Determine what type of (sub)model should be built if applicable.
-			var model = this._findSubModelType( this, attributes ) || this;
-
-			return new model( attributes, options );
+			var model = this._findSubModelType( this, attributes );
+			if (model)
+				return model.build.call(model, attributes, options);
+			return new this( attributes, options );
 		},
 
 		/**
