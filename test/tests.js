@@ -1639,6 +1639,61 @@ $(document).ready(function() {
 			equal( changedAttrs.color, 'red', '... with correct properties in "changedAttributes"' );
 		});
 
+		test( 'collection updates should fire change events on parent objects', function() {
+			var scope = {};
+			Backbone.Relational.store.addModelScope( scope );
+
+			scope.PetAnimal = Backbone.RelationalModel.extend({
+				subModelTypes: {
+					'cat': 'Cat',
+					'dog': 'Dog'
+				}
+			});
+			scope.Dog = scope.PetAnimal.extend();
+			scope.Cat = scope.PetAnimal.extend();
+
+			scope.PetOwner = Backbone.RelationalModel.extend({
+				relations: [{
+					type: Backbone.HasMany,
+					key: 'pets',
+					relatedModel: scope.PetAnimal,
+					reverseRelation: {
+						key: 'owner'
+					}
+				}]
+			});
+
+			var owner = new scope.PetOwner( { id: 'owner-2354' } );
+			var animal = new scope.Dog( { type: 'dog', id: '238902', color: 'blue' } );
+			owner.set(owner.parse({
+				id: 'owner-2354',
+				pets: [ animal ]
+			}));
+
+			var pets = owner.get('pets');
+			equal( pets.size(), 1, 'pets starts with one animal' );
+
+			var changes = 0;
+			owner.on('change change:pets', function () {
+				changes++;
+			});
+			pets.add( { id: '456780', type: 'dog', color: 'yellow' } );
+			equal( pets.size(), 2, 'added one animal to pets' );
+			equal( changes, 2, 'change events get called on owner for pets collection change' );
+
+			pets.remove( '456780' );
+			equal( pets.size(), 1, 'removed one animal from pets' );
+			equal( changes, 4, 'change events get called on owner for pets collection change' );
+
+			var animal2 = new scope.Dog( { id: '34567', type: 'dog', color: 'black' } );
+			owner.set(owner.parse({
+				id: 'owner-2354',
+				pets: [ animal, animal2 ]
+			}));
+			equal( pets.size(), 2, 'new array of pets is of size 2' );
+			equal( changes, 6, 'change events get called on owner for pets collection set via owner.set' );
+		});
+
 		test( 'change events should not fire on new items in Collection#set', function() {
 			var modelChangeEvents = 0,
 				collectionChangeEvents = 0;
@@ -4657,8 +4712,8 @@ $(document).ready(function() {
 			change = changeAnimals = animalChange = 0;
 			animals.add( 'a2' );
 
-			ok( change === 0, 'change event not should fire' );
-			ok( changeAnimals === 0, 'no change:animals event should fire' );
+			ok( change === 1, 'change event should fire' );
+			ok( changeAnimals === 1, 'change:animals event should fire' );
 			ok( animalChange === 0, 'no animals:change event should fire' );
 
 			// Update an animal directly
@@ -4673,8 +4728,8 @@ $(document).ready(function() {
 			change = changeAnimals = animalChange = 0;
 			animals.remove( 'a2' );
 
-			ok( change === 0, 'no change event should fire' );
-			ok( changeAnimals === 0, 'no change:animals event should fire' );
+			ok( change === 1, 'change event should fire' );
+			ok( changeAnimals === 1, 'change:animals event should fire' );
 			ok( animalChange === 0, 'no animals:change event should fire' );
 		});
 
@@ -4772,6 +4827,8 @@ $(document).ready(function() {
 			person
 				.on('change:livesIn', function() {
 					//console.log( arguments );
+
+					// Will cause a second change notification in `house`
 					house.set({livesIn: house});
 				})
 				.on( 'change', function () {
@@ -4779,9 +4836,10 @@ $(document).ready(function() {
 					changeEventsTriggered++;
 				});
 
+			// Will cause a change notification in `house`
 			person.set({livesIn: house});
 
-			ok( changeEventsTriggered === 2, 'one change each triggered for `house` and `person`' );
+			ok( changeEventsTriggered === 3, 'one change triggered for `person`, two for `house`' );
 		});
 
 	module( "Performance", { setup: reset } );
