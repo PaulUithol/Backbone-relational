@@ -1570,6 +1570,26 @@
 			return result;
 		},
 
+		fetch: function( options ) {
+			var dit = this;
+			var args = arguments;
+			var promise = Backbone.Model.prototype.fetch.apply( dit, arguments );
+			if ( options && options.fetchRelationships && !_.isEmpty( dit._relations ) ) {
+				promise = promise.then( function( value ) {
+					var relationshipPromises = _.map( dit._relations, function( rel ) {
+						return dit.getAsync( rel.key, _.omit( options, 'fetchRelationships' ) );
+					});
+					relationshipPromises.splice(0, 0, new Promise( function( resolve, reject ) {
+						resolve( value );
+					}));
+					return Promise.all( relationshipPromises );
+				}).then( function( values ) {
+					return values[0];
+				});
+			}
+			return promise;
+		},
+
 		clone: function() {
 			var attributes = _.clone( this.attributes );
 			if ( !_.isUndefined( attributes[ this.idAttribute ] ) ) {

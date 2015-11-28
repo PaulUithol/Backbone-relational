@@ -1137,6 +1137,40 @@ $(document).ready(function() {
 			_.last( window.requests ).respond( 200, { id: 'f-2', name: 'Cheese' } );
 		});
 
+		test( "fetchRelationships recursively fetches relationships", function() {
+			var personCounter = 0;
+			var Person = Backbone.RelationalModel.extend({
+				urlRoot: '/people/',
+				// This is ultimately what the server would return when asked for a
+				// single person model, but there's no way to specify nested responses
+				// in the test framework. The value is just faked here with stateful
+				// parsing.
+				parse: function (resp, options) {
+					personCounter++;
+					return {id: "person"+personCounter};
+				}
+			});
+			var People = Backbone.Collection.extend({
+				model: Person,
+				url: '/people/'
+			});
+			var Family = Backbone.RelationalModel.extend({
+				urlRoot: '/families/',
+				relations: [
+					{
+						type: Backbone.HasMany,
+						key: 'members',
+						collectionType: People,
+						relatedModel: Person
+					}
+				],
+			});
+
+			var family = new Family({id: 'family1'});
+			family.fetch( {fetchRelationships: true, response: {status: 200, responseText: {id: "family1", members: ["person1", "person2"]}}} );
+			equal( window.requests.length, 3, "fetched family1, person1, and person2" );
+		});
+
 		test( "autoFetch a HasMany relation", function() {
 			var shopOne = new Shop({
 				id: 'shop-1',
