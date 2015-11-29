@@ -989,7 +989,8 @@
 
 			this.listenTo( collection, 'relational:add', this.handleAddition )
 				.listenTo( collection, 'relational:remove', this.handleRemoval )
-				.listenTo( collection, 'relational:reset', this.handleReset );
+				.listenTo( collection, 'relational:reset', this.handleReset )
+				.listenTo( collection, 'relational:update', this.handleUpdate );
 
 			return collection;
 		},
@@ -1136,6 +1137,16 @@
 			options = options ? _.clone( options ) : {};
 			!options.silent && Backbone.Relational.eventQueue.add( function() {
 				dit.instance.trigger( 'reset:' + dit.key, dit.related, options );
+			});
+		},
+
+		handleUpdate: function ( coll, options ) {
+			// If this change is not inside a set (an onChanged handler), ensure that
+			// change events for the key and the object are queued.
+			var dit = this;
+			!options.silent && !dit.instance._relationalModelChangingViaSet && Backbone.Relational.eventQueue.add( function() {
+				dit.instance.trigger( 'change:' + dit.key, dit.instance, dit.related, options, true );
+				dit.instance.trigger( 'change', dit.instance, options, null, true );
 			});
 		},
 
@@ -1505,6 +1516,7 @@
 		},
 
 		set: function( key, value, options ) {
+			this._relationalModelChangingViaSet = true;
 			Backbone.Relational.eventQueue.block();
 
 			// Duplicate backbone's behavior to allow separate key/value parameters, instead of a single 'attributes' object
@@ -1554,7 +1566,28 @@
 				Backbone.Relational.eventQueue.unblock();
 			}
 
+			this._relationalModelChangingViaSet = false;
 			return result;
+		},
+
+		fetch: function( options ) {
+			var dit = this;
+			var args = arguments;
+			var promise = Backbone.Model.prototype.fetch.apply( dit, arguments );
+			if ( options && options.fetchRelationships && !_.isEmpty( dit._relations ) ) {
+				promise = promise.then( function( value ) {
+					var relationshipPromises = _.map( dit._relations, function( rel ) {
+						return dit.getAsync( rel.key, _.omit( options, 'fetchRelationships' ) );
+					});
+					relationshipPromises.splice(0, 0, new Promise( function( resolve, reject ) {
+						resolve( value );
+					}));
+					return Promise.all( relationshipPromises );
+				}).then( function( values ) {
+					return values[0];
+				});
+			}
+			return promise;
 		},
 
 		clone: function() {
@@ -1973,6 +2006,10 @@
 			}
 		}
 
+		if ( !_.isEmpty( toAdd ) ) {
+			this.trigger('relational:update', this, options)
+		}
+
 		return result;
 	};
 
@@ -1999,6 +2036,10 @@
 		_.each( toRemove, function( model ) {
 			this.trigger( 'relational:remove', model, this, options );
 		}, this );
+
+		if ( !_.isEmpty( toRemove ) ) {
+			this.trigger('relational:update', this, options);
+		}
 
 		return result;
 	};
