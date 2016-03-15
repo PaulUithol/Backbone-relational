@@ -3,17 +3,38 @@
   "main": "backbone-relational.js",
   "description": "Get and set relations (one-to-one, one-to-many, many-to-one) for Backbone models",
   "homepage": "http://backbonerelational.org",
-  "keywords": ["backbone", "relation", "nested", "model"],
+  "keywords": [
+    "backbone",
+    "relation",
+    "nested",
+    "model"
+  ],
   "repository": {
     "type": "git",
-	"url": "https://github.com/PaulUithol/Backbone-relational.git"
+    "url": "https://github.com/PaulUithol/Backbone-relational.git"
+  },
+  "scripts": {
+    "test": "karma start --single-run --browsers PhantomJS"
   },
   "author": "Paul Uithol <https://github.com/PaulUithol>",
   "contributors": "Listed at <https://github.com/PaulUithol/Backbone-relational/contributors>",
-  "dependencies": {
-    "underscore": ">=1.7.0",
-    "backbone": ">=1.2.1"
+  "peerDependencies": {
+    "backbone": "1.2.3"
   },
   "license": "MIT",
-  "version": "0.10.0"
+  "version": "0.10.0",
+  "devDependencies": {
+    "backbone": "1.2.3",
+    "browserify": "^13.0.0",
+    "jquery": "^2.2.1",
+    "karma": "^0.13.22",
+    "karma-browserify": "^5.0.2",
+    "karma-chrome-launcher": "^0.2.2",
+    "karma-phantomjs-launcher": "^1.0.0",
+    "karma-qunit": "^0.1.9",
+    "phantomjs-prebuilt": "^2.1.5",
+    "qunitjs": "^1.22.0",
+    "underscore": ">=1.7.0",
+    "watchify": "^3.7.0"
+  }
 }
