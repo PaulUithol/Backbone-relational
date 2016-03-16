@@ -7,3 +7,6 @@ before_install:
 script:
   - npm test
 sudo: false
+cache:
+  directories:
+    - node_modules
