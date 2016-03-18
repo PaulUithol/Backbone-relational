@@ -1220,8 +1220,14 @@
 			this._queue.block();
 			Backbone.Relational.eventQueue.block();
 
+			var args = new Array( arguments.length );
+
+			for (var i = 0; i < arguments.length; i++) {
+				args[i] = arguments[i];
+			}
+
 			try {
-				Backbone.Model.apply( this, arguments );
+				Backbone.Model.apply( this, args );
 			}
 			finally {
 				// Try to run the global queue holding external events
@@ -1233,9 +1239,14 @@
 		 * Override 'trigger' to queue 'change' and 'change:*' events
 		 */
 		trigger: function( eventName ) {
+			var args = new Array( arguments.length );
+
+			for (var i = 0; i < arguments.length; i++) {
+				args[i] = arguments[i];
+			}
+
 			if ( eventName.length > 5 && eventName.indexOf( 'change' ) === 0 ) {
-				var dit = this,
-					args = arguments;
+				var dit = this;
 
 				if ( !Backbone.Relational.eventQueue.isBlocked() ) {
 					// If we're not in a more complicated nested scenario, fire the change event right away
@@ -1282,11 +1293,11 @@
 				}
 			}
 			else if ( eventName === 'destroy' ) {
-				Backbone.Model.prototype.trigger.apply( this, arguments );
+				Backbone.Model.prototype.trigger.apply( this, args );
 				Backbone.Relational.store.unregister( this );
 			}
 			else {
-				Backbone.Model.prototype.trigger.apply( this, arguments );
+				Backbone.Model.prototype.trigger.apply( this, args );
 			}
 
 			return this;
@@ -1457,11 +1468,17 @@
 					var opts = _.defaults(
 						{
 							error: function() {
+								var args = new Array( arguments.length );
+
+								for (var i = 0; i < arguments.length; i++) {
+									args[i] = arguments[i];
+								}
+
 								_.each( createdModels, function( model ) {
 									model.trigger( 'destroy', model, model.collection, options );
 								});
-								
-								options.error && options.error.apply( models, arguments );
+
+								options.error && options.error.apply( models, args );
 							},
 							url: setUrl
 						},
@@ -1480,10 +1497,17 @@
 						var opts = _.defaults(
 							{
 								error: function() {
+									var args = new Array( arguments.length );
+
+									for (var i = 0; i < arguments.length; i++) {
+										args[i] = arguments[i];
+									}
+
 									if ( _.contains( createdModels, model ) ) {
 										model.trigger( 'destroy', model, model.collection, options );
 									}
-									options.error && options.error.apply( models, arguments );
+
+									options.error && options.error.apply( models, args );
 								}
 							},
 							options
@@ -1527,7 +1551,13 @@
 				// Check if we're not setting a duplicate id before actually calling `set`.
 				Backbone.Relational.store.checkId( this, newId );
 
-				result = Backbone.Model.prototype.set.apply( this, arguments );
+				var args = new Array( arguments.length );
+
+				for (var i = 0; i < arguments.length; i++) {
+					args[i] = arguments[i];
+				}
+
+				result = Backbone.Model.prototype.set.apply( this, args );
 
 				// Ideal place to set up relations, if this is the first time we're here for this model
 				if ( !this._isInitialized && !this.isLocked() ) {
@@ -2038,14 +2068,19 @@
 	 */
 	var trigger = Backbone.Collection.prototype.__trigger = Backbone.Collection.prototype.trigger;
 	Backbone.Collection.prototype.trigger = function( eventName ) {
+		var args = new Array( arguments.length );
+
+		for (var i = 0; i < arguments.length; i++) {
+			args[i] = arguments[i];
+		}
+
 		// Short-circuit if this Collection doesn't hold RelationalModels
 		if ( !( this.model.prototype instanceof Backbone.RelationalModel ) ) {
-			return trigger.apply( this, arguments );
+			return trigger.apply( this, args );
 		}
 
 		if ( eventName === 'add' || eventName === 'remove' || eventName === 'reset' || eventName === 'sort' ) {
-			var dit = this,
-				args = arguments;
+			var dit = this;
 
 			if ( _.isObject( args[ 3 ] ) ) {
 				args = _.toArray( args );
@@ -2059,7 +2094,7 @@
 			});
 		}
 		else {
-			trigger.apply( this, arguments );
+			trigger.apply( this, args );
 		}
 
 		return this;
