@@ -593,6 +593,10 @@
 
 		this.relatedModel = this.options.relatedModel;
 
+		if(_.isUndefined(this.relatedModel)){
+			this.relatedModel = this.model;
+		}
+
 		if ( _.isFunction( this.relatedModel ) && !( this.relatedModel.prototype instanceof module.Model ) ) {
 			this.relatedModel = _.result( this, 'relatedModel' );
 		}
@@ -740,14 +744,22 @@
 		getReverseRelations: function( model ) {
 			var reverseRelations = [];
 			// Iterate over 'model', 'this.related.models' (if this.related is a module.Collection), or wrap 'this.related' in an array.
-			var models = !_.isUndefined( model ) ? [ model ] : this.related && ( this.related.models || [ this.related ] );
-			_.each( models || [], function( related ) {
-				_.each( related.getRelations() || [], function( relation ) {
+			var models = !_.isUndefined( model ) ? [ model ] : this.related && ( this.related.models || [ this.related ] ),
+				relations = null,
+				relation = null;
+
+			for( var i = 0; i < ( models || [] ).length; i++ ) {
+				relations = models[ i ].getRelations() || [];
+
+				for( var j = 0; j < relations.length; j++ ) {
+					relation = relations[ j ];
+
+
 					if ( this._isReverseRelation( relation ) ) {
 						reverseRelations.push( relation );
 					}
-				}, this );
-			}, this );
+				}
+			}
 
 			return reverseRelations;
 		},
@@ -1007,9 +1019,8 @@
 					}
 					else {
 						// If `merge` is true, update models here, instead of during update.
-						model = this.relatedModel.findOrCreate( attributes,
-							_.extend( { merge: true }, options, { create: this.options.createModels } )
-						);
+						model = ( _.isObject( attributes ) && options.parse && this.relatedModel.prototype.parse ) ?
+							this.relatedModel.prototype.parse( _.clone( attributes ), options ) : attributes;
 					}
 
 					model && toAdd.push( model );
@@ -1022,9 +1033,9 @@
 					related = this._prepareCollection();
 				}
 
-				// By now, both `merge` and `parse` will already have been executed for models if they were specified.
-				// Disable them to prevent additional calls.
-				related.set( toAdd, _.defaults( { merge: false, parse: false }, options ) );
+				// By now, `parse` will already have been executed just above for models if specified.
+				// Disable to prevent additional calls.
+				related.set( toAdd, _.defaults( { parse: false }, options ) );
 			}
 
 			// Remove entries from `keyIds` that were already part of the relation (and are thus 'unchanged')
@@ -1392,7 +1403,7 @@
 		 */
 		getAsync: function( attr, options ) {
 			// Set default `options` for fetch
-			options = _.extend( { update: true, remove: false, refresh: false }, options );
+			options = _.extend( { add: true, remove: false, refresh: false }, options );
 
 			var dit = this,
 				requests = [],
@@ -1479,11 +1490,15 @@
 				}
 			}
 
-			return $.when.apply( null, requests ).then(
+			return this.deferArray(requests).then(
 				function() {
 					return Backbone.Model.prototype.get.call( dit, attr );
 				}
 			);
+		},
+
+		deferArray: function(deferArray) {
+			return Backbone.$.when.apply(null, deferArray);
 		},
 
 		set: function( key, value, options ) {
@@ -1800,7 +1815,7 @@
 		 * Find an instance of `this` type in 'Backbone.store'.
 		 * A new model is created if no matching model is found, `attributes` is an object, and `options.create` is true.
 		 * - If `attributes` is a string or a number, `findOrCreate` will query the `store` and return a model if found.
-		 * - If `attributes` is an object and is found in the store, the model will be updated with `attributes` unless `options.update` is `false`.
+		 * - If `attributes` is an object and is found in the store, the model will be updated with `attributes` unless `options.merge` is `false`.
 		 * @param {Object|String|Number} attributes Either a model's id, or the attributes used to create or update a model.
 		 * @param {Object} [options]
 		 * @param {Boolean} [options.create=true]
@@ -1811,7 +1826,7 @@
 		findOrCreate: function( attributes, options ) {
 			options || ( options = {} );
 			var parsedAttributes = ( _.isObject( attributes ) && options.parse && this.prototype.parse ) ?
-				this.prototype.parse( _.clone( attributes ) ) : attributes;
+				this.prototype.parse( _.clone( attributes ), options ) : attributes;
 
 			// If specified, use a custom `find` function to match up existing models to the given attributes.
 			// Otherwise, try to find an instance of 'this' model type in the store
@@ -1838,7 +1853,7 @@
 		/**
 		 * Find an instance of `this` type in 'Backbone.store'.
 		 * - If `attributes` is a string or a number, `find` will query the `store` and return a model if found.
-		 * - If `attributes` is an object and is found in the store, the model will be updated with `attributes` unless `options.update` is `false`.
+		 * - If `attributes` is an object and is found in the store, the model will be updated with `attributes` unless `options.merge` is `false`.
 		 * @param {Object|String|Number} attributes Either a model's id, or the attributes used to create or update a model.
 		 * @param {Object} [options]
 		 * @param {Boolean} [options.merge=true]
@@ -1908,7 +1923,7 @@
 	module.Collection.prototype.set = function( models, options ) {
 		// Short-circuit if this Collection doesn't hold RelationalModels
 		if ( !( this.model.prototype instanceof module.Model ) ) {
-			return set.apply( this, arguments );
+			return set.call( this, models, options );
 		}
 
 		if ( options && options.parse ) {
@@ -1917,12 +1932,14 @@
 
 		var singular = !_.isArray( models ),
 			newModels = [],
-			toAdd = [];
+			toAdd = [],
+			model = null;
 
 		models = singular ? ( models ? [ models ] : [] ) : _.clone( models );
 
 		//console.debug( 'calling add on coll=%o; model=%o, options=%o', this, models, options );
-		_.each( models, function( model ) {
+		for ( var i = 0; i < models.length; i++ ) {
+			model = models[i];
 			if ( !( model instanceof Backbone.Model ) ) {
 				model = module.Collection.prototype._prepareModel.call( this, model, options );
 			}
@@ -1939,38 +1956,35 @@
 					this._byId[ model.id ] = model;
 				}
 			}
-		}, this );
+		}
 
 		// Add 'models' in a single batch, so the original add will only be called once (and thus 'sort', etc).
 		// If `parse` was specified, the collection and contained models have been parsed now.
 		toAdd = singular ? ( toAdd.length ? toAdd[ 0 ] : null ) : toAdd;
 		var result = set.call( this, toAdd, _.defaults( { merge: false, parse: false }, options ) );
 
-		_.each( newModels, function( model ) {
+		for ( i = 0; i < newModels.length; i++ ) {
+			model = newModels[i];
 			// Fire a `relational:add` event for any model in `newModels` that has actually been added to the collection.
 			if ( this.get( model ) || this.get( model.cid ) ) {
 				this.trigger( 'relational:add', model, this, options );
 			}
-		}, this );
+		}
 
 		return result;
 	};
 
 	/**
-	 * Override 'module.Collection.remove' to trigger 'relational:remove'.
+	 * Override 'Backbone.Collection._removeModels' to trigger 'relational:remove'.
 	 */
-	var remove = module.Collection.prototype.__remove = module.Collection.prototype.remove;
-	module.Collection.prototype.remove = function( models, options ) {
+	var _removeModels = Backbone.Collection.prototype.___removeModels = Backbone.Collection.prototype._removeModels;
+	Backbone.Collection.prototype._removeModels = function( models, options ) {
 		// Short-circuit if this Collection doesn't hold RelationalModels
 		if ( !( this.model.prototype instanceof module.Model ) ) {
-			return remove.apply( this, arguments );
+			return _removeModels.call( this, models, options );
 		}
 
-		var singular = !_.isArray( models ),
-			toRemove = [];
-
-		models = singular ? ( models ? [ models ] : [] ) : _.clone( models );
-		options || ( options = {} );
+		var toRemove = [];
 
 		//console.debug('calling remove on coll=%o; models=%o, options=%o', this, models, options );
 		_.each( models, function( model ) {
@@ -1978,7 +1992,7 @@
 			model && toRemove.push( model );
 		}, this );
 
-		var result = remove.call( this, singular ? ( toRemove.length ? toRemove[ 0 ] : null ) : toRemove, options );
+		var result = _removeModels.call( this, toRemove, options );
 
 		_.each( toRemove, function( model ) {
 			this.trigger( 'relational:remove', model, this, options );
@@ -2057,7 +2071,6 @@
 
 		return child;
 	};
-
 	Backbone.Relational = module;
 	return module;
 }));
