@@ -8,5 +8,5 @@ exports.reset = function reset() {
 
 	Backbone.Relational.store.reset();
 	Backbone.Relational.store.addModelScope( window );
-	Backbone.Relational.eventQueue = new Backbone.BlockingQueue();
+	Backbone.Relational.eventQueue = new Backbone.Relational.BlockingQueue();
 }

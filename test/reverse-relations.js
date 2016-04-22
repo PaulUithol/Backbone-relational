@@ -137,11 +137,13 @@ QUnit.module( "Reverse relations", { setup: require('./setup/data') } );
 	QUnit.test( "'Save' objects (performing 'set' multiple times without and with id)", 4, function() {
 		person3
 			.on( 'add:jobs', function( model, coll ) {
+				console.log('got here 1');
 				var company = model.get('company');
 				ok( company instanceof Company && company.get('ceo').get('name') === 'Lunar boy' && model.get('person') === person3,
 					"add:jobs: Both Person and Company are set on the Job instance once the event gets fired" );
 			})
 			.on( 'remove:jobs', function( model, coll ) {
+				console.log('got here 2');
 				ok( false, "remove:jobs: 'person3' should not lose his job" );
 			});
 
@@ -156,11 +158,13 @@ QUnit.module( "Reverse relations", { setup: require('./setup/data') } );
 
 		company
 			.on( 'add:employees', function( model, coll ) {
+				console.log('got here 3');
 				var company = model.get('company');
 				ok( company instanceof Company && company.get('ceo').get('name') === 'Lunar boy' && model.get('person') === person3,
 					"add:employees: Both Person and Company are set on the Company instance once the event gets fired" );
 			})
 			.on( 'remove:employees', function( model, coll ) {
+				console.log('got here 4');
 				ok( true, "'remove:employees: person3' should lose a job once" );
 			});
 
@@ -238,15 +242,15 @@ QUnit.module( "Reverse relations", { setup: require('./setup/data') } );
 		// This test caused a race condition to surface:
 		// The 'relation's constructor initializes the 'reverseRelation', which called 'relation.addRelated' in it's 'initialize'.
 		// However, 'relation's 'initialize' has not been executed yet, so it doesn't have a 'related' collection yet.
-		var Properties = Backbone.RelationalModel.extend({});
-		var View = Backbone.RelationalModel.extend({
+		var Properties = Backbone.Relational.Model.extend({});
+		var View = Backbone.Relational.Model.extend({
 			relations: [
 				{
-					type: Backbone.HasMany,
+					type: Backbone.Relational.HasMany,
 					key: 'properties',
 					relatedModel: Properties,
 					reverseRelation: {
-						type: Backbone.HasOne,
+						type: Backbone.Relational.HasOne,
 						key: 'view'
 					}
 				}
@@ -264,14 +268,14 @@ QUnit.module( "Reverse relations", { setup: require('./setup/data') } );
 	});
 
 	QUnit.test( "Reverse relations are found for models that have not been instantiated and use .extend()", function() {
-		var View = Backbone.RelationalModel.extend({ });
-		var Property = Backbone.RelationalModel.extend({
+		var View = Backbone.Relational.Model.extend({ });
+		var Property = Backbone.Relational.Model.extend({
 			relations: [{
-				type: Backbone.HasOne,
+				type: Backbone.Relational.HasOne,
 				key: 'view',
 				relatedModel: View,
 				reverseRelation: {
-					type: Backbone.HasMany,
+					type: Backbone.Relational.HasMany,
 					key: 'properties'
 				}
 			}]
@@ -282,22 +286,22 @@ QUnit.module( "Reverse relations", { setup: require('./setup/data') } );
 			properties: [ { id: 1, key: 'width', value: '300px' } ]
 		});
 
-		ok( view.get( 'properties' ) instanceof Backbone.Collection );
+		ok( view.get( 'properties' ) instanceof Backbone.Relational.Collection );
 	});
 
 	QUnit.test( "Reverse relations found for models that have not been instantiated and run .setup() manually", function() {
 		// Generated from CoffeeScript code:
-		// 	 class View extends Backbone.RelationalModel
+		// 	 class View extends Backbone.Relational.Model
 		//
 		// 	 View.setup()
 		//
-		// 	 class Property extends Backbone.RelationalModel
+		// 	 class Property extends Backbone.Relational.Model
 		// 	   relations: [
-		// 	     type: Backbone.HasOne
+		// 	     type: Backbone.Relational.HasOne
 		// 	     key: 'view'
 		// 	     relatedModel: View
 		// 	     reverseRelation:
-		// 	       type: Backbone.HasMany
+		// 	       type: Backbone.Relational.HasMany
 		// 	       key: 'properties'
 		// 	   ]
 		//
@@ -317,7 +321,7 @@ QUnit.module( "Reverse relations", { setup: require('./setup/data') } );
 			}
 
 			return View;
-		})( Backbone.RelationalModel );
+		})( Backbone.Relational.Model );
 
 		View.setup();
 
@@ -331,17 +335,17 @@ QUnit.module( "Reverse relations", { setup: require('./setup/data') } );
 			}
 
 			Property.prototype.relations = [{
-				type: Backbone.HasOne,
+				type: Backbone.Relational.HasOne,
 				key: 'view',
 				relatedModel: View,
 				reverseRelation: {
-				type: Backbone.HasMany,
+				type: Backbone.Relational.HasMany,
 					key: 'properties'
 				}
 			}];
 
 			return Property;
-		})(Backbone.RelationalModel);
+		})(Backbone.Relational.Model);
 
 		Property.setup();
 
@@ -350,19 +354,19 @@ QUnit.module( "Reverse relations", { setup: require('./setup/data') } );
 			properties: [ { id: 1, key: 'width', value: '300px' } ]
 		});
 
-		ok( view.get( 'properties' ) instanceof Backbone.Collection );
+		ok( view.get( 'properties' ) instanceof Backbone.Relational.Collection );
 	});
 
 	QUnit.test( "ReverseRelations are applied retroactively", function() {
 		// Use brand new Model types, so we can be sure we don't have any reverse relations cached from previous tests
-		var NewUser = Backbone.RelationalModel.extend({});
-		var NewPerson = Backbone.RelationalModel.extend({
+		var NewUser = Backbone.Relational.Model.extend({});
+		var NewPerson = Backbone.Relational.Model.extend({
 			relations: [{
-				type: Backbone.HasOne,
+				type: Backbone.Relational.HasOne,
 				key: 'user',
 				relatedModel: NewUser,
 				reverseRelation: {
-					type: Backbone.HasOne,
+					type: Backbone.Relational.HasOne,
 					key: 'person'
 				}
 			}]
@@ -382,18 +386,18 @@ QUnit.module( "Reverse relations", { setup: require('./setup/data') } );
 		Backbone.Relational.store.addModelScope( models );
 
 		// Use brand new Model types, so we can be sure we don't have any reverse relations cached from previous tests
-		models.NewPerson = Backbone.RelationalModel.extend({
+		models.NewPerson = Backbone.Relational.Model.extend({
 			relations: [{
-				type: Backbone.HasOne,
+				type: Backbone.Relational.HasOne,
 				key: 'user',
 				relatedModel: 'NewUser',
 				reverseRelation: {
-					type: Backbone.HasOne,
+					type: Backbone.Relational.HasOne,
 					key: 'person'
 				}
 			}]
 		});
-		models.NewUser = Backbone.RelationalModel.extend({});
+		models.NewUser = Backbone.Relational.Model.extend({});
 
 		var user = new models.NewUser( { id: 'newuser-1', person: { id: 'newperson-1' } } );
 

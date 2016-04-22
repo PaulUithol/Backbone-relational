@@ -1,9 +1,9 @@
-QUnit.module( "Backbone.Collection", { setup: require('./setup/setup').reset } );
+QUnit.module( "Backbone.Relational.Collection", { setup: require('./setup/setup').reset } );
 
 	QUnit.test( "Loading (fetching) multiple times updates the model, and relations's `keyContents`", function() {
-		var collA = new Backbone.Collection();
+		var collA = new Backbone.Relational.Collection();
 		collA.model = User;
-		var collB = new Backbone.Collection();
+		var collB = new Backbone.Relational.Collection();
 		collB.model = User;
 
 		// Similar to what happens when calling 'fetch' on collA, updating it, calling 'fetch' on collB
@@ -48,7 +48,7 @@ QUnit.module( "Backbone.Collection", { setup: require('./setup/setup').reset } )
 	});
 
 	QUnit.test( "Loading (fetching) a collection multiple times updates related models as well (HasMany)", function() {
-		var coll = new Backbone.Collection();
+		var coll = new Backbone.Relational.Collection();
 		coll.model = Zoo;
 
 		// Create a 'zoo' with 1 animal in it
@@ -82,8 +82,8 @@ QUnit.module( "Backbone.Collection", { setup: require('./setup/setup').reset } )
 	});
 
 	QUnit.test( "Return values for add/remove/reset/set match plain Backbone's", function() {
-		var Car = Backbone.RelationalModel.extend(),
-			Cars = Backbone.Collection.extend( { model: Car } ),
+		var Car = Backbone.Relational.Model.extend(),
+			Cars = Backbone.Relational.Collection.extend( { model: Car } ),
 			cars = new Cars();
 
 		ok( cars.add( { name: 'A' } ) instanceof Car, "Add one model" );
@@ -288,11 +288,11 @@ QUnit.module( "Backbone.Collection", { setup: require('./setup/setup').reset } )
 	});
 
 	QUnit.test( "Adding a new model doesn't `merge` it onto itself", function() {
-		var TreeModel = Backbone.RelationalModel.extend({
+		var TreeModel = Backbone.Relational.Model.extend({
 			relations: [
 				{
 					key: 'parent',
-					type: Backbone.HasOne
+					type: Backbone.Relational.HasOne
 				}
 			],
 
@@ -303,7 +303,7 @@ QUnit.module( "Backbone.Collection", { setup: require('./setup/setup').reset } )
 			}
 		});
 
-		var TreeCollection = Backbone.Collection.extend({
+		var TreeCollection = Backbone.Relational.Collection.extend({
 			model: TreeModel
 		});
 

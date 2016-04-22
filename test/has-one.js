@@ -1,4 +1,4 @@
-QUnit.module( "Backbone.HasOne", { setup: require('./setup/data') } );
+QUnit.module( "Backbone.Relational.HasOne", { setup: require('./setup/data') } );
 
 	QUnit.test( "HasOne relations on Person are set up properly", function() {
 		ok( person1.get('likesALot') === person2 );

@@ -1,4 +1,4 @@
-QUnit.module( "Backbone.Store", { setup: require('./setup/data') } );
+QUnit.module( "Backbone.Relational.Store", { setup: require('./setup/data') } );
 
 	QUnit.test( "Initialized", function() {
 		// `initObjects` instantiates models of the following types: `Person`, `Job`, `Company`, `User`, `House` and `Password`.
@@ -6,7 +6,7 @@ QUnit.module( "Backbone.Store", { setup: require('./setup/data') } );
 	});
 
 	QUnit.test( "getObjectByName", function() {
-		equal( Backbone.Relational.store.getObjectByName( 'Backbone.RelationalModel' ), Backbone.RelationalModel );
+		equal( Backbone.Relational.store.getObjectByName( 'Backbone.Relational.Model' ), Backbone.Relational.Model );
 	});
 
 	QUnit.test( "Add and remove from store", function() {
@@ -32,9 +32,9 @@ QUnit.module( "Backbone.Store", { setup: require('./setup/data') } );
 		var models = {};
 		Backbone.Relational.store.addModelScope( models );
 
-		models.Book = Backbone.RelationalModel.extend({
+		models.Book = Backbone.Relational.Model.extend({
 			relations: [{
-				type: Backbone.HasMany,
+				type: Backbone.Relational.HasMany,
 				key: 'pages',
 				relatedModel: 'Page',
 				createModels: false,
@@ -43,7 +43,7 @@ QUnit.module( "Backbone.Store", { setup: require('./setup/data') } );
 				}
 			}]
 		});
-		models.Page = Backbone.RelationalModel.extend();
+		models.Page = Backbone.Relational.Model.extend();
 
 		var book = new models.Book();
 		var page = new models.Page({ book: book });
@@ -57,7 +57,7 @@ QUnit.module( "Backbone.Store", { setup: require('./setup/data') } );
 		ns.People = {};
 		Backbone.Relational.store.addModelScope( ns );
 
-		ns.People.Person = Backbone.RelationalModel.extend({
+		ns.People.Person = Backbone.Relational.Model.extend({
 			subModelTypes: {
 				'Student': 'People.Student'
 			},
@@ -68,7 +68,7 @@ QUnit.module( "Backbone.Store", { setup: require('./setup/data') } );
 			iam: function() { return "I am a student"; }
 		});
 
-		ns.People.PersonCollection = Backbone.Collection.extend({
+		ns.People.PersonCollection = Backbone.Relational.Collection.extend({
 			model: ns.People.Person
 		});
 
@@ -81,7 +81,7 @@ QUnit.module( "Backbone.Store", { setup: require('./setup/data') } );
 		var models = {};
 		Backbone.Relational.store.addModelScope( models );
 
-		models.Page = Backbone.RelationalModel.extend();
+		models.Page = Backbone.Relational.Model.extend();
 
 		ok( Backbone.Relational.store.getObjectByName( 'Page' ) === models.Page );
 		ok( Backbone.Relational.store.getObjectByName( 'Person' ) === window.Person );
@@ -190,7 +190,7 @@ QUnit.module( "Backbone.Store", { setup: require('./setup/data') } );
 			}]
 		});
 
-		ok( anotherHouse.get('occupants') instanceof Backbone.Collection, "Occupants is a Collection" );
+		ok( anotherHouse.get('occupants') instanceof Backbone.Relational.Collection, "Occupants is a Collection" );
 		ok( anotherHouse.get('occupants').get( personId ) instanceof Person, "Occupants contains the Person with id='" + personId + "'" );
 
 		var person = Backbone.Relational.store.find( Person, personId );
@@ -215,7 +215,7 @@ QUnit.module( "Backbone.Store", { setup: require('./setup/data') } );
 		ok( !house, houseId + " is not found in the store anymore" );
 	});
 
-	QUnit.test( "Model.collection is the first collection a Model is added to by an end-user (not its Backbone.Store collection!)", function() {
+	QUnit.test( "Model.collection is the first collection a Model is added to by an end-user (not its Backbone.Relational.Store collection!)", function() {
 		var person = new Person( { id: 5, name: 'New guy' } );
 		var personColl = new PersonCollection();
 		personColl.add( person );
@@ -322,7 +322,7 @@ QUnit.module( "Backbone.Store", { setup: require('./setup/data') } );
 	});
 
 	QUnit.test( "findOrCreate does not modify attributes hash if parse is used, prior to creating new model", function () {
-		var model = Backbone.RelationalModel.extend({
+		var model = Backbone.Relational.Model.extend({
 			parse: function( response ) {
 				response.id = response.id + 'something';
 				return response;
