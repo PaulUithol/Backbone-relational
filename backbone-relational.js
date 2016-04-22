@@ -45,20 +45,27 @@
 		monkey = zoo.get( 'animals' ).first(),
 		sameZoo = lion.get( 'livesIn' );
  */
-( function( root, factory ) {
+( function( factory ) {
+	// Establish the root object, `window` (`self`) in the browser, or `global` on the server.
+	// We use `self` instead of `window` for `WebWorker` support.
+	var root = (typeof self == 'object' && self.self == self && self) ||
+		(typeof global == 'object' && global.global == global && global);
+
 	// Set up Backbone-relational for the environment. Start with AMD.
 	if ( typeof define === 'function' && define.amd ) {
-		define( [ 'exports', 'backbone', 'underscore' ], factory );
+		define( [ 'exports', 'backbone', 'underscore' ], function(exports, Backbone, _){
+			factory(exports, Backbone, _, root);
+		});
 	}
 	// Next for Node.js or CommonJS.
 	else if ( typeof exports !== 'undefined' ) {
-		factory( exports, require( 'backbone' ), require( 'underscore' ) );
+		factory( exports, require( 'backbone' ), require( 'underscore' ), root );
 	}
 	// Finally, as a browser global. Use `root` here as it references `window`.
 	else {
-		factory( {} , root.Backbone, root._ );
+		root.Backbone.Relational = factory( {} , root.Backbone, root._, root );
 	}
-}( this, function( module, Backbone, _ ) {
+}( function( module, Backbone, _, root ) {
 	"use strict";
 
 	module.Collection = Backbone.Collection.extend();
@@ -169,7 +176,7 @@
 		this._reverseRelations = [];
 		this._orphanRelations = [];
 		this._subModels = [];
-		this._modelScopes = [ module ];
+		this._modelScopes = [ root ];
 	};
 	_.extend( module.Store.prototype, Backbone.Events, {
 		/**
@@ -554,7 +561,7 @@
 
 			this._collections = [];
 			this._subModels = [];
-			this._modelScopes = [ module ];
+			this._modelScopes = [ root ];
 		}
 	});
 	module.store = new module.Store();
@@ -2071,6 +2078,5 @@
 
 		return child;
 	};
-	Backbone.Relational = module;
 	return module;
 }));
