@@ -1,4 +1,4 @@
-QUnit.module( "Backbone.RelationalModel", { setup: require('./setup/data') } );
+QUnit.module( "Backbone.Relational.Model", { setup: require('./setup/data') } );
 
 	QUnit.test( "Return values: set returns the Model", function() {
 		var personId = 'person-10';
@@ -34,7 +34,7 @@ QUnit.module( "Backbone.RelationalModel", { setup: require('./setup/data') } );
 		equal( relations.length, 6 );
 
 		ok( _.every( relations, function( rel ) {
-				return rel instanceof Backbone.Relation;
+				return rel instanceof Backbone.Relational.Relation;
 			})
 		);
 	});
@@ -42,12 +42,12 @@ QUnit.module( "Backbone.RelationalModel", { setup: require('./setup/data') } );
 	QUnit.test( "getRelation", function() {
 		var userRel = person1.getRelation( 'user' );
 
-		ok( userRel instanceof Backbone.HasOne );
+		ok( userRel instanceof Backbone.Relational.HasOne );
 		equal( userRel.key, 'user' );
 
 		var jobsRel = person1.getRelation( 'jobs' );
 
-		ok( jobsRel instanceof Backbone.HasMany );
+		ok( jobsRel instanceof Backbone.Relational.HasMany );
 		equal( jobsRel.key, 'jobs' );
 
 		ok( person1.getRelation( 'nope' ) == null );
@@ -351,7 +351,7 @@ QUnit.module( "Backbone.RelationalModel", { setup: require('./setup/data') } );
 		// Save a collection with `wait: true`
 		var zoo = new Zoo( { id: 'z1' } ),
 			animal1 = new Animal( { id: 'a1', species: 'Goat', name: 'G' } ),
-			coll = new Backbone.Collection( [ { id: 'a2', species: 'Rabbit', name: 'R' }, animal1 ] );
+			coll = new Backbone.Relational.Collection( [ { id: 'a2', species: 'Rabbit', name: 'R' }, animal1 ] );
 
 		request = zoo.save( 'animals', coll, { wait: true } );
 		json = JSON.parse( request.data );
@@ -533,17 +533,17 @@ QUnit.module( "Backbone.RelationalModel", { setup: require('./setup/data') } );
 		ok( parseCalled === 0, 'parse called 0 times? ' + parseCalled );
 
 		// Reset `parse` methods
-		Zoo.prototype.parse = Animal.prototype.parse = Backbone.RelationalModel.prototype.parse;
+		Zoo.prototype.parse = Animal.prototype.parse = Backbone.Relational.Model.prototype.parse;
 	});
 
 	QUnit.test( "`Collection#parse` with RelationalModel simple case", function() {
-		var Contact = Backbone.RelationalModel.extend({
+		var Contact = Backbone.Relational.Model.extend({
 			parse: function( response ) {
 				response.bar = response.foo * 2;
 				return response;
 			}
 		});
-		var Contacts = Backbone.Collection.extend({
+		var Contacts = Backbone.Relational.Collection.extend({
 			model: Contact,
 			url: '/contacts',
 			parse: function( response ) {
@@ -583,15 +583,15 @@ QUnit.module( "Backbone.RelationalModel", { setup: require('./setup/data') } );
 			}
 		};
 
-		var Contact = Backbone.RelationalModel.extend();
-		var Contacts = Backbone.Collection.extend({
+		var Contact = Backbone.Relational.Model.extend();
+		var Contacts = Backbone.Relational.Collection.extend({
 			model: Contact
 		});
 
-		var Company = Backbone.RelationalModel.extend({
+		var Company = Backbone.Relational.Model.extend({
 			urlRoot: '/company/',
 			relations: [{
-				type: Backbone.HasMany,
+				type: Backbone.Relational.HasMany,
 				key: 'contacts',
 				relatedModel: Contact,
 				collectionType: Contacts
@@ -679,7 +679,7 @@ QUnit.module( "Backbone.RelationalModel", { setup: require('./setup/data') } );
 		var scope = {};
 		Backbone.Relational.store.addModelScope( scope );
 
-		scope.PetAnimal = Backbone.RelationalModel.extend({
+		scope.PetAnimal = Backbone.Relational.Model.extend({
 			subModelTypes: {
 				'cat': 'Cat',
 				'dog': 'Dog'
@@ -688,9 +688,9 @@ QUnit.module( "Backbone.RelationalModel", { setup: require('./setup/data') } );
 		scope.Dog = scope.PetAnimal.extend();
 		scope.Cat = scope.PetAnimal.extend();
 
-		scope.PetOwner = Backbone.RelationalModel.extend({
+		scope.PetOwner = Backbone.Relational.Model.extend({
 			relations: [{
-				type: Backbone.HasMany,
+				type: Backbone.Relational.HasMany,
 				key: 'pets',
 				relatedModel: scope.PetAnimal,
 				reverseRelation: {
@@ -769,10 +769,10 @@ QUnit.module( "Backbone.RelationalModel", { setup: require('./setup/data') } );
 	});
 
 	QUnit.test( "Model's collection children should be in the proper order during fetch w/remove: false", function() {
-		var Child = Backbone.RelationalModel.extend();
-		var Parent = Backbone.RelationalModel.extend( {
+		var Child = Backbone.Relational.Model.extend();
+		var Parent = Backbone.Relational.Model.extend( {
 			relations: [ {
-				type: Backbone.HasMany,
+				type: Backbone.Relational.HasMany,
 				key: 'children',
 				relatedModel: Child
 			} ]
@@ -800,7 +800,7 @@ QUnit.module( "Backbone.RelationalModel", { setup: require('./setup/data') } );
 		deepEqual( children.pluck('id'), ['foo1', 'foo2'], 'children are in the right order' );
 	});
 
-QUnit.module( "Backbone.RelationalModel inheritance (`subModelTypes`)", { setup: require('./setup/setup').reset } );
+QUnit.module( "Backbone.Relational.Model inheritance (`subModelTypes`)", { setup: require('./setup/setup').reset } );
 
 	QUnit.test( "Object building based on type, when using explicit collections" , function() {
 		var scope = {};
@@ -842,7 +842,7 @@ QUnit.module( "Backbone.RelationalModel inheritance (`subModelTypes`)", { setup:
 		var scope = {};
 		Backbone.Relational.store.addModelScope( scope );
 
-		var PetAnimal = scope.PetAnimal = Backbone.RelationalModel.extend({
+		var PetAnimal = scope.PetAnimal = Backbone.Relational.Model.extend({
 			subModelTypes: {
 				'cat': 'Cat',
 				'dog': 'Dog'
@@ -856,9 +856,9 @@ QUnit.module( "Backbone.RelationalModel inheritance (`subModelTypes`)", { setup:
 		var Cat = scope.Cat = PetAnimal.extend();
 		var Poodle = scope.Poodle = Dog.extend();
 
-		var PetPerson = scope.PetPerson = Backbone.RelationalModel.extend({
+		var PetPerson = scope.PetPerson = Backbone.Relational.Model.extend({
 			relations: [{
-				type: Backbone.HasMany,
+				type: Backbone.Relational.HasMany,
 				key: 'pets',
 				relatedModel: PetAnimal,
 				reverseRelation: {
@@ -904,7 +904,7 @@ QUnit.module( "Backbone.RelationalModel inheritance (`subModelTypes`)", { setup:
 		var scope = {};
 		Backbone.Relational.store.addModelScope( scope );
 
-		var Caveman = scope.Caveman = Backbone.RelationalModel.extend({
+		var Caveman = scope.Caveman = Backbone.Relational.Model.extend({
 			subModelTypes: {
 				'rubble': 'Rubble',
 				'flintstone': 'Flintstone'
@@ -914,9 +914,9 @@ QUnit.module( "Backbone.RelationalModel inheritance (`subModelTypes`)", { setup:
 		var Flintstone = scope.Flintstone = Caveman.extend();
 		var Rubble = scope.Rubble = Caveman.extend();
 
-		var Cartoon = scope.Cartoon = Backbone.RelationalModel.extend({
+		var Cartoon = scope.Cartoon = Backbone.Relational.Model.extend({
 			relations: [{
-				type: Backbone.HasMany,
+				type: Backbone.Relational.HasMany,
 				key: 'cavemen',
 				relatedModel: Caveman
 			}]
@@ -956,24 +956,24 @@ QUnit.module( "Backbone.RelationalModel inheritance (`subModelTypes`)", { setup:
 		var scope = {};
 		Backbone.Relational.store.addModelScope( scope );
 
-		scope.PetPerson = Backbone.RelationalModel.extend({});
-		scope.PetAnimal = Backbone.RelationalModel.extend({
+		scope.PetPerson = Backbone.Relational.Model.extend({});
+		scope.PetAnimal = Backbone.Relational.Model.extend({
 			subModelTypes: {
 				'dog': 'Dog'
 			},
 
 			relations: [{
-				type: Backbone.HasOne,
+				type: Backbone.Relational.HasOne,
 				key:  'owner',
 				relatedModel: scope.PetPerson,
 				reverseRelation: {
-					type: Backbone.HasMany,
+					type: Backbone.Relational.HasMany,
 					key: 'pets'
 				}
 			}]
 		});
 
-		scope.Flea = Backbone.RelationalModel.extend({});
+		scope.Flea = Backbone.Relational.Model.extend({});
 
 		scope.Dog = scope.PetAnimal.extend({
 			subModelTypes: {
@@ -981,7 +981,7 @@ QUnit.module( "Backbone.RelationalModel inheritance (`subModelTypes`)", { setup:
 			},
 
 			relations: [{
-				type: Backbone.HasMany,
+				type: Backbone.Relational.HasMany,
 				key:	'fleas',
 				relatedModel: scope.Flea,
 				reverseRelation: {
@@ -1021,19 +1021,19 @@ QUnit.module( "Backbone.RelationalModel inheritance (`subModelTypes`)", { setup:
 	QUnit.test( "Initialization and sharing of 'superModel' reverse relations from a 'leaf' child model" , function() {
 		var scope = {};
 		Backbone.Relational.store.addModelScope( scope );
-		scope.PetAnimal = Backbone.RelationalModel.extend({
+		scope.PetAnimal = Backbone.Relational.Model.extend({
 			subModelTypes: {
 				'dog': 'Dog'
 			}
 		});
 
-		scope.Flea = Backbone.RelationalModel.extend({});
+		scope.Flea = Backbone.Relational.Model.extend({});
 		scope.Dog = scope.PetAnimal.extend({
 			subModelTypes: {
 				'poodle': 'Poodle'
 			},
 			relations: [{
-				type: Backbone.HasMany,
+				type: Backbone.Relational.HasMany,
 				key:	'fleas',
 				relatedModel: scope.Flea,
 				reverseRelation: {
@@ -1044,13 +1044,13 @@ QUnit.module( "Backbone.RelationalModel inheritance (`subModelTypes`)", { setup:
 		scope.Poodle = scope.Dog.extend();
 
 		// Define the PetPerson after defining all of the Animal models. Include the 'owner' as a reverse-relation.
-		scope.PetPerson = Backbone.RelationalModel.extend({
+		scope.PetPerson = Backbone.Relational.Model.extend({
 			relations: [{
-				type: Backbone.HasMany,
+				type: Backbone.Relational.HasMany,
 				key:  'pets',
 				relatedModel: scope.PetAnimal,
 				reverseRelation: {
-					type: Backbone.HasOne,
+					type: Backbone.Relational.HasOne,
 					key: 'owner'
 				}
 			}]
@@ -1087,7 +1087,7 @@ QUnit.module( "Backbone.RelationalModel inheritance (`subModelTypes`)", { setup:
 	QUnit.test( "Initialization and sharing of 'superModel' reverse relations by adding to a polymorphic HasMany" , function() {
 		var scope = {};
 		Backbone.Relational.store.addModelScope( scope );
-		scope.PetAnimal = Backbone.RelationalModel.extend({
+		scope.PetAnimal = Backbone.Relational.Model.extend({
 			// The order in which these are defined matters for this regression test.
 			subModelTypes: {
 				'dog': 'Dog',
@@ -1098,13 +1098,13 @@ QUnit.module( "Backbone.RelationalModel inheritance (`subModelTypes`)", { setup:
 		// This looks unnecessary but it's for this regression test there has to be multiple subModelTypes.
 		scope.Fish = scope.PetAnimal.extend({});
 
-		scope.Flea = Backbone.RelationalModel.extend({});
+		scope.Flea = Backbone.Relational.Model.extend({});
 		scope.Dog = scope.PetAnimal.extend({
 			subModelTypes: {
 				'poodle': 'Poodle'
 			},
 			relations: [{
-				type: Backbone.HasMany,
+				type: Backbone.Relational.HasMany,
 				key:	'fleas',
 				relatedModel: scope.Flea,
 				reverseRelation: {
@@ -1115,13 +1115,13 @@ QUnit.module( "Backbone.RelationalModel inheritance (`subModelTypes`)", { setup:
 		scope.Poodle = scope.Dog.extend({});
 
 		// Define the PetPerson after defining all of the Animal models. Include the 'owner' as a reverse-relation.
-		scope.PetPerson = Backbone.RelationalModel.extend({
+		scope.PetPerson = Backbone.Relational.Model.extend({
 			relations: [{
-				type: Backbone.HasMany,
+				type: Backbone.Relational.HasMany,
 				key:  'pets',
 				relatedModel: scope.PetAnimal,
 				reverseRelation: {
-					type: Backbone.HasOne,
+					type: Backbone.Relational.HasOne,
 					key: 'owner'
 				}
 			}]
@@ -1143,16 +1143,16 @@ QUnit.module( "Backbone.RelationalModel inheritance (`subModelTypes`)", { setup:
 		var models = {};
 		Backbone.Relational.store.addModelScope( models );
 
-		models.URL = Backbone.RelationalModel.extend({});
+		models.URL = Backbone.Relational.Model.extend({});
 
-		models.File = Backbone.RelationalModel.extend({
+		models.File = Backbone.Relational.Model.extend({
 			subModelTypes: {
 				'video': 'Video',
 				'publication': 'Publication'
 			},
 
 			relations: [{
-				type: Backbone.HasOne,
+				type: Backbone.Relational.HasOne,
 				key: 'url',
 				relatedModel: models.URL
 			}]
@@ -1161,17 +1161,17 @@ QUnit.module( "Backbone.RelationalModel inheritance (`subModelTypes`)", { setup:
 		models.Video = models.File.extend({});
 
 		// Publication redefines the `url` relation
-		models.Publication = Backbone.RelationalModel.extend({
+		models.Publication = Backbone.Relational.Model.extend({
 			relations: [{
-				type: Backbone.HasMany,
+				type: Backbone.Relational.HasMany,
 				key: 'url',
 				relatedModel: models.URL
 			}]
 		});
 
-		models.Project = Backbone.RelationalModel.extend({
+		models.Project = Backbone.Relational.Model.extend({
 			relations: [{
-				type: Backbone.HasMany,
+				type: Backbone.Relational.HasMany,
 				key: 'files',
 				relatedModel: models.File,
 				reverseRelation: {
@@ -1234,17 +1234,17 @@ QUnit.module( "Backbone.RelationalModel inheritance (`subModelTypes`)", { setup:
 		equal( _.size( file3._relations ), 2 );
 
 		ok( file1.get( 'url' ) instanceof Backbone.Model, '`url` on Video is a model' );
-		ok( file1.getRelation( 'url' ) instanceof Backbone.HasOne, '`url` relation on Video is HasOne' );
+		ok( file1.getRelation( 'url' ) instanceof Backbone.Relational.HasOne, '`url` relation on Video is HasOne' );
 
-		ok( file3.get( 'url' ) instanceof Backbone.Collection, '`url` on Publication is a collection' );
-		ok( file3.getRelation( 'url' ) instanceof Backbone.HasMany, '`url` relation on Publication is HasMany' );
+		ok( file3.get( 'url' ) instanceof Backbone.Relational.Collection, '`url` on Publication is a collection' );
+		ok( file3.getRelation( 'url' ) instanceof Backbone.Relational.HasMany, '`url` relation on Publication is HasMany' );
 	});
 
 	QUnit.test( "toJSON includes the type", function() {
 		var scope = {};
 		Backbone.Relational.store.addModelScope( scope );
 
-		scope.PetAnimal = Backbone.RelationalModel.extend({
+		scope.PetAnimal = Backbone.Relational.Model.extend({
 			subModelTypes: {
 				'dog': 'Dog'
 			}

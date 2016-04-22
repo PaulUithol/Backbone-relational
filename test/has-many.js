@@ -1,4 +1,4 @@
-QUnit.module( "Backbone.HasMany", { setup: require('./setup/data') } );
+QUnit.module( "Backbone.Relational.HasMany", { setup: require('./setup/data') } );
 
 	QUnit.test( "Listeners on 'add'/'remove'", 7, function() {
 		ourHouse
@@ -113,7 +113,7 @@ QUnit.module( "Backbone.HasMany", { setup: require('./setup/data') } );
 		ok( ourHouse.get( 'occupants' ).length === 1 );
 
 		// Setting a new collection loses the original collection
-		ourHouse.set( { 'occupants': new Backbone.Collection() } );
+		ourHouse.set( { 'occupants': new Backbone.Relational.Collection() } );
 		ok( ourHouse.get( 'occupants' ).id === undefined );
 	});
 
@@ -159,7 +159,7 @@ QUnit.module( "Backbone.HasMany", { setup: require('./setup/data') } );
 		ok( visitors.first() === visitor2 );
 
 		// Handle a Collection
-		var visitorColl = new Backbone.Collection( [ visitor1, visitor2 ] );
+		var visitorColl = new Backbone.Relational.Collection( [ visitor1, visitor2 ] );
 		zoo = new Zoo( { visitors: visitorColl } );
 		visitors = zoo.get( 'visitors' );
 
@@ -168,7 +168,7 @@ QUnit.module( "Backbone.HasMany", { setup: require('./setup/data') } );
 		zoo.set( 'visitors', false );
 		equal( visitors.length, 0 );
 
-		visitorColl = new Backbone.Collection( [ visitor2 ] );
+		visitorColl = new Backbone.Relational.Collection( [ visitor2 ] );
 		zoo.set( 'visitors', visitorColl );
 		ok( visitorColl === zoo.get( 'visitors' ) );
 		equal( zoo.get( 'visitors' ).length, 1 );
@@ -283,9 +283,9 @@ QUnit.module( "Backbone.HasMany", { setup: require('./setup/data') } );
 
 	QUnit.test( "Models found in 'findRelated' are all added in one go (so 'sort' will only be called once)", function() {
 		var count = 0,
-			sort = Backbone.Collection.prototype.sort;
+			sort = Backbone.Relational.Collection.prototype.sort;
 
-		Backbone.Collection.prototype.sort = function() {
+		Backbone.Relational.Collection.prototype.sort = function() {
 			count++;
 		};
 
@@ -300,7 +300,7 @@ QUnit.module( "Backbone.HasMany", { setup: require('./setup/data') } );
 
 		equal( count, 1, "Sort is called only once" );
 
-		Backbone.Collection.prototype.sort = sort;
+		Backbone.Relational.Collection.prototype.sort = sort;
 		delete AnimalCollection.prototype.comparator;
 	});
 
@@ -372,10 +372,10 @@ QUnit.module( "Backbone.HasMany", { setup: require('./setup/data') } );
 		equal( zoo.get( 'animals' ).zoo, undefined );
 
 
-		var FarmAnimal = Backbone.RelationalModel.extend();
-		var Barn = Backbone.RelationalModel.extend({
+		var FarmAnimal = Backbone.Relational.Model.extend();
+		var Barn = Backbone.Relational.Model.extend({
 			relations: [{
-					type: Backbone.HasMany,
+					type: Backbone.Relational.HasMany,
 					key: 'animals',
 					relatedModel: FarmAnimal,
 					collectionKey: 'barn',
@@ -392,10 +392,10 @@ QUnit.module( "Backbone.HasMany", { setup: require('./setup/data') } );
 		equal( barn.get( 'animals' ).livesIn, undefined );
 		equal( barn.get( 'animals' ).barn, barn );
 
-		FarmAnimal = Backbone.RelationalModel.extend();
-		var BarnNoKey = Backbone.RelationalModel.extend({
+		FarmAnimal = Backbone.Relational.Model.extend();
+		var BarnNoKey = Backbone.Relational.Model.extend({
 			relations: [{
-					type: Backbone.HasMany,
+					type: Backbone.Relational.HasMany,
 					key: 'animals',
 					relatedModel: FarmAnimal,
 					collectionKey: false,
@@ -414,9 +414,9 @@ QUnit.module( "Backbone.HasMany", { setup: require('./setup/data') } );
 	});
 
 	QUnit.test( "Polymorhpic relations", function() {
-		var Location = Backbone.RelationalModel.extend();
+		var Location = Backbone.Relational.Model.extend();
 
-		var Locatable = Backbone.RelationalModel.extend({
+		var Locatable = Backbone.Relational.Model.extend({
 			relations: [
 				{
 					key: 'locations',
