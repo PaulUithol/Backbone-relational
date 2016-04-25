@@ -1,4 +1,4 @@
-QUnit.module( "Backbone.Relation options", { setup: require('./setup/data') } );
+QUnit.module( "Backbone.Relational.Relation options", { setup: require('./setup/data') } );
 
 	QUnit.test( "`includeInJSON` (Person to JSON)", function() {
 		var json = person1.toJSON();
@@ -48,10 +48,10 @@ QUnit.module( "Backbone.Relation options", { setup: require('./setup/data') } );
 	});
 
 	QUnit.test( "'createModels' is false", function() {
-		var NewUser = Backbone.RelationalModel.extend({});
-		var NewPerson = Backbone.RelationalModel.extend({
+		var NewUser = Backbone.Relational.Model.extend({});
+		var NewPerson = Backbone.Relational.Model.extend({
 			relations: [{
-				type: Backbone.HasOne,
+				type: Backbone.Relational.HasOne,
 				key: 'user',
 				relatedModel: NewUser,
 				createModels: false
@@ -74,14 +74,14 @@ QUnit.module( "Backbone.Relation options", { setup: require('./setup/data') } );
 	});
 
 	QUnit.test( "Relations load from both `keySource` and `key`", function() {
-		var Property = Backbone.RelationalModel.extend({
+		var Property = Backbone.Relational.Model.extend({
 			idAttribute: 'property_id'
 		});
-		var View = Backbone.RelationalModel.extend({
+		var View = Backbone.Relational.Model.extend({
 			idAttribute: 'id',
 
 			relations: [{
-				type: Backbone.HasMany,
+				type: Backbone.Relational.HasMany,
 				key: 'properties',
 				keySource: 'property_ids',
 				relatedModel: Property,
@@ -122,11 +122,11 @@ QUnit.module( "Backbone.Relation options", { setup: require('./setup/data') } );
 	});
 
 	QUnit.test( "`keySource` is emptied after a set, doesn't get confused by `unset`", function() {
-		var SubModel = Backbone.RelationalModel.extend();
+		var SubModel = Backbone.Relational.Model.extend();
 
-		var Model = Backbone.RelationalModel.extend({
+		var Model = Backbone.Relational.Model.extend({
 			relations: [{
-				type: Backbone.HasOne,
+				type: Backbone.Relational.HasOne,
 				key: 'submodel',
 				keySource: 'sub_data',
 				relatedModel: SubModel
@@ -168,14 +168,14 @@ QUnit.module( "Backbone.Relation options", { setup: require('./setup/data') } );
 	});
 
 	QUnit.test( "'keyDestination' saves to 'key'", function() {
-		var Property = Backbone.RelationalModel.extend({
+		var Property = Backbone.Relational.Model.extend({
 			idAttribute: 'property_id'
 		});
-		var View = Backbone.RelationalModel.extend({
+		var View = Backbone.Relational.Model.extend({
 			idAttribute: 'id',
 
 			relations: [{
-				type: Backbone.HasMany,
+				type: Backbone.Relational.HasMany,
 				key: 'properties',
 				keyDestination: 'properties_attributes',
 				relatedModel: Property,
@@ -219,9 +219,9 @@ QUnit.module( "Backbone.Relation options", { setup: require('./setup/data') } );
 		var collParseCalled = 0,
 			modelParseCalled = 0;
 
-		var Job = Backbone.RelationalModel.extend({});
+		var Job = Backbone.Relational.Model.extend({});
 
-		var JobCollection = Backbone.Collection.extend({
+		var JobCollection = Backbone.Relational.Collection.extend({
 			model: Job,
 
 			parse: function( resp, options ) {
@@ -230,7 +230,7 @@ QUnit.module( "Backbone.Relation options", { setup: require('./setup/data') } );
 			}
 		});
 
-		var Company = Backbone.RelationalModel.extend({
+		var Company = Backbone.Relational.Model.extend({
 			relations: [{
 				type: 'HasMany',
 				key: 'employees',
@@ -243,7 +243,7 @@ QUnit.module( "Backbone.Relation options", { setup: require('./setup/data') } );
 			}]
 		});
 
-		var Person = Backbone.RelationalModel.extend({
+		var Person = Backbone.Relational.Model.extend({
 			relations: [{
 				type: 'HasMany',
 				key: 'jobs',
@@ -315,12 +315,12 @@ QUnit.module( "Backbone.Relation options", { setup: require('./setup/data') } );
 		ok( collParseCalled === 0, 'coll.parse called 0 times? ' + collParseCalled );
 	});
 
-QUnit.module( "Backbone.Relation preconditions", { setup: require('./setup/setup').reset } );
+QUnit.module( "Backbone.Relational.Relation preconditions", { setup: require('./setup/setup').reset } );
 
 
 	QUnit.test( "'type', 'key', 'relatedModel' are required properties", function() {
-		var Properties = Backbone.RelationalModel.extend({});
-		var View = Backbone.RelationalModel.extend({
+		var Properties = Backbone.Relational.Model.extend({});
+		var View = Backbone.Relational.Model.extend({
 			relations: [
 				{
 					key: 'listProperties',
@@ -333,10 +333,10 @@ QUnit.module( "Backbone.Relation preconditions", { setup: require('./setup/setup
 		ok( _.size( view._relations ) === 0 );
 		ok( view.getRelations().length === 0 );
 
-		View = Backbone.RelationalModel.extend({
+		View = Backbone.Relational.Model.extend({
 			relations: [
 				{
-					type: Backbone.HasOne,
+					type: Backbone.Relational.HasOne,
 					relatedModel: Properties
 				}
 			]
@@ -345,10 +345,10 @@ QUnit.module( "Backbone.Relation preconditions", { setup: require('./setup/setup
 		view = new View();
 		ok( _.size( view._relations ) === 0 );
 
-		View = Backbone.RelationalModel.extend({
+		View = Backbone.Relational.Model.extend({
 			relations: [
 				{
-					type: Backbone.HasOne,
+					type: Backbone.Relational.HasOne,
 					key: 'parentView'
 				}
 			]
@@ -360,11 +360,11 @@ QUnit.module( "Backbone.Relation preconditions", { setup: require('./setup/setup
 	});
 
 	QUnit.test( "'type' can be a string or an object reference", function() {
-		var Properties = Backbone.RelationalModel.extend({});
-		var View = Backbone.RelationalModel.extend({
+		var Properties = Backbone.Relational.Model.extend({});
+		var View = Backbone.Relational.Model.extend({
 			relations: [
 				{
-					type: 'Backbone.HasOne',
+					type: 'Backbone.Relational.HasOne',
 					key: 'listProperties',
 					relatedModel: Properties
 				}
@@ -374,7 +374,7 @@ QUnit.module( "Backbone.Relation preconditions", { setup: require('./setup/setup
 		var view = new View();
 		ok( _.size( view._relations ) === 1 );
 
-		View = Backbone.RelationalModel.extend({
+		View = Backbone.Relational.Model.extend({
 			relations: [
 				{
 					type: 'HasOne',
@@ -387,10 +387,10 @@ QUnit.module( "Backbone.Relation preconditions", { setup: require('./setup/setup
 		view = new View();
 		ok( _.size( view._relations ) === 1 );
 
-		View = Backbone.RelationalModel.extend({
+		View = Backbone.Relational.Model.extend({
 			relations: [
 				{
-					type: Backbone.HasOne,
+					type: Backbone.Relational.HasOne,
 					key: 'listProperties',
 					relatedModel: Properties
 				}
@@ -402,11 +402,11 @@ QUnit.module( "Backbone.Relation preconditions", { setup: require('./setup/setup
 	});
 
 	QUnit.test( "'key' can be a string or an object reference", function() {
-		var Properties = Backbone.RelationalModel.extend({});
-		var View = Backbone.RelationalModel.extend({
+		var Properties = Backbone.Relational.Model.extend({});
+		var View = Backbone.Relational.Model.extend({
 			relations: [
 				{
-					type: Backbone.HasOne,
+					type: Backbone.Relational.HasOne,
 					key: 'listProperties',
 					relatedModel: Properties
 				}
@@ -416,10 +416,10 @@ QUnit.module( "Backbone.Relation preconditions", { setup: require('./setup/setup
 		var view = new View();
 		ok( _.size( view._relations ) === 1 );
 
-		View = Backbone.RelationalModel.extend({
+		View = Backbone.Relational.Model.extend({
 			relations: [
 				{
-					type: Backbone.HasOne,
+					type: Backbone.Relational.HasOne,
 					key: 'listProperties',
 					relatedModel: Properties
 				}
@@ -431,8 +431,8 @@ QUnit.module( "Backbone.Relation preconditions", { setup: require('./setup/setup
 	});
 
 	QUnit.test( "HasMany with a reverseRelation HasMany is not allowed", function() {
-		var User = Backbone.RelationalModel.extend({});
-		var Password = Backbone.RelationalModel.extend({
+		var User = Backbone.Relational.Model.extend({});
+		var Password = Backbone.Relational.Model.extend({
 			relations: [{
 				type: 'HasMany',
 				key: 'users',
@@ -453,16 +453,16 @@ QUnit.module( "Backbone.Relation preconditions", { setup: require('./setup/setup
 	});
 
 	QUnit.test( "Duplicate relations not allowed (two simple relations)", function() {
-		var Properties = Backbone.RelationalModel.extend({});
-		var View = Backbone.RelationalModel.extend({
+		var Properties = Backbone.Relational.Model.extend({});
+		var View = Backbone.Relational.Model.extend({
 			relations: [
 				{
-					type: Backbone.HasOne,
+					type: Backbone.Relational.HasOne,
 					key: 'properties',
 					relatedModel: Properties
 				},
 				{
-					type: Backbone.HasOne,
+					type: Backbone.Relational.HasOne,
 					key: 'properties',
 					relatedModel: Properties
 				}
@@ -475,20 +475,20 @@ QUnit.module( "Backbone.Relation preconditions", { setup: require('./setup/setup
 	});
 
 	QUnit.test( "Duplicate relations not allowed (one relation with a reverse relation, one without)", function() {
-		var Properties = Backbone.RelationalModel.extend({});
-		var View = Backbone.RelationalModel.extend({
+		var Properties = Backbone.Relational.Model.extend({});
+		var View = Backbone.Relational.Model.extend({
 			relations: [
 				{
-					type: Backbone.HasOne,
+					type: Backbone.Relational.HasOne,
 					key: 'properties',
 					relatedModel: Properties,
 					reverseRelation: {
-						type: Backbone.HasOne,
+						type: Backbone.Relational.HasOne,
 						key: 'view'
 					}
 				},
 				{
-					type: Backbone.HasOne,
+					type: Backbone.Relational.HasOne,
 					key: 'properties',
 					relatedModel: Properties
 				}
@@ -501,24 +501,24 @@ QUnit.module( "Backbone.Relation preconditions", { setup: require('./setup/setup
 	});
 
 	QUnit.test( "Duplicate relations not allowed (two relations with reverse relations)", function() {
-		var Properties = Backbone.RelationalModel.extend({});
-		var View = Backbone.RelationalModel.extend({
+		var Properties = Backbone.Relational.Model.extend({});
+		var View = Backbone.Relational.Model.extend({
 			relations: [
 				{
-					type: Backbone.HasOne,
+					type: Backbone.Relational.HasOne,
 					key: 'properties',
 					relatedModel: Properties,
 					reverseRelation: {
-						type: Backbone.HasOne,
+						type: Backbone.Relational.HasOne,
 						key: 'view'
 					}
 				},
 				{
-					type: Backbone.HasOne,
+					type: Backbone.Relational.HasOne,
 					key: 'properties',
 					relatedModel: Properties,
 					reverseRelation: {
-						type: Backbone.HasOne,
+						type: Backbone.Relational.HasOne,
 						key: 'view'
 					}
 				}
@@ -531,24 +531,24 @@ QUnit.module( "Backbone.Relation preconditions", { setup: require('./setup/setup
 	});
 
 	QUnit.test( "Duplicate relations not allowed (different relations, reverse relations)", function() {
-		var Properties = Backbone.RelationalModel.extend({});
-		var View = Backbone.RelationalModel.extend({
+		var Properties = Backbone.Relational.Model.extend({});
+		var View = Backbone.Relational.Model.extend({
 			relations: [
 				{
-					type: Backbone.HasOne,
+					type: Backbone.Relational.HasOne,
 					key: 'listProperties',
 					relatedModel: Properties,
 					reverseRelation: {
-						type: Backbone.HasOne,
+						type: Backbone.Relational.HasOne,
 						key: 'view'
 					}
 				},
 				{
-					type: Backbone.HasOne,
+					type: Backbone.Relational.HasOne,
 					key: 'windowProperties',
 					relatedModel: Properties,
 					reverseRelation: {
-						type: Backbone.HasOne,
+						type: Backbone.Relational.HasOne,
 						key: 'view'
 					}
 				}
@@ -567,7 +567,7 @@ QUnit.module( "Backbone.Relation preconditions", { setup: require('./setup/setup
 		ok( view.get( 'windowProperties' ).get( 'name' ) === 'b' );
 	});
 
-QUnit.module( "Backbone.Relation general", { setup: require('./setup/setup').reset } );
+QUnit.module( "Backbone.Relational.Relation general", { setup: require('./setup/setup').reset } );
 
 
 	QUnit.test( "Only valid models (no validation failure) should be added to a relation", function() {
@@ -739,7 +739,7 @@ QUnit.module( "Backbone.Relation general", { setup: require('./setup/setup').res
 			employee = employees.first();
 
 		ok( company.get( 'ceo' ) === ceo );
-		ok( employees instanceof Backbone.Collection );
+		ok( employees instanceof Backbone.Relational.Collection );
 		equal( employees.length, 2 );
 
 		employee.set( 'company', null, { silent: true } );
@@ -773,10 +773,10 @@ QUnit.module( "Backbone.Relation general", { setup: require('./setup/setup').res
 		throws( function() { new Company( dataCompanyA ); }, "Can only instantiate one model for a given `id` (per model type)" );
 
 		// init-ed a lead and its nested contacts are a collection
-		ok( companyA.get('employees') instanceof Backbone.Collection, "Company's employees should be a collection" );
+		ok( companyA.get('employees') instanceof Backbone.Relational.Collection, "Company's employees should be a collection" );
 		equal(companyA.get('employees').length, 2, 'with elements');
 
-		var CompanyCollection = Backbone.Collection.extend({
+		var CompanyCollection = Backbone.Relational.Collection.extend({
 			model: Company
 		});
 		var companyCollection = new CompanyCollection( [ dataCompanyA, dataCompanyB ] );
@@ -784,7 +784,7 @@ QUnit.module( "Backbone.Relation general", { setup: require('./setup/setup').res
 		// After loading a collection with models of the same type
 		// the existing company should still have correct collections
 		ok( companyCollection.get( dataCompanyA.id ) === companyA );
-		ok( companyA.get('employees') instanceof Backbone.Collection, "Company's employees should still be a collection" );
+		ok( companyA.get('employees') instanceof Backbone.Relational.Collection, "Company's employees should still be a collection" );
 		equal( companyA.get('employees').length, 2, 'with elements' );
 	});
 
@@ -819,12 +819,12 @@ QUnit.module( "Backbone.Relation general", { setup: require('./setup/setup').res
 	});
 
 	QUnit.test( "If keySource is used, don't remove a model that is present in the key attribute", function() {
-		var ForumPost = Backbone.RelationalModel.extend({
+		var ForumPost = Backbone.Relational.Model.extend({
 			// Normally would set something here, not needed for test
 		});
-		var Forum = Backbone.RelationalModel.extend({
+		var Forum = Backbone.Relational.Model.extend({
 			relations: [{
-				type: Backbone.HasMany,
+				type: Backbone.Relational.HasMany,
 				key: 'posts',
 				relatedModel: ForumPost,
 				reverseRelation: {
@@ -871,10 +871,10 @@ QUnit.module( "Backbone.Relation general", { setup: require('./setup/setup').res
 
 	// GH-187
 	QUnit.test( "Can pass related model in constructor", function() {
-		var A = Backbone.RelationalModel.extend();
-		var B = Backbone.RelationalModel.extend({
+		var A = Backbone.Relational.Model.extend();
+		var B = Backbone.Relational.Model.extend({
 			relations: [{
-				type: Backbone.HasOne,
+				type: Backbone.Relational.HasOne,
 				key: 'a',
 				keySource: 'a_id',
 				relatedModel: A

@@ -1,7 +1,7 @@
-QUnit.module( "Backbone.BlockingQueue", { setup: require('./setup/setup').reset } );
+QUnit.module( "Backbone.Relational.BlockingQueue", { setup: require('./setup/setup').reset } );
 
 	QUnit.test( "Block", function() {
-		var queue = new Backbone.BlockingQueue();
+		var queue = new Backbone.Relational.BlockingQueue();
 		var count = 0;
 		var increment = function() { count++; };
 		var decrement = function() { count--; };

@@ -1,7 +1,7 @@
-QUnit.module( "Backbone.Semaphore", { setup: require('./setup/setup').reset } );
+QUnit.module( "Backbone.Relational.Semaphore ", { setup: require('./setup/setup').reset } );
 
 	QUnit.test( "Unbounded", 10, function() {
-		var semaphore = _.extend( {}, Backbone.Semaphore );
+		var semaphore = _.extend( {}, Backbone.Relational.Semaphore  );
 		ok( !semaphore.isLocked(), 'Semaphore is not locked initially' );
 		semaphore.acquire();
 		ok( semaphore.isLocked(), 'Semaphore is locked after acquire' );
