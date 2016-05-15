@@ -28,16 +28,6 @@ module.exports = function(config) {
 		port: 9877,
 		colors: true,
 		singleRun: true,
-		logLevel: config.LOG_INFO,
-
-		client: {
-			qunit: {
-				urlConfig: {
-					id: 'master',
-					label: 'Backbone+Underscore master',
-					tooltip: 'Load Backbone and Underscore master, instead of using the local copies.'
-				}
-			}
-		}
-	})
+		logLevel: config.LOG_INFO
+	});
 }
