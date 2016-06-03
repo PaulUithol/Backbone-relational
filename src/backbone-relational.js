@@ -1,119 +1,32 @@
 import Backbone from 'backbone';
 import _ from 'underscore';
+import Semaphore from './utils/semaphore';
+import BlockingQueue from './utils/blocking-queue';
+import eventQueue from './event-queue';
+import BObject from './utils/object';
+import config from './config';
 
-const module = {};
+const module = config;
 
 module.Collection = Backbone.Collection.extend();
-module.showWarnings = true;
 
-/**
- * Semaphore mixin; can be used as both binary and counting.
- **/
-module.Semaphore = {
-	_permitsAvailable: null,
-	_permitsUsed: 0,
-
-	acquire: function() {
-		if ( this._permitsAvailable && this._permitsUsed >= this._permitsAvailable ) {
-			throw new Error( 'Max permits acquired' );
-		}
-		else {
-			this._permitsUsed++;
-		}
-	},
-
-	release: function() {
-		if ( this._permitsUsed === 0 ) {
-			throw new Error( 'All permits released' );
-		}
-		else {
-			this._permitsUsed--;
-		}
-	},
-
-	isLocked: function() {
-		return this._permitsUsed > 0;
-	},
-
-	setAvailablePermits: function( amount ) {
-		if ( this._permitsUsed > amount ) {
-			throw new Error( 'Available permits cannot be less than used permits' );
-		}
-		this._permitsAvailable = amount;
-	}
-};
-
-/**
- * A BlockingQueue that accumulates items while blocked (via 'block'),
- * and processes them when unblocked (via 'unblock').
- * Process can also be called manually (via 'process').
- */
-module.BlockingQueue = function() {
-	this._queue = [];
-};
-_.extend( module.BlockingQueue.prototype, module.Semaphore, {
-	_queue: null,
-
-	add: function( func ) {
-		if ( this.isBlocked() ) {
-			this._queue.push( func );
-		}
-		else {
-			func();
-		}
-	},
-
-	// Some of the queued events may trigger other blocking events. By
-	// copying the queue here it allows queued events to process closer to
-	// the natural order.
-	//
-	// queue events [ 'A', 'B', 'C' ]
-	// A handler of 'B' triggers 'D' and 'E'
-	// By copying `this._queue` this executes:
-	// [ 'A', 'B', 'D', 'E', 'C' ]
-	// The same order the would have executed if they didn't have to be
-	// delayed and queued.
-	process: function() {
-		var queue = this._queue;
-		this._queue = [];
-		while ( queue && queue.length ) {
-			queue.shift()();
-		}
-	},
-
-	block: function() {
-		this.acquire();
-	},
-
-	unblock: function() {
-		this.release();
-		if ( !this.isBlocked() ) {
-			this.process();
-		}
-	},
-
-	isBlocked: function() {
-		return this.isLocked();
-	}
-});
-/**
- * Global event queue. Accumulates external events ('add:<key>', 'remove:<key>' and 'change:<key>')
- * until the top-level object is fully initialized (see 'Backbone.Relational.Model').
- */
-module.eventQueue = new module.BlockingQueue();
+module.Semaphore = Semaphore;
+module.BlockingQueue = BlockingQueue;
+module.eventQueue = eventQueue;
 
 /**
  * Backbone.Store keeps track of all created (and destruction of) Backbone.Relational.Model.
  * Handles lookup for relations.
  */
-module.Store = function() {
-	this._collections = [];
-	this._reverseRelations = [];
-	this._orphanRelations = [];
-	this._subModels = [];
-	this._modelScopes = [ window ];
-};
-_.extend( module.Store.prototype, Backbone.Events, {
+module.Store = BObject.extend({
+	initialize() {
+		this._collections = [];
+		this._reverseRelations = [];
+		this._orphanRelations = [];
+		this._subModels = [];
+		this._modelScopes = [ window ];
+	},
+
 	/**
 	 * Create a new `Relation`.
 	 * @param {Backbone.Relational.Model} [model]
@@ -499,6 +412,7 @@ _.extend( module.Store.prototype, Backbone.Events, {
 		this._modelScopes = [ window ];
 	}
 });
+
 module.store = new module.Store();
 
 /**
@@ -517,84 +431,7 @@ module.store = new module.Store();
  *    {Backbone.Relation|String} type ('HasOne' or 'HasMany').
  * @param {Object} opts
  */
-module.Relation = function( instance, options, opts ) {
-	this.instance = instance;
-	// Make sure 'options' is sane, and fill with defaults from subclasses and this object's prototype
-	options = _.isObject( options ) ? options : {};
-	this.reverseRelation = _.defaults( options.reverseRelation || {}, this.options.reverseRelation );
-	this.options = _.defaults( options, this.options, module.Relation.prototype.options );
-
-	this.reverseRelation.type = !_.isString( this.reverseRelation.type ) ? this.reverseRelation.type :
-		module[ this.reverseRelation.type ] || module.store.getObjectByName( this.reverseRelation.type );
-
-	this.key = this.options.key;
-	this.keySource = this.options.keySource || this.key;
-	this.keyDestination = this.options.keyDestination || this.keySource || this.key;
-
-	this.model = this.options.model || this.instance.constructor;
-
-	this.relatedModel = this.options.relatedModel;
-
-	if(_.isUndefined(this.relatedModel)){
-		this.relatedModel = this.model;
-	}
-
-	if ( _.isFunction( this.relatedModel ) && !( this.relatedModel.prototype instanceof module.Model ) ) {
-		this.relatedModel = _.result( this, 'relatedModel' );
-	}
-	if ( _.isString( this.relatedModel ) ) {
-		this.relatedModel = module.store.getObjectByName( this.relatedModel );
-	}
-
-	if ( !this.checkPreconditions() ) {
-		return;
-	}
-
-	// Add the reverse relation on 'relatedModel' to the store's reverseRelations
-	if ( !this.options.isAutoRelation && this.reverseRelation.type && this.reverseRelation.key ) {
-		module.store.addReverseRelation( _.defaults( {
-				isAutoRelation: true,
-				model: this.relatedModel,
-				relatedModel: this.model,
-				reverseRelation: this.options // current relation is the 'reverseRelation' for its own reverseRelation
-			},
-			this.reverseRelation // Take further properties from this.reverseRelation (type, key, etc.)
-		) );
-	}
-
-	if ( instance ) {
-		var contentKey = this.keySource;
-		if ( contentKey !== this.key && _.isObject( this.instance.get( this.key ) ) ) {
-			contentKey = this.key;
-		}
-
-		this.setKeyContents( this.instance.get( contentKey ) );
-		this.relatedCollection = module.store.getCollection( this.relatedModel );
-
-		// Explicitly clear 'keySource', to prevent a leaky abstraction if 'keySource' differs from 'key'.
-		if ( this.keySource !== this.key ) {
-			delete this.instance.attributes[ this.keySource ];
-		}
-
-		// Add this Relation to instance._relations
-		this.instance._relations[ this.key ] = this;
-
-		this.initialize( opts );
-
-		if ( this.options.autoFetch ) {
-			this.instance.getAsync( this.key, _.isObject( this.options.autoFetch ) ? this.options.autoFetch : {} );
-		}
-
-		// When 'relatedModel' are created or destroyed, check if it affects this relation.
-		this.listenTo( this.instance, 'destroy', this.destroy )
-			.listenTo( this.relatedCollection, 'relational:add relational:change:id', this.tryAddRelated )
-			.listenTo( this.relatedCollection, 'relational:remove', this.removeRelated );
-	}
-};
-// Fix inheritance :\
-module.Relation.extend = Backbone.Model.extend;
-// Set up all inheritable **Backbone.Relation** properties and methods.
-_.extend( module.Relation.prototype, Backbone.Events, module.Semaphore, {
+module.Relation = BObject.extend(Semaphore).extend({
 	options: {
 		createModels: true,
 		includeInJSON: true,
@@ -610,6 +447,81 @@ _.extend( module.Relation.prototype, Backbone.Events, module.Semaphore, {
 	relatedCollection: null,
 	reverseRelation: null,
 	related: null,
+
+	constructor(instance, options, opts) {
+		this.instance = instance;
+		// Make sure 'options' is sane, and fill with defaults from subclasses and this object's prototype
+		options = _.isObject( options ) ? options : {};
+		this.reverseRelation = _.defaults( options.reverseRelation || {}, this.options.reverseRelation );
+		this.options = _.defaults( options, this.options, module.Relation.prototype.options );
+
+		this.reverseRelation.type = !_.isString( this.reverseRelation.type ) ? this.reverseRelation.type :
+			module[ this.reverseRelation.type ] || module.store.getObjectByName( this.reverseRelation.type );
+
+		this.key = this.options.key;
+		this.keySource = this.options.keySource || this.key;
+		this.keyDestination = this.options.keyDestination || this.keySource || this.key;
+
+		this.model = this.options.model || this.instance.constructor;
+
+		this.relatedModel = this.options.relatedModel;
+
+		if(_.isUndefined(this.relatedModel)){
+			this.relatedModel = this.model;
+		}
+
+		if ( _.isFunction( this.relatedModel ) && !( this.relatedModel.prototype instanceof module.Model ) ) {
+			this.relatedModel = _.result( this, 'relatedModel' );
+		}
+		if ( _.isString( this.relatedModel ) ) {
+			this.relatedModel = module.store.getObjectByName( this.relatedModel );
+		}
+
+		if ( !this.checkPreconditions() ) {
+			return;
+		}
+
+		// Add the reverse relation on 'relatedModel' to the store's reverseRelations
+		if ( !this.options.isAutoRelation && this.reverseRelation.type && this.reverseRelation.key ) {
+			module.store.addReverseRelation( _.defaults( {
+					isAutoRelation: true,
+					model: this.relatedModel,
+					relatedModel: this.model,
+					reverseRelation: this.options // current relation is the 'reverseRelation' for its own reverseRelation
+				},
+				this.reverseRelation // Take further properties from this.reverseRelation (type, key, etc.)
+			) );
+		}
+
+		if ( instance ) {
+			var contentKey = this.keySource;
+			if ( contentKey !== this.key && _.isObject( this.instance.get( this.key ) ) ) {
+				contentKey = this.key;
+			}
+
+			this.setKeyContents( this.instance.get( contentKey ) );
+			this.relatedCollection = module.store.getCollection( this.relatedModel );
+
+			// Explicitly clear 'keySource', to prevent a leaky abstraction if 'keySource' differs from 'key'.
+			if ( this.keySource !== this.key ) {
+				delete this.instance.attributes[ this.keySource ];
+			}
+
+			// Add this Relation to instance._relations
+			this.instance._relations[ this.key ] = this;
+
+			this.initialize( opts );
+
+			if ( this.options.autoFetch ) {
+				this.instance.getAsync( this.key, _.isObject( this.options.autoFetch ) ? this.options.autoFetch : {} );
+			}
+
+			// When 'relatedModel' are created or destroyed, check if it affects this relation.
+			this.listenTo( this.instance, 'destroy', this.destroy )
+				.listenTo( this.relatedCollection, 'relational:add relational:change:id', this.tryAddRelated )
+				.listenTo( this.relatedCollection, 'relational:remove', this.removeRelated );
+		}
+	},
 
 	/**
 	 * Check several pre-conditions.
@@ -1112,7 +1024,7 @@ module.HasMany = module.Relation.extend({
  *  - 'remove:<key>' (model, related collection, options)
  *  - 'change:<key>' (model, related model or collection, options)
  */
-module.Model = Backbone.Model.extend({
+module.Model = Backbone.Model.extend(Semaphore).extend({
 	relations: null, // Relation descriptions on the prototype
 	_relations: null, // Relation instances
 	_isInitialized: false,
@@ -1818,7 +1730,6 @@ module.Model = Backbone.Model.extend({
 		return module.store.find( this, attributes );
 	}
 });
-_.extend( module.Model.prototype, module.Semaphore );
 
 /**
  * Override module.Collection._prepareModel, so objects will be built using the correct type
