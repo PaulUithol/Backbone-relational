@@ -1,9 +1,9 @@
 {
   "name": "backbone-relational",
-  "main": "backbone-relational.js",
+  "main": "dist/backbone-relational.js",
   "dependencies": {
     "underscore": ">=1.7.0",
-    "backbone": ">=1.2.1"
+    "backbone": "1.2.3"
   },
-  "ignore": ["static", "test", ".html"]
+  "ignore": ["static", "test", ".html", "src"]
 }

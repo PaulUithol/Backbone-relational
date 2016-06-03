@@ -1,7 +1,7 @@
 var _ = window._ = require('underscore');
 var $ = window.$ = require('jquery');
 var Backbone = window.Backbone = require('backbone');
-Backbone.Relational = require('../../backbone-relational');
+Backbone.Relational = require('../../dist/backbone-relational');
 
 /**
  * 'Zoo'

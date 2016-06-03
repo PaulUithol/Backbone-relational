@@ -1,3 +1,5 @@
+/* eslint-env amd */
+
 module.exports = function(config) {
 	config.set({
 		frameworks: [
@@ -17,17 +19,22 @@ module.exports = function(config) {
 		],
 
 		preprocessors: {
-			'test/**/*.js': [ 'browserify' ]
+			'test/**/*.js': ['browserify']
 		},
 
 		browserify: {
-			debug: true
+			debug: true,
+			transform: [
+				['babelify', {
+					presets: ['es2015'],
+					sourceMap: true
+				}]
+			]
 		},
 
-		autoWatch: false,
+		autoWatch: true,
 		port: 9877,
 		colors: true,
-		singleRun: true,
-		logLevel: config.LOG_INFO
+		// singleRun: true
 	});
-}
+};

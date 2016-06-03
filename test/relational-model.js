@@ -671,7 +671,7 @@ QUnit.module( "Backbone.Relational.Model", { setup: require('./setup/data') } );
 		origPersonCollSize = personColl.length;
 
 		// Look for a non-existent person
-		person = Person.find( { id: 5001 } );
+		var person = Person.find( { id: 5001 } );
 		ok( !person );
 	});
 

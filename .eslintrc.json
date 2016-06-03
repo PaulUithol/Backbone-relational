@@ -1,12 +1,18 @@
 {
+  "root": true,
+  "parserOptions": {
+    "ecmaVersion": 6,
+    "sourceType": "module",
+    "ecmaFeatures": {
+      "impliedStrict": true
+    }
+  },
   "env": {
-    "browser": true,
-    "node": true,
-    "amd": true
+    "browser": true
   },
   "globals": {
-    "attachEvent": true,
-    "detachEvent": true
+    "Set": true,
+    "Promise": true
   },
   "rules": {
     "array-bracket-spacing": [2],
@@ -19,7 +25,7 @@
     "dot-notation": [2, { "allowKeywords": false }],
     "eol-last": 2,
     "eqeqeq": [2, "smart"],
-    "indent": [2, 2, {"SwitchCase": 1}],
+    "indent": [0, 2, {"SwitchCase": 1}],
     "key-spacing": 1,
     "linebreak-style": 2,
     "max-depth": [1, 4],
@@ -76,7 +82,7 @@
     "no-with": 2,
     "object-curly-spacing": [2, "never"],
     "quote-props": [1, "consistent-as-needed"],
-    "quotes": [2, "single", "avoid-escape"],
+    "quotes": [0, "single", "avoid-escape"],
     "radix": 2,
     "semi": 2,
     "keyword-spacing": 2,

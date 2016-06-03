@@ -314,8 +314,6 @@ QUnit.module( "Reverse relations", { setup: require('./setup/data') } );
 		View = ( function( _super ) {
 			__extends(View, _super);
 
-			View.name = 'View';
-
 			function View() {
 				return View.__super__.constructor.apply( this, arguments );
 			}
@@ -327,8 +325,6 @@ QUnit.module( "Reverse relations", { setup: require('./setup/data') } );
 
 		Property = (function(_super) {
 			__extends(Property, _super);
-
-			Property.name = 'Property';
 
 			function Property() {
 				return Property.__super__.constructor.apply(this, arguments);
