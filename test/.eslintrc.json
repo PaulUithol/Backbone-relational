@@ -1,0 +1,14 @@
+{
+  "extends": "./../.eslintrc.json",
+  "env": {
+    "qunit": true,
+    "commonjs": true
+  },
+  "rules": {
+    "func-names": 0,
+    "no-magic-numbers": 0,
+    "no-undef": 0,
+    "id-length": 0,
+    "no-invalid-this": 0
+  }
+}
