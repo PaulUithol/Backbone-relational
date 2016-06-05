@@ -15,13 +15,17 @@
     "Promise": true
   },
   "rules": {
-    "array-bracket-spacing": [2],
+    "array-bracket-spacing": [1, "always",  { "objectsInArrays": false }],
+    "computed-property-spacing": [1, "always"],
+    "object-curly-spacing": [1, "always", { "arraysInObjects": false }],
+    "space-in-parens": [1, "always", { "exceptions": ["{}"] }],
+
+    "brace-style": [1, "stroustrup", { "allowSingleLine": true }],
+
     "block-scoped-var": 2,
-    "brace-style": [1, "1tbs", {"allowSingleLine": true}],
     "camelcase": 2,
     "comma-dangle": [2, "never"],
     "comma-spacing": 2,
-    "computed-property-spacing": [2, "never"],
     "dot-notation": [2, { "allowKeywords": false }],
     "eol-last": 2,
     "eqeqeq": [2, "smart"],
@@ -34,7 +38,7 @@
     "no-alert": 2,
     "no-caller": 2,
     "no-catch-shadow": 2,
-    "no-console": 2,
+    "no-console": 0,
     "no-debugger": 2,
     "no-delete-var": 2,
     "no-div-regex": 1,
@@ -80,7 +84,6 @@
     "no-unreachable": 2,
     "no-unused-expressions": [2, {"allowTernary": true, "allowShortCircuit": true}],
     "no-with": 2,
-    "object-curly-spacing": [2, "never"],
     "quote-props": [1, "consistent-as-needed"],
     "quotes": [0, "single", "avoid-escape"],
     "radix": 2,

@@ -32,9 +32,13 @@ module.exports = function(config) {
 			]
 		},
 
-		autoWatch: true,
+		browsers: [
+			'PhantomJS'
+		],
+
+		singleRun: true,
+		autoWatch: false,
 		port: 9877,
-		colors: true,
-		// singleRun: true
+		colors: true
 	});
 };
