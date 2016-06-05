@@ -137,13 +137,13 @@ QUnit.module( "Reverse relations", { setup: require('./setup/data') } );
 	QUnit.test( "'Save' objects (performing 'set' multiple times without and with id)", 4, function() {
 		person3
 			.on( 'add:jobs', function( model, coll ) {
-				console.log('got here 1');
+				// console.log('got here 1');
 				var company = model.get('company');
 				ok( company instanceof Company && company.get('ceo').get('name') === 'Lunar boy' && model.get('person') === person3,
 					"add:jobs: Both Person and Company are set on the Job instance once the event gets fired" );
 			})
 			.on( 'remove:jobs', function( model, coll ) {
-				console.log('got here 2');
+				// console.log('got here 2');
 				ok( false, "remove:jobs: 'person3' should not lose his job" );
 			});
 
@@ -158,13 +158,13 @@ QUnit.module( "Reverse relations", { setup: require('./setup/data') } );
 
 		company
 			.on( 'add:employees', function( model, coll ) {
-				console.log('got here 3');
+				// console.log('got here 3');
 				var company = model.get('company');
 				ok( company instanceof Company && company.get('ceo').get('name') === 'Lunar boy' && model.get('person') === person3,
 					"add:employees: Both Person and Company are set on the Company instance once the event gets fired" );
 			})
 			.on( 'remove:employees', function( model, coll ) {
-				console.log('got here 4');
+				// console.log('got here 4');
 				ok( true, "'remove:employees: person3' should lose a job once" );
 			});
 

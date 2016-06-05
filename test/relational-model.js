@@ -192,9 +192,9 @@ QUnit.module( "Backbone.Relational.Model", { setup: require('./setup/data') } );
 		var zoo = Zoo.findOrCreate( { id: 'z-1', animals: [ 'cat-1' ] } );
 
 		zoo.on( 'add:animals', function( animal ) {
-			console.log( 'add:animals=%o', animal );
+			// console.log( 'add:animals=%o', animal );
 			animal.on( 'change:favoriteFood', function( model, food ) {
-				console.log( '%s eats %s', animal.get( 'name' ), food.get( 'name' ) );
+				// console.log( '%s eats %s', animal.get( 'name' ), food.get( 'name' ) );
 			});
 		});
 
@@ -330,7 +330,7 @@ QUnit.module( "Backbone.Relational.Model", { setup: require('./setup/data') } );
 		var user1 = person1.get( 'user' );
 		request = person1.save( 'user', null, { wait: true } );
 		json = JSON.parse( request.data );
-		console.log( request, json );
+		// console.log( request, json );
 
 		equal( person1.get( 'user' ), user1 );
 
@@ -355,14 +355,14 @@ QUnit.module( "Backbone.Relational.Model", { setup: require('./setup/data') } );
 
 		request = zoo.save( 'animals', coll, { wait: true } );
 		json = JSON.parse( request.data );
-		console.log( request, json );
+		// console.log( request, json );
 
 		ok( zoo.get( 'animals' ).length === 0 );
 
 		request.success( json );
 
 		ok( zoo.get( 'animals' ).length === 2 );
-		console.log( animal1 );
+		// console.log( animal1 );
 	});
 
 	QUnit.test( "`Collection.create` (with `wait`)", function() {

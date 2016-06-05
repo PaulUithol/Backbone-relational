@@ -20,7 +20,7 @@ QUnit.module( "Events", { setup: require('./setup/setup').reset } );
 
 		animal
 			.on( 'change', function( model, coll ) {
-				console.log( 'change; args=%o', arguments );
+				// console.log( 'change; args=%o', arguments );
 				changeEventsTriggered++;
 			})
 			.on( 'change:livesIn', function( model, coll ) {
@@ -47,7 +47,7 @@ QUnit.module( "Events", { setup: require('./setup/setup').reset } );
 		ok( removeAnimalEventsTriggered === 0 );
 		ok( changeEventsTriggered === 2 );
 		ok( changeLiveInEventsTriggered === 1 );
-		console.log( changeEventsTriggered );
+		// console.log( changeEventsTriggered );
 
 		// Doing this shouldn't trigger any `add`/`remove`/`update` events
 		zoo.set( 'animals', [ 'a1' ] );

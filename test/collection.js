@@ -130,7 +130,7 @@ QUnit.module( "Backbone.Relational.Collection", { setup: require('./setup/setup'
 		// Check setting `null`
 		// ok( _.isUndefined( cars.set( null ) ), "Set `null` empties collection" );
 		ok( _.isUndefined( cars.set( null ) ), "Set `null` causes noop on collection" );
-		console.log( cars, cars.length );
+		// console.log( cars, cars.length );
 		// ok( cars.length === 0, "All cars gone" );
 		ok( cars.length === 2, "All cars still exist" );
 	});

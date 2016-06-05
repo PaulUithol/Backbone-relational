@@ -2,11 +2,11 @@ var _ = window._ = require('underscore');
 var $ = window.$ = require('jquery');
 var Backbone = window.Backbone = require('backbone');
 Backbone.Relational = require('../../dist/backbone-relational');
+Backbone.Relational.showWarnings = false;
 
 /**
  * 'Zoo'
  */
-
 exports.Zoo = window.Zoo = Backbone.Relational.Model.extend({
 	urlRoot: '/zoo/',
 

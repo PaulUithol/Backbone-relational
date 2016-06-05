@@ -91,7 +91,7 @@ QUnit.module( "Performance", { setup: require('./setup/setup').reset } );
 		 */
 		Backbone.Relational.store.reset();
 		addHasManyCount = addHasOneCount = 0;
-		console.log('loading test 2...');
+		// console.log('loading test 2...');
 		var start = new Date();
 
 		var preparedData = _.map( data, function( item ) {
@@ -106,7 +106,7 @@ QUnit.module( "Performance", { setup: require('./setup/setup').reset } );
 
 		parents.on('reset', function () {
 			var secs = (new Date() - start) / 1000;
-			console.log( 'data loaded in %s, addHasManyCount=%o, addHasOneCount=%o', secs, addHasManyCount, addHasOneCount );
+			// console.log( 'data loaded in %s, addHasManyCount=%o, addHasOneCount=%o', secs, addHasManyCount, addHasOneCount );
 		});
 		parents.reset( preparedData );
 
@@ -118,14 +118,14 @@ QUnit.module( "Performance", { setup: require('./setup/setup').reset } );
 		 */
 		Backbone.Relational.store.reset();
 		addHasManyCount = addHasOneCount = 0;
-		console.log('loading test 1...');
+		// console.log('loading test 1...');
 		var start = new Date();
 
 		var parents = new Parents();
 
 		parents.on('reset', function () {
 			var secs = (new Date() - start) / 1000;
-			console.log( 'data loaded in %s, addHasManyCount=%o, addHasOneCount=%o', secs, addHasManyCount, addHasOneCount );
+			// console.log( 'data loaded in %s, addHasManyCount=%o, addHasOneCount=%o', secs, addHasManyCount, addHasOneCount );
 		});
 		parents.reset( data );
 
@@ -137,13 +137,13 @@ QUnit.module( "Performance", { setup: require('./setup/setup').reset } );
 		 */
 		Backbone.Relational.store.reset();
 		addHasManyCount = addHasOneCount = removeHasManyCount = removeHasOneCount = 0;
-		console.log('loading test 2...');
+		// console.log('loading test 2...');
 		var start = new Date();
 
 		var parents = new Parents();
 		parents.on('reset', function () {
 			var secs = (new Date() - start) / 1000;
-			console.log( 'data loaded in %s, addHasManyCount=%o, addHasOneCount=%o', secs, addHasManyCount, addHasOneCount );
+			// console.log( 'data loaded in %s, addHasManyCount=%o, addHasOneCount=%o', secs, addHasManyCount, addHasOneCount );
 		});
 		parents.reset( preparedData );
 
@@ -158,7 +158,7 @@ QUnit.module( "Performance", { setup: require('./setup/setup').reset } );
 		});
 
 		var secs = (new Date() - start) / 1000;
-		console.log( 'data loaded in %s, removeHasManyCount=%o, removeHasOneCount=%o', secs, removeHasManyCount, removeHasOneCount );
+		// console.log( 'data loaded in %s, removeHasManyCount=%o, removeHasOneCount=%o', secs, removeHasManyCount, removeHasOneCount );
 
 		//_.invoke( _.clone( parents.models ), 'destroy' );
 
@@ -167,13 +167,13 @@ QUnit.module( "Performance", { setup: require('./setup/setup').reset } );
 		 */
 		Backbone.Relational.store.reset();
 		addHasManyCount = addHasOneCount = removeHasManyCount = removeHasOneCount = 0;
-		console.log('loading test 1...');
+		// console.log('loading test 1...');
 		var start = new Date();
 
 		var parents = new Parents();
 		parents.on('reset', function () {
 			var secs = (new Date() - start) / 1000;
-			console.log( 'data loaded in %s, addHasManyCount=%o, addHasOneCount=%o', secs, addHasManyCount, addHasOneCount );
+			// console.log( 'data loaded in %s, addHasManyCount=%o, addHasOneCount=%o', secs, addHasManyCount, addHasOneCount );
 		});
 		parents.reset(data);
 
@@ -182,7 +182,7 @@ QUnit.module( "Performance", { setup: require('./setup/setup').reset } );
 		parents.remove( parents.models );
 
 		var secs = (new Date() - start) / 1000;
-		console.log( 'data removed in %s, removeHasManyCount=%o, removeHasOneCount=%o', secs, removeHasManyCount, removeHasOneCount );
+		// console.log( 'data removed in %s, removeHasManyCount=%o, removeHasOneCount=%o', secs, removeHasManyCount, removeHasOneCount );
 
-		console.log( 'registerCount=%o, unregisterCount=%o', registerCount, unregisterCount );
+		// console.log( 'registerCount=%o, unregisterCount=%o', registerCount, unregisterCount );
 	});
