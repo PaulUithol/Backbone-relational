@@ -9,7 +9,6 @@ module.exports = function( config ) {
 		plugins: [
 			'karma-browserify',
 			'karma-phantomjs-launcher',
-			'karma-chrome-launcher',
 			'karma-qunit'
 		],
 
