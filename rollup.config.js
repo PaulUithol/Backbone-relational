@@ -38,9 +38,11 @@ module.exports = {
 			format: 'umd'
 		}
 	],
+  external: [ 'backbone', 'underscore', 'jquery' ],
   globals: {
     backbone: 'Backbone',
-    underscore: '_'
+    underscore: '_',
+    jquery: '$'
   },
 	banner
 };

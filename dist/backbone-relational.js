@@ -7,15 +7,15 @@
  * http://backbonerelational.org
  */
 
-
 (function (global, factory) {
-  typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory(require('backbone'), require('underscore')) :
-  typeof define === 'function' && define.amd ? define(['backbone', 'underscore'], factory) :
-  (global.BackboneRelational = factory(global.Backbone,global._));
-}(this, (function (Backbone,_$1) { 'use strict';
+  typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory(require('backbone'), require('underscore'), require('jquery')) :
+  typeof define === 'function' && define.amd ? define(['backbone', 'underscore', 'jquery'], factory) :
+  (global.BackboneRelational = factory(global.Backbone,global._,global.$));
+}(this, (function (Backbone,_,$) { 'use strict';
 
 var Backbone__default = 'default' in Backbone ? Backbone['default'] : Backbone;
-_$1 = 'default' in _$1 ? _$1['default'] : _$1;
+_ = 'default' in _ ? _['default'] : _;
+$ = 'default' in $ ? $['default'] : $;
 
 var Semaphore = {
 	_permitsAvailable: null,
@@ -53,7 +53,7 @@ var BlockingQueue = function BlockingQueue() {
 	this._queue = [];
 };
 
-_$1.extend(BlockingQueue.prototype, Semaphore, {
+_.extend(BlockingQueue.prototype, Semaphore, {
 	_queue: null,
 
 	add: function add(func) {
@@ -103,7 +103,7 @@ var extendableObject = function extendableObject() {
 
   (_initialize = this.initialize).call.apply(_initialize, [this].concat(args));
 };
-_$1.extend(extendableObject.prototype, Events);
+_.extend(extendableObject.prototype, Events);
 extendableObject.extend = extend$1;
 
 var config = {
@@ -275,11 +275,11 @@ var Store = extendableObject.extend({
 	initializeRelation: function initializeRelation(model, relation, options) {
 		var Type = relation.type;
 
-		if (_$1.isString(Type)) {
+		if (_.isString(Type)) {
 			Type = relationTypeStore.find(Type) || this.getObjectByName(Type);
 		}
 
-		if (_$1.isObject(Type)) {
+		if (_.isObject(Type)) {
 			var relationType = new Type(model, relation, options);
 		} else if (config.showWarnings && console) {
 			console.warn('Relation=%o; missing or invalid relation type!', relation);
@@ -291,7 +291,7 @@ var Store = extendableObject.extend({
 	},
 
 	removeModelScope: function removeModelScope(scope) {
-		this._modelScopes = _$1.without(this._modelScopes, scope);
+		this._modelScopes = _.without(this._modelScopes, scope);
 	},
 
 	addSubModels: function addSubModels(subModelTypes, superModelType) {
@@ -302,8 +302,8 @@ var Store = extendableObject.extend({
 	},
 
 	setupSuperModel: function setupSuperModel(modelType) {
-		_$1.find(this._subModels, function (subModelDef) {
-			return _$1.filter(subModelDef.subModels || [], function (subModelTypeName, typeValue) {
+		_.find(this._subModels, function (subModelDef) {
+			return _.filter(subModelDef.subModels || [], function (subModelTypeName, typeValue) {
 				var subModelType = this.getObjectByName(subModelTypeName);
 
 				if (modelType === subModelType) {
@@ -319,8 +319,8 @@ var Store = extendableObject.extend({
 	},
 
 	addReverseRelation: function addReverseRelation(relation) {
-		var exists = _$1.any(this._reverseRelations, function (rel) {
-			return _$1.all(relation || [], function (val, key) {
+		var exists = _.any(this._reverseRelations, function (rel) {
+			return _.all(relation || [], function (val, key) {
 				return val === rel[key];
 			});
 		});
@@ -333,8 +333,8 @@ var Store = extendableObject.extend({
 	},
 
 	addOrphanRelation: function addOrphanRelation(relation) {
-		var exists = _$1.any(this._orphanRelations, function (rel) {
-			return _$1.all(relation || [], function (val, key) {
+		var exists = _.any(this._orphanRelations, function (rel) {
+			return _.all(relation || [], function (val, key) {
 				return val === rel[key];
 			});
 		});
@@ -345,11 +345,11 @@ var Store = extendableObject.extend({
 	},
 
 	processOrphanRelations: function processOrphanRelations() {
-		_$1.each(this._orphanRelations.slice(0), function (rel) {
+		_.each(this._orphanRelations.slice(0), function (rel) {
 			var relatedModel = this.getObjectByName(rel.relatedModel);
 			if (relatedModel) {
 				this.initializeRelation(null, rel);
-				this._orphanRelations = _$1.without(this._orphanRelations, rel);
+				this._orphanRelations = _.without(this._orphanRelations, rel);
 			}
 		}, this);
 	},
@@ -360,7 +360,7 @@ var Store = extendableObject.extend({
 		}
 		type.prototype.relations.push(relation);
 
-		_$1.each(type._subModels || [], function (subModel) {
+		_.each(type._subModels || [], function (subModel) {
 			this._addRelation(subModel, relation);
 		}, this);
 	},
@@ -389,7 +389,7 @@ var Store = extendableObject.extend({
 			rootModel = rootModel._superModel;
 		}
 
-		var coll = _$1.find(this._collections, function (item) {
+		var coll = _.find(this._collections, function (item) {
 			return item.model === rootModel;
 		});
 
@@ -404,8 +404,8 @@ var Store = extendableObject.extend({
 		var parts = name.split('.'),
 		    type = null;
 
-		_$1.find(this._modelScopes, function (scope) {
-			type = _$1.reduce(parts || [], function (memo, val) {
+		_.find(this._modelScopes, function (scope) {
+			type = _.reduce(parts || [], function (memo, val) {
 				return memo ? memo[val] : undefined;
 			}, scope);
 
@@ -418,7 +418,7 @@ var Store = extendableObject.extend({
 	},
 
 	_createCollection: function _createCollection(type) {
-		if (!_$1.isObject(type)) {
+		if (!_.isObject(type)) {
 			type = type.constructor;
 		}
 
@@ -438,7 +438,7 @@ var Store = extendableObject.extend({
 			return null;
 		}
 
-		if (_$1.isString(item) || _$1.isNumber(item)) {
+		if (_.isString(item) || _.isNumber(item)) {
 			return item;
 		}
 
@@ -497,27 +497,27 @@ var Store = extendableObject.extend({
 
 	unregister: function unregister(type) {
 		var coll = void 0;
-		var models = _$1.clone(type.models);
+		var models = _.clone(type.models);
 		if (type.model) {
 			coll = this.getCollection(type.model);
 		} else {
 			coll = this.getCollection(type);
-			models = _$1.clone(coll.models);
+			models = _.clone(coll.models);
 		}
 
 		if (type instanceof Backbone.Model) {
 			models = [type];
 		}
 
-		_$1.each(models, function (model) {
+		_.each(models, function (model) {
 			this.stopListening(model);
-			_$1.invoke(model.getRelations(), 'stopListening');
+			_.invoke(model.getRelations(), 'stopListening');
 		}, this);
 
-		if (_$1.contains(this._collections, type)) {
+		if (_.contains(this._collections, type)) {
 			coll.reset([]);
 		} else {
-			_$1.each(models, function (model) {
+			_.each(models, function (model) {
 				if (coll.get(model)) {
 					coll.remove(model);
 				} else {
@@ -530,7 +530,7 @@ var Store = extendableObject.extend({
 	reset: function reset() {
 		this.stopListening();
 
-		_$1.each(this._collections, function (coll) {
+		_.each(this._collections, function (coll) {
 			this.unregister(coll);
 		}, this);
 
@@ -554,9 +554,9 @@ var Relation = extendableObject.extend(Semaphore).extend({
 	constructor: function constructor(instance, options, opts) {
 		this.instance = instance;
 
-		options = _$1.isObject(options) ? options : {};
-		this.reverseRelation = _$1.defaults(options.reverseRelation || {}, this.options.reverseRelation);
-		this.options = _$1.defaults(options, this.options, {
+		options = _.isObject(options) ? options : {};
+		this.reverseRelation = _.defaults(options.reverseRelation || {}, this.options.reverseRelation);
+		this.options = _.defaults(options, this.options, {
 			createModels: true,
 			includeInJSON: true,
 			isAutoRelation: false,
@@ -564,7 +564,7 @@ var Relation = extendableObject.extend(Semaphore).extend({
 			parse: false
 		});
 
-		if (_$1.isString(this.reverseRelation.type)) {
+		if (_.isString(this.reverseRelation.type)) {
 			this.reverseRelation.type = relationTypeStore.find(this.reverseRelation.type) || store.getObjectByName(this.reverseRelation.type);
 		}
 
@@ -576,11 +576,11 @@ var Relation = extendableObject.extend(Semaphore).extend({
 
 		this.relatedModel = this.options.relatedModel;
 
-		if (_$1.isUndefined(this.relatedModel)) {
+		if (_.isUndefined(this.relatedModel)) {
 			this.relatedModel = this.model;
 		}
 
-		if (_$1.isString(this.relatedModel)) {
+		if (_.isString(this.relatedModel)) {
 			this.relatedModel = store.getObjectByName(this.relatedModel);
 		}
 
@@ -589,7 +589,7 @@ var Relation = extendableObject.extend(Semaphore).extend({
 		}
 
 		if (!this.options.isAutoRelation && this.reverseRelation.type && this.reverseRelation.key) {
-			store.addReverseRelation(_$1.defaults({
+			store.addReverseRelation(_.defaults({
 				isAutoRelation: true,
 				model: this.relatedModel,
 				relatedModel: this.model,
@@ -598,7 +598,7 @@ var Relation = extendableObject.extend(Semaphore).extend({
 
 		if (instance) {
 			var contentKey = this.keySource;
-			if (contentKey !== this.key && _$1.isObject(this.instance.get(this.key))) {
+			if (contentKey !== this.key && _.isObject(this.instance.get(this.key))) {
 				contentKey = this.key;
 			}
 
@@ -614,7 +614,7 @@ var Relation = extendableObject.extend(Semaphore).extend({
 			this.initialize(opts);
 
 			if (this.options.autoFetch) {
-				this.instance.getAsync(this.key, _$1.isObject(this.options.autoFetch) ? this.options.autoFetch : {});
+				this.instance.getAsync(this.key, _.isObject(this.options.autoFetch) ? this.options.autoFetch : {});
 			}
 
 			this.listenTo(this.instance, 'destroy', this.destroy).listenTo(this.relatedCollection, 'relational:add relational:change:id', this.tryAddRelated).listenTo(this.relatedCollection, 'relational:remove', this.removeRelated);
@@ -638,8 +638,8 @@ var Relation = extendableObject.extend(Semaphore).extend({
 			return false;
 		}
 
-		if (i && _$1.keys(i._relations).length) {
-			var existing = _$1.find(i._relations, function (rel) {
+		if (i && _.keys(i._relations).length) {
+			var existing = _.find(i._relations, function (rel) {
 				return rel.key === k;
 			}, this);
 
@@ -664,7 +664,7 @@ var Relation = extendableObject.extend(Semaphore).extend({
 	getReverseRelations: function getReverseRelations(model) {
 		var reverseRelations = [];
 
-		var models = !_$1.isUndefined(model) ? [model] : this.related && (this.related.models || [this.related]),
+		var models = !_.isUndefined(model) ? [model] : this.related && (this.related.models || [this.related]),
 		    relations = null,
 		    relation = null;
 
@@ -692,26 +692,13 @@ var Relation = extendableObject.extend(Semaphore).extend({
 			this.setRelated(this._prepareCollection());
 		}
 
-		_$1.each(this.getReverseRelations(), function (relation) {
+		_.each(this.getReverseRelations(), function (relation) {
 			relation.removeRelated(this.instance);
 		}, this);
 	}
 });
 
-var module$1 = config;
-
-module$1.Collection = Collection$1;
-module$1.Semaphore = Semaphore;
-module$1.BlockingQueue = BlockingQueue;
-module$1.eventQueue = eventQueue;
-module$1.relationTypeStore = relationTypeStore;
-
-module$1.Store = Store;
-module$1.store = store;
-
-module$1.Relation = Relation;
-
-module$1.HasOne = module$1.Relation.extend({
+var HasOne = Relation.extend({
 	options: {
 		reverseRelation: { type: 'HasMany' }
 	},
@@ -722,7 +709,7 @@ module$1.HasOne = module$1.Relation.extend({
 		var related = this.findRelated(opts);
 		this.setRelated(related);
 
-		_$1.each(this.getReverseRelations(), function (relation) {
+		_.each(this.getReverseRelations(), function (relation) {
 			relation.addRelated(this.instance, opts);
 		}, this);
 	},
@@ -730,12 +717,12 @@ module$1.HasOne = module$1.Relation.extend({
 	findRelated: function findRelated(options) {
 		var related = null;
 
-		options = _$1.defaults({ parse: this.options.parse }, options);
+		options = _.defaults({ parse: this.options.parse }, options);
 
 		if (this.keyContents instanceof this.relatedModel) {
 			related = this.keyContents;
 		} else if (this.keyContents || this.keyContents === 0) {
-			var opts = _$1.defaults({ create: this.options.createModels }, options);
+			var opts = _.defaults({ create: this.options.createModels }, options);
 			related = this.relatedModel.findOrCreate(this.keyContents, opts);
 		}
 
@@ -748,7 +735,7 @@ module$1.HasOne = module$1.Relation.extend({
 
 	setKeyContents: function setKeyContents(keyContents) {
 		this.keyContents = keyContents;
-		this.keyId = module$1.store.resolveIdForItem(this.relatedModel, this.keyContents);
+		this.keyId = store.resolveIdForItem(this.relatedModel, this.keyContents);
 	},
 
 	onChange: function onChange(model, attr, options) {
@@ -756,9 +743,9 @@ module$1.HasOne = module$1.Relation.extend({
 			return;
 		}
 		this.acquire();
-		options = options ? _$1.clone(options) : {};
+		options = options ? _.clone(options) : {};
 
-		var changed = _$1.isUndefined(options.__related),
+		var changed = _.isUndefined(options.__related),
 		    oldRelated = changed ? this.related : options.__related;
 
 		if (changed) {
@@ -768,19 +755,19 @@ module$1.HasOne = module$1.Relation.extend({
 		}
 
 		if (oldRelated && this.related !== oldRelated) {
-			_$1.each(this.getReverseRelations(oldRelated), function (relation) {
+			_.each(this.getReverseRelations(oldRelated), function (relation) {
 				relation.removeRelated(this.instance, null, options);
 			}, this);
 		}
 
-		_$1.each(this.getReverseRelations(), function (relation) {
+		_.each(this.getReverseRelations(), function (relation) {
 			relation.addRelated(this.instance, options);
 		}, this);
 
 		if (!options.silent && this.related !== oldRelated) {
 			var dit = this;
 			this.changed = true;
-			module$1.eventQueue.add(function () {
+			eventQueue.add(function () {
 				dit.instance.trigger('change:' + dit.key, dit.instance, dit.related, options, true);
 				dit.changed = false;
 			});
@@ -801,7 +788,7 @@ module$1.HasOne = module$1.Relation.extend({
 			if (model !== dit.related) {
 				var oldRelated = dit.related || null;
 				dit.setRelated(model);
-				dit.onChange(dit.instance, model, _$1.defaults({ __related: oldRelated }, options));
+				dit.onChange(dit.instance, model, _.defaults({ __related: oldRelated }, options));
 			}
 		});
 	},
@@ -814,17 +801,17 @@ module$1.HasOne = module$1.Relation.extend({
 		if (model === this.related) {
 			var oldRelated = this.related || null;
 			this.setRelated(null);
-			this.onChange(this.instance, model, _$1.defaults({ __related: oldRelated }, options));
+			this.onChange(this.instance, model, _.defaults({ __related: oldRelated }, options));
 		}
 	}
 });
 
-module$1.HasMany = module$1.Relation.extend({
+var HasMany = Relation.extend({
 	collectionType: null,
 
 	options: {
 		reverseRelation: { type: 'HasOne' },
-		collectionType: module$1.Collection,
+		collectionType: Collection$1,
 		collectionKey: true,
 		collectionOptions: {}
 	},
@@ -833,14 +820,14 @@ module$1.HasMany = module$1.Relation.extend({
 		this.listenTo(this.instance, 'relational:change:' + this.key, this.onChange);
 
 		this.collectionType = this.options.collectionType;
-		if (_$1.isFunction(this.collectionType) && this.collectionType !== module$1.Collection && !(this.collectionType.prototype instanceof module$1.Collection)) {
-			this.collectionType = _$1.result(this, 'collectionType');
+		if (_.isFunction(this.collectionType) && this.collectionType !== Collection$1 && !(this.collectionType.prototype instanceof Collection$1)) {
+			this.collectionType = _.result(this, 'collectionType');
 		}
-		if (_$1.isString(this.collectionType)) {
-			this.collectionType = module$1.store.getObjectByName(this.collectionType);
+		if (_.isString(this.collectionType)) {
+			this.collectionType = store.getObjectByName(this.collectionType);
 		}
-		if (this.collectionType !== module$1.Collection && !(this.collectionType.prototype instanceof module$1.Collection)) {
-			throw new Error('`collectionType` must inherit from module.Collection');
+		if (this.collectionType !== Collection$1 && !(this.collectionType.prototype instanceof Collection$1)) {
+			throw new Error('`collectionType` must inherit from Collection');
 		}
 
 		var related = this.findRelated(opts);
@@ -852,8 +839,8 @@ module$1.HasMany = module$1.Relation.extend({
 			this.stopListening(this.related);
 		}
 
-		if (!collection || !(collection instanceof module$1.Collection)) {
-			var options = _$1.isFunction(this.options.collectionOptions) ? this.options.collectionOptions(this.instance) : this.options.collectionOptions;
+		if (!collection || !(collection instanceof Collection$1)) {
+			var options = _.isFunction(this.options.collectionOptions) ? this.options.collectionOptions(this.instance) : this.options.collectionOptions;
 
 			collection = new this.collectionType(null, options);
 		}
@@ -864,7 +851,7 @@ module$1.HasMany = module$1.Relation.extend({
 			var key = this.options.collectionKey === true ? this.options.reverseRelation.key : this.options.collectionKey;
 
 			if (collection[key] && collection[key] !== this.instance) {
-				if (module$1.showWarnings && typeof console !== 'undefined') {
+				if (config.showWarnings && typeof console !== 'undefined') {
 					console.warn('Relation=%o; collectionKey=%s already exists on collection=%o', this, key, this.options.collectionKey);
 				}
 			} else if (key) {
@@ -880,49 +867,49 @@ module$1.HasMany = module$1.Relation.extend({
 	findRelated: function findRelated(options) {
 		var related = null;
 
-		options = _$1.defaults({ parse: this.options.parse }, options);
+		options = _.defaults({ parse: this.options.parse }, options);
 
-		if (this.keyContents instanceof module$1.Collection) {
+		if (this.keyContents instanceof Collection$1) {
 			this._prepareCollection(this.keyContents);
 			related = this.keyContents;
 		} else {
 				var toAdd = [];
 
-				_$1.each(this.keyContents, function (attributes) {
+				_.each(this.keyContents, function (attributes) {
 					var model = null;
 
 					if (attributes instanceof this.relatedModel) {
 						model = attributes;
 					} else {
-						model = _$1.isObject(attributes) && options.parse && this.relatedModel.prototype.parse ? this.relatedModel.prototype.parse(_$1.clone(attributes), options) : attributes;
+						model = _.isObject(attributes) && options.parse && this.relatedModel.prototype.parse ? this.relatedModel.prototype.parse(_.clone(attributes), options) : attributes;
 					}
 
 					model && toAdd.push(model);
 				}, this);
 
-				if (this.related instanceof module$1.Collection) {
+				if (this.related instanceof Collection$1) {
 					related = this.related;
 				} else {
 					related = this._prepareCollection();
 				}
 
-				related.set(toAdd, _$1.defaults({ parse: false }, options));
+				related.set(toAdd, _.defaults({ parse: false }, options));
 			}
 
-		this.keyIds = _$1.difference(this.keyIds, _$1.pluck(related.models, 'id'));
+		this.keyIds = _.difference(this.keyIds, _.pluck(related.models, 'id'));
 
 		return related;
 	},
 
 	setKeyContents: function setKeyContents(keyContents) {
-		this.keyContents = keyContents instanceof module$1.Collection ? keyContents : null;
+		this.keyContents = keyContents instanceof Collection$1 ? keyContents : null;
 		this.keyIds = [];
 
 		if (!this.keyContents && (keyContents || keyContents === 0)) {
-			this.keyContents = _$1.isArray(keyContents) ? keyContents : [keyContents];
+			this.keyContents = _.isArray(keyContents) ? keyContents : [keyContents];
 
-			_$1.each(this.keyContents, function (item) {
-				var itemId = module$1.store.resolveIdForItem(this.relatedModel, item);
+			_.each(this.keyContents, function (item) {
+				var itemId = store.resolveIdForItem(this.relatedModel, item);
 				if (itemId || itemId === 0) {
 					this.keyIds.push(itemId);
 				}
@@ -931,7 +918,7 @@ module$1.HasMany = module$1.Relation.extend({
 	},
 
 	onChange: function onChange(model, attr, options) {
-		options = options ? _$1.clone(options) : {};
+		options = options ? _.clone(options) : {};
 		this.setKeyContents(attr);
 		this.changed = false;
 
@@ -940,7 +927,7 @@ module$1.HasMany = module$1.Relation.extend({
 
 		if (!options.silent) {
 			var dit = this;
-			module$1.eventQueue.add(function () {
+			eventQueue.add(function () {
 				if (dit.changed) {
 					dit.instance.trigger('change:' + dit.key, dit.instance, dit.related, options, true);
 					dit.changed = false;
@@ -950,47 +937,47 @@ module$1.HasMany = module$1.Relation.extend({
 	},
 
 	handleAddition: function handleAddition(model, coll, options) {
-		options = options ? _$1.clone(options) : {};
+		options = options ? _.clone(options) : {};
 		this.changed = true;
 
-		_$1.each(this.getReverseRelations(model), function (relation) {
+		_.each(this.getReverseRelations(model), function (relation) {
 			relation.addRelated(this.instance, options);
 		}, this);
 
 		var dit = this;
-		!options.silent && module$1.eventQueue.add(function () {
+		!options.silent && eventQueue.add(function () {
 			dit.instance.trigger('add:' + dit.key, model, dit.related, options);
 		});
 	},
 
 	handleRemoval: function handleRemoval(model, coll, options) {
-		options = options ? _$1.clone(options) : {};
+		options = options ? _.clone(options) : {};
 		this.changed = true;
 
-		_$1.each(this.getReverseRelations(model), function (relation) {
+		_.each(this.getReverseRelations(model), function (relation) {
 			relation.removeRelated(this.instance, null, options);
 		}, this);
 
 		var dit = this;
-		!options.silent && module$1.eventQueue.add(function () {
+		!options.silent && eventQueue.add(function () {
 			dit.instance.trigger('remove:' + dit.key, model, dit.related, options);
 		});
 	},
 
 	handleReset: function handleReset(coll, options) {
 		var dit = this;
-		options = options ? _$1.clone(options) : {};
-		!options.silent && module$1.eventQueue.add(function () {
+		options = options ? _.clone(options) : {};
+		!options.silent && eventQueue.add(function () {
 			dit.instance.trigger('reset:' + dit.key, dit.related, options);
 		});
 	},
 
 	tryAddRelated: function tryAddRelated(model, coll, options) {
-		var item = _$1.contains(this.keyIds, model.id);
+		var item = _.contains(this.keyIds, model.id);
 
 		if (item) {
 			this.addRelated(model, options);
-			this.keyIds = _$1.without(this.keyIds, model.id);
+			this.keyIds = _.without(this.keyIds, model.id);
 		}
 	},
 
@@ -998,7 +985,7 @@ module$1.HasMany = module$1.Relation.extend({
 		var dit = this;
 		model.queue(function () {
 			if (dit.related && !dit.related.get(model)) {
-				dit.related.add(model, _$1.defaults({ parse: false }, options));
+				dit.related.add(model, _.defaults({ parse: false }, options));
 			}
 		});
 	},
@@ -1010,7 +997,7 @@ module$1.HasMany = module$1.Relation.extend({
 	}
 });
 
-module$1.Model = Backbone__default.Model.extend(Semaphore).extend({
+var Model$1 = Backbone.Model.extend(Semaphore).extend({
 	relations: null,
 	_relations: null,
 	_isInitialized: false,
@@ -1039,22 +1026,22 @@ module$1.Model = Backbone__default.Model.extend(Semaphore).extend({
 			};
 			collection.on('relational:add', processQueue);
 
-			_$1.defer(function () {
+			_.defer(function () {
 				processQueue(dit);
 			});
 		}
 
-		module$1.store.processOrphanRelations();
-		module$1.store.listenTo(this, 'relational:unregister', module$1.store.unregister);
+		store.processOrphanRelations();
+		store.listenTo(this, 'relational:unregister', store.unregister);
 
-		this._queue = new module$1.BlockingQueue();
+		this._queue = new BlockingQueue();
 		this._queue.block();
-		module$1.eventQueue.block();
+		eventQueue.block();
 
 		try {
-			Backbone__default.Model.apply(this, arguments);
+			Backbone.Model.apply(this, arguments);
 		} finally {
-			module$1.eventQueue.unblock();
+			eventQueue.unblock();
 		}
 	},
 
@@ -1063,10 +1050,10 @@ module$1.Model = Backbone__default.Model.extend(Semaphore).extend({
 			var dit = this,
 			    args = arguments;
 
-			if (!module$1.eventQueue.isLocked()) {
-				Backbone__default.Model.prototype.trigger.apply(dit, args);
+			if (!eventQueue.isLocked()) {
+				Backbone.Model.prototype.trigger.apply(dit, args);
 			} else {
-				module$1.eventQueue.add(function () {
+				eventQueue.add(function () {
 					var changed = true;
 					if (eventName === 'change') {
 						changed = dit.hasChanged() || dit._attributeChangeFired;
@@ -1088,14 +1075,14 @@ module$1.Model = Backbone__default.Model.extend(Semaphore).extend({
 						}
 					}
 
-					changed && Backbone__default.Model.prototype.trigger.apply(dit, args);
+					changed && Backbone.Model.prototype.trigger.apply(dit, args);
 				});
 			}
 		} else if (eventName === 'destroy') {
-			Backbone__default.Model.prototype.trigger.apply(this, arguments);
-			module$1.store.unregister(this);
+			Backbone.Model.prototype.trigger.apply(this, arguments);
+			store.unregister(this);
 		} else {
-			Backbone__default.Model.prototype.trigger.apply(this, arguments);
+			Backbone.Model.prototype.trigger.apply(this, arguments);
 		}
 
 		return this;
@@ -1105,8 +1092,8 @@ module$1.Model = Backbone__default.Model.extend(Semaphore).extend({
 		this.acquire();
 		this._relations = {};
 
-		_$1.each(this.relations || [], function (rel) {
-			module$1.store.initializeRelation(this, rel, options);
+		_.each(this.relations || [], function (rel) {
+			store.initializeRelation(this, rel, options);
 		}, this);
 
 		this._isInitialized = true;
@@ -1116,7 +1103,7 @@ module$1.Model = Backbone__default.Model.extend(Semaphore).extend({
 
 	updateRelations: function updateRelations(changedAttrs, options) {
 		if (this._isInitialized && !this.isLocked()) {
-			_$1.each(this._relations, function (rel) {
+			_.each(this._relations, function (rel) {
 				if (!changedAttrs || rel.keySource in changedAttrs || rel.key in changedAttrs) {
 					var value = this.attributes[rel.keySource] || this.attributes[rel.key],
 					    attr = changedAttrs && (changedAttrs[rel.keySource] || changedAttrs[rel.key]);
@@ -1148,16 +1135,16 @@ module$1.Model = Backbone__default.Model.extend(Semaphore).extend({
 	},
 
 	getRelations: function getRelations() {
-		return _$1.values(this._relations);
+		return _.values(this._relations);
 	},
 
 	getIdsToFetch: function getIdsToFetch(attr, refresh) {
-		var rel = attr instanceof module$1.Relation ? attr : this.getRelation(attr),
+		var rel = attr instanceof Relation ? attr : this.getRelation(attr),
 		    ids = rel ? rel.keyIds && rel.keyIds.slice(0) || (rel.keyId || rel.keyId === 0 ? [rel.keyId] : []) : [];
 
 		if (refresh) {
 			var models = rel.related && (rel.related.models || [rel.related]);
-			_$1.each(models, function (model) {
+			_.each(models, function (model) {
 				if (model.id || model.id === 0) {
 					ids.push(model.id);
 				}
@@ -1168,20 +1155,20 @@ module$1.Model = Backbone__default.Model.extend(Semaphore).extend({
 	},
 
 	getAsync: function getAsync(attr, options) {
-		options = _$1.extend({ add: true, remove: false, refresh: false }, options);
+		options = _.extend({ add: true, remove: false, refresh: false }, options);
 
 		var dit = this,
 		    requests = [],
 		    rel = this.getRelation(attr),
 		    idsToFetch = rel && this.getIdsToFetch(rel, options.refresh),
-		    coll = rel.related instanceof module$1.Collection ? rel.related : rel.relatedCollection;
+		    coll = rel.related instanceof Collection$1 ? rel.related : rel.relatedCollection;
 
 		if (idsToFetch && idsToFetch.length) {
 			var models = [],
 			    createdModels = [],
 			    setUrl,
 			    createModels = function createModels() {
-				models = _$1.map(idsToFetch, function (id) {
+				models = _.map(idsToFetch, function (id) {
 					var model = rel.relatedModel.findModel(id);
 
 					if (!model) {
@@ -1195,7 +1182,7 @@ module$1.Model = Backbone__default.Model.extend(Semaphore).extend({
 				}, this);
 			};
 
-			if (coll instanceof module$1.Collection && _$1.isFunction(coll.url)) {
+			if (coll instanceof Collection$1 && _.isFunction(coll.url)) {
 				var defaultUrl = coll.url();
 				setUrl = coll.url(idsToFetch);
 
@@ -1210,9 +1197,9 @@ module$1.Model = Backbone__default.Model.extend(Semaphore).extend({
 			}
 
 			if (setUrl) {
-				var opts = _$1.defaults({
+				var opts = _.defaults({
 					error: function error() {
-						_$1.each(createdModels, function (model) {
+						_.each(createdModels, function (model) {
 							model.trigger('destroy', model, model.collection, options);
 						});
 
@@ -1227,10 +1214,10 @@ module$1.Model = Backbone__default.Model.extend(Semaphore).extend({
 					createModels();
 				}
 
-				requests = _$1.map(models, function (model) {
-					var opts = _$1.defaults({
+				requests = _.map(models, function (model) {
+					var opts = _.defaults({
 						error: function error() {
-							if (_$1.contains(createdModels, model)) {
+							if (_.contains(createdModels, model)) {
 								model.trigger('destroy', model, model.collection, options);
 							}
 							options.error && options.error.apply(models, arguments);
@@ -1242,20 +1229,20 @@ module$1.Model = Backbone__default.Model.extend(Semaphore).extend({
 		}
 
 		return this.deferArray(requests).then(function () {
-			return Backbone__default.Model.prototype.get.call(dit, attr);
+			return Backbone.Model.prototype.get.call(dit, attr);
 		});
 	},
 
 	deferArray: function deferArray(_deferArray) {
-		return Backbone__default.$.when.apply(null, _deferArray);
+		return $.when.apply(null, _deferArray);
 	},
 
 	set: function set(key, value, options) {
-		module$1.eventQueue.block();
+		eventQueue.block();
 
 		var attributes, result;
 
-		if (_$1.isObject(key) || key == null) {
+		if (_.isObject(key) || key == null) {
 			attributes = key;
 			options = value;
 		} else {
@@ -1267,39 +1254,39 @@ module$1.Model = Backbone__default.Model.extend(Semaphore).extend({
 			var id = this.id,
 			    newId = attributes && this.idAttribute in attributes && attributes[this.idAttribute];
 
-			module$1.store.checkId(this, newId);
+			store.checkId(this, newId);
 
-			result = Backbone__default.Model.prototype.set.apply(this, arguments);
+			result = Backbone.Model.prototype.set.apply(this, arguments);
 
 			if (!this._isInitialized && !this.isLocked()) {
 				this.constructor.initializeModelHierarchy();
 
 				if (newId || newId === 0) {
-					module$1.store.register(this);
+					store.register(this);
 				}
 
 				this.initializeRelations(options);
 			} else if (newId && newId !== id) {
-					module$1.store.update(this);
+					store.update(this);
 				}
 
 			if (attributes) {
 				this.updateRelations(attributes, options);
 			}
 		} finally {
-			module$1.eventQueue.unblock();
+			eventQueue.unblock();
 		}
 
 		return result;
 	},
 
 	clone: function clone() {
-		var attributes = _$1.clone(this.attributes);
-		if (!_$1.isUndefined(attributes[this.idAttribute])) {
+		var attributes = _.clone(this.attributes);
+		if (!_.isUndefined(attributes[this.idAttribute])) {
 			attributes[this.idAttribute] = null;
 		}
 
-		_$1.each(this.getRelations(), function (rel) {
+		_.each(this.getRelations(), function (rel) {
 			delete attributes[rel.key];
 		});
 
@@ -1312,52 +1299,52 @@ module$1.Model = Backbone__default.Model.extend(Semaphore).extend({
 		}
 
 		this.acquire();
-		var json = Backbone__default.Model.prototype.toJSON.call(this, options);
+		var json = Backbone.Model.prototype.toJSON.call(this, options);
 
 		if (this.constructor._superModel && !(this.constructor._subModelTypeAttribute in json)) {
 			json[this.constructor._subModelTypeAttribute] = this.constructor._subModelTypeValue;
 		}
 
-		_$1.each(this._relations, function (rel) {
+		_.each(this._relations, function (rel) {
 			var related = json[rel.key],
 			    includeInJSON = rel.options.includeInJSON,
 			    value = null;
 
 			if (includeInJSON === true) {
-				if (related && _$1.isFunction(related.toJSON)) {
+				if (related && _.isFunction(related.toJSON)) {
 					value = related.toJSON(options);
 				}
-			} else if (_$1.isString(includeInJSON)) {
-				if (related instanceof module$1.Collection) {
+			} else if (_.isString(includeInJSON)) {
+				if (related instanceof Collection$1) {
 					value = related.pluck(includeInJSON);
-				} else if (related instanceof Backbone__default.Model) {
+				} else if (related instanceof Backbone.Model) {
 					value = related.get(includeInJSON);
 				}
 
 				if (includeInJSON === rel.relatedModel.prototype.idAttribute) {
-					if (rel instanceof module$1.HasMany) {
+					if (rel instanceof relationTypeStore.find('HasMany')) {
 						value = value.concat(rel.keyIds);
-					} else if (rel instanceof module$1.HasOne) {
+					} else if (rel instanceof relationTypeStore.find('HasOne')) {
 						value = value || rel.keyId;
 
-						if (!value && !_$1.isObject(rel.keyContents)) {
+						if (!value && !_.isObject(rel.keyContents)) {
 							value = rel.keyContents || null;
 						}
 					}
 				}
-			} else if (_$1.isArray(includeInJSON)) {
-				if (related instanceof module$1.Collection) {
+			} else if (_.isArray(includeInJSON)) {
+				if (related instanceof Collection$1) {
 					value = [];
 					related.each(function (model) {
 						var curJson = {};
-						_$1.each(includeInJSON, function (key) {
+						_.each(includeInJSON, function (key) {
 							curJson[key] = model.get(key);
 						});
 						value.push(curJson);
 					});
-				} else if (related instanceof Backbone__default.Model) {
+				} else if (related instanceof Backbone.Model) {
 					value = {};
-					_$1.each(includeInJSON, function (key) {
+					_.each(includeInJSON, function (key) {
 						value[key] = related.get(key);
 					});
 				}
@@ -1389,27 +1376,27 @@ module$1.Model = Backbone__default.Model.extend(Semaphore).extend({
 		this._superModel = null;
 
 		if (this.prototype.hasOwnProperty('subModelTypes')) {
-			module$1.store.addSubModels(this.prototype.subModelTypes, this);
+			store.addSubModels(this.prototype.subModelTypes, this);
 		} else {
 				this.prototype.subModelTypes = null;
 			}
 
-		_$1.each(this.prototype.relations || [], function (rel) {
+		_.each(this.prototype.relations || [], function (rel) {
 			if (!rel.model) {
 				rel.model = this;
 			}
 
 			if (rel.reverseRelation && rel.model === this) {
 				var preInitialize = true;
-				if (_$1.isString(rel.relatedModel)) {
-					var relatedModel = module$1.store.getObjectByName(rel.relatedModel);
-					preInitialize = relatedModel && relatedModel.prototype instanceof module$1.Model;
+				if (_.isString(rel.relatedModel)) {
+					var relatedModel = store.getObjectByName(rel.relatedModel);
+					preInitialize = relatedModel && relatedModel.prototype instanceof this;
 				}
 
 				if (preInitialize) {
-					module$1.store.initializeRelation(null, rel);
-				} else if (_$1.isString(rel.relatedModel)) {
-					module$1.store.addOrphanRelation(rel);
+					store.initializeRelation(null, rel);
+				} else if (_.isString(rel.relatedModel)) {
+					store.addOrphanRelation(rel);
 				}
 			}
 		}, this);
@@ -1447,27 +1434,27 @@ module$1.Model = Backbone__default.Model.extend(Semaphore).extend({
 		this.inheritRelations();
 
 		if (this.prototype.subModelTypes) {
-			var resolvedSubModels = _$1.keys(this._subModels);
-			var unresolvedSubModels = _$1.omit(this.prototype.subModelTypes, resolvedSubModels);
-			_$1.each(unresolvedSubModels, function (subModelTypeName) {
-				var subModelType = module$1.store.getObjectByName(subModelTypeName);
+			var resolvedSubModels = _.keys(this._subModels);
+			var unresolvedSubModels = _.omit(this.prototype.subModelTypes, resolvedSubModels);
+			_.each(unresolvedSubModels, function (subModelTypeName) {
+				var subModelType = store.getObjectByName(subModelTypeName);
 				subModelType && subModelType.initializeModelHierarchy();
 			});
 		}
 	},
 
 	inheritRelations: function inheritRelations() {
-		if (!_$1.isUndefined(this._superModel) && !_$1.isNull(this._superModel)) {
+		if (!_.isUndefined(this._superModel) && !_.isNull(this._superModel)) {
 			return;
 		}
 
-		module$1.store.setupSuperModel(this);
+		store.setupSuperModel(this);
 
 		if (this._superModel) {
 			this._superModel.inheritRelations();
 			if (this._superModel.prototype.relations) {
-				var inheritedRelations = _$1.filter(this._superModel.prototype.relations || [], function (superRel) {
-					return !_$1.any(this.prototype.relations || [], function (rel) {
+				var inheritedRelations = _.filter(this._superModel.prototype.relations || [], function (superRel) {
+					return !_.any(this.prototype.relations || [], function (rel) {
 						return superRel.relatedModel === rel.relatedModel && superRel.key === rel.key;
 					}, this);
 				}, this);
@@ -1481,18 +1468,18 @@ module$1.Model = Backbone__default.Model.extend(Semaphore).extend({
 
 	findOrCreate: function findOrCreate(attributes, options) {
 		options || (options = {});
-		var parsedAttributes = _$1.isObject(attributes) && options.parse && this.prototype.parse ? this.prototype.parse(_$1.clone(attributes), options) : attributes;
+		var parsedAttributes = _.isObject(attributes) && options.parse && this.prototype.parse ? this.prototype.parse(_.clone(attributes), options) : attributes;
 
 		var model = this.findModel(parsedAttributes);
 
-		if (_$1.isObject(attributes)) {
+		if (_.isObject(attributes)) {
 			if (model && options.merge !== false) {
 				delete options.collection;
 				delete options.url;
 
 				model.set(parsedAttributes, options);
 			} else if (!model && options.create !== false) {
-				model = this.build(parsedAttributes, _$1.defaults({ parse: false }, options));
+				model = this.build(parsedAttributes, _.defaults({ parse: false }, options));
 			}
 		}
 
@@ -1506,7 +1493,7 @@ module$1.Model = Backbone__default.Model.extend(Semaphore).extend({
 	},
 
 	findModel: function findModel(attributes) {
-		return module$1.store.find(this, attributes);
+		return store.find(this, attributes);
 	},
 
 	extend: function extend(protoProps, classProps) {
@@ -1518,8 +1505,25 @@ module$1.Model = Backbone__default.Model.extend(Semaphore).extend({
 	}
 });
 
+var module$1 = config;
+
+module$1.Collection = Collection$1;
+module$1.Semaphore = Semaphore;
+module$1.BlockingQueue = BlockingQueue;
+module$1.eventQueue = eventQueue;
+module$1.relationTypeStore = relationTypeStore;
+
+module$1.Store = Store;
+module$1.store = store;
+
+module$1.Relation = Relation;
+module$1.HasOne = HasOne;
+module$1.HasMany = HasMany;
+
 relationTypeStore.registerType('HasOne', module$1.HasOne);
 relationTypeStore.registerType('HasMany', module$1.HasMany);
+
+module$1.Model = Model$1;
 
 return module$1;
 

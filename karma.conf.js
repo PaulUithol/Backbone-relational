@@ -36,7 +36,7 @@ module.exports = function( config ) {
 			'PhantomJS'
 		],
 
-		singleRun: true,
+		singleRun: false,
 		autoWatch: false,
 		port: 9877,
 		colors: true

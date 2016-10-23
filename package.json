@@ -16,8 +16,9 @@
     "url": "https://github.com/PaulUithol/Backbone-relational.git"
   },
   "scripts": {
-    "test": "karma start",
-    "build": "rollup -c"
+    "test": "karma start --single-run",
+    "build": "rollup -c",
+    "watch": "karma start --auto-watch & rollup -c --watch && fg"
   },
   "author": "Paul Uithol <https://github.com/PaulUithol>",
   "contributors": "Listed at <https://github.com/PaulUithol/Backbone-relational/contributors>",
@@ -43,7 +44,8 @@
     "phantomjs-prebuilt": "^2.1.5",
     "rollup": "^0.36.3",
     "rollup-plugin-babel": "^2.6.1",
-    "rollup-plugin-json": "^2.0.0"
+    "rollup-plugin-json": "^2.0.0",
+    "rollup-watch": "^2.5.0"
   },
   "dependencies": {}
 }

@@ -140,7 +140,7 @@ export default BObject.extend( Semaphore ).extend({
 		// }
 		// Check if this is not a HasMany, and the reverse relation is HasMany as well
 		// TODO: handle this logic elsewhere!
-		if ( this instanceof relationTypeStore.find('HasMany') && this.reverseRelation.type === relationTypeStore.find('HasMany') ) {
+		if ( this instanceof relationTypeStore.find( 'HasMany' ) && this.reverseRelation.type === relationTypeStore.find( 'HasMany' ) ) {
 			warn && console.warn( 'Relation=%o: relation is a HasMany, and the reverseRelation is HasMany as well.', this );
 			return false;
 		}
