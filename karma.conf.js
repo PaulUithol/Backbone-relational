@@ -1,6 +1,6 @@
-/* eslint-env amd */
+/* eslint-env node */
 
-module.exports = function(config) {
+module.exports = function( config ) {
 	config.set({
 		frameworks: [
 			'browserify',
@@ -19,14 +19,14 @@ module.exports = function(config) {
 		],
 
 		preprocessors: {
-			'test/**/*.js': ['browserify']
+			'test/**/*.js': [ 'browserify' ]
 		},
 
 		browserify: {
 			debug: true,
 			transform: [
-				['babelify', {
-					presets: ['es2015'],
+				[ 'babelify', {
+					presets: [ 'es2015' ],
 					sourceMap: true
 				}]
 			]

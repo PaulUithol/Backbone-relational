@@ -5,7 +5,7 @@ before_install:
   - npm install -g npm
   - npm install -g karma-cli
 script:
-  - npm test
+  - npm run test
 sudo: false
 cache:
   directories:
