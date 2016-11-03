@@ -1046,7 +1046,7 @@
 			}
 
 			// Remove entries from `keyIds` that were already part of the relation (and are thus 'unchanged')
-			this.keyIds = _.difference( this.keyIds, _.pluck( related.models, 'id' ) );
+			this.keyIds = _.difference( this.keyIds, _.map( related.models, 'id' ) );
 
 			return related;
 		},
@@ -1602,7 +1602,7 @@
 				}
 				else if ( _.isString( includeInJSON ) ) {
 					if ( related instanceof module.Collection ) {
-						value = related.pluck( includeInJSON );
+						value = related.map( includeInJSON );
 					}
 					else if ( related instanceof Backbone.Model ) {
 						value = related.get( includeInJSON );
