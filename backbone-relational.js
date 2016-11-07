@@ -260,7 +260,7 @@
 		 * @param {String|Object} relation.relatedModel
 		 */
 		addReverseRelation: function( relation ) {
-			var exists = _.any( this._reverseRelations, function( rel ) {
+			var exists = _.some( this._reverseRelations, function( rel ) {
 				return _.all( relation || [], function( val, key ) {
 					return val === rel[ key ];
 				});
@@ -279,7 +279,7 @@
 		 * @param {Object} relation
 		 */
 		addOrphanRelation: function( relation ) {
-			var exists = _.any( this._orphanRelations, function( rel ) {
+			var exists = _.some( this._orphanRelations, function( rel ) {
 				return _.all( relation || [], function( val, key ) {
 					return val === rel[ key ];
 				});
@@ -1803,7 +1803,7 @@
 				if ( this._superModel.prototype.relations ) {
 					// Find relations that exist on the '_superModel', but not yet on this model.
 					var inheritedRelations = _.filter( this._superModel.prototype.relations || [], _.bind(function( superRel ) {
-						return !_.any( this.prototype.relations || [], _.bind(function( rel ) {
+						return !_.some( this.prototype.relations || [], _.bind(function( rel ) {
 							return superRel.relatedModel === rel.relatedModel && superRel.key === rel.key;
 						}, this ));
 					}, this ));
