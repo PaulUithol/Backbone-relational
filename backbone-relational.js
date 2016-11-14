@@ -232,7 +232,7 @@
 		 * @param {Backbone.Relational.Model} modelType
 		 */
 		setupSuperModel: function( modelType ) {
-			_.find( this._subModels, function( subModelDef ) {
+			_.find( this._subModels, _.bind(function( subModelDef ) {
 				return _.filter( subModelDef.subModels || [], function( subModelTypeName, typeValue ) {
 					var subModelType = this.getObjectByName( subModelTypeName );
 
@@ -247,7 +247,7 @@
 						return true;
 					}
 				}, this ).length;
-			}, this );
+			}, this ));
 		},
 
 		/**
@@ -260,7 +260,7 @@
 		 * @param {String|Object} relation.relatedModel
 		 */
 		addReverseRelation: function( relation ) {
-			var exists = _.any( this._reverseRelations, function( rel ) {
+			var exists = _.some( this._reverseRelations, function( rel ) {
 				return _.all( relation || [], function( val, key ) {
 					return val === rel[ key ];
 				});
@@ -279,7 +279,7 @@
 		 * @param {Object} relation
 		 */
 		addOrphanRelation: function( relation ) {
-			var exists = _.any( this._orphanRelations, function( rel ) {
+			var exists = _.some( this._orphanRelations, function( rel ) {
 				return _.all( relation || [], function( val, key ) {
 					return val === rel[ key ];
 				});
@@ -295,13 +295,13 @@
 		 */
 		processOrphanRelations: function() {
 			// Make sure to operate on a copy since we're removing while iterating
-			_.each( this._orphanRelations.slice( 0 ), function( rel ) {
+			_.each( this._orphanRelations.slice( 0 ), _.bind(function( rel ) {
 				var relatedModel = module.store.getObjectByName( rel.relatedModel );
 				if ( relatedModel ) {
 					this.initializeRelation( null, rel );
 					this._orphanRelations = _.without( this._orphanRelations, rel );
 				}
-			}, this );
+			}, this ));
 		},
 
 		/**
@@ -316,9 +316,9 @@
 			}
 			type.prototype.relations.push( relation );
 
-			_.each( type._subModels || [], function( subModel ) {
+			_.each( type._subModels || [], _.bind(function( subModel ) {
 				this._addRelation( subModel, relation );
-			}, this );
+			}, this ));
 		},
 
 		/**
@@ -327,13 +327,13 @@
 		 */
 		retroFitRelation: function( relation ) {
 			var coll = this.getCollection( relation.model, false );
-			coll && coll.each( function( model ) {
+			coll && coll.each( _.bind(function( model ) {
 				if ( !( model instanceof relation.model ) ) {
 					return;
 				}
 
 				var rel = new relation.type( model, relation );
-			}, this );
+			}, this ));
 		},
 
 		/**
@@ -372,7 +372,7 @@
 			var parts = name.split( '.' ),
 				type = null;
 
-			_.find( this._modelScopes, function( scope ) {
+			_.find( this._modelScopes, _.bind(function( scope ) {
 				type = _.reduce( parts || [], function( memo, val ) {
 					return memo ? memo[ val ] : undefined;
 				}, scope );
@@ -380,7 +380,7 @@
 				if ( type && type !== scope ) {
 					return true;
 				}
-			}, this );
+			}, this ));
 
 			return type;
 		},
@@ -524,10 +524,10 @@
 				models = _.clone( coll.models );
 			}
 
-			_.each( models, function( model ) {
+			_.each( models, _.bind(function( model ) {
 				this.stopListening( model );
 				_.invoke( model.getRelations(), 'stopListening' );
-			}, this );
+			}, this ));
 
 
 			// If we've unregistered an entire store collection, reset the collection (which is much faster).
@@ -536,14 +536,14 @@
 				coll.reset( [] );
 			}
 			else {
-				_.each( models, function( model ) {
+				_.each( models, _.bind(function( model ) {
 					if ( coll.get( model ) ) {
 						coll.remove( model );
 					}
 					else {
 						coll.trigger( 'relational:remove', model, coll );
 					}
-				}, this );
+				}, this ));
 			}
 		},
 
@@ -555,9 +555,9 @@
 			this.stopListening();
 
 			// Unregister each collection to remove event listeners
-			_.each( this._collections, function( coll ) {
+			_.each( this._collections, _.bind(function( coll ) {
 				this.unregister( coll );
-			}, this );
+			}, this ));
 
 			this._collections = [];
 			this._subModels = [];
@@ -708,9 +708,9 @@
 			}
 			// Check if we're not attempting to create a relationship on a `key` that's already used.
 			if ( i && _.keys( i._relations ).length ) {
-				var existing = _.find( i._relations, function( rel ) {
+				var existing = _.find( i._relations, _.bind(function( rel ) {
 					return rel.key === k;
-				}, this );
+				}, this ));
 
 				if ( existing ) {
 					warn && console.warn( 'Cannot create relation=%o on %o for model=%o: already taken by relation=%o.',
@@ -785,9 +785,9 @@
 				this.setRelated( this._prepareCollection() );
 			}
 
-			_.each( this.getReverseRelations(), function( relation ) {
+			_.each( this.getReverseRelations(), _.bind(function( relation ) {
 				relation.removeRelated( this.instance );
-			}, this );
+			}, this ));
 		}
 	});
 
@@ -803,9 +803,9 @@
 			this.setRelated( related );
 
 			// Notify new 'related' object of the new relation.
-			_.each( this.getReverseRelations(), function( relation ) {
+			_.each( this.getReverseRelations(), _.bind(function( relation ) {
 				relation.addRelated( this.instance, opts );
-			}, this );
+			}, this ));
 		},
 
 		/**
@@ -869,17 +869,17 @@
 
 			// Notify old 'related' object of the terminated relation
 			if ( oldRelated && this.related !== oldRelated ) {
-				_.each( this.getReverseRelations( oldRelated ), function( relation ) {
+				_.each( this.getReverseRelations( oldRelated ), _.bind(function( relation ) {
 					relation.removeRelated( this.instance, null, options );
-				}, this );
+				}, this ));
 			}
 
 			// Notify new 'related' object of the new relation. Note we do re-apply even if this.related is oldRelated;
 			// that can be necessary for bi-directional relations if 'this.instance' was created after 'this.related'.
 			// In that case, 'this.instance' will already know 'this.related', but the reverse might not exist yet.
-			_.each( this.getReverseRelations(), function( relation ) {
+			_.each( this.getReverseRelations(), _.bind(function( relation ) {
 				relation.addRelated( this.instance, options );
-			}, this );
+			}, this ));
 
 			// Fire the 'change:<key>' event if 'related' was updated
 			if ( !options.silent && this.related !== oldRelated ) {
@@ -1018,7 +1018,7 @@
 			else {
 				var toAdd = [];
 
-				_.each( this.keyContents, function( attributes ) {
+				_.each( this.keyContents, _.bind(function( attributes ) {
 					var model = null;
 
 					if ( attributes instanceof this.relatedModel ) {
@@ -1031,7 +1031,7 @@
 					}
 
 					model && toAdd.push( model );
-				}, this );
+				}, this ));
 
 				if ( this.related instanceof module.Collection ) {
 					related = this.related;
@@ -1046,7 +1046,7 @@
 			}
 
 			// Remove entries from `keyIds` that were already part of the relation (and are thus 'unchanged')
-			this.keyIds = _.difference( this.keyIds, _.pluck( related.models, 'id' ) );
+			this.keyIds = _.difference( this.keyIds, _.map( related.models, 'id' ) );
 
 			return related;
 		},
@@ -1063,12 +1063,12 @@
 				// Handle cases the an API/user supplies just an Object/id instead of an Array
 				this.keyContents = _.isArray( keyContents ) ? keyContents : [ keyContents ];
 
-				_.each( this.keyContents, function( item ) {
+				_.each( this.keyContents, _.bind(function( item ) {
 					var itemId = module.store.resolveIdForItem( this.relatedModel, item );
 					if ( itemId || itemId === 0 ) {
 						this.keyIds.push( itemId );
 					}
-				}, this );
+				}, this ));
 			}
 		},
 
@@ -1105,9 +1105,9 @@
 			options = options ? _.clone( options ) : {};
 			this.changed = true;
 
-			_.each( this.getReverseRelations( model ), function( relation ) {
+			_.each( this.getReverseRelations( model ), _.bind(function( relation ) {
 				relation.addRelated( this.instance, options );
-			}, this );
+			}, this ));
 
 			// Only trigger 'add' once the newly added model is initialized (so, has its relations set up)
 			var dit = this;
@@ -1125,9 +1125,9 @@
 			options = options ? _.clone( options ) : {};
 			this.changed = true;
 
-			_.each( this.getReverseRelations( model ), function( relation ) {
+			_.each( this.getReverseRelations( model ), _.bind(function( relation ) {
 				relation.removeRelated( this.instance, null, options );
-			}, this );
+			}, this ));
 
 			var dit = this;
 			!options.silent && module.eventQueue.add( function() {
@@ -1304,9 +1304,9 @@
 			this.acquire(); // Setting up relations often also involve calls to 'set', and we only want to enter this function once
 			this._relations = {};
 
-			_.each( this.relations || [], function( rel ) {
+			_.each( this.relations || [], _.bind(function( rel ) {
 				module.store.initializeRelation( this, rel, options );
-			}, this );
+			}, this ));
 
 			this._isInitialized = true;
 			this.release();
@@ -1321,7 +1321,7 @@
 		 */
 		updateRelations: function( changedAttrs, options ) {
 			if ( this._isInitialized && !this.isLocked() ) {
-				_.each( this._relations, function( rel ) {
+				_.each( this._relations, _.bind(function( rel ) {
 					if ( !changedAttrs || ( rel.keySource in changedAttrs || rel.key in changedAttrs ) ) {
 						// Fetch data in `rel.keySource` if data got set in there, or `rel.key` otherwise
 						var value = this.attributes[ rel.keySource ] || this.attributes[ rel.key ],
@@ -1338,7 +1338,7 @@
 					if ( rel.keySource !== rel.key ) {
 						delete this.attributes[ rel.keySource ];
 					}
-				}, this );
+				}, this ));
 			}
 		},
 
@@ -1424,7 +1424,7 @@
 					setUrl,
 					createModels = function() {
 						// Find (or create) a model for each one that is to be fetched
-						models = _.map( idsToFetch, function( id ) {
+						models = _.map( idsToFetch, _.bind(function( id ) {
 							var model = rel.relatedModel.findModel( id );
 
 							if ( !model ) {
@@ -1435,7 +1435,7 @@
 							}
 
 							return model;
-						}, this );
+						}, this ));
 					};
 
 				// Try if the 'collection' can provide a url to fetch a set of models in one request.
@@ -1480,7 +1480,7 @@
 						createModels();
 					}
 
-					requests = _.map( models, function( model ) {
+					requests = _.map( models, _.bind(function( model ) {
 						var opts = _.defaults(
 							{
 								error: function() {
@@ -1493,7 +1493,7 @@
 							options
 						);
 						return model.fetch( opts );
-					}, this );
+					}, this ));
 				}
 			}
 
@@ -1602,7 +1602,7 @@
 				}
 				else if ( _.isString( includeInJSON ) ) {
 					if ( related instanceof module.Collection ) {
-						value = related.pluck( includeInJSON );
+						value = related.map( includeInJSON );
 					}
 					else if ( related instanceof Backbone.Model ) {
 						value = related.get( includeInJSON );
@@ -1688,7 +1688,7 @@
 			}
 
 			// Initialize all reverseRelations that belong to this new model.
-			_.each( this.prototype.relations || [], function( rel ) {
+			_.each( this.prototype.relations || [], _.bind(function( rel ) {
 				if ( !rel.model ) {
 					rel.model = this;
 				}
@@ -1716,7 +1716,7 @@
 						module.store.addOrphanRelation( rel );
 					}
 				}
-			}, this );
+			}, this ));
 
 			return this;
 		},
@@ -1802,11 +1802,11 @@
 				this._superModel.inheritRelations();
 				if ( this._superModel.prototype.relations ) {
 					// Find relations that exist on the '_superModel', but not yet on this model.
-					var inheritedRelations = _.filter( this._superModel.prototype.relations || [], function( superRel ) {
-						return !_.any( this.prototype.relations || [], function( rel ) {
+					var inheritedRelations = _.filter( this._superModel.prototype.relations || [], _.bind(function( superRel ) {
+						return !_.some( this.prototype.relations || [], _.bind(function( rel ) {
 							return superRel.relatedModel === rel.relatedModel && superRel.key === rel.key;
-						}, this );
-					}, this );
+						}, this ));
+					}, this ));
 
 					this.prototype.relations = inheritedRelations.concat( this.prototype.relations );
 				}
@@ -1994,16 +1994,16 @@
 		var toRemove = [];
 
 		//console.debug('calling remove on coll=%o; models=%o, options=%o', this, models, options );
-		_.each( models, function( model ) {
+		_.each( models, _.bind(function( model ) {
 			model = this.get( model ) || ( model && this.get( model.cid ) );
 			model && toRemove.push( model );
-		}, this );
+		}, this ));
 
 		var result = _removeModels.call( this, toRemove, options );
 
-		_.each( toRemove, function( model ) {
+		_.each( toRemove, _.bind(function( model ) {
 			this.trigger( 'relational:remove', model, this, options );
-		}, this );
+		}, this ));
 
 		return result;
 	};
