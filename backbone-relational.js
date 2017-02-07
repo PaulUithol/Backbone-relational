@@ -261,7 +261,7 @@
 		 */
 		addReverseRelation: function( relation ) {
 			var exists = _.some( this._reverseRelations, function( rel ) {
-				return _.all( relation || [], function( val, key ) {
+				return _.every( relation || [], function( val, key ) {
 					return val === rel[ key ];
 				});
 			});
@@ -280,7 +280,7 @@
 		 */
 		addOrphanRelation: function( relation ) {
 			var exists = _.some( this._orphanRelations, function( rel ) {
-				return _.all( relation || [], function( val, key ) {
+				return _.every( relation || [], function( val, key ) {
 					return val === rel[ key ];
 				});
 			});
