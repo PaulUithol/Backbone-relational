@@ -532,7 +532,7 @@
 
 			// If we've unregistered an entire store collection, reset the collection (which is much faster).
 			// Otherwise, remove each model one by one.
-			if ( _.contains( this._collections, type ) ) {
+			if ( _.includes( this._collections, type ) ) {
 				coll.reset( [] );
 			}
 			else {
@@ -1144,7 +1144,7 @@
 		},
 
 		tryAddRelated: function( model, coll, options ) {
-			var item = _.contains( this.keyIds, model.id );
+			var item = _.includes( this.keyIds, model.id );
 
 			if ( item ) {
 				this.addRelated( model, options );
@@ -1484,7 +1484,7 @@
 						var opts = _.defaults(
 							{
 								error: function() {
-									if ( _.contains( createdModels, model ) ) {
+									if ( _.includes( createdModels, model ) ) {
 										model.trigger( 'destroy', model, model.collection, options );
 									}
 									options.error && options.error.apply( models, arguments );
