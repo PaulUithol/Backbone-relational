@@ -492,7 +492,7 @@
 			var coll = this.getCollection( model );
 
 			// Register a model if it isn't yet (which happens if it was created without an id).
-			if ( !coll.contains( model ) ) {
+			if ( !_.includes(coll, model ) ) {
 				this.register( model );
 			}
 
