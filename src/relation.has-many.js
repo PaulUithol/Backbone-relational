@@ -94,7 +94,7 @@ export default Relation.extend({
 		else {
 			var toAdd = [];
 
-			_.each( this.keyContents, function( attributes ) {
+			_.each( this.keyContents, _.bind(function( attributes ) {
 				var model = null;
 
 				if ( attributes instanceof this.relatedModel ) {
@@ -107,7 +107,7 @@ export default Relation.extend({
 				}
 
 				model && toAdd.push( model );
-			}, this );
+			}, this ));
 
 			if ( this.related instanceof Collection ) {
 				related = this.related;
@@ -139,12 +139,12 @@ export default Relation.extend({
 			// Handle cases the an API/user supplies just an Object/id instead of an Array
 			this.keyContents = _.isArray( keyContents ) ? keyContents : [ keyContents ];
 
-			_.each( this.keyContents, function( item ) {
+			_.each( this.keyContents, _.bind(function( item ) {
 				var itemId = store.resolveIdForItem( this.relatedModel, item );
 				if ( itemId || itemId === 0 ) {
 					this.keyIds.push( itemId );
 				}
-			}, this );
+			}, this ));
 		}
 	},
 
@@ -181,9 +181,9 @@ export default Relation.extend({
 		options = options ? _.clone( options ) : {};
 		this.changed = true;
 
-		_.each( this.getReverseRelations( model ), function( relation ) {
+		_.each( this.getReverseRelations( model ), _.bind(function( relation ) {
 			relation.addRelated( this.instance, options );
-		}, this );
+		}, this ));
 
 		// Only trigger 'add' once the newly added model is initialized (so, has its relations set up)
 		var dit = this;
@@ -201,9 +201,9 @@ export default Relation.extend({
 		options = options ? _.clone( options ) : {};
 		this.changed = true;
 
-		_.each( this.getReverseRelations( model ), function( relation ) {
+		_.each( this.getReverseRelations( model ), _.bind(function( relation ) {
 			relation.removeRelated( this.instance, null, options );
-		}, this );
+		}, this ));
 
 		var dit = this;
 		!options.silent && eventQueue.add( function() {

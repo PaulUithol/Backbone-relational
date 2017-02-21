@@ -162,16 +162,16 @@ export default BBCollection.extend({
 		var toRemove = [];
 
 		//console.debug('calling remove on coll=%o; models=%o, options=%o', this, models, options );
-		_.each( models, function( model ) {
+		_.each( models, _.bind(function( model ) {
 			model = this.get( model ) || ( model && this.get( model.cid ) );
 			model && toRemove.push( model );
-		}, this );
+		}, this ));
 
 		var result = BBCollection.prototype._removeModels.call( this, toRemove, options );
 
-		_.each( toRemove, function( model ) {
+		_.each( toRemove, _.bind(function( model ) {
 			this.trigger( 'relational:remove', model, this, options );
-		}, this );
+		}, this ));
 
 		return result;
 	}

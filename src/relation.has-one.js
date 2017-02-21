@@ -15,9 +15,9 @@ export default Relation.extend({
 		this.setRelated( related );
 
 		// Notify new 'related' object of the new relation.
-		_.each( this.getReverseRelations(), function( relation ) {
+		_.each( this.getReverseRelations(), _.bind(function( relation ) {
 			relation.addRelated( this.instance, opts );
-		}, this );
+		}, this ));
 	},
 
 	/**
@@ -81,17 +81,17 @@ export default Relation.extend({
 
 		// Notify old 'related' object of the terminated relation
 		if ( oldRelated && this.related !== oldRelated ) {
-			_.each( this.getReverseRelations( oldRelated ), function( relation ) {
+			_.each( this.getReverseRelations( oldRelated ), _.bind(function( relation ) {
 				relation.removeRelated( this.instance, null, options );
-			}, this );
+			}, this ));
 		}
 
 		// Notify new 'related' object of the new relation. Note we do re-apply even if this.related is oldRelated;
 		// that can be necessary for bi-directional relations if 'this.instance' was created after 'this.related'.
 		// In that case, 'this.instance' will already know 'this.related', but the reverse might not exist yet.
-		_.each( this.getReverseRelations(), function( relation ) {
+		_.each( this.getReverseRelations(), _.bind(function( relation ) {
 			relation.addRelated( this.instance, options );
-		}, this );
+		}, this ));
 
 		// Fire the 'change:<key>' event if 'related' was updated
 		if ( !options.silent && this.related !== oldRelated ) {
