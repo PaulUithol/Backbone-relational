@@ -797,7 +797,7 @@ QUnit.module( "Backbone.Relational.Model", { setup: require('./setup/data') } );
 
 		// check order of parent's children
 		equal( children.length, 2, 'parent is fetched with children' );
-		deepEqual( children.pluck('id'), ['foo1', 'foo2'], 'children are in the right order' );
+		deepEqual( children.map('id'), ['foo1', 'foo2'], 'children are in the right order' );
 	});
 
 QUnit.module( "Backbone.Relational.Model inheritance (`subModelTypes`)", { setup: require('./setup/setup').reset } );

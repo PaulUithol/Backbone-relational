@@ -122,7 +122,7 @@ export default Relation.extend({
 		}
 
 		// Remove entries from `keyIds` that were already part of the relation (and are thus 'unchanged')
-		this.keyIds = _.difference( this.keyIds, _.pluck( related.models, 'id' ) );
+		this.keyIds = _.difference( this.keyIds, _.map( related.models, 'id' ) );
 
 		return related;
 	},
@@ -220,7 +220,7 @@ export default Relation.extend({
 	},
 
 	tryAddRelated: function( model, coll, options ) {
-		var item = _.contains( this.keyIds, model.id );
+		var item = _.includes( this.keyIds, model.id );
 
 		if ( item ) {
 			this.addRelated( model, options );

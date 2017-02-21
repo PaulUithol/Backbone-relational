@@ -323,7 +323,7 @@ export default BBModel.extend( Semaphore ).extend({
 					let opts = _.defaults(
 						{
 							error: function() {
-								if ( _.contains( createdModels, model ) ) {
+								if ( _.includes( createdModels, model ) ) {
 									model.trigger( 'destroy', model, model.collection, options );
 								}
 								options.error && options.error.apply( models, arguments );
@@ -441,7 +441,7 @@ export default BBModel.extend( Semaphore ).extend({
 			}
 			else if ( _.isString( includeInJSON ) ) {
 				if ( related instanceof Collection ) {
-					value = related.pluck( includeInJSON );
+					value = related.map( includeInJSON );
 				}
 				else if ( related instanceof BBModel ) {
 					value = related.get( includeInJSON );
@@ -642,7 +642,7 @@ export default BBModel.extend( Semaphore ).extend({
 			if ( this._superModel.prototype.relations ) {
 				// Find relations that exist on the '_superModel', but not yet on this model.
 				var inheritedRelations = _.filter( this._superModel.prototype.relations || [], _.bind(function( superRel ) {
-					return !_.any( this.prototype.relations || [], _.bind(function( rel ) {
+					return !_.some( this.prototype.relations || [], _.bind(function( rel ) {
 						return superRel.relatedModel === rel.relatedModel && superRel.key === rel.key;
 					}, this ));
 				}, this ));

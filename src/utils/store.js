@@ -103,8 +103,8 @@ export default BObject.extend({
 	 * @param {String|Object} relation.relatedModel
 	 */
 	addReverseRelation: function( relation ) {
-		var exists = _.any( this._reverseRelations, function( rel ) {
-			return _.all( relation || [], function( val, key ) {
+		var exists = _.some( this._reverseRelations, function( rel ) {
+			return _.every( relation || [], function( val, key ) {
 				return val === rel[ key ];
 			});
 		});
@@ -122,8 +122,8 @@ export default BObject.extend({
 	 * @param {Object} relation
 	 */
 	addOrphanRelation: function( relation ) {
-		var exists = _.any( this._orphanRelations, function( rel ) {
-			return _.all( relation || [], function( val, key ) {
+		var exists = _.some( this._orphanRelations, function( rel ) {
+			return _.every( relation || [], function( val, key ) {
 				return val === rel[ key ];
 			});
 		});
@@ -327,7 +327,7 @@ export default BObject.extend({
 		var coll = this.getCollection( model );
 
 		// Register a model if it isn't yet (which happens if it was created without an id).
-		if ( !coll.contains( model ) ) {
+		if ( !coll.includes( model ) ) {
 			this.register( model );
 		}
 
@@ -364,7 +364,7 @@ export default BObject.extend({
 
 		// If we've unregistered an entire store collection, reset the collection (which is much faster).
 		// Otherwise, remove each model one by one.
-		if ( _.contains( this._collections, type ) ) {
+		if ( _.includes( this._collections, type ) ) {
 			coll.reset( [] );
 		}
 		else {

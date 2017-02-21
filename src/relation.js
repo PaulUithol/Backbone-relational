@@ -146,7 +146,7 @@ export default BObject.extend( Semaphore ).extend({
 		}
 		// Check if we're not attempting to create a relationship on a `key` that's already used.
 		if ( i && _.keys( i._relations ).length ) {
-			var existing = _.find( i._relations, _.bind(function( rel )
+			var existing = _.find( i._relations, _.bind(function( rel ) {
 				return rel.key === k;
 			}, this ));
 

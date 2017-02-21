@@ -348,7 +348,7 @@ var artis = new Zoo( { name: 'Artis' } );
 var lion = new Animal( { species: 'Lion', livesIn: artis } );
 
 // `animals` in `artis` now contains `lion`
-alert( artis.get( 'animals' ).pluck( 'species' ) );
+alert( artis.get( 'animals' ).map( 'species' ) );
 </code></pre>
 <pre class="language-javascript nomargin"><code class="language-javascript runnable" data-setup="#example-zoo"><!--
 -->var amersfoort = new Zoo( { name: 'Dierenpark Amersfoort', animals: [ lion ] } );
@@ -1200,7 +1200,7 @@ alert( 'paul.livesIn=' + paul.get( 'livesIn' ) );
 theirHouse = new House( { id: 'house-2' } );
 paul.set( { 'livesIn': theirHouse } );
 
-alert( 'theirHouse.occupants=' + theirHouse.get( 'occupants' ).pluck( 'name' ) );
+alert( 'theirHouse.occupants=' + theirHouse.get( 'occupants' ).map( 'name' ) );
 </code></pre>
 
 	<p>This is achieved using the following relations and models:</p>
@@ -1246,7 +1246,7 @@ PersonCollection = Backbone.Collection.extend({
 	url: function( models ) {
 		// Logic to create a url for the whole collection, or a set of models.
 		// See the tests, or Backbone-tastypie, for an example.
-		return '/person/' + ( models ? 'set/' + _.pluck( models, 'id' ).join(';') + '/' : '' );
+		return '/person/' + ( models ? 'set/' + _.map( models, 'id' ).join(';') + '/' : '' );
 	}
 });
 
