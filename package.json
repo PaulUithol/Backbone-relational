@@ -22,10 +22,6 @@
   },
   "author": "Paul Uithol <https://github.com/PaulUithol>",
   "contributors": "Listed at <https://github.com/PaulUithol/Backbone-relational/contributors>",
-  "peerDependencies": {
-    "backbone": "1.2.3",
-    "underscore": "1.8 - 1.8.3"
-  },
   "license": "MIT",
   "version": "0.10.0",
   "devDependencies": {
@@ -40,6 +36,7 @@
     "karma-browserify": "^5.0.2",
     "karma-phantomjs-launcher": "^1.0.2",
     "karma-qunit": "^1.2.1",
+    "lodash": "^4.17.4",
     "phantomjs-prebuilt": "^2.1.5",
     "qunitjs": "^1.14.0",
     "rollup": "^0.36.3",

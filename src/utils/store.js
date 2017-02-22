@@ -75,7 +75,7 @@ export default BObject.extend({
 	 * @param {Backbone.Relational.Model} modelType
 	 */
 	setupSuperModel: function( modelType ) {
-		_.find( this._subModels, function( subModelDef ) {
+		_.find( this._subModels, _.bind(function( subModelDef ) {
 			return _.filter( subModelDef.subModels || [], function( subModelTypeName, typeValue ) {
 				var subModelType = this.getObjectByName( subModelTypeName );
 
@@ -90,7 +90,7 @@ export default BObject.extend({
 					return true;
 				}
 			}, this ).length;
-		}, this );
+		}, this ));
 	},
 
 	/**
@@ -103,8 +103,8 @@ export default BObject.extend({
 	 * @param {String|Object} relation.relatedModel
 	 */
 	addReverseRelation: function( relation ) {
-		var exists = _.any( this._reverseRelations, function( rel ) {
-			return _.all( relation || [], function( val, key ) {
+		var exists = _.some( this._reverseRelations, function( rel ) {
+			return _.every( relation || [], function( val, key ) {
 				return val === rel[ key ];
 			});
 		});
@@ -122,8 +122,8 @@ export default BObject.extend({
 	 * @param {Object} relation
 	 */
 	addOrphanRelation: function( relation ) {
-		var exists = _.any( this._orphanRelations, function( rel ) {
-			return _.all( relation || [], function( val, key ) {
+		var exists = _.some( this._orphanRelations, function( rel ) {
+			return _.every( relation || [], function( val, key ) {
 				return val === rel[ key ];
 			});
 		});
@@ -138,13 +138,13 @@ export default BObject.extend({
 	 */
 	processOrphanRelations: function() {
 		// Make sure to operate on a copy since we're removing while iterating
-		_.each( this._orphanRelations.slice( 0 ), function( rel ) {
+		_.each( this._orphanRelations.slice( 0 ), _.bind(function( rel ) {
 			var relatedModel = this.getObjectByName( rel.relatedModel );
 			if ( relatedModel ) {
 				this.initializeRelation( null, rel );
 				this._orphanRelations = _.without( this._orphanRelations, rel );
 			}
-		}, this );
+		}, this ));
 	},
 
 	/**
@@ -159,9 +159,9 @@ export default BObject.extend({
 		}
 		type.prototype.relations.push( relation );
 
-		_.each( type._subModels || [], function( subModel ) {
+		_.each( type._subModels || [], _.bind(function( subModel ) {
 			this._addRelation( subModel, relation );
-		}, this );
+		}, this ));
 	},
 
 	/**
@@ -172,13 +172,13 @@ export default BObject.extend({
 		let { type: RelationType } = relation;
 
 		var coll = this.getCollection( relation.model, false );
-		coll && coll.each( function( model ) {
+		coll && coll.each( _.bind(function( model ) {
 			if ( !( model instanceof relation.model ) ) {
 				return;
 			}
 
 			let relationType = new RelationType( model, relation );
-		}, this );
+		}, this ));
 	},
 
 	/**
@@ -217,7 +217,7 @@ export default BObject.extend({
 		var parts = name.split( '.' ),
 			type = null;
 
-		_.find( this._modelScopes, function( scope ) {
+		_.find( this._modelScopes, _.bind(function( scope ) {
 			type = _.reduce( parts || [], function( memo, val ) {
 				return memo ? memo[ val ] : undefined;
 			}, scope );
@@ -225,7 +225,7 @@ export default BObject.extend({
 			if ( type && type !== scope ) {
 				return true;
 			}
-		}, this );
+		}, this ));
 
 		return type;
 	},
@@ -327,7 +327,7 @@ export default BObject.extend({
 		var coll = this.getCollection( model );
 
 		// Register a model if it isn't yet (which happens if it was created without an id).
-		if ( !coll.contains( model ) ) {
+		if ( !coll.includes( model ) ) {
 			this.register( model );
 		}
 
@@ -357,25 +357,25 @@ export default BObject.extend({
 			models = [ type ];
 		}
 
-		_.each( models, function( model ) {
+		_.each( models, _.bind(function( model ) {
 			this.stopListening( model );
 			_.invoke( model.getRelations(), 'stopListening' );
-		}, this );
+		}, this ));
 
 		// If we've unregistered an entire store collection, reset the collection (which is much faster).
 		// Otherwise, remove each model one by one.
-		if ( _.contains( this._collections, type ) ) {
+		if ( _.includes( this._collections, type ) ) {
 			coll.reset( [] );
 		}
 		else {
-			_.each( models, function( model ) {
+			_.each( models, _.bind(function( model ) {
 				if ( coll.get( model ) ) {
 					coll.remove( model );
 				}
 				else {
 					coll.trigger( 'relational:remove', model, coll );
 				}
-			}, this );
+			}, this ));
 		}
 	},
 
@@ -387,9 +387,9 @@ export default BObject.extend({
 		this.stopListening();
 
 		// Unregister each collection to remove event listeners
-		_.each( this._collections, function( coll ) {
+		_.each( this._collections, _.bind(function( coll ) {
 			this.unregister( coll );
-		}, this );
+		}, this ));
 
 		this._collections = [];
 		this._subModels = [];

@@ -146,9 +146,9 @@ export default BObject.extend( Semaphore ).extend({
 		}
 		// Check if we're not attempting to create a relationship on a `key` that's already used.
 		if ( i && _.keys( i._relations ).length ) {
-			var existing = _.find( i._relations, function( rel ) {
+			var existing = _.find( i._relations, _.bind(function( rel ) {
 				return rel.key === k;
-			}, this );
+			}, this ));
 
 			if ( existing ) {
 				warn && console.warn( 'Cannot create relation=%o on %o for model=%o: already taken by relation=%o.',
@@ -223,8 +223,8 @@ export default BObject.extend( Semaphore ).extend({
 			this.setRelated( this._prepareCollection() );
 		}
 
-		_.each( this.getReverseRelations(), function( relation ) {
+		_.each( this.getReverseRelations(), _.bind(function( relation ) {
 			relation.removeRelated( this.instance );
-		}, this );
+		}, this ));
 	}
 });

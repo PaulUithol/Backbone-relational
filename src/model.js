@@ -143,9 +143,9 @@ export default BBModel.extend( Semaphore ).extend({
 		this.acquire(); // Setting up relations often also involve calls to 'set', and we only want to enter this function once
 		this._relations = {};
 
-		_.each( this.relations || [], function( rel ) {
+		_.each( this.relations || [], _.bind(function( rel ) {
 			store.initializeRelation( this, rel, options );
-		}, this );
+		}, this ));
 
 		this._isInitialized = true;
 		this.release();
@@ -160,7 +160,7 @@ export default BBModel.extend( Semaphore ).extend({
 	 */
 	updateRelations: function( changedAttrs, options ) {
 		if ( this._isInitialized && !this.isLocked() ) {
-			_.each( this._relations, function( rel ) {
+			_.each( this._relations, _.bind(function( rel ) {
 				if ( !changedAttrs || ( rel.keySource in changedAttrs || rel.key in changedAttrs ) ) {
 					// Fetch data in `rel.keySource` if data got set in there, or `rel.key` otherwise
 					var value = this.attributes[ rel.keySource ] || this.attributes[ rel.key ],
@@ -177,7 +177,7 @@ export default BBModel.extend( Semaphore ).extend({
 				if ( rel.keySource !== rel.key ) {
 					delete this.attributes[ rel.keySource ];
 				}
-			}, this );
+			}, this ));
 		}
 	},
 
@@ -263,7 +263,7 @@ export default BBModel.extend( Semaphore ).extend({
 				setUrl,
 				createModels = function() {
 					// Find (or create) a model for each one that is to be fetched
-					models = _.map( idsToFetch, function( id ) {
+					models = _.map( idsToFetch, _.bind(function( id ) {
 						var model = rel.relatedModel.findModel( id );
 
 						if ( !model ) {
@@ -274,7 +274,7 @@ export default BBModel.extend( Semaphore ).extend({
 						}
 
 						return model;
-					}, this );
+					}, this ));
 				};
 
 			// Try if the 'collection' can provide a url to fetch a set of models in one request.
@@ -319,11 +319,11 @@ export default BBModel.extend( Semaphore ).extend({
 					createModels();
 				}
 
-				requests = _.map( models, function( model ) {
+				requests = _.map( models, _.bind(function( model ) {
 					let opts = _.defaults(
 						{
 							error: function() {
-								if ( _.contains( createdModels, model ) ) {
+								if ( _.includes( createdModels, model ) ) {
 									model.trigger( 'destroy', model, model.collection, options );
 								}
 								options.error && options.error.apply( models, arguments );
@@ -332,7 +332,7 @@ export default BBModel.extend( Semaphore ).extend({
 						options
 					);
 					return model.fetch( opts );
-				}, this );
+				}, this ));
 			}
 		}
 
@@ -441,7 +441,7 @@ export default BBModel.extend( Semaphore ).extend({
 			}
 			else if ( _.isString( includeInJSON ) ) {
 				if ( related instanceof Collection ) {
-					value = related.pluck( includeInJSON );
+					value = related.map( includeInJSON );
 				}
 				else if ( related instanceof BBModel ) {
 					value = related.get( includeInJSON );
@@ -527,7 +527,7 @@ export default BBModel.extend( Semaphore ).extend({
 		}
 
 		// Initialize all reverseRelations that belong to this new model.
-		_.each( this.prototype.relations || [], function( rel ) {
+		_.each( this.prototype.relations || [], _.bind(function( rel ) {
 			if ( !rel.model ) {
 				rel.model = this;
 			}
@@ -555,7 +555,7 @@ export default BBModel.extend( Semaphore ).extend({
 					store.addOrphanRelation( rel );
 				}
 			}
-		}, this );
+		}, this ));
 
 		return this;
 	},
@@ -641,11 +641,11 @@ export default BBModel.extend( Semaphore ).extend({
 			this._superModel.inheritRelations();
 			if ( this._superModel.prototype.relations ) {
 				// Find relations that exist on the '_superModel', but not yet on this model.
-				var inheritedRelations = _.filter( this._superModel.prototype.relations || [], function( superRel ) {
-					return !_.any( this.prototype.relations || [], function( rel ) {
+				var inheritedRelations = _.filter( this._superModel.prototype.relations || [], _.bind(function( superRel ) {
+					return !_.some( this.prototype.relations || [], _.bind(function( rel ) {
 						return superRel.relatedModel === rel.relatedModel && superRel.key === rel.key;
-					}, this );
-				}, this );
+					}, this ));
+				}, this ));
 
 				this.prototype.relations = inheritedRelations.concat( this.prototype.relations );
 			}
