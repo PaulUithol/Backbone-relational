@@ -5,17 +5,28 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
+This is a big update. We have refactored our entire codebase to use ES2015 compliant code. With this release we also change what we export.
 ### Added
 - New linter rules (ESLint, editorConfig)
 - New test runner (Karma and TravisCI)
 - New build tasks
 - Code coverage reporting on unit tests
 - Change log
+- [#575](https://github.com/PaulUithol/Backbone-relational/issues/575): Add license information to bower.json
 ### Removed
 - `relatedModel` can no longer be defined as a function when defining `Relational.Model` relations
 ### Changed
 - ES6 Refactor
 - Updated QUnit from 1.x to 2.x
+- Rather than modifying the existing `Backbone.Collection` we extend and use our own. This means Backbone and Backbone Relational can work side-by-side!
+- No longer modify Backbone's namespace, but instead export our own
+    - `Backbone.RelationalModel` -> `BackboneRelational.Model`
+    - `Backbone.Collection` -> `BackboneRelational.Collection`
+    - `Backbone.Relation` -> `BackboneRelational.Relation`
+    - `Backbone.HasOne` -> `BackboneRelational.HasOne`
+    - `Backbone.HasMany` -> `BackboneRelational.HasMany`
+    - `Backbone.Store` -> `BackboneRelational.Store`
+    - `Backbone.Relational.store` -> `BackboneRelational.store`
 
 ## [0.10.0] - 2015-08-19
 ### Changed
@@ -35,7 +46,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 - `Backbone.Relational.store.unregister` now also accepts a collection or a model type
 - [#215](https://github.com/PaulUithol/Backbone-relational/issues/215) Add direct support for AMD, CommonJS, require, etc.
-### Changed
+### Fixed
 - [#419](https://github.com/PaulUithol/Backbone-relational/issues/419): Proper return values for single models on collection methods for `Backbone` 1.1.0
 - [#427](https://github.com/PaulUithol/Backbone-relational/issues/427): Fix firing explicit `change` events
 - [#411](https://github.com/PaulUithol/Backbone-relational/issues/411): Don't add models without an `id` to the store
@@ -57,6 +68,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 - [#322](https://github.com/PaulUithol/Backbone-relational/pull/322): Remove keySource value after a `set`
 - [#349](https://github.com/PaulUithol/Backbone-relational/pull/349): Event ordering: maintain the originally intended order when process gets called more than once.
+### Fixed
 - [#380](https://github.com/PaulUithol/Backbone-relational/pull/380): Fix pop on an empty collection.
 
 ## [0.8.5] - 2013-04-10
@@ -90,7 +102,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [0.7.0] - 2012-12-18
 ### Changed
 - Compatible with `Backbone` >= 0.9.9
-- [#180](https://github.com/PaulUithol/Backbone-relational/issues/180): no longer allow multiple instances of `RelationalModel` with the same type, and the same `id`
+- [#180](https://github.com/PaulUithol/Backbone-relational/issues/180): No longer allow multiple instances of `RelationalModel` with the same type, and the same `id`
 
 ## [0.6.1] - 2012-12-04
 ### Changed
@@ -115,7 +127,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [0.4.0] - 2011-07-11
 ### Added
 - Added the Backbone.RelationalModel.updateRelations method
-### Changed
-- update<key> event added
+- `update:<key>` event added
+### Fixed
 - Override `Backbone.Collection._add` and `Backbone.Collection._remove` so relations update properly
 - Queue change and `change:<key>` events, so they won't fire before relations are updated
