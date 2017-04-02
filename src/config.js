@@ -1,3 +1,3 @@
 export default {
-  showWarnings: true
+	showWarnings: true
 };

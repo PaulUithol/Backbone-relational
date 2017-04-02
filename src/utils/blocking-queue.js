@@ -10,12 +10,12 @@ const BlockingQueue = function() {
 	this._queue = [];
 };
 
-_.extend( BlockingQueue.prototype, Semaphore, {
+_.extend(BlockingQueue.prototype, Semaphore, {
 	_queue: null,
 
-	add: function( func ) {
-		if ( this.isBlocked() ) {
-			this._queue.push( func );
+	add(func) {
+		if (this.isBlocked()) {
+			this._queue.push(func);
 		} else {
 			func();
 		}
@@ -31,26 +31,26 @@ _.extend( BlockingQueue.prototype, Semaphore, {
 	// [ 'A', 'B', 'D', 'E', 'C' ]
 	// The same order the would have executed if they didn't have to be
 	// delayed and queued.
-	process: function() {
-		var queue = this._queue;
+	process() {
+		let queue = this._queue;
 		this._queue = [];
-		while ( queue && queue.length ) {
+		while (queue && queue.length) {
 			queue.shift()();
 		}
 	},
 
-	block: function() {
+	block() {
 		this.acquire();
 	},
 
-	unblock: function() {
+	unblock() {
 		this.release();
-		if ( !this.isBlocked() ) {
+		if (!this.isBlocked()) {
 			this.process();
 		}
 	},
 
-	isBlocked: function() {
+	isBlocked() {
 		return this.isLocked();
 	}
 });

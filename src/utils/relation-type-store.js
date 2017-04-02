@@ -4,17 +4,17 @@ export default BObject.extend({
 	initialize() {
 		this.types = {};
 	},
-	registerType( name, Type ) {
+	registerType(name, Type) {
 		this.types[ name ] = Type;
 	},
-	unregisterType( name, Type ) {
-		if ( name in this.types ) {
+	unregisterType(name, Type) {
+		if (name in this.types) {
 			delete this.types[ name ];
 			return true;
 		}
 		return false;
 	},
-	find( name ) {
+	find(name) {
 		return this.types[ name ];
 	}
 });

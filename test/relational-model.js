@@ -1,533 +1,531 @@
 import { reset, requests } from './setup/setup';
 import { store, Model as RelationalModel, HasMany, HasOne, Collection as RelationalCollection, Relation } from 'backbone-relational';
-import { Model as BackboneModel, Collection as BackboneCollection } from 'backbone';
+import { Model as BackboneModel } from 'backbone';
 import { Person, User, Animal, Zoo, Agent, Shop, AnimalCollection, Customer, Job, Address, Node, NodeList } from './setup/objects';
 import initObjects from './setup/data';
 import _ from 'underscore';
 
 let objects;
 
-QUnit.module( "RelationalModel", { beforeEach() {
-  reset();
-  store.addModelScope({
-    Person, User, Animal, Zoo, Agent, Shop, Customer, Job, Address, Node
-  });
-  objects = initObjects();
-} });
-
-	QUnit.test( "Return values: set returns the Model", function( assert ) {
-		var personId = 'person-10';
-		var person = new Person({
+QUnit.module('RelationalModel', {
+	beforeEach() {
+		reset();
+		store.addModelScope({
+			Person, User, Animal, Zoo, Agent, Shop, Customer, Job, Address, Node
+		});
+		objects = initObjects();
+	}
+}, () => {
+	QUnit.test('Return values: set returns the Model', function(assert) {
+		let personId = 'person-10';
+		let person = new Person({
 			id: personId,
 			name: 'Remi',
 			resource_uri: personId
 		});
 
-		var result = person.set( { 'name': 'Hector' } );
-		assert.ok( result === person, "Set returns the model" );
+		let result = person.set({ 'name': 'Hector' });
+		assert.ok(result === person, 'Set returns the model');
 	});
 
-	QUnit.test( "`clear`", function( assert ) {
-		var person = new Person( { id: 'person-10' } );
+	QUnit.test('`clear`', function(assert) {
+		let person = new Person({ id: 'person-10' });
 
-		assert.ok( person === Person.findOrCreate( 'person-10' ) );
+		assert.ok(person === Person.findOrCreate('person-10'));
 
 		person.clear();
 
-		assert.ok( !person.id );
+		assert.ok(!person.id);
 
-		assert.ok( !Person.findOrCreate( 'person-10' ) );
+		assert.ok(!Person.findOrCreate('person-10'));
 
-		person.set( { id: 'person-10' } );
+		person.set({ id: 'person-10' });
 
-		assert.ok( person === Person.findOrCreate( 'person-10' ) );
+		assert.ok(person === Person.findOrCreate('person-10'));
 	});
 
-	QUnit.test( "getRelations", function( assert ) {
-		var relations = objects.person1.getRelations();
+	QUnit.test('getRelations', function(assert) {
+		let relations = objects.person1.getRelations();
 
-		assert.equal( relations.length, 6 );
+		assert.equal(relations.length, 6);
 
-		assert.ok( _.every( relations, function( rel ) {
-				return rel instanceof Relation;
-			})
-		);
+		assert.ok(_.every(relations, function(rel) {
+			return rel instanceof Relation;
+		}));
 	});
 
-	QUnit.test( "getRelation", function( assert ) {
-		var userRel = objects.person1.getRelation( 'user' );
+	QUnit.test('getRelation', function(assert) {
+		let userRel = objects.person1.getRelation('user');
 
-		assert.ok( userRel instanceof HasOne );
-		assert.equal( userRel.key, 'user' );
+		assert.ok(userRel instanceof HasOne);
+		assert.equal(userRel.key, 'user');
 
-		var jobsRel = objects.person1.getRelation( 'jobs' );
+		let jobsRel = objects.person1.getRelation('jobs');
 
-		assert.ok( jobsRel instanceof HasMany );
-		assert.equal( jobsRel.key, 'jobs' );
+		assert.ok(jobsRel instanceof HasMany);
+		assert.equal(jobsRel.key, 'jobs');
 
-		assert.ok( objects.person1.getRelation( 'nope' ) == null );
+		assert.ok(objects.person1.getRelation('nope') == null);
 	});
 
-	QUnit.test( "getAsync on a HasOne relation", function( assert ) {
-		var errorCount = 0;
-		var person = new Person({
+	QUnit.test('getAsync on a HasOne relation', function(assert) {
+		let errorCount = 0;
+		let person = new Person({
 			id: 'person-10',
 			resource_uri: 'person-10',
 			user: 'user-10'
 		});
 
-		var idsToFetch = person.getIdsToFetch( 'user' );
-		assert.deepEqual( idsToFetch, [ 'user-10' ] );
+		let idsToFetch = person.getIdsToFetch('user');
+		assert.deepEqual(idsToFetch, ['user-10']);
 
-		var request = person.getAsync( 'user', { error: function() {
-				errorCount++;
-			}
-		});
+		let request = person.getAsync('user', { error() {
+			errorCount++;
+		}});
 
-		assert.ok( _.isObject( request ) && request.always && request.done && request.fail );
-		assert.equal( requests.length, 1, "A single request has been made" );
-		assert.ok( person.get( 'user' ) instanceof User );
+		assert.ok(_.isObject(request) && request.always && request.done && request.fail);
+		assert.equal(requests.length, 1, 'A single request has been made');
+		assert.ok(person.get('user') instanceof User);
 
 		// Triggering the 'error' callback should destroy the model
 		requests[ 0 ].error();
 		// Trigger the 'success' callback on the `destroy` call to actually fire the 'destroy' event
-		_.last( requests ).success();
+		_.last(requests).success();
 
-		assert.ok( !person.get( 'user' ), "User has been destroyed & removed" );
-		assert.equal( errorCount, 1, "The error callback executed successfully" );
+		assert.ok(!person.get('user'), 'User has been destroyed & removed');
+		assert.equal(errorCount, 1, 'The error callback executed successfully');
 
-		var person2 = new Person({
+		let person2 = new Person({
 			id: 'person-11',
 			resource_uri: 'person-11'
 		});
 
-		request = person2.getAsync( 'user' );
-		assert.equal( requests.length, 1, "No request was made" );
+		request = person2.getAsync('user');
+		assert.equal(requests.length, 1, 'No request was made');
 	});
 
-	QUnit.test( "getAsync on a HasMany relation", function( assert ) {
-		var errorCount = 0;
-		var zoo = new Zoo({
-			animals: [ { id: 'monkey-1' }, 'lion-1', 'zebra-1' ]
+	QUnit.test('getAsync on a HasMany relation', function(assert) {
+		let errorCount = 0;
+		let zoo = new Zoo({
+			animals: [{ id: 'monkey-1' }, 'lion-1', 'zebra-1']
 		});
 
-		var idsToFetch = zoo.getIdsToFetch( 'animals' );
-		assert.deepEqual( idsToFetch, [ 'lion-1', 'zebra-1' ] );
+		let idsToFetch = zoo.getIdsToFetch('animals');
+		assert.deepEqual(idsToFetch, ['lion-1', 'zebra-1']);
 
 		/**
-		 * Case 1: separate requests for each model
-		 */
+		* Case 1: separate requests for each model
+		*/
 		requests.length = 0;
 
 		// `getAsync` creates two placeholder models for the ids present in the relation.
-		var request = zoo.getAsync( 'animals', { error: function() { errorCount++; } } );
+		let request = zoo.getAsync('animals', { error() { errorCount++; } });
 
-		assert.ok( _.isObject( request ) && request.always && request.done && request.fail );
-		assert.equal( requests.length, 2, "Two requests have been made (a separate one for each animal)" );
-		assert.equal( zoo.get( 'animals' ).length, 3, "Three animals in the zoo" );
+		assert.ok(_.isObject(request) && request.always && request.done && request.fail);
+		assert.equal(requests.length, 2, 'Two requests have been made (a separate one for each animal)');
+		assert.equal(zoo.get('animals').length, 3, 'Three animals in the zoo');
 
 		// Triggering the 'error' callback for one request should destroy the model
 		requests[ 0 ].error();
 		// Trigger the 'success' callback on the `destroy` call to actually fire the 'destroy' event
-		_.last( requests ).success();
+		_.last(requests).success();
 
-		assert.equal( zoo.get( 'animals' ).length, 2, "Two animals left in the zoo" );
-		assert.equal( errorCount, 1, "The error callback executed successfully" );
+		assert.equal(zoo.get('animals').length, 2, 'Two animals left in the zoo');
+		assert.equal(errorCount, 1, 'The error callback executed successfully');
 
 		// Try to re-fetch; nothing left to get though, since the placeholder models got destroyed
 		requests.length = 0;
-		request = zoo.getAsync( 'animals' );
+		request = zoo.getAsync('animals');
 
-		assert.equal( requests.length, 0, "No request" );
-		assert.equal( zoo.get( 'animals' ).length, 2, "Two animals" );
+		assert.equal(requests.length, 0, 'No request');
+		assert.equal(zoo.get('animals').length, 2, 'Two animals');
 
 		/**
-		 * Case 2: one request per fetch (generated by the collection)
-		 */
+		* Case 2: one request per fetch (generated by the collection)
+		*/
 		requests.length = 0;
 		errorCount = 0;
 
 		// Define a `url` function for the zoo that builds a url to fetch a set of models from their ids
-		zoo.get( 'animals' ).url = function( models ) {
-			var ids = _.map( models || [], function( model ) {
+		zoo.get('animals').url = function(models) {
+			let ids = _.map(models || [], function(model) {
 				return model instanceof BackboneModel ? model.id : model;
-			} );
+			});
 
-			return '/animal/' + ( ids.length ? 'set/' + ids.join( ';' ) + '/' : '' );
+			return '/animal/' + (ids.length ? 'set/' + ids.join(';') + '/' : '');
 		};
 
 		// Set two new animals to be fetched; both should be fetched in a single request.
-		zoo.set( { animals: [ 'monkey-1', 'lion-2', 'zebra-2' ] } );
+		zoo.set({ animals: ['monkey-1', 'lion-2', 'zebra-2'] });
 
-		assert.equal( zoo.get( 'animals' ).length, 1, "One animal" );
+		assert.equal(zoo.get('animals').length, 1, 'One animal');
 
 		// `getAsync` should not create placeholder models in this case, since the custom `url` function
 		// can return a url for the whole set without needing to resort to this.
 		requests.length = 0;
-		request = zoo.getAsync( 'animals', { error: function() { errorCount++; } } );
+		request = zoo.getAsync('animals', { error() { errorCount++; } });
 
-		assert.ok( _.isObject( request ) && request.always && request.done && request.fail );
-		assert.equal( requests.length, 1, "One request" );
-		assert.equal( _.last( requests ).url, '/animal/set/lion-2;zebra-2/' );
-		assert.equal( zoo.get('animals').length, 1, "Still only one animal in the zoo" );
+		assert.ok(_.isObject(request) && request.always && request.done && request.fail);
+		assert.equal(requests.length, 1, 'One request');
+		assert.equal(_.last(requests).url, '/animal/set/lion-2;zebra-2/');
+		assert.equal(zoo.get('animals').length, 1, 'Still only one animal in the zoo');
 
 		// Triggering the 'error' callback (some error occured during fetching) should trigger the 'destroy' event
 		// on both fetched models, but should NOT actually make 'delete' requests to the server!
-		_.last( requests ).error();
-		assert.equal( requests.length, 1, "An error occured when fetching, but no DELETE requests are made to the server while handling local cleanup." );
+		_.last(requests).error();
+		assert.equal(requests.length, 1, 'An error occured when fetching, but no DELETE requests are made to the server while handling local cleanup.');
 
-		assert.equal( zoo.get( 'animals' ).length, 1, "Both animals are destroyed" );
-		assert.equal( errorCount, 1, "The error callback executed successfully" );
+		assert.equal(zoo.get('animals').length, 1, 'Both animals are destroyed');
+		assert.equal(errorCount, 1, 'The error callback executed successfully');
 
 		// Try to re-fetch; attempts to get both missing animals again
 		requests.length = 0;
-		request = zoo.getAsync( 'animals' );
+		request = zoo.getAsync('animals');
 
-		assert.equal( requests.length, 1, "One request" );
-		assert.equal( zoo.get( 'animals' ).length, 1, "One animal" );
+		assert.equal(requests.length, 1, 'One request');
+		assert.equal(zoo.get('animals').length, 1, 'One animal');
 
 		// In this case, models are only created after receiving data for them
-		requests[ 0 ].success( [ { id: 'lion-2' }, { id: 'zebra-2' } ] );
-		assert.equal( zoo.get( 'animals' ).length, 3 );
+		requests[ 0 ].success([{ id: 'lion-2' }, { id: 'zebra-2' }]);
+		assert.equal(zoo.get('animals').length, 3);
 
 		// Re-fetch the existing models
 		requests.length = 0;
-		request = zoo.getAsync( 'animals', { refresh: true } );
+		request = zoo.getAsync('animals', { refresh: true });
 
-		assert.equal( requests.length, 1 );
-		assert.equal( _.last( requests ).url, '/animal/set/monkey-1;lion-2;zebra-2/' );
-		assert.equal( zoo.get( 'animals' ).length, 3 );
+		assert.equal(requests.length, 1);
+		assert.equal(_.last(requests).url, '/animal/set/monkey-1;lion-2;zebra-2/');
+		assert.equal(zoo.get('animals').length, 3);
 
 		// An error while refreshing existing models shouldn't affect it
 		requests[ 0 ].error();
-		assert.equal( zoo.get( 'animals' ).length, 3 );
+		assert.equal(zoo.get('animals').length, 3);
 	});
 
-	QUnit.test( "getAsync", function( assert ) {
-		var zoo = Zoo.findOrCreate( { id: 'z-1', animals: [ 'cat-1' ] } );
+	QUnit.test('getAsync', function(assert) {
+		let zoo = Zoo.findOrCreate({ id: 'z-1', animals: ['cat-1'] });
 
-		zoo.on( 'add:animals', function( animal ) {
-			// console.log( 'add:animals=%o', animal );
-			animal.on( 'change:favoriteFood', function( model, food ) {
-				// console.log( '%s eats %s', animal.get( 'name' ), food.get( 'name' ) );
+		zoo.on('add:animals', function(animal) {
+		// console.log( 'add:animals=%o', animal );
+			animal.on('change:favoriteFood', function(model, food) {
+			// console.log( '%s eats %s', animal.get( 'name' ), food.get( 'name' ) );
 			});
 		});
 
-		zoo.getAsync( 'animals' ).done( function( animals ) {
-			assert.ok( animals instanceof AnimalCollection );
-			assert.ok( animals.length === 1 );
+		zoo.getAsync('animals').done(function(animals) {
+			assert.ok(animals instanceof AnimalCollection);
+			assert.ok(animals.length === 1);
 
-			var cat = zoo.get( 'animals' ).at( 0 );
-			assert.equal( cat.get( 'name' ), 'Tiger' );
+			let cat = zoo.get('animals').at(0);
+			assert.equal(cat.get('name'), 'Tiger');
 
-			cat.getAsync( 'favoriteFood' ).done( function( food ) {
-				assert.equal( food.get( 'name' ), 'Cheese', 'Favorite food is cheese' );
+			cat.getAsync('favoriteFood').done(function(food) {
+				assert.equal(food.get('name'), 'Cheese', 'Favorite food is cheese');
 			});
 		});
 
-		assert.equal( zoo.get( 'animals' ).length, 1 );
-		assert.equal( requests.length, 1 );
-		assert.equal( _.last( requests ).url, '/animal/cat-1' );
+		assert.equal(zoo.get('animals').length, 1);
+		assert.equal(requests.length, 1);
+		assert.equal(_.last(requests).url, '/animal/cat-1');
 
 		// Declare success
-		_.last( requests ).respond( 200, { id: 'cat-1', name: 'Tiger', favoriteFood: 'f-2' } );
-		assert.equal( requests.length, 2 );
+		_.last(requests).respond(200, { id: 'cat-1', name: 'Tiger', favoriteFood: 'f-2' });
+		assert.equal(requests.length, 2);
 
-		_.last( requests ).respond( 200, { id: 'f-2', name: 'Cheese' } );
+		_.last(requests).respond(200, { id: 'f-2', name: 'Cheese' });
 	});
 
-	QUnit.test( "autoFetch a HasMany relation", function( assert ) {
-		var shopOne = new Shop({
+	QUnit.test('autoFetch a HasMany relation', function(assert) {
+		let shopOne = new Shop({
 			id: 'shop-1',
 			customers: ['customer-1', 'customer-2']
 		});
 
-		assert.equal( requests.length, 2, "Two requests to fetch the users has been made" );
+		assert.equal(requests.length, 2, 'Two requests to fetch the users has been made');
 		requests.length = 0;
 
-		var shopTwo = new Shop({
+		let shopTwo = new Shop({
 			id: 'shop-2',
 			customers: ['customer-1', 'customer-3']
 		});
 
-		assert.equal( requests.length, 1, "A request to fetch a user has been made" ); //as customer-1 has already been fetched
+		assert.equal(requests.length, 1, 'A request to fetch a user has been made'); //as customer-1 has already been fetched
 	});
 
-	QUnit.test( "autoFetch on a HasOne relation (with callbacks)", function( assert ) {
-		var shopThree = new Shop({
+	QUnit.test('autoFetch on a HasOne relation (with callbacks)', function(assert) {
+		let shopThree = new Shop({
 			id: 'shop-3',
 			address: 'address-3'
 		});
 
-		assert.equal( requests.length, 1, "A request to fetch the address has been made" );
+		assert.equal(requests.length, 1, 'A request to fetch the address has been made');
 
-		var res = { successOK: false, errorOK: false };
+		let res = { successOK: false, errorOK: false };
 
-		requests[0].success( res );
-		assert.equal( res.successOK, true, "The success() callback has been called" );
+		requests[0].success(res);
+		assert.equal(res.successOK, true, 'The success() callback has been called');
 		requests.length = 0;
 
-		var shopFour = new Shop({
+		let shopFour = new Shop({
 			id: 'shop-4',
 			address: 'address-4'
 		});
 
-		assert.equal( requests.length, 1, "A request to fetch the address has been made" );
-		requests[0].error( res );
-		assert.equal( res.errorOK, true, "The error() callback has been called" );
+		assert.equal(requests.length, 1, 'A request to fetch the address has been made');
+		requests[0].error(res);
+		assert.equal(res.errorOK, true, 'The error() callback has been called');
 	});
 
-	QUnit.test( "autoFetch false by default", function( assert ) {
-		var agentOne = new Agent({
+	QUnit.test('autoFetch false by default', function(assert) {
+		let agentOne = new Agent({
 			id: 'agent-1',
 			customers: ['customer-4', 'customer-5']
 		});
 
-		assert.equal( requests.length, 0, "No requests to fetch the customers has been made as autoFetch was not defined" );
+		assert.equal(requests.length, 0, 'No requests to fetch the customers has been made as autoFetch was not defined');
 
 		agentOne = new Agent({
 			id: 'agent-2',
 			address: 'address-5'
 		});
 
-		assert.equal( requests.length, 0, "No requests to fetch the customers has been made as autoFetch was set to false" );
+		assert.equal(requests.length, 0, 'No requests to fetch the customers has been made as autoFetch was set to false');
 	});
 
-	QUnit.test( "`clone`", function( assert ) {
-		var user = objects.person1.get( 'user' );
+	QUnit.test('`clone`', function(assert) {
+		let user = objects.person1.get('user');
 
 		// HasOne relations should stay with the original model
-		var newPerson = objects.person1.clone();
+		let newPerson = objects.person1.clone();
 
-		assert.ok( newPerson.get( 'user' ) === null );
-		assert.ok( objects.person1.get( 'user' ) === user );
+		assert.ok(newPerson.get('user') === null);
+		assert.ok(objects.person1.get('user') === user);
 	});
 
-	QUnit.test( "`save` (with `wait`)", function( assert ) {
-		var node1 = new Node({ id: '1', parent: '3', name: 'First node' } ),
+	QUnit.test('`save` (with `wait`)', function(assert) {
+		let node1 = new Node({ id: '1', parent: '3', name: 'First node' }),
 			node2 = new Node({ id: '2', name: 'Second node' });
 
 		// Set node2's parent to node1 in a request with `wait: true`
-		var request = node2.save( 'parent', node1, { wait: true } ),
-			json = JSON.parse( request.data );
+		let request = node2.save('parent', node1, { wait: true }),
+			json = JSON.parse(request.data);
 
-		assert.ok( _.isObject( json.parent ) );
-		assert.equal( json.parent.id, '1' );
-		assert.equal( node2.get( 'parent' ), null );
+		assert.ok(_.isObject(json.parent));
+		assert.equal(json.parent.id, '1');
+		assert.equal(node2.get('parent'), null);
 
 		request.success();
 
-		assert.equal( node2.get( 'parent' ), node1 );
+		assert.equal(node2.get('parent'), node1);
 
 		// Save a new node as node2's parent, only specified as JSON in the call to save
-		request = node2.save( 'parent', { id: '3', parent: '2', name: 'Third node' }, { wait: true } );
-		json = JSON.parse( request.data );
+		request = node2.save('parent', { id: '3', parent: '2', name: 'Third node' }, { wait: true });
+		json = JSON.parse(request.data);
 
-		assert.ok( _.isObject( json.parent ) );
-		assert.equal( json.parent.id, '3' );
-		assert.equal( node2.get( 'parent' ), node1 );
+		assert.ok(_.isObject(json.parent));
+		assert.equal(json.parent.id, '3');
+		assert.equal(node2.get('parent'), node1);
 
 		request.success();
 
-		var node3 = node2.get( 'parent' );
+		let node3 = node2.get('parent');
 
-		assert.ok( node3 instanceof Node );
-		assert.equal( node3.id, '3' );
+		assert.ok(node3 instanceof Node);
+		assert.equal(node3.id, '3');
 
 		// Try to reset node2's parent to node1, but fail the request
-		request = node2.save( 'parent', node1, { wait: true } );
+		request = node2.save('parent', node1, { wait: true });
 		request.error();
 
-		assert.equal( node2.get( 'parent' ), node3 );
+		assert.equal(node2.get('parent'), node3);
 
 		// See what happens for different values of `includeInJSON`...
 		// For `Person.user`, just the `idAttribute` should be serialized to the keyDestination `user_id`
-		var user1 = objects.person1.get( 'user' );
-		request = objects.person1.save( 'user', null, { wait: true } );
-		json = JSON.parse( request.data );
+		let user1 = objects.person1.get('user');
+		request = objects.person1.save('user', null, { wait: true });
+		json = JSON.parse(request.data);
 		// console.log( request, json );
 
-		assert.equal( objects.person1.get( 'user' ), user1 );
+		assert.equal(objects.person1.get('user'), user1);
 
-		request.success( json );
+		request.success(json);
 
-		assert.equal( objects.person1.get( 'user' ), null );
+		assert.equal(objects.person1.get('user'), null);
 
-		request = objects.person1.save( 'user', user1, { wait: true } );
-		json = JSON.parse( request.data );
+		request = objects.person1.save('user', user1, { wait: true });
+		json = JSON.parse(request.data);
 
-		assert.equal( json.user_id, user1.id );
-		assert.equal( objects.person1.get( 'user' ), null );
+		assert.equal(json.user_id, user1.id);
+		assert.equal(objects.person1.get('user'), null);
 
-		request.success( json );
+		request.success(json);
 
-		assert.equal( objects.person1.get( 'user' ), user1 );
+		assert.equal(objects.person1.get('user'), user1);
 
 		// Save a collection with `wait: true`
-		var zoo = new Zoo( { id: 'z1' } ),
-			animal1 = new Animal( { id: 'a1', species: 'Goat', name: 'G' } ),
-			coll = new RelationalCollection( [ { id: 'a2', species: 'Rabbit', name: 'R' }, animal1 ] );
+		let zoo = new Zoo({ id: 'z1' }),
+			animal1 = new Animal({ id: 'a1', species: 'Goat', name: 'G' }),
+			coll = new RelationalCollection([{ id: 'a2', species: 'Rabbit', name: 'R' }, animal1]);
 
-		request = zoo.save( 'animals', coll, { wait: true } );
-		json = JSON.parse( request.data );
+		request = zoo.save('animals', coll, { wait: true });
+		json = JSON.parse(request.data);
 		// console.log( request, json );
 
-		assert.ok( zoo.get( 'animals' ).length === 0 );
+		assert.ok(zoo.get('animals').length === 0);
 
-		request.success( json );
+		request.success(json);
 
-		assert.ok( zoo.get( 'animals' ).length === 2 );
+		assert.ok(zoo.get('animals').length === 2);
 		// console.log( animal1 );
 	});
 
-	QUnit.test( "`Collection.create` (with `wait`)", function( assert ) {
-		var nodeColl = new NodeList(),
+	QUnit.test('`Collection.create` (with `wait`)', function(assert) {
+		let nodeColl = new NodeList(),
 			nodesAdded = 0;
 
-		nodeColl.on( 'add', function( model, collection, options ) {
+		nodeColl.on('add', function(model, collection, options) {
 			nodesAdded++;
 		});
 
 		nodeColl.create({ id: '3', parent: '2', name: 'Third node' }, { wait: true });
-		assert.ok( nodesAdded === 0 );
+		assert.ok(nodesAdded === 0);
 		requests[ requests.length - 1 ].success();
-		assert.ok( nodesAdded === 1 );
+		assert.ok(nodesAdded === 1);
 
 		nodeColl.create({ id: '4', name: 'Third node' }, { wait: true });
-		assert.ok( nodesAdded === 1 );
+		assert.ok(nodesAdded === 1);
 		requests[ requests.length - 1 ].error();
-		assert.ok( nodesAdded === 1 );
+		assert.ok(nodesAdded === 1);
 	});
 
-	QUnit.test( "`toJSON`: simple cases", function( assert ) {
-		var node = new Node({ id: '1', parent: '3', name: 'First node' });
+	QUnit.test('`toJSON`: simple cases', function(assert) {
+		let node = new Node({ id: '1', parent: '3', name: 'First node' });
 		new Node({ id: '2', parent: '1', name: 'Second node' });
 		new Node({ id: '3', parent: '2', name: 'Third node' });
 
-		var json = node.toJSON();
+		let json = node.toJSON();
 
-		assert.ok( json.children.length === 1 );
+		assert.ok(json.children.length === 1);
 	});
 
-	QUnit.test( "'toJSON' should return null for relations that are set to null, even when model is not fetched", function( assert ) {
-		var person = new Person( { user : 'u1' } );
+	QUnit.test('\'toJSON\' should return null for relations that are set to null, even when model is not fetched', function(assert) {
+		let person = new Person({ user: 'u1' });
 
-		assert.equal( person.toJSON().user_id, 'u1' );
-		person.set( 'user', null );
-		assert.equal( person.toJSON().user_id, null );
+		assert.equal(person.toJSON().user_id, 'u1');
+		person.set('user', null);
+		assert.equal(person.toJSON().user_id, null);
 
-		person = new Person( { user: new User( { id : 'u2' } ) } );
+		person = new Person({ user: new User({ id: 'u2' }) });
 
-		assert.equal( person.toJSON().user_id, 'u2' );
-		person.set( { user: 'unfetched_user_id' } );
-		assert.equal( person.toJSON().user_id, 'unfetched_user_id' );
+		assert.equal(person.toJSON().user_id, 'u2');
+		person.set({ user: 'unfetched_user_id' });
+		assert.equal(person.toJSON().user_id, 'unfetched_user_id');
 	});
 
-	QUnit.test( "`toJSON` should include ids for 'unknown' or 'missing' models (if `includeInJSON` is `idAttribute`)", function( assert ) {
+	QUnit.test('`toJSON` should include ids for \'unknown\' or \'missing\' models (if `includeInJSON` is `idAttribute`)', function(assert) {
 		// See GH-191
 
 		// `Zoo` shouldn't be affected; `animals.includeInJSON` is not equal to `idAttribute`
-		var zoo = new Zoo({ id: 'z1', animals: [ 'a1', 'a2' ] }),
+		let zoo = new Zoo({ id: 'z1', animals: ['a1', 'a2'] }),
 			zooJSON = zoo.toJSON();
 
-		assert.ok( _.isArray( zooJSON.animals ) );
-		assert.equal( zooJSON.animals.length, 0, "0 animals in zooJSON; it serializes an array of attributes" );
+		assert.ok(_.isArray(zooJSON.animals));
+		assert.equal(zooJSON.animals.length, 0, '0 animals in zooJSON; it serializes an array of attributes');
 
-		var a1 = new Animal( { id: 'a1' } );
+		let a1 = new Animal({ id: 'a1' });
 		zooJSON = zoo.toJSON();
-		assert.equal( zooJSON.animals.length, 1, "1 animals in zooJSON; it serializes an array of attributes" );
+		assert.equal(zooJSON.animals.length, 1, '1 animals in zooJSON; it serializes an array of attributes');
 
 		// Agent -> Customer; `idAttribute` on a HasMany
-		var agent = new Agent({ id: 'a1', customers: [ 'c1', 'c2' ] } ),
+		let agent = new Agent({ id: 'a1', customers: ['c1', 'c2'] }),
 			agentJSON = agent.toJSON();
 
-		assert.ok( _.isArray( agentJSON.customers ) );
-		assert.equal( agentJSON.customers.length, 2, "2 customers in agentJSON; it serializes the `idAttribute`" );
+		assert.ok(_.isArray(agentJSON.customers));
+		assert.equal(agentJSON.customers.length, 2, '2 customers in agentJSON; it serializes the `idAttribute`');
 
-		var c1 = new Customer( { id: 'c1' } );
-		assert.equal( agent.get( 'customers' ).length, 1, '1 customer in agent' );
+		let c1 = new Customer({ id: 'c1' });
+		assert.equal(agent.get('customers').length, 1, '1 customer in agent');
 
 		agentJSON = agent.toJSON();
-		assert.equal( agentJSON.customers.length, 2, "2 customers in agentJSON; `idAttribute` for 1 missing, other existing" );
+		assert.equal(agentJSON.customers.length, 2, '2 customers in agentJSON; `idAttribute` for 1 missing, other existing');
 
 		//c1.destroy();
 
 		//agentJSON = agent.toJSON();
 		//assert.equal( agentJSON.customers.length, 1, "1 customer in agentJSON; `idAttribute` for 1 missing, other destroyed" );
 
-		agent.set( 'customers', [ 'c1', 'c3' ] );
-		var c3 = new Customer( { id: 'c3' } );
+		agent.set('customers', ['c1', 'c3']);
+		let c3 = new Customer({ id: 'c3' });
 
 		agentJSON = agent.toJSON();
-		assert.equal( agentJSON.customers.length, 2, "2 customers in agentJSON; 'c1' already existed, 'c3' created" );
+		assert.equal(agentJSON.customers.length, 2, '2 customers in agentJSON; \'c1\' already existed, \'c3\' created');
 
-		agent.get( 'customers' ).remove( c1 );
+		agent.get('customers').remove(c1);
 
 		agentJSON = agent.toJSON();
-		assert.equal( agentJSON.customers.length, 1, "1 customer in agentJSON; 'c1' removed, 'c3' still in there" );
+		assert.equal(agentJSON.customers.length, 1, '1 customer in agentJSON; \'c1\' removed, \'c3\' still in there');
 
 		// Person -> User; `idAttribute` on a HasOne
-		var person = new Person({ id: 'p1', user: 'u1' } ),
+		let person = new Person({ id: 'p1', user: 'u1' }),
 			personJSON = person.toJSON();
 
-		assert.equal( personJSON.user_id, 'u1', "`user_id` gets set in JSON" );
+		assert.equal(personJSON.user_id, 'u1', '`user_id` gets set in JSON');
 
-		var u1 = new User( { id: 'u1' } );
+		let u1 = new User({ id: 'u1' });
 		personJSON = person.toJSON();
-		assert.ok( u1.get( 'person' ) === person );
-		assert.equal( personJSON.user_id, 'u1', "`user_id` gets set in JSON" );
+		assert.ok(u1.get('person') === person);
+		assert.equal(personJSON.user_id, 'u1', '`user_id` gets set in JSON');
 
-		person.set( 'user', 'u1' );
+		person.set('user', 'u1');
 		personJSON = person.toJSON();
-		assert.equal( personJSON.user_id, 'u1', "`user_id` gets set in JSON" );
+		assert.equal(personJSON.user_id, 'u1', '`user_id` gets set in JSON');
 
 		u1.destroy();
 		personJSON = person.toJSON();
-		assert.ok( !u1.get( 'person' ) );
-		assert.equal( personJSON.user_id, 'u1', "`user_id` still gets set in JSON" );
+		assert.ok(!u1.get('person'));
+		assert.equal(personJSON.user_id, 'u1', '`user_id` still gets set in JSON');
 	});
 
-	QUnit.test( "`toJSON` should include ids for unregistered models (if `includeInJSON` is `idAttribute`)", function( assert ) {
-
+	QUnit.test('`toJSON` should include ids for unregistered models (if `includeInJSON` is `idAttribute`)', function(assert) {
 		// Person -> User; `idAttribute` on a HasOne
-		var person = new Person({ id: 'p1', user: 'u1' } ),
+		let person = new Person({ id: 'p1', user: 'u1' }),
 			personJSON = person.toJSON();
 
-		assert.equal( personJSON.user_id, 'u1', "`user_id` gets set in JSON even though no user obj exists" );
+		assert.equal(personJSON.user_id, 'u1', '`user_id` gets set in JSON even though no user obj exists');
 
-		var u1 = new User( { id: 'u1' } );
+		let u1 = new User({ id: 'u1' });
 		personJSON = person.toJSON();
-		assert.ok( u1.get( 'person' ) === person );
-		assert.equal( personJSON.user_id, 'u1', "`user_id` gets set in JSON after matching user obj is created" );
+		assert.ok(u1.get('person') === person);
+		assert.equal(personJSON.user_id, 'u1', '`user_id` gets set in JSON after matching user obj is created');
 
 		store.unregister(u1);
 
 		personJSON = person.toJSON();
-		assert.equal( personJSON.user_id, 'u1', "`user_id` gets set in JSON after user was unregistered from store" );
+		assert.equal(personJSON.user_id, 'u1', '`user_id` gets set in JSON after user was unregistered from store');
 	});
 
-	QUnit.test( "`parse` gets called through `findOrCreate`", function( assert ) {
-		var parseCalled = 0;
-		Zoo.prototype.parse = Animal.prototype.parse = function( resp, options ) {
+	QUnit.test('`parse` gets called through `findOrCreate`', function(assert) {
+		let parseCalled = 0;
+		Zoo.prototype.parse = Animal.prototype.parse = function(resp, options) {
 			parseCalled++;
 			return resp;
 		};
 
-		var zoo = Zoo.findOrCreate({
+		let zoo = Zoo.findOrCreate({
 			id: '1',
 			name: 'San Diego Zoo',
-			animals: [ { id: 'a' } ]
-		}, { parse: true } );
-		var animal = zoo.get( 'animals' ).first();
+			animals: [{ id: 'a' }]
+		}, { parse: true });
+		let animal = zoo.get('animals').first();
 
-		assert.ok( animal.get( 'livesIn' ) );
-		assert.ok( animal.get( 'livesIn' ) instanceof Zoo );
-		assert.ok( animal.get( 'livesIn' ).get( 'animals' ).get( animal ) === animal );
+		assert.ok(animal.get('livesIn'));
+		assert.ok(animal.get('livesIn') instanceof Zoo);
+		assert.ok(animal.get('livesIn').get('animals').get(animal) === animal);
 
 		// `parse` gets called by `findOrCreate` directly when trying to lookup `1`,
 		// and the parsed attributes are passed to `build` (called from `findOrCreate`) with `{ parse: false }`,
 		// rather than having `parse` called again by the Zoo constructor.
-		assert.ok( parseCalled === 1, 'parse called 1 time? ' + parseCalled );
+		assert.ok(parseCalled === 1, 'parse called 1 time? ' + parseCalled);
 
 		parseCalled = 0;
 
@@ -537,54 +535,54 @@ QUnit.module( "RelationalModel", { beforeEach() {
 			livesIn: {
 				id: '2',
 				name: 'San Diego Zoo',
-				animals: [ 'b' ]
+				animals: ['b']
 			}
-		}, { parse: true } );
+		}, { parse: true });
 
-		assert.ok( animal.get( 'livesIn' ) );
-		assert.ok( animal.get( 'livesIn' ) instanceof Zoo );
-		assert.ok( animal.get( 'livesIn' ).get( 'animals' ).get( animal ) === animal );
+		assert.ok(animal.get('livesIn'));
+		assert.ok(animal.get('livesIn') instanceof Zoo);
+		assert.ok(animal.get('livesIn').get('animals').get(animal) === animal);
 
-		assert.ok( parseCalled === 0, 'parse called 0 times? ' + parseCalled );
+		assert.ok(parseCalled === 0, 'parse called 0 times? ' + parseCalled);
 
 		// Reset `parse` methods
 		Zoo.prototype.parse = Animal.prototype.parse = RelationalModel.prototype.parse;
 	});
 
-	QUnit.test( "`Collection#parse` with RelationalModel simple case", function( assert ) {
-		var Contact = RelationalModel.extend({
-			parse: function( response ) {
+	QUnit.test('`Collection#parse` with RelationalModel simple case', function(assert) {
+		let Contact = RelationalModel.extend({
+			parse(response) {
 				response.bar = response.foo * 2;
 				return response;
 			}
 		});
-		var Contacts = RelationalCollection.extend({
+		let Contacts = RelationalCollection.extend({
 			model: Contact,
 			url: '/contacts',
-			parse: function( response ) {
+			parse(response) {
 				return response.items;
 			}
 		});
 
-		var contacts = new Contacts();
+		let contacts = new Contacts();
 		contacts.fetch({
-			// fake response for testing
+		// fake response for testing
 			response: {
 				status: 200,
-				responseText: { items: [ { foo: 1 }, { foo: 2 } ] }
+				responseText: { items: [{ foo: 1 }, { foo: 2 }] }
 			}
 		});
 
-		assert.equal( contacts.length, 2, 'Collection response was fetched properly' );
-		var contact = contacts.first();
-		assert.ok( contact , 'Collection has a non-null item' );
-		assert.ok( contact instanceof Contact, '... of the type type' );
-		assert.equal( contact.get('foo'), 1, '... with correct fetched value' );
-		assert.equal( contact.get('bar'), 2, '... with correct parsed value' );
+		assert.equal(contacts.length, 2, 'Collection response was fetched properly');
+		let contact = contacts.first();
+		assert.ok(contact , 'Collection has a non-null item');
+		assert.ok(contact instanceof Contact, '... of the type type');
+		assert.equal(contact.get('foo'), 1, '... with correct fetched value');
+		assert.equal(contact.get('bar'), 2, '... with correct parsed value');
 	});
 
-	QUnit.test( "By default, `parse` should only get called on top-level objects; not for nested models and collections", function( assert ) {
-		var companyData = {
+	QUnit.test('By default, `parse` should only get called on top-level objects; not for nested models and collections', function(assert) {
+		let companyData = {
 			'data': {
 				'id': 'company-1',
 				'contacts': [
@@ -598,12 +596,12 @@ QUnit.module( "RelationalModel", { beforeEach() {
 			}
 		};
 
-		var Contact = RelationalModel.extend();
-		var Contacts = RelationalCollection.extend({
+		let Contact = RelationalModel.extend();
+		let Contacts = RelationalCollection.extend({
 			model: Contact
 		});
 
-		var Company = RelationalModel.extend({
+		let Company = RelationalModel.extend({
 			urlRoot: '/company/',
 			relations: [{
 				type: HasMany,
@@ -613,86 +611,86 @@ QUnit.module( "RelationalModel", { beforeEach() {
 			}]
 		});
 
-		var parseCalled = 0;
-		Company.prototype.parse = Contact.prototype.parse = Contacts.prototype.parse = function( resp, options ) {
+		let parseCalled = 0;
+		Company.prototype.parse = Contact.prototype.parse = Contacts.prototype.parse = function(resp, options) {
 			parseCalled++;
 			return resp.data || resp;
 		};
 
-		var company = new Company( companyData, { parse: true } ),
-			contacts = company.get( 'contacts' ),
+		let company = new Company(companyData, { parse: true }),
+			contacts = company.get('contacts'),
 			contact = contacts.first();
 
-		assert.ok( company.id === 'company-1' );
-		assert.ok( contact && contact.id === '1', 'contact exists' );
-		assert.ok( parseCalled === 1, 'parse called 1 time? ' + parseCalled );
+		assert.ok(company.id === 'company-1');
+		assert.ok(contact && contact.id === '1', 'contact exists');
+		assert.ok(parseCalled === 1, 'parse called 1 time? ' + parseCalled);
 
 		// simulate what would happen if company.fetch() was called.
 		company.fetch({
 			parse: true,
 			response: {
 				status: 200,
-				responseText: _.clone( companyData )
+				responseText: _.clone(companyData)
 			}
 		});
 
-		assert.ok( parseCalled === 2, 'parse called 2 times? ' + parseCalled );
+		assert.ok(parseCalled === 2, 'parse called 2 times? ' + parseCalled);
 
-		assert.ok( contacts === company.get( 'contacts' ), 'contacts collection is same instance after fetch' );
-		assert.equal( contacts.length, 2, '... with correct length' );
-		assert.ok( contact && contact.id === '1', 'contact exists' );
-		assert.ok( contact === contacts.first(), '... and same model instances' );
+		assert.ok(contacts === company.get('contacts'), 'contacts collection is same instance after fetch');
+		assert.equal(contacts.length, 2, '... with correct length');
+		assert.ok(contact && contact.id === '1', 'contact exists');
+		assert.ok(contact === contacts.first(), '... and same model instances');
 	});
 
-	QUnit.test( "constructor.findOrCreate", function( assert ) {
-		var personColl = store.getCollection( objects.person1 ),
+	QUnit.test('constructor.findOrCreate', function(assert) {
+		let personColl = store.getCollection(objects.person1),
 			origPersonCollSize = personColl.length;
 
 		// Just find an existing model
-		var person = Person.findOrCreate( objects.person1.id );
+		let person = Person.findOrCreate(objects.person1.id);
 
-		assert.ok( person === objects.person1 );
-		assert.ok( origPersonCollSize === personColl.length, "Existing person was found (none created)" );
+		assert.ok(person === objects.person1);
+		assert.ok(origPersonCollSize === personColl.length, 'Existing person was found (none created)');
 
 		// Update an existing model
-		person = Person.findOrCreate( { id: objects.person1.id, name: 'dude' } );
+		person = Person.findOrCreate({ id: objects.person1.id, name: 'dude' });
 
-		assert.equal( person.get( 'name' ), 'dude' );
-		assert.equal( objects.person1.get( 'name' ), 'dude' );
+		assert.equal(person.get('name'), 'dude');
+		assert.equal(objects.person1.get('name'), 'dude');
 
-		assert.ok( origPersonCollSize === personColl.length, "Existing person was updated (none created)" );
+		assert.ok(origPersonCollSize === personColl.length, 'Existing person was updated (none created)');
 
 		// Look for a non-existent person; 'options.create' is false
-		person = Person.findOrCreate( { id: 5001 }, { create: false } );
+		person = Person.findOrCreate({ id: 5001 }, { create: false });
 
-		assert.ok( !person );
-		assert.ok( origPersonCollSize === personColl.length, "No person was found (none created)" );
+		assert.ok(!person);
+		assert.ok(origPersonCollSize === personColl.length, 'No person was found (none created)');
 
 		// Create a new model
-		person = Person.findOrCreate( { id: 5001 } );
+		person = Person.findOrCreate({ id: 5001 });
 
-		assert.ok( person instanceof Person );
-		assert.ok( origPersonCollSize + 1 === personColl.length, "No person was found (1 created)" );
+		assert.ok(person instanceof Person);
+		assert.ok(origPersonCollSize + 1 === personColl.length, 'No person was found (1 created)');
 
 		// Find when options.merge is false
-		person = Person.findOrCreate( { id: objects.person1.id, name: 'phil' }, { merge: false } );
+		person = Person.findOrCreate({ id: objects.person1.id, name: 'phil' }, { merge: false });
 
-		assert.equal( person.get( 'name' ), 'dude' );
-		assert.equal( objects.person1.get( 'name' ), 'dude' );
+		assert.equal(person.get('name'), 'dude');
+		assert.equal(objects.person1.get('name'), 'dude');
 	});
 
-	QUnit.test( "constructor.find", function( assert ) {
-		var personColl = store.getCollection( objects.person1 ),
-		origPersonCollSize = personColl.length;
+	QUnit.test('constructor.find', function(assert) {
+		let personColl = store.getCollection(objects.person1),
+			origPersonCollSize = personColl.length;
 
 		// Look for a non-existent person
-		var person = Person.find( { id: 5001 } );
-		assert.ok( !person );
+		let person = Person.find({ id: 5001 });
+		assert.ok(!person);
 	});
 
-	QUnit.test( "change events in relation can use changedAttributes properly", function( assert ) {
-		var scope = {};
-		store.addModelScope( scope );
+	QUnit.test('change events in relation can use changedAttributes properly', function(assert) {
+		let scope = {};
+		store.addModelScope(scope);
 
 		scope.PetAnimal = RelationalModel.extend({
 			subModelTypes: {
@@ -714,112 +712,112 @@ QUnit.module( "RelationalModel", { beforeEach() {
 			}]
 		});
 
-		var owner = new scope.PetOwner( { id: 'owner-2354' } );
-		var animal = new scope.Dog( { type: 'dog', id: '238902', color: 'blue' } );
-		assert.equal( animal.get('color'), 'blue', 'animal starts out blue' );
+		let owner = new scope.PetOwner({ id: 'owner-2354' });
+		let animal = new scope.Dog({ type: 'dog', id: '238902', color: 'blue' });
+		assert.equal(animal.get('color'), 'blue', 'animal starts out blue');
 
-		var changes = 0, changedAttrs = null;
+		let changes = 0, changedAttrs = null;
 		animal.on('change', function(model, options) {
 			changes++;
 			changedAttrs = model.changedAttributes();
 		});
 
-		animal.set( { color: 'green' } );
-		assert.equal( changes, 1, 'change event gets called after animal.set' );
-		assert.equal( changedAttrs.color, 'green', '... with correct properties in "changedAttributes"' );
+		animal.set({ color: 'green' });
+		assert.equal(changes, 1, 'change event gets called after animal.set');
+		assert.equal(changedAttrs.color, 'green', '... with correct properties in "changedAttributes"');
 
 		owner.set(owner.parse({
 			id: 'owner-2354',
-			pets: [ { id: '238902', type: 'dog', color: 'red' } ]
+			pets: [{ id: '238902', type: 'dog', color: 'red' }]
 		}));
 
-		assert.equal( animal.get('color'), 'red', 'color gets updated properly' );
-		assert.equal( changes, 2, 'change event gets called after owner.set' );
-		assert.equal( changedAttrs.color, 'red', '... with correct properties in "changedAttributes"' );
+		assert.equal(animal.get('color'), 'red', 'color gets updated properly');
+		assert.equal(changes, 2, 'change event gets called after owner.set');
+		assert.equal(changedAttrs.color, 'red', '... with correct properties in "changedAttributes"');
 	});
 
-	QUnit.test( 'change events should not fire on new items in Collection#set', function( assert ) {
-		var modelChangeEvents = 0,
+	QUnit.test('change events should not fire on new items in Collection#set', function(assert) {
+		let modelChangeEvents = 0,
 			collectionChangeEvents = 0;
 
-		var Animal2 = Animal.extend({
-			initialize: function(options) {
-				this.on( 'all', function( name, event ) {
-					//console.log( 'Animal2: %o', arguments );
-					if ( name.indexOf( 'change' ) === 0 ) {
+		let Animal2 = Animal.extend({
+			initialize(options) {
+				this.on('all', function(name, event) {
+				//console.log( 'Animal2: %o', arguments );
+					if (name.indexOf('change') === 0) {
 						modelChangeEvents++;
 					}
 				});
 			}
 		});
 
-		var AnimalCollection2 = AnimalCollection.extend({
+		let AnimalCollection2 = AnimalCollection.extend({
 			model: Animal2,
 
-			initialize: function(options) {
-				this.on( 'all', function( name, event ) {
-					//console.log( 'AnimalCollection2: %o', arguments );
-					if ( name.indexOf('change') === 0 ) {
+			initialize(options) {
+				this.on('all', function(name, event) {
+				//console.log( 'AnimalCollection2: %o', arguments );
+					if (name.indexOf('change') === 0) {
 						collectionChangeEvents++;
 					}
 				});
 			}
 		});
 
-		var zoo = new Zoo( { id: 'zoo-1' } );
+		let zoo = new Zoo({ id: 'zoo-1' });
 
-		var coll = new AnimalCollection2();
-		coll.set( [{
+		let coll = new AnimalCollection2();
+		coll.set([{
 			id: 'animal-1',
 			livesIn: 'zoo-1'
-		}] );
+		}]);
 
-		assert.equal( collectionChangeEvents, 0, 'no change event should be triggered on the collection' );
+		assert.equal(collectionChangeEvents, 0, 'no change event should be triggered on the collection');
 
 		modelChangeEvents = collectionChangeEvents = 0;
 
-		coll.at( 0 ).set( 'name', 'Willie' );
+		coll.at(0).set('name', 'Willie');
 
-		assert.equal( modelChangeEvents, 2, 'change event should be triggered' );
+		assert.equal(modelChangeEvents, 2, 'change event should be triggered');
 	});
 
-	QUnit.test( "Model's collection children should be in the proper order during fetch w/remove: false", function( assert ) {
-		var Child = RelationalModel.extend();
-		var Parent = RelationalModel.extend( {
-			relations: [ {
+	QUnit.test('Model\'s collection children should be in the proper order during fetch w/remove: false', function(assert) {
+		let Child = RelationalModel.extend();
+		let Parent = RelationalModel.extend({
+			relations: [{
 				type: HasMany,
 				key: 'children',
 				relatedModel: Child
-			} ]
-		} );
+			}]
+		});
 
 		// initialize a child... there's no good reason why this should affect the test passing
-		Child.findOrCreate( { id: 'foo1' } );
+		Child.findOrCreate({ id: 'foo1' });
 
 		// simulate a fetch of the parent with nested children
-		var parent = Parent.findOrCreate( { id: 'the-parent' } );
-		var children = parent.get( 'children' );
-		assert.equal( children.length, 0 );
+		let parent = Parent.findOrCreate({ id: 'the-parent' });
+		let children = parent.get('children');
+		assert.equal(children.length, 0);
 		parent.set({
 			id: 'the-parent',
 			children: [
-				{ id: 'foo1' },
-				{ id: 'foo2' }
+			{ id: 'foo1' },
+			{ id: 'foo2' }
 			]
 		}, {
 			remove: false // maybe necessary in case you have other relations with isNew models, etc.
 		});
 
 		// check order of parent's children
-		assert.equal( children.length, 2, 'parent is fetched with children' );
-		assert.deepEqual( children.pluck('id'), ['foo1', 'foo2'], 'children are in the right order' );
+		assert.equal(children.length, 2, 'parent is fetched with children');
+		assert.deepEqual(children.pluck('id'), ['foo1', 'foo2'], 'children are in the right order');
 	});
+});
 
-QUnit.module( "RelationalModel inheritance (`subModelTypes`)", { beforeEach: reset });
-
-	QUnit.test( "Object building based on type, when using explicit collections", function( assert ) {
-		var scope = {};
-		store.addModelScope( scope );
+QUnit.module('RelationalModel inheritance (`subModelTypes`)', { beforeEach: reset }, () => {
+	QUnit.test('Object building based on type, when using explicit collections', function(assert) {
+		let scope = {};
+		store.addModelScope(scope);
 
 		scope.Mammal = Animal.extend({
 			subModelTypes: {
@@ -836,42 +834,42 @@ QUnit.module( "RelationalModel inheritance (`subModelTypes`)", { beforeEach: res
 		scope.Human = scope.Primate.extend();
 		scope.Carnivore = scope.Mammal.extend();
 
-		var MammalCollection = AnimalCollection.extend({
+		let MammalCollection = AnimalCollection.extend({
 			model: scope.Mammal
 		});
 
-		var mammals = new MammalCollection( [
+		let mammals = new MammalCollection([
 			{ id: 5, species: 'chimp', type: 'primate' },
 			{ id: 6, species: 'panther', type: 'carnivore' },
 			{ id: 7, species: 'person', type: 'human' },
 			{ id: 8, species: 'gorilla', type: 'ape' }
 		]);
 
-		assert.ok( mammals.at( 0 ) instanceof scope.Primate );
-		assert.ok( mammals.at( 1 ) instanceof scope.Carnivore );
-		assert.ok( mammals.at( 2 ) instanceof scope.Human );
-		assert.ok( mammals.at( 3 ) instanceof scope.Primate );
+		assert.ok(mammals.at(0) instanceof scope.Primate);
+		assert.ok(mammals.at(1) instanceof scope.Carnivore);
+		assert.ok(mammals.at(2) instanceof scope.Human);
+		assert.ok(mammals.at(3) instanceof scope.Primate);
 	});
 
-	QUnit.test( "Object building based on type, when used in relations", function( assert ) {
-		var scope = {};
-		store.addModelScope( scope );
+	QUnit.test('Object building based on type, when used in relations', function(assert) {
+		let scope = {};
+		store.addModelScope(scope);
 
-		var PetAnimal = scope.PetAnimal = RelationalModel.extend({
+		let PetAnimal = scope.PetAnimal = RelationalModel.extend({
 			subModelTypes: {
 				'cat': 'Cat',
 				'dog': 'Dog'
 			}
 		});
-		var Dog = scope.Dog = PetAnimal.extend({
+		let Dog = scope.Dog = PetAnimal.extend({
 			subModelTypes: {
 				'poodle': 'Poodle'
 			}
 		});
-		var Cat = scope.Cat = PetAnimal.extend();
-		var Poodle = scope.Poodle = Dog.extend();
+		let Cat = scope.Cat = PetAnimal.extend();
+		let Poodle = scope.Poodle = Dog.extend();
 
-		var PetPerson = scope.PetPerson = RelationalModel.extend({
+		let PetPerson = scope.PetPerson = RelationalModel.extend({
 			relations: [{
 				type: HasMany,
 				key: 'pets',
@@ -882,7 +880,7 @@ QUnit.module( "RelationalModel inheritance (`subModelTypes`)", { beforeEach: res
 			}]
 		});
 
-		var petPerson = new scope.PetPerson({
+		let petPerson = new scope.PetPerson({
 			pets: [
 				{
 					type: 'dog',
@@ -899,11 +897,11 @@ QUnit.module( "RelationalModel inheritance (`subModelTypes`)", { beforeEach: res
 			]
 		});
 
-		assert.ok( petPerson.get( 'pets' ).at( 0 ) instanceof Dog );
-		assert.ok( petPerson.get( 'pets' ).at( 1 ) instanceof Cat );
-		assert.ok( petPerson.get( 'pets' ).at( 2 ) instanceof Poodle );
+		assert.ok(petPerson.get('pets').at(0) instanceof Dog);
+		assert.ok(petPerson.get('pets').at(1) instanceof Cat);
+		assert.ok(petPerson.get('pets').at(2) instanceof Poodle);
 
-		petPerson.get( 'pets' ).add([{
+		petPerson.get('pets').add([{
 			type: 'dog',
 			name: 'Spot II'
 		},{
@@ -911,25 +909,25 @@ QUnit.module( "RelationalModel inheritance (`subModelTypes`)", { beforeEach: res
 			name: 'Mitsy II'
 		}]);
 
-		assert.ok( petPerson.get( 'pets' ).at( 3 ) instanceof Dog );
-		assert.ok( petPerson.get( 'pets' ).at( 4 ) instanceof Poodle );
+		assert.ok(petPerson.get('pets').at(3) instanceof Dog);
+		assert.ok(petPerson.get('pets').at(4) instanceof Poodle);
 	});
 
-	QUnit.test( "Object building based on type in a custom field, when used in relations", function( assert ) {
-		var scope = {};
-		store.addModelScope( scope );
+	QUnit.test('Object building based on type in a custom field, when used in relations', function(assert) {
+		let scope = {};
+		store.addModelScope(scope);
 
-		var Caveman = scope.Caveman = RelationalModel.extend({
+		let Caveman = scope.Caveman = RelationalModel.extend({
 			subModelTypes: {
 				'rubble': 'Rubble',
 				'flintstone': 'Flintstone'
 			},
-			subModelTypeAttribute: "caveman_type"
+			subModelTypeAttribute: 'caveman_type'
 		});
-		var Flintstone = scope.Flintstone = Caveman.extend();
-		var Rubble = scope.Rubble = Caveman.extend();
+		let Flintstone = scope.Flintstone = Caveman.extend();
+		let Rubble = scope.Rubble = Caveman.extend();
 
-		var Cartoon = scope.Cartoon = RelationalModel.extend({
+		let Cartoon = scope.Cartoon = RelationalModel.extend({
 			relations: [{
 				type: HasMany,
 				key: 'cavemen',
@@ -937,7 +935,7 @@ QUnit.module( "RelationalModel inheritance (`subModelTypes`)", { beforeEach: res
 			}]
 		});
 
-		var captainCaveman = new scope.Cartoon({
+		let captainCaveman = new scope.Cartoon({
 			cavemen: [
 				{
 					type: 'rubble',
@@ -946,9 +944,9 @@ QUnit.module( "RelationalModel inheritance (`subModelTypes`)", { beforeEach: res
 			]
 		});
 
-		assert.ok( !(captainCaveman.get( "cavemen" ).at( 0 ) instanceof Rubble) );
+		assert.ok(!(captainCaveman.get('cavemen').at(0) instanceof Rubble));
 
-		var theFlintstones = new scope.Cartoon({
+		let theFlintstones = new scope.Cartoon({
 			cavemen: [
 				{
 					caveman_type: 'rubble',
@@ -962,14 +960,14 @@ QUnit.module( "RelationalModel inheritance (`subModelTypes`)", { beforeEach: res
 			]
 		});
 
-		assert.ok( theFlintstones.get( "cavemen" ).at( 0 ) instanceof Rubble );
-		assert.ok( theFlintstones.get( "cavemen" ).at( 1 ) instanceof Flintstone );
+		assert.ok(theFlintstones.get('cavemen').at(0) instanceof Rubble);
+		assert.ok(theFlintstones.get('cavemen').at(1) instanceof Flintstone);
 
 	});
 
-	QUnit.test( "Automatic sharing of 'superModel' relations", function( assert ) {
-		var scope = {};
-		store.addModelScope( scope );
+	QUnit.test('Automatic sharing of \'superModel\' relations', function(assert) {
+		let scope = {};
+		store.addModelScope(scope);
 
 		scope.PetPerson = RelationalModel.extend({});
 		scope.PetAnimal = RelationalModel.extend({
@@ -979,7 +977,7 @@ QUnit.module( "RelationalModel inheritance (`subModelTypes`)", { beforeEach: res
 
 			relations: [{
 				type: HasOne,
-				key:  'owner',
+				key: 'owner',
 				relatedModel: scope.PetPerson,
 				reverseRelation: {
 					type: HasMany,
@@ -1006,36 +1004,36 @@ QUnit.module( "RelationalModel inheritance (`subModelTypes`)", { beforeEach: res
 		});
 		scope.Poodle = scope.Dog.extend();
 
-		var dog = new scope.Dog({
+		let dog = new scope.Dog({
 			name: 'Spot'
 		});
 
-		var poodle = new scope.Poodle({
+		let poodle = new scope.Poodle({
 			name: 'Mitsy'
 		});
 
-		var person = new scope.PetPerson({
-			pets: [ dog, poodle ]
+		let person = new scope.PetPerson({
+			pets: [dog, poodle]
 		});
 
-		assert.ok( dog.get( 'owner' ) === person, "Dog has a working owner relation." );
-		assert.ok( poodle.get( 'owner' ) === person, "Poodle has a working owner relation." );
+		assert.ok(dog.get('owner') === person, 'Dog has a working owner relation.');
+		assert.ok(poodle.get('owner') === person, 'Poodle has a working owner relation.');
 
-		var flea = new scope.Flea({
+		let flea = new scope.Flea({
 			host: dog
 		});
 
-		var flea2 = new scope.Flea({
+		let flea2 = new scope.Flea({
 			host: poodle
 		});
 
-		assert.ok( dog.get( 'fleas' ).at( 0 ) === flea, "Dog has a working fleas relation." );
-		assert.ok( poodle.get( 'fleas' ).at( 0 ) === flea2, "Poodle has a working fleas relation." );
+		assert.ok(dog.get('fleas').at(0) === flea, 'Dog has a working fleas relation.');
+		assert.ok(poodle.get('fleas').at(0) === flea2, 'Poodle has a working fleas relation.');
 	});
 
-	QUnit.test( "Initialization and sharing of 'superModel' reverse relations from a 'leaf' child model", function( assert ) {
-		var scope = {};
-		store.addModelScope( scope );
+	QUnit.test('Initialization and sharing of \'superModel\' reverse relations from a \'leaf\' child model', function(assert) {
+		let scope = {};
+		store.addModelScope(scope);
 		scope.PetAnimal = RelationalModel.extend({
 			subModelTypes: {
 				'dog': 'Dog'
@@ -1062,7 +1060,7 @@ QUnit.module( "RelationalModel inheritance (`subModelTypes`)", { beforeEach: res
 		scope.PetPerson = RelationalModel.extend({
 			relations: [{
 				type: HasMany,
-				key:  'pets',
+				key: 'pets',
 				relatedModel: scope.PetAnimal,
 				reverseRelation: {
 					type: HasOne,
@@ -1072,36 +1070,36 @@ QUnit.module( "RelationalModel inheritance (`subModelTypes`)", { beforeEach: res
 		});
 
 		// Initialize the models starting from the deepest descendant and working your way up to the root parent class.
-		var poodle = new scope.Poodle({
+		let poodle = new scope.Poodle({
 			name: 'Mitsy'
 		});
 
-		var dog = new scope.Dog({
+		let dog = new scope.Dog({
 			name: 'Spot'
 		});
 
-		var person = new scope.PetPerson({
-			pets: [ dog, poodle ]
+		let person = new scope.PetPerson({
+			pets: [dog, poodle]
 		});
 
-		assert.ok( dog.get( 'owner' ) === person, "Dog has a working owner relation." );
-		assert.ok( poodle.get( 'owner' ) === person, "Poodle has a working owner relation." );
+		assert.ok(dog.get('owner') === person, 'Dog has a working owner relation.');
+		assert.ok(poodle.get('owner') === person, 'Poodle has a working owner relation.');
 
-		var flea = new scope.Flea({
+		let flea = new scope.Flea({
 			host: dog
 		});
 
-		var flea2 = new scope.Flea({
+		let flea2 = new scope.Flea({
 			host: poodle
 		});
 
-		assert.ok( dog.get( 'fleas' ).at( 0 ) === flea, "Dog has a working fleas relation." );
-		assert.ok( poodle.get( 'fleas' ).at( 0 ) === flea2, "Poodle has a working fleas relation." );
+		assert.ok(dog.get('fleas').at(0) === flea, 'Dog has a working fleas relation.');
+		assert.ok(poodle.get('fleas').at(0) === flea2, 'Poodle has a working fleas relation.');
 	});
 
-	QUnit.test( "Initialization and sharing of 'superModel' reverse relations by adding to a polymorphic HasMany", function( assert ) {
-		var scope = {};
-		store.addModelScope( scope );
+	QUnit.test('Initialization and sharing of \'superModel\' reverse relations by adding to a polymorphic HasMany', function(assert) {
+		let scope = {};
+		store.addModelScope(scope);
 		scope.PetAnimal = RelationalModel.extend({
 			// The order in which these are defined matters for this regression test.
 			subModelTypes: {
@@ -1133,7 +1131,7 @@ QUnit.module( "RelationalModel inheritance (`subModelTypes`)", { beforeEach: res
 		scope.PetPerson = RelationalModel.extend({
 			relations: [{
 				type: HasMany,
-				key:  'pets',
+				key: 'pets',
 				relatedModel: scope.PetAnimal,
 				reverseRelation: {
 					type: HasOne,
@@ -1144,19 +1142,19 @@ QUnit.module( "RelationalModel inheritance (`subModelTypes`)", { beforeEach: res
 
 		// We need to initialize a model through the root-parent-model's build method by adding raw-attributes for a
 		// leaf-child-class to a polymorphic HasMany.
-		var person = new scope.PetPerson({
+		let person = new scope.PetPerson({
 			pets: [{
 				type: 'poodle',
 				name: 'Mitsy'
 			}]
 		});
-		var poodle = person.get('pets').first();
-		assert.ok( poodle.get( 'owner' ) === person, "Poodle has a working owner relation." );
+		let poodle = person.get('pets').first();
+		assert.ok(poodle.get('owner') === person, 'Poodle has a working owner relation.');
 	});
 
-	QUnit.test( "Overriding of supermodel relations", function( assert ) {
-		var models = {};
-		store.addModelScope( models );
+	QUnit.test('Overriding of supermodel relations', function(assert) {
+		let models = {};
+		store.addModelScope(models);
 
 		models.URL = RelationalModel.extend({});
 
@@ -1195,18 +1193,18 @@ QUnit.module( "RelationalModel inheritance (`subModelTypes`)", { beforeEach: res
 			}]
 		});
 
-		assert.equal( models.File.prototype.relations.length, 2, "2 relations on File" );
-		assert.equal( models.Video.prototype.relations.length, 1, "1 relation on Video" );
-		assert.equal( models.Publication.prototype.relations.length, 1, "1 relation on Publication" );
+		assert.equal(models.File.prototype.relations.length, 2, '2 relations on File');
+		assert.equal(models.Video.prototype.relations.length, 1, '1 relation on Video');
+		assert.equal(models.Publication.prototype.relations.length, 1, '1 relation on Publication');
 
 		// Instantiating the superModel should instantiate the modelHierarchy, and copy relations over to subModels
-		var file = new models.File();
+		let file = new models.File();
 
-		assert.equal( models.File.prototype.relations.length, 2, "2 relations on File" );
-		assert.equal( models.Video.prototype.relations.length, 2, "2 relations on Video" );
-		assert.equal( models.Publication.prototype.relations.length, 2, "2 relations on Publication" );
+		assert.equal(models.File.prototype.relations.length, 2, '2 relations on File');
+		assert.equal(models.Video.prototype.relations.length, 2, '2 relations on Video');
+		assert.equal(models.Publication.prototype.relations.length, 2, '2 relations on Publication');
 
-		var projectDecription = {
+		let projectDecription = {
 			name: 'project1',
 
 			files: [
@@ -1234,30 +1232,30 @@ QUnit.module( "RelationalModel inheritance (`subModelTypes`)", { beforeEach: res
 			]
 		};
 
-		var project = new models.Project( projectDecription ),
-			files = project.get( 'files' ),
-			file1 = files.at( 0 ),
-			file2 = files.at( 1 ),
-			file3 = files.at( 2 );
+		let project = new models.Project(projectDecription),
+		files = project.get('files'),
+		file1 = files.at(0),
+		file2 = files.at(1),
+		file3 = files.at(2);
 
-		assert.equal( models.File.prototype.relations.length, 2, "2 relations on File" );
-		assert.equal( models.Video.prototype.relations.length, 2, "2 relations on Video" );
-		assert.equal( models.Publication.prototype.relations.length, 2, "2 relations on Publication" );
+		assert.equal(models.File.prototype.relations.length, 2, '2 relations on File');
+		assert.equal(models.Video.prototype.relations.length, 2, '2 relations on Video');
+		assert.equal(models.Publication.prototype.relations.length, 2, '2 relations on Publication');
 
-		assert.equal( _.size( file1._relations ), 2 );
-		assert.equal( _.size( file2._relations ), 2 );
-		assert.equal( _.size( file3._relations ), 2 );
+		assert.equal(_.size(file1._relations), 2);
+		assert.equal(_.size(file2._relations), 2);
+		assert.equal(_.size(file3._relations), 2);
 
-		assert.ok( file1.get( 'url' ) instanceof BackboneModel, '`url` on Video is a model' );
-		assert.ok( file1.getRelation( 'url' ) instanceof HasOne, '`url` relation on Video is HasOne' );
+		assert.ok(file1.get('url') instanceof BackboneModel, '`url` on Video is a model');
+		assert.ok(file1.getRelation('url') instanceof HasOne, '`url` relation on Video is HasOne');
 
-		assert.ok( file3.get( 'url' ) instanceof RelationalCollection, '`url` on Publication is a collection' );
-		assert.ok( file3.getRelation( 'url' ) instanceof HasMany, '`url` relation on Publication is HasMany' );
+		assert.ok(file3.get('url') instanceof RelationalCollection, '`url` on Publication is a collection');
+		assert.ok(file3.getRelation('url') instanceof HasMany, '`url` relation on Publication is HasMany');
 	});
 
-	QUnit.test( "toJSON includes the type", function( assert ) {
-		var scope = {};
-		store.addModelScope( scope );
+	QUnit.test('toJSON includes the type', function(assert) {
+		let scope = {};
+		store.addModelScope(scope);
 
 		scope.PetAnimal = RelationalModel.extend({
 			subModelTypes: {
@@ -1267,11 +1265,12 @@ QUnit.module( "RelationalModel inheritance (`subModelTypes`)", { beforeEach: res
 
 		scope.Dog = scope.PetAnimal.extend();
 
-		var dog = new scope.Dog({
+		let dog = new scope.Dog({
 			name: 'Spot'
 		});
 
-		var json = dog.toJSON();
+		let json = dog.toJSON();
 
-		assert.equal( json.type, 'dog', "The value of 'type' is the pet animal's type." );
+		assert.equal(json.type, 'dog', 'The value of \'type\' is the pet animal\'s type.');
 	});
+});

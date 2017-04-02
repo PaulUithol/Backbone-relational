@@ -26,13 +26,13 @@ export const Animal = RelationalModel.extend({
 	],
 
 	// For validation testing. Wikipedia says elephants are reported up to 12.000 kg. Any more, we must've weighted wrong ;).
-	validate: function( attrs ) {
-		if ( attrs.species === 'elephant' && attrs.weight && attrs.weight > 12000 ) {
-			return "Too heavy.";
+	validate(attrs) {
+		if (attrs.species === 'elephant' && attrs.weight && attrs.weight > 12000) {
+			return 'Too heavy.';
 		}
 	},
 
-	toString: function() {
+	toString() {
 		return 'Animal (' + this.id + ')';
 	}
 });
@@ -49,11 +49,11 @@ export const Zoo = RelationalModel.extend({
 			type: HasMany,
 			key: 'animals',
 			relatedModel: Animal,
-			includeInJSON: [ 'id', 'species' ],
+			includeInJSON: ['id', 'species'],
 			collectionType: AnimalCollection,
 			reverseRelation: {
 				key: 'livesIn',
-				includeInJSON: [ 'id', 'name' ]
+				includeInJSON: ['id', 'name']
 			}
 		},
 		{ // A simple HasMany without reverse relation
@@ -63,7 +63,7 @@ export const Zoo = RelationalModel.extend({
 		}
 	],
 
-	toString: function() {
+	toString() {
 		return 'Zoo (' + this.id + ')';
 	}
 });
@@ -85,7 +85,7 @@ export const House = RelationalModel.extend({
 		}
 	}],
 
-	toString: function() {
+	toString() {
 		return 'House (' + this.id + ')';
 	}
 });
@@ -93,7 +93,7 @@ export const House = RelationalModel.extend({
 export const User = RelationalModel.extend({
 	urlRoot: '/user/',
 
-	toString: function() {
+	toString() {
 		return 'User (' + this.id + ')';
 	}
 });
@@ -132,7 +132,7 @@ export const Person = RelationalModel.extend({
 		}
 	],
 
-	toString: function() {
+	toString() {
 		return 'Person (' + this.id + ')';
 	}
 });
@@ -152,7 +152,7 @@ export const Password = RelationalModel.extend({
 		}
 	}],
 
-	toString: function() {
+	toString() {
 		return 'Password (' + this.id + ')';
 	}
 });
@@ -164,13 +164,14 @@ export const Job = RelationalModel.extend({
 		'endDate': null
 	},
 
-	toString: function() {
+	toString() {
 		return 'Job (' + this.id + ')';
 	}
 });
 
 export const Company = RelationalModel.extend({
-	relations: [{
+	relations: [
+		{
 			type: 'HasMany',
 			key: 'employees',
 			relatedModel: Job,
@@ -188,7 +189,7 @@ export const Company = RelationalModel.extend({
 		}
 	],
 
-	toString: function() {
+	toString() {
 		return 'Company (' + this.id + ')';
 	}
 });
@@ -201,15 +202,15 @@ export const Node = RelationalModel.extend({
 	urlRoot: '/node/',
 
 	relations: [{
-			type: HasOne,
-			key: 'parent',
-			reverseRelation: {
-				key: 'children'
-			}
+		type: HasOne,
+		key: 'parent',
+		reverseRelation: {
+			key: 'children'
 		}
+	}
 	],
 
-	toString: function() {
+	toString() {
 		return 'Node (' + this.id + ')';
 	}
 });
@@ -225,7 +226,7 @@ export const NodeList = RelationalCollection.extend({
 export const Customer = RelationalModel.extend({
 	urlRoot: '/customer/',
 
-	toString: function() {
+	toString() {
 		return 'Customer (' + this.id + ')';
 	}
 });
@@ -233,7 +234,7 @@ export const Customer = RelationalModel.extend({
 export const CustomerCollection = RelationalCollection.extend({
 	model: Customer,
 
-	initialize: function( models, options ) {
+	initialize(models, options) {
 		options || (options = {});
 		this.url = options.url;
 	}
@@ -242,7 +243,7 @@ export const CustomerCollection = RelationalCollection.extend({
 export const Address = RelationalModel.extend({
 	urlRoot: '/address/',
 
-	toString: function() {
+	toString() {
 		return 'Address (' + this.id + ')';
 	}
 });
@@ -253,7 +254,7 @@ export const Shop = RelationalModel.extend({
 			type: HasMany,
 			key: 'customers',
 			collectionType: CustomerCollection,
-			collectionOptions: function( instance ) {
+			collectionOptions(instance) {
 				return { 'url': 'shop/' + instance.id + '/customers/' };
 			},
 			relatedModel: 'Customer',
@@ -264,17 +265,17 @@ export const Shop = RelationalModel.extend({
 			key: 'address',
 			relatedModel: 'Address',
 			autoFetch: {
-				success: function( model, response ) {
+				success(model, response) {
 					response.successOK = true;
 				},
-				error: function( model, response ) {
+				error(model, response) {
 					response.errorOK = true;
 				}
 			}
 		}
 	],
 
-	toString: function() {
+	toString() {
 		return 'Shop (' + this.id + ')';
 	}
 });
@@ -297,7 +298,7 @@ export const Agent = RelationalModel.extend({
 		}
 	],
 
-	toString: function() {
+	toString() {
 		return 'Agent (' + this.id + ')';
 	}
 });

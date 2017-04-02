@@ -1,7 +1,6 @@
 import Semaphore from './utils/semaphore';
 import BlockingQueue from './utils/blocking-queue';
 import eventQueue from './event-queue';
-import BObject from './utils/object';
 import config from './config';
 import Collection from './collection';
 import relationTypeStore from './relation-type-store';
@@ -13,6 +12,8 @@ import store from './store';
 import Model from './model';
 
 export { Collection };
+export { Model };
+
 export { Semaphore };
 export { BlockingQueue };
 export { eventQueue };
@@ -25,9 +26,7 @@ export { Relation };
 export { HasOne };
 export { HasMany };
 
-relationTypeStore.registerType( 'HasOne', HasOne );
-relationTypeStore.registerType( 'HasMany', HasMany );
-
-export { Model };
+relationTypeStore.registerType('HasOne', HasOne);
+relationTypeStore.registerType('HasMany', HasMany);
 
 export { config };

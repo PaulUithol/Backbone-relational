@@ -5,10 +5,10 @@ import Events from './events';
 /**
  * Base object to extend off of. Works similar to how you extend in Backbone
  */
-const extendableObject = function(...args) {
-  this.initialize.call(this, ...args);
+function ExtendableObject(...args) {
+	this.initialize.call(this, ...args);
 };
-_.extend(extendableObject.prototype, Events);
-extendableObject.extend = extend;
+_.extend(ExtendableObject.prototype, Events);
+ExtendableObject.extend = extend;
 
-export default extendableObject;
+export default ExtendableObject;
