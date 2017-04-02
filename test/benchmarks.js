@@ -1,49 +1,53 @@
-QUnit.module( "Performance", { setup: require('./setup/setup').reset } );
+import { reset } from './setup/setup';
+import { Model, Collection, Store, HasMany, HasOne, store } from 'backbone-relational';
+import _ from 'underscore';
 
-	QUnit.test( "Creation and destruction", 0, function() {
+QUnit.module( "Performance", { beforeEach: reset } );
+
+	QUnit.test( "Creation and destruction", function( assert ) {
 		var registerCount = 0,
 			unregisterCount = 0,
-			register = Backbone.Relational.Store.prototype.register,
-			unregister = Backbone.Relational.Store.prototype.unregister;
+			register = Store.prototype.register,
+			unregister = Store.prototype.unregister;
 
-		Backbone.Relational.Store.prototype.register = function( model ) {
+		Store.prototype.register = function( model ) {
 			registerCount++;
 			return register.apply( this, arguments );
 		};
-		Backbone.Relational.Store.prototype.unregister = function( model, coll, options ) {
+		Store.prototype.unregister = function( model, coll, options ) {
 			unregisterCount++;
 			return unregister.apply( this, arguments );
 		};
 
 		var addHasManyCount = 0,
 			addHasOneCount = 0,
-			tryAddRelatedHasMany = Backbone.Relational.HasMany.prototype.tryAddRelated,
-			tryAddRelatedHasOne = Backbone.Relational.HasOne.prototype.tryAddRelated;
+			tryAddRelatedHasMany = HasMany.prototype.tryAddRelated,
+			tryAddRelatedHasOne = HasOne.prototype.tryAddRelated;
 
-		Backbone.Relational.Store.prototype.tryAddRelated = function( model, coll, options ) {
+		Store.prototype.tryAddRelated = function( model, coll, options ) {
 			addHasManyCount++;
 			return tryAddRelatedHasMany.apply( this, arguments );
 		};
-		Backbone.Relational.HasOne.prototype.tryAddRelated = function( model, coll, options ) {
+		HasOne.prototype.tryAddRelated = function( model, coll, options ) {
 			addHasOneCount++;
 			return tryAddRelatedHasOne.apply( this, arguments );
 		};
 
 		var removeHasManyCount = 0,
 			removeHasOneCount = 0,
-			removeRelatedHasMany = Backbone.Relational.HasMany.prototype.removeRelated,
-			removeRelatedHasOne= Backbone.Relational.HasOne.prototype.removeRelated;
+			removeRelatedHasMany = HasMany.prototype.removeRelated,
+			removeRelatedHasOne = HasOne.prototype.removeRelated;
 
-		Backbone.Relational.HasMany.prototype.removeRelated = function( model, coll, options ) {
+		HasMany.prototype.removeRelated = function( model, coll, options ) {
 			removeHasManyCount++;
 			return removeRelatedHasMany.apply( this, arguments );
 		};
-		Backbone.Relational.HasOne.prototype.removeRelated = function( model, coll, options ) {
+		HasOne.prototype.removeRelated = function( model, coll, options ) {
 			removeHasOneCount++;
 			return removeRelatedHasOne.apply( this, arguments );
 		};
 
-		var Child = Backbone.Relational.Model.extend({
+		var Child = Model.extend({
 			url: '/child/',
 
 			toString: function() {
@@ -51,9 +55,9 @@ QUnit.module( "Performance", { setup: require('./setup/setup').reset } );
 			}
 		});
 
-		var Parent = Backbone.Relational.Model.extend({
+		var Parent = Model.extend({
 			relations: [{
-				type: Backbone.Relational.HasMany,
+				type: HasMany,
 				key: 'children',
 				relatedModel: Child,
 				reverseRelation: {
@@ -66,7 +70,7 @@ QUnit.module( "Performance", { setup: require('./setup/setup').reset } );
 			}
 		});
 
-		var Parents = Backbone.Relational.Collection.extend({
+		var Parents = Collection.extend({
 			model: Parent
 		});
 
@@ -89,7 +93,7 @@ QUnit.module( "Performance", { setup: require('./setup/setup').reset } );
 		/**
 		 * Test 2
 		 */
-		Backbone.Relational.store.reset();
+		store.reset();
 		addHasManyCount = addHasOneCount = 0;
 		// console.log('loading test 2...');
 		var start = new Date();
@@ -116,7 +120,7 @@ QUnit.module( "Performance", { setup: require('./setup/setup').reset } );
 		/**
 		 * Test 1
 		 */
-		Backbone.Relational.store.reset();
+		store.reset();
 		addHasManyCount = addHasOneCount = 0;
 		// console.log('loading test 1...');
 		var start = new Date();
@@ -135,7 +139,7 @@ QUnit.module( "Performance", { setup: require('./setup/setup').reset } );
 		/**
 		 * Test 2 (again)
 		 */
-		Backbone.Relational.store.reset();
+		store.reset();
 		addHasManyCount = addHasOneCount = removeHasManyCount = removeHasOneCount = 0;
 		// console.log('loading test 2...');
 		var start = new Date();
@@ -165,7 +169,7 @@ QUnit.module( "Performance", { setup: require('./setup/setup').reset } );
 		/**
 		 * Test 1 (again)
 		 */
-		Backbone.Relational.store.reset();
+		store.reset();
 		addHasManyCount = addHasOneCount = removeHasManyCount = removeHasOneCount = 0;
 		// console.log('loading test 1...');
 		var start = new Date();
@@ -185,4 +189,6 @@ QUnit.module( "Performance", { setup: require('./setup/setup').reset } );
 		// console.log( 'data removed in %s, removeHasManyCount=%o, removeHasOneCount=%o', secs, removeHasManyCount, removeHasOneCount );
 
 		// console.log( 'registerCount=%o, unregisterCount=%o', registerCount, unregisterCount );
+
+		assert.expect(0);
 	});

@@ -1,48 +1,27 @@
-var _ = window._ = require('underscore');
-var $ = window.$ = require('jquery');
-var Backbone = window.Backbone = require('backbone');
-Backbone.Relational = require('../../dist/backbone-relational');
-Backbone.Relational.showWarnings = false;
+import {
+	Model as RelationalModel,
+	Collection as RelationalCollection,
+	HasMany, HasOne
+} from 'backbone-relational';
+
+import { Model as BackboneModel } from 'backbone';
 
 /**
- * 'Zoo'
+ * Zoo/Animal/Food/Visitor
  */
-exports.Zoo = window.Zoo = Backbone.Relational.Model.extend({
-	urlRoot: '/zoo/',
 
-	relations: [
-		{
-			type: Backbone.Relational.HasMany,
-			key: 'animals',
-			relatedModel: 'Animal',
-			includeInJSON: [ 'id', 'species' ],
-			collectionType: 'AnimalCollection',
-			reverseRelation: {
-				key: 'livesIn',
-				includeInJSON: [ 'id', 'name' ]
-			}
-		},
-		{ // A simple HasMany without reverse relation
-			type: Backbone.Relational.HasMany,
-			key: 'visitors',
-			relatedModel: 'Visitor'
-		}
-	],
-
-	toString: function() {
-		return 'Zoo (' + this.id + ')';
-	}
+export const Food = RelationalModel.extend({
+	urlRoot: '/food/'
 });
 
-
-exports.Animal = window.Animal = Backbone.Relational.Model.extend({
+export const Animal = RelationalModel.extend({
 	urlRoot: '/animal/',
 
 	relations: [
 		{ // A simple HasOne without reverse relation
-			type: Backbone.Relational.HasOne,
+			type: HasOne,
 			key: 'favoriteFood',
-			relatedModel: 'Food'
+			relatedModel: Food
 		}
 	],
 
@@ -58,24 +37,46 @@ exports.Animal = window.Animal = Backbone.Relational.Model.extend({
 	}
 });
 
-exports.AnimalCollection = window.AnimalCollection = Backbone.Relational.Collection.extend({
+export const AnimalCollection = RelationalCollection.extend({
 	model: Animal
 });
 
-exports.Food = window.Food = Backbone.Relational.Model.extend({
-	urlRoot: '/food/'
+export const Zoo = RelationalModel.extend({
+	urlRoot: '/zoo/',
+
+	relations: [
+		{
+			type: HasMany,
+			key: 'animals',
+			relatedModel: Animal,
+			includeInJSON: [ 'id', 'species' ],
+			collectionType: AnimalCollection,
+			reverseRelation: {
+				key: 'livesIn',
+				includeInJSON: [ 'id', 'name' ]
+			}
+		},
+		{ // A simple HasMany without reverse relation
+			type: HasMany,
+			key: 'visitors',
+			relatedModel: 'Visitor'
+		}
+	],
+
+	toString: function() {
+		return 'Zoo (' + this.id + ')';
+	}
 });
 
-exports.Visitor = window.Visitor = Backbone.Relational.Model.extend();
-
+export const Visitor = RelationalModel.extend();
 
 /**
  * House/Person/Job/Company
  */
 
-exports.House = window.House = Backbone.Relational.Model.extend({
+export const House = RelationalModel.extend({
 	relations: [{
-		type: Backbone.Relational.HasMany,
+		type: HasMany,
 		key: 'occupants',
 		relatedModel: 'Person',
 		reverseRelation: {
@@ -89,7 +90,7 @@ exports.House = window.House = Backbone.Relational.Model.extend({
 	}
 });
 
-exports.User = window.User = Backbone.Relational.Model.extend({
+export const User = RelationalModel.extend({
 	urlRoot: '/user/',
 
 	toString: function() {
@@ -97,26 +98,26 @@ exports.User = window.User = Backbone.Relational.Model.extend({
 	}
 });
 
-exports.Person = window.Person = Backbone.Relational.Model.extend({
+export const Person = RelationalModel.extend({
 	relations: [
 		{
 			// Create a cozy, recursive, one-to-one relationship
-			type: Backbone.Relational.HasOne,
+			type: HasOne,
 			key: 'likesALot',
 			relatedModel: 'Person',
 			reverseRelation: {
-				type: Backbone.Relational.HasOne,
+				type: HasOne,
 				key: 'likedALotBy'
 			}
 		},
 		{
-			type: Backbone.Relational.HasOne,
+			type: HasOne,
 			key: 'user',
 			keyDestination: 'user_id',
 			relatedModel: 'User',
-			includeInJSON: Backbone.Model.prototype.idAttribute,
+			includeInJSON: BackboneModel.prototype.idAttribute,
 			reverseRelation: {
-				type: Backbone.Relational.HasOne,
+				type: HasOne,
 				includeInJSON: 'name',
 				key: 'person'
 			}
@@ -136,17 +137,17 @@ exports.Person = window.Person = Backbone.Relational.Model.extend({
 	}
 });
 
-exports.PersonCollection = window.PersonCollection = Backbone.Relational.Collection.extend({
+export const PersonCollection = RelationalCollection.extend({
 	model: Person
 });
 
-exports.Password = window.Password = Backbone.Relational.Model.extend({
+export const Password = RelationalModel.extend({
 	relations: [{
-		type: Backbone.Relational.HasOne,
+		type: HasOne,
 		key: 'user',
 		relatedModel: 'User',
 		reverseRelation: {
-			type: Backbone.Relational.HasOne,
+			type: HasOne,
 			key: 'password'
 		}
 	}],
@@ -157,7 +158,7 @@ exports.Password = window.Password = Backbone.Relational.Model.extend({
 });
 
 // A link table between 'Person' and 'Company', to achieve many-to-many relations
-exports.Job = window.Job = Backbone.Relational.Model.extend({
+export const Job = RelationalModel.extend({
 	defaults: {
 		'startDate': null,
 		'endDate': null
@@ -168,11 +169,11 @@ exports.Job = window.Job = Backbone.Relational.Model.extend({
 	}
 });
 
-exports.Company = window.Company = Backbone.Relational.Model.extend({
+export const Company = RelationalModel.extend({
 	relations: [{
 			type: 'HasMany',
 			key: 'employees',
-			relatedModel: 'Job',
+			relatedModel: Job,
 			reverseRelation: {
 				key: 'company'
 			}
@@ -180,7 +181,7 @@ exports.Company = window.Company = Backbone.Relational.Model.extend({
 		{
 			type: 'HasOne',
 			key: 'ceo',
-			relatedModel: 'Person',
+			relatedModel: Person,
 			reverseRelation: {
 				key: 'runs'
 			}
@@ -192,15 +193,15 @@ exports.Company = window.Company = Backbone.Relational.Model.extend({
 	}
 });
 
-
 /**
  * Node/NodeList
  */
-exports.Node = window.Node = Backbone.Relational.Model.extend({
+
+export const Node = RelationalModel.extend({
 	urlRoot: '/node/',
 
 	relations: [{
-			type: Backbone.Relational.HasOne,
+			type: HasOne,
 			key: 'parent',
 			reverseRelation: {
 				key: 'children'
@@ -213,16 +214,15 @@ exports.Node = window.Node = Backbone.Relational.Model.extend({
 	}
 });
 
-exports.NodeList = window.NodeList = Backbone.Relational.Collection.extend({
+export const NodeList = RelationalCollection.extend({
 	model: Node
 });
-
 
 /**
  * Customer/Address/Shop/Agent
  */
 
-exports.Customer = window.Customer = Backbone.Relational.Model.extend({
+export const Customer = RelationalModel.extend({
 	urlRoot: '/customer/',
 
 	toString: function() {
@@ -230,7 +230,7 @@ exports.Customer = window.Customer = Backbone.Relational.Model.extend({
 	}
 });
 
-exports.CustomerCollection = window.CustomerCollection = Backbone.Relational.Collection.extend({
+export const CustomerCollection = RelationalCollection.extend({
 	model: Customer,
 
 	initialize: function( models, options ) {
@@ -239,7 +239,7 @@ exports.CustomerCollection = window.CustomerCollection = Backbone.Relational.Col
 	}
 });
 
-exports.Address = window.Address = Backbone.Relational.Model.extend({
+export const Address = RelationalModel.extend({
 	urlRoot: '/address/',
 
 	toString: function() {
@@ -247,12 +247,12 @@ exports.Address = window.Address = Backbone.Relational.Model.extend({
 	}
 });
 
-exports.Shop = window.Shop = Backbone.Relational.Model.extend({
+export const Shop = RelationalModel.extend({
 	relations: [
 		{
-			type: Backbone.Relational.HasMany,
+			type: HasMany,
 			key: 'customers',
-			collectionType: 'CustomerCollection',
+			collectionType: CustomerCollection,
 			collectionOptions: function( instance ) {
 				return { 'url': 'shop/' + instance.id + '/customers/' };
 			},
@@ -260,7 +260,7 @@ exports.Shop = window.Shop = Backbone.Relational.Model.extend({
 			autoFetch: true
 		},
 		{
-			type: Backbone.Relational.HasOne,
+			type: HasOne,
 			key: 'address',
 			relatedModel: 'Address',
 			autoFetch: {
@@ -279,20 +279,20 @@ exports.Shop = window.Shop = Backbone.Relational.Model.extend({
 	}
 });
 
-exports.Agent = window.Agent = Backbone.Relational.Model.extend({
+export const Agent = RelationalModel.extend({
 	urlRoot: '/agent/',
 
 	relations: [
 		{
-			type: Backbone.Relational.HasMany,
+			type: HasMany,
 			key: 'customers',
-			relatedModel: 'Customer',
-			includeInJSON: Backbone.Relational.Model.prototype.idAttribute
+			relatedModel: Customer,
+			includeInJSON: RelationalModel.prototype.idAttribute
 		},
 		{
-			type: Backbone.Relational.HasOne,
+			type: HasOne,
 			key: 'address',
-			relatedModel: 'Address',
+			relatedModel: Address,
 			autoFetch: false
 		}
 	],

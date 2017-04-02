@@ -1,16 +1,16 @@
 /**!
  * Backbone Relational v0.10.0 (backbone-relational)
  * ----------------------------------
- * (c) 2011-2016 Paul Uithol and contributors (https://github.com/PaulUithol/Backbone-relational/graphs/contributors)
+ * (c) 2011-2017 Paul Uithol and contributors (https://github.com/PaulUithol/Backbone-relational/graphs/contributors)
  * Distributed under MIT license
  *
  * http://backbonerelational.org
  */
 
 (function (global, factory) {
-  typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory(require('backbone'), require('underscore'), require('jquery')) :
-  typeof define === 'function' && define.amd ? define(['backbone', 'underscore', 'jquery'], factory) :
-  (global.BackboneRelational = factory(global.Backbone,global._,global.$));
+	typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory(require('backbone'), require('underscore'), require('jquery')) :
+	typeof define === 'function' && define.amd ? define(['backbone', 'underscore', 'jquery'], factory) :
+	(global.BackboneRelational = factory(global.Backbone,global._,global.$));
 }(this, (function (Backbone,_,$) { 'use strict';
 
 var Backbone__default = 'default' in Backbone ? Backbone['default'] : Backbone;
@@ -90,7 +90,7 @@ _.extend(BlockingQueue.prototype, Semaphore, {
 
 var eventQueue = new BlockingQueue();
 
-var extend$1 = Backbone.Model.extend;
+var extend = Backbone.Model.extend;
 
 var Events = Backbone__default.Events;
 
@@ -104,7 +104,7 @@ var extendableObject = function extendableObject() {
   (_initialize = this.initialize).call.apply(_initialize, [this].concat(args));
 };
 _.extend(extendableObject.prototype, Events);
-extendableObject.extend = extend$1;
+extendableObject.extend = extend;
 
 var config = {
   showWarnings: true

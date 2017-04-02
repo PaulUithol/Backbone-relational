@@ -1,3 +1,3 @@
-import Backbone from 'backbone';
+import { Events } from 'backbone';
 
-export default Backbone.Events;
+export default Events;

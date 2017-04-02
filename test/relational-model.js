@@ -1,6 +1,21 @@
-QUnit.module( "Backbone.Relational.Model", { setup: require('./setup/data') } );
+import { reset, requests } from './setup/setup';
+import { store, Model as RelationalModel, HasMany, HasOne, Collection as RelationalCollection, Relation } from 'backbone-relational';
+import { Model as BackboneModel, Collection as BackboneCollection } from 'backbone';
+import { Person, User, Animal, Zoo, Agent, Shop, AnimalCollection, Customer, Job, Address, Node, NodeList } from './setup/objects';
+import initObjects from './setup/data';
+import _ from 'underscore';
 
-	QUnit.test( "Return values: set returns the Model", function() {
+let objects;
+
+QUnit.module( "RelationalModel", { beforeEach() {
+  reset();
+  store.addModelScope({
+    Person, User, Animal, Zoo, Agent, Shop, Customer, Job, Address, Node
+  });
+  objects = initObjects();
+} });
+
+	QUnit.test( "Return values: set returns the Model", function( assert ) {
 		var personId = 'person-10';
 		var person = new Person({
 			id: personId,
@@ -9,51 +24,51 @@ QUnit.module( "Backbone.Relational.Model", { setup: require('./setup/data') } );
 		});
 
 		var result = person.set( { 'name': 'Hector' } );
-		ok( result === person, "Set returns the model" );
+		assert.ok( result === person, "Set returns the model" );
 	});
 
-	QUnit.test( "`clear`", function() {
+	QUnit.test( "`clear`", function( assert ) {
 		var person = new Person( { id: 'person-10' } );
 
-		ok( person === Person.findOrCreate( 'person-10' ) );
+		assert.ok( person === Person.findOrCreate( 'person-10' ) );
 
 		person.clear();
 
-		ok( !person.id );
+		assert.ok( !person.id );
 
-		ok( !Person.findOrCreate( 'person-10' ) );
+		assert.ok( !Person.findOrCreate( 'person-10' ) );
 
 		person.set( { id: 'person-10' } );
 
-		ok( person === Person.findOrCreate( 'person-10' ) );
+		assert.ok( person === Person.findOrCreate( 'person-10' ) );
 	});
 
-	QUnit.test( "getRelations", function() {
-		var relations = person1.getRelations();
+	QUnit.test( "getRelations", function( assert ) {
+		var relations = objects.person1.getRelations();
 
-		equal( relations.length, 6 );
+		assert.equal( relations.length, 6 );
 
-		ok( _.every( relations, function( rel ) {
-				return rel instanceof Backbone.Relational.Relation;
+		assert.ok( _.every( relations, function( rel ) {
+				return rel instanceof Relation;
 			})
 		);
 	});
 
-	QUnit.test( "getRelation", function() {
-		var userRel = person1.getRelation( 'user' );
+	QUnit.test( "getRelation", function( assert ) {
+		var userRel = objects.person1.getRelation( 'user' );
 
-		ok( userRel instanceof Backbone.Relational.HasOne );
-		equal( userRel.key, 'user' );
+		assert.ok( userRel instanceof HasOne );
+		assert.equal( userRel.key, 'user' );
 
-		var jobsRel = person1.getRelation( 'jobs' );
+		var jobsRel = objects.person1.getRelation( 'jobs' );
 
-		ok( jobsRel instanceof Backbone.Relational.HasMany );
-		equal( jobsRel.key, 'jobs' );
+		assert.ok( jobsRel instanceof HasMany );
+		assert.equal( jobsRel.key, 'jobs' );
 
-		ok( person1.getRelation( 'nope' ) == null );
+		assert.ok( objects.person1.getRelation( 'nope' ) == null );
 	});
 
-	QUnit.test( "getAsync on a HasOne relation", function() {
+	QUnit.test( "getAsync on a HasOne relation", function( assert ) {
 		var errorCount = 0;
 		var person = new Person({
 			id: 'person-10',
@@ -62,24 +77,24 @@ QUnit.module( "Backbone.Relational.Model", { setup: require('./setup/data') } );
 		});
 
 		var idsToFetch = person.getIdsToFetch( 'user' );
-		deepEqual( idsToFetch, [ 'user-10' ] );
+		assert.deepEqual( idsToFetch, [ 'user-10' ] );
 
 		var request = person.getAsync( 'user', { error: function() {
 				errorCount++;
 			}
 		});
 
-		ok( _.isObject( request ) && request.always && request.done && request.fail );
-		equal( window.requests.length, 1, "A single request has been made" );
-		ok( person.get( 'user' ) instanceof User );
+		assert.ok( _.isObject( request ) && request.always && request.done && request.fail );
+		assert.equal( requests.length, 1, "A single request has been made" );
+		assert.ok( person.get( 'user' ) instanceof User );
 
 		// Triggering the 'error' callback should destroy the model
-		window.requests[ 0 ].error();
+		requests[ 0 ].error();
 		// Trigger the 'success' callback on the `destroy` call to actually fire the 'destroy' event
-		_.last( window.requests ).success();
+		_.last( requests ).success();
 
-		ok( !person.get( 'user' ), "User has been destroyed & removed" );
-		equal( errorCount, 1, "The error callback executed successfully" );
+		assert.ok( !person.get( 'user' ), "User has been destroyed & removed" );
+		assert.equal( errorCount, 1, "The error callback executed successfully" );
 
 		var person2 = new Person({
 			id: 'person-11',
@@ -87,55 +102,55 @@ QUnit.module( "Backbone.Relational.Model", { setup: require('./setup/data') } );
 		});
 
 		request = person2.getAsync( 'user' );
-		equal( window.requests.length, 1, "No request was made" );
+		assert.equal( requests.length, 1, "No request was made" );
 	});
 
-	QUnit.test( "getAsync on a HasMany relation", function() {
+	QUnit.test( "getAsync on a HasMany relation", function( assert ) {
 		var errorCount = 0;
 		var zoo = new Zoo({
 			animals: [ { id: 'monkey-1' }, 'lion-1', 'zebra-1' ]
 		});
 
 		var idsToFetch = zoo.getIdsToFetch( 'animals' );
-		deepEqual( idsToFetch, [ 'lion-1', 'zebra-1' ] );
+		assert.deepEqual( idsToFetch, [ 'lion-1', 'zebra-1' ] );
 
 		/**
 		 * Case 1: separate requests for each model
 		 */
-		window.requests = [];
+		requests.length = 0;
 
 		// `getAsync` creates two placeholder models for the ids present in the relation.
 		var request = zoo.getAsync( 'animals', { error: function() { errorCount++; } } );
 
-		ok( _.isObject( request ) && request.always && request.done && request.fail );
-		equal( window.requests.length, 2, "Two requests have been made (a separate one for each animal)" );
-		equal( zoo.get( 'animals' ).length, 3, "Three animals in the zoo" );
+		assert.ok( _.isObject( request ) && request.always && request.done && request.fail );
+		assert.equal( requests.length, 2, "Two requests have been made (a separate one for each animal)" );
+		assert.equal( zoo.get( 'animals' ).length, 3, "Three animals in the zoo" );
 
 		// Triggering the 'error' callback for one request should destroy the model
-		window.requests[ 0 ].error();
+		requests[ 0 ].error();
 		// Trigger the 'success' callback on the `destroy` call to actually fire the 'destroy' event
-		_.last( window.requests ).success();
+		_.last( requests ).success();
 
-		equal( zoo.get( 'animals' ).length, 2, "Two animals left in the zoo" );
-		equal( errorCount, 1, "The error callback executed successfully" );
+		assert.equal( zoo.get( 'animals' ).length, 2, "Two animals left in the zoo" );
+		assert.equal( errorCount, 1, "The error callback executed successfully" );
 
 		// Try to re-fetch; nothing left to get though, since the placeholder models got destroyed
-		window.requests = [];
+		requests.length = 0;
 		request = zoo.getAsync( 'animals' );
 
-		equal( window.requests.length, 0, "No request" );
-		equal( zoo.get( 'animals' ).length, 2, "Two animals" );
+		assert.equal( requests.length, 0, "No request" );
+		assert.equal( zoo.get( 'animals' ).length, 2, "Two animals" );
 
 		/**
 		 * Case 2: one request per fetch (generated by the collection)
 		 */
-		window.requests = [];
+		requests.length = 0;
 		errorCount = 0;
 
 		// Define a `url` function for the zoo that builds a url to fetch a set of models from their ids
 		zoo.get( 'animals' ).url = function( models ) {
 			var ids = _.map( models || [], function( model ) {
-				return model instanceof Backbone.Model ? model.id : model;
+				return model instanceof BackboneModel ? model.id : model;
 			} );
 
 			return '/animal/' + ( ids.length ? 'set/' + ids.join( ';' ) + '/' : '' );
@@ -144,51 +159,51 @@ QUnit.module( "Backbone.Relational.Model", { setup: require('./setup/data') } );
 		// Set two new animals to be fetched; both should be fetched in a single request.
 		zoo.set( { animals: [ 'monkey-1', 'lion-2', 'zebra-2' ] } );
 
-		equal( zoo.get( 'animals' ).length, 1, "One animal" );
+		assert.equal( zoo.get( 'animals' ).length, 1, "One animal" );
 
 		// `getAsync` should not create placeholder models in this case, since the custom `url` function
 		// can return a url for the whole set without needing to resort to this.
-		window.requests = [];
+		requests.length = 0;
 		request = zoo.getAsync( 'animals', { error: function() { errorCount++; } } );
 
-		ok( _.isObject( request ) && request.always && request.done && request.fail );
-		equal( window.requests.length, 1, "One request" );
-		equal( _.last( window.requests ).url, '/animal/set/lion-2;zebra-2/' );
-		equal( zoo.get('animals').length, 1, "Still only one animal in the zoo" );
+		assert.ok( _.isObject( request ) && request.always && request.done && request.fail );
+		assert.equal( requests.length, 1, "One request" );
+		assert.equal( _.last( requests ).url, '/animal/set/lion-2;zebra-2/' );
+		assert.equal( zoo.get('animals').length, 1, "Still only one animal in the zoo" );
 
 		// Triggering the 'error' callback (some error occured during fetching) should trigger the 'destroy' event
 		// on both fetched models, but should NOT actually make 'delete' requests to the server!
-		_.last( window.requests ).error();
-		equal( window.requests.length, 1, "An error occured when fetching, but no DELETE requests are made to the server while handling local cleanup." );
+		_.last( requests ).error();
+		assert.equal( requests.length, 1, "An error occured when fetching, but no DELETE requests are made to the server while handling local cleanup." );
 
-		equal( zoo.get( 'animals' ).length, 1, "Both animals are destroyed" );
-		equal( errorCount, 1, "The error callback executed successfully" );
+		assert.equal( zoo.get( 'animals' ).length, 1, "Both animals are destroyed" );
+		assert.equal( errorCount, 1, "The error callback executed successfully" );
 
 		// Try to re-fetch; attempts to get both missing animals again
-		window.requests = [];
+		requests.length = 0;
 		request = zoo.getAsync( 'animals' );
 
-		equal( window.requests.length, 1, "One request" );
-		equal( zoo.get( 'animals' ).length, 1, "One animal" );
+		assert.equal( requests.length, 1, "One request" );
+		assert.equal( zoo.get( 'animals' ).length, 1, "One animal" );
 
 		// In this case, models are only created after receiving data for them
-		window.requests[ 0 ].success( [ { id: 'lion-2' }, { id: 'zebra-2' } ] );
-		equal( zoo.get( 'animals' ).length, 3 );
+		requests[ 0 ].success( [ { id: 'lion-2' }, { id: 'zebra-2' } ] );
+		assert.equal( zoo.get( 'animals' ).length, 3 );
 
 		// Re-fetch the existing models
-		window.requests = [];
+		requests.length = 0;
 		request = zoo.getAsync( 'animals', { refresh: true } );
 
-		equal( window.requests.length, 1 );
-		equal( _.last( window.requests ).url, '/animal/set/monkey-1;lion-2;zebra-2/' );
-		equal( zoo.get( 'animals' ).length, 3 );
+		assert.equal( requests.length, 1 );
+		assert.equal( _.last( requests ).url, '/animal/set/monkey-1;lion-2;zebra-2/' );
+		assert.equal( zoo.get( 'animals' ).length, 3 );
 
 		// An error while refreshing existing models shouldn't affect it
-		window.requests[ 0 ].error();
-		equal( zoo.get( 'animals' ).length, 3 );
+		requests[ 0 ].error();
+		assert.equal( zoo.get( 'animals' ).length, 3 );
 	});
 
-	QUnit.test( "getAsync", 8, function() {
+	QUnit.test( "getAsync", function( assert ) {
 		var zoo = Zoo.findOrCreate( { id: 'z-1', animals: [ 'cat-1' ] } );
 
 		zoo.on( 'add:animals', function( animal ) {
@@ -199,35 +214,35 @@ QUnit.module( "Backbone.Relational.Model", { setup: require('./setup/data') } );
 		});
 
 		zoo.getAsync( 'animals' ).done( function( animals ) {
-			ok( animals instanceof AnimalCollection );
-			ok( animals.length === 1 );
+			assert.ok( animals instanceof AnimalCollection );
+			assert.ok( animals.length === 1 );
 
 			var cat = zoo.get( 'animals' ).at( 0 );
-			equal( cat.get( 'name' ), 'Tiger' );
+			assert.equal( cat.get( 'name' ), 'Tiger' );
 
 			cat.getAsync( 'favoriteFood' ).done( function( food ) {
-				equal( food.get( 'name' ), 'Cheese', 'Favorite food is cheese' );
+				assert.equal( food.get( 'name' ), 'Cheese', 'Favorite food is cheese' );
 			});
 		});
 
-		equal( zoo.get( 'animals' ).length, 1 );
-		equal( window.requests.length, 1 );
-		equal( _.last( window.requests ).url, '/animal/cat-1' );
+		assert.equal( zoo.get( 'animals' ).length, 1 );
+		assert.equal( requests.length, 1 );
+		assert.equal( _.last( requests ).url, '/animal/cat-1' );
 
 		// Declare success
-		_.last( window.requests ).respond( 200, { id: 'cat-1', name: 'Tiger', favoriteFood: 'f-2' } );
-		equal( window.requests.length, 2 );
+		_.last( requests ).respond( 200, { id: 'cat-1', name: 'Tiger', favoriteFood: 'f-2' } );
+		assert.equal( requests.length, 2 );
 
-		_.last( window.requests ).respond( 200, { id: 'f-2', name: 'Cheese' } );
+		_.last( requests ).respond( 200, { id: 'f-2', name: 'Cheese' } );
 	});
 
-	QUnit.test( "autoFetch a HasMany relation", function() {
+	QUnit.test( "autoFetch a HasMany relation", function( assert ) {
 		var shopOne = new Shop({
 			id: 'shop-1',
 			customers: ['customer-1', 'customer-2']
 		});
 
-		equal( requests.length, 2, "Two requests to fetch the users has been made" );
+		assert.equal( requests.length, 2, "Two requests to fetch the users has been made" );
 		requests.length = 0;
 
 		var shopTwo = new Shop({
@@ -235,21 +250,21 @@ QUnit.module( "Backbone.Relational.Model", { setup: require('./setup/data') } );
 			customers: ['customer-1', 'customer-3']
 		});
 
-		equal( requests.length, 1, "A request to fetch a user has been made" ); //as customer-1 has already been fetched
+		assert.equal( requests.length, 1, "A request to fetch a user has been made" ); //as customer-1 has already been fetched
 	});
 
-	QUnit.test( "autoFetch on a HasOne relation (with callbacks)", function() {
+	QUnit.test( "autoFetch on a HasOne relation (with callbacks)", function( assert ) {
 		var shopThree = new Shop({
 			id: 'shop-3',
 			address: 'address-3'
 		});
 
-		equal( requests.length, 1, "A request to fetch the address has been made" );
+		assert.equal( requests.length, 1, "A request to fetch the address has been made" );
 
 		var res = { successOK: false, errorOK: false };
 
 		requests[0].success( res );
-		equal( res.successOK, true, "The success() callback has been called" );
+		assert.equal( res.successOK, true, "The success() callback has been called" );
 		requests.length = 0;
 
 		var shopFour = new Shop({
@@ -257,38 +272,38 @@ QUnit.module( "Backbone.Relational.Model", { setup: require('./setup/data') } );
 			address: 'address-4'
 		});
 
-		equal( requests.length, 1, "A request to fetch the address has been made" );
+		assert.equal( requests.length, 1, "A request to fetch the address has been made" );
 		requests[0].error( res );
-		equal( res.errorOK, true, "The error() callback has been called" );
+		assert.equal( res.errorOK, true, "The error() callback has been called" );
 	});
 
-	QUnit.test( "autoFetch false by default", function() {
+	QUnit.test( "autoFetch false by default", function( assert ) {
 		var agentOne = new Agent({
 			id: 'agent-1',
 			customers: ['customer-4', 'customer-5']
 		});
 
-		equal( requests.length, 0, "No requests to fetch the customers has been made as autoFetch was not defined" );
+		assert.equal( requests.length, 0, "No requests to fetch the customers has been made as autoFetch was not defined" );
 
 		agentOne = new Agent({
 			id: 'agent-2',
 			address: 'address-5'
 		});
 
-		equal( requests.length, 0, "No requests to fetch the customers has been made as autoFetch was set to false" );
+		assert.equal( requests.length, 0, "No requests to fetch the customers has been made as autoFetch was set to false" );
 	});
 
-	QUnit.test( "`clone`", function() {
-		var user = person1.get( 'user' );
+	QUnit.test( "`clone`", function( assert ) {
+		var user = objects.person1.get( 'user' );
 
 		// HasOne relations should stay with the original model
-		var newPerson = person1.clone();
+		var newPerson = objects.person1.clone();
 
-		ok( newPerson.get( 'user' ) === null );
-		ok( person1.get( 'user' ) === user );
+		assert.ok( newPerson.get( 'user' ) === null );
+		assert.ok( objects.person1.get( 'user' ) === user );
 	});
 
-	QUnit.test( "`save` (with `wait`)", function() {
+	QUnit.test( "`save` (with `wait`)", function( assert ) {
 		var node1 = new Node({ id: '1', parent: '3', name: 'First node' } ),
 			node2 = new Node({ id: '2', name: 'Second node' });
 
@@ -296,76 +311,76 @@ QUnit.module( "Backbone.Relational.Model", { setup: require('./setup/data') } );
 		var request = node2.save( 'parent', node1, { wait: true } ),
 			json = JSON.parse( request.data );
 
-		ok( _.isObject( json.parent ) );
-		equal( json.parent.id, '1' );
-		equal( node2.get( 'parent' ), null );
+		assert.ok( _.isObject( json.parent ) );
+		assert.equal( json.parent.id, '1' );
+		assert.equal( node2.get( 'parent' ), null );
 
 		request.success();
 
-		equal( node2.get( 'parent' ), node1 );
+		assert.equal( node2.get( 'parent' ), node1 );
 
 		// Save a new node as node2's parent, only specified as JSON in the call to save
 		request = node2.save( 'parent', { id: '3', parent: '2', name: 'Third node' }, { wait: true } );
 		json = JSON.parse( request.data );
 
-		ok( _.isObject( json.parent ) );
-		equal( json.parent.id, '3' );
-		equal( node2.get( 'parent' ), node1 );
+		assert.ok( _.isObject( json.parent ) );
+		assert.equal( json.parent.id, '3' );
+		assert.equal( node2.get( 'parent' ), node1 );
 
 		request.success();
 
 		var node3 = node2.get( 'parent' );
 
-		ok( node3 instanceof Node );
-		equal( node3.id, '3' );
+		assert.ok( node3 instanceof Node );
+		assert.equal( node3.id, '3' );
 
 		// Try to reset node2's parent to node1, but fail the request
 		request = node2.save( 'parent', node1, { wait: true } );
 		request.error();
 
-		equal( node2.get( 'parent' ), node3 );
+		assert.equal( node2.get( 'parent' ), node3 );
 
 		// See what happens for different values of `includeInJSON`...
 		// For `Person.user`, just the `idAttribute` should be serialized to the keyDestination `user_id`
-		var user1 = person1.get( 'user' );
-		request = person1.save( 'user', null, { wait: true } );
+		var user1 = objects.person1.get( 'user' );
+		request = objects.person1.save( 'user', null, { wait: true } );
 		json = JSON.parse( request.data );
 		// console.log( request, json );
 
-		equal( person1.get( 'user' ), user1 );
+		assert.equal( objects.person1.get( 'user' ), user1 );
 
 		request.success( json );
 
-		equal( person1.get( 'user' ), null );
+		assert.equal( objects.person1.get( 'user' ), null );
 
-		request = person1.save( 'user', user1, { wait: true } );
+		request = objects.person1.save( 'user', user1, { wait: true } );
 		json = JSON.parse( request.data );
 
-		equal( json.user_id, user1.id );
-		equal( person1.get( 'user' ), null );
+		assert.equal( json.user_id, user1.id );
+		assert.equal( objects.person1.get( 'user' ), null );
 
 		request.success( json );
 
-		equal( person1.get( 'user' ), user1 );
+		assert.equal( objects.person1.get( 'user' ), user1 );
 
 		// Save a collection with `wait: true`
 		var zoo = new Zoo( { id: 'z1' } ),
 			animal1 = new Animal( { id: 'a1', species: 'Goat', name: 'G' } ),
-			coll = new Backbone.Relational.Collection( [ { id: 'a2', species: 'Rabbit', name: 'R' }, animal1 ] );
+			coll = new RelationalCollection( [ { id: 'a2', species: 'Rabbit', name: 'R' }, animal1 ] );
 
 		request = zoo.save( 'animals', coll, { wait: true } );
 		json = JSON.parse( request.data );
 		// console.log( request, json );
 
-		ok( zoo.get( 'animals' ).length === 0 );
+		assert.ok( zoo.get( 'animals' ).length === 0 );
 
 		request.success( json );
 
-		ok( zoo.get( 'animals' ).length === 2 );
+		assert.ok( zoo.get( 'animals' ).length === 2 );
 		// console.log( animal1 );
 	});
 
-	QUnit.test( "`Collection.create` (with `wait`)", function() {
+	QUnit.test( "`Collection.create` (with `wait`)", function( assert ) {
 		var nodeColl = new NodeList(),
 			nodesAdded = 0;
 
@@ -374,124 +389,124 @@ QUnit.module( "Backbone.Relational.Model", { setup: require('./setup/data') } );
 		});
 
 		nodeColl.create({ id: '3', parent: '2', name: 'Third node' }, { wait: true });
-		ok( nodesAdded === 0 );
+		assert.ok( nodesAdded === 0 );
 		requests[ requests.length - 1 ].success();
-		ok( nodesAdded === 1 );
+		assert.ok( nodesAdded === 1 );
 
 		nodeColl.create({ id: '4', name: 'Third node' }, { wait: true });
-		ok( nodesAdded === 1 );
+		assert.ok( nodesAdded === 1 );
 		requests[ requests.length - 1 ].error();
-		ok( nodesAdded === 1 );
+		assert.ok( nodesAdded === 1 );
 	});
 
-	QUnit.test( "`toJSON`: simple cases", function() {
+	QUnit.test( "`toJSON`: simple cases", function( assert ) {
 		var node = new Node({ id: '1', parent: '3', name: 'First node' });
 		new Node({ id: '2', parent: '1', name: 'Second node' });
 		new Node({ id: '3', parent: '2', name: 'Third node' });
 
 		var json = node.toJSON();
 
-		ok( json.children.length === 1 );
+		assert.ok( json.children.length === 1 );
 	});
 
-	QUnit.test("'toJSON' should return null for relations that are set to null, even when model is not fetched", function() {
+	QUnit.test( "'toJSON' should return null for relations that are set to null, even when model is not fetched", function( assert ) {
 		var person = new Person( { user : 'u1' } );
 
-		equal( person.toJSON().user_id, 'u1' );
+		assert.equal( person.toJSON().user_id, 'u1' );
 		person.set( 'user', null );
-		equal( person.toJSON().user_id, null );
+		assert.equal( person.toJSON().user_id, null );
 
 		person = new Person( { user: new User( { id : 'u2' } ) } );
 
-		equal( person.toJSON().user_id, 'u2' );
+		assert.equal( person.toJSON().user_id, 'u2' );
 		person.set( { user: 'unfetched_user_id' } );
-		equal( person.toJSON().user_id, 'unfetched_user_id' );
+		assert.equal( person.toJSON().user_id, 'unfetched_user_id' );
 	});
 
-	QUnit.test( "`toJSON` should include ids for 'unknown' or 'missing' models (if `includeInJSON` is `idAttribute`)", function() {
+	QUnit.test( "`toJSON` should include ids for 'unknown' or 'missing' models (if `includeInJSON` is `idAttribute`)", function( assert ) {
 		// See GH-191
 
 		// `Zoo` shouldn't be affected; `animals.includeInJSON` is not equal to `idAttribute`
 		var zoo = new Zoo({ id: 'z1', animals: [ 'a1', 'a2' ] }),
 			zooJSON = zoo.toJSON();
 
-		ok( _.isArray( zooJSON.animals ) );
-		equal( zooJSON.animals.length, 0, "0 animals in zooJSON; it serializes an array of attributes" );
+		assert.ok( _.isArray( zooJSON.animals ) );
+		assert.equal( zooJSON.animals.length, 0, "0 animals in zooJSON; it serializes an array of attributes" );
 
 		var a1 = new Animal( { id: 'a1' } );
 		zooJSON = zoo.toJSON();
-		equal( zooJSON.animals.length, 1, "1 animals in zooJSON; it serializes an array of attributes" );
+		assert.equal( zooJSON.animals.length, 1, "1 animals in zooJSON; it serializes an array of attributes" );
 
 		// Agent -> Customer; `idAttribute` on a HasMany
 		var agent = new Agent({ id: 'a1', customers: [ 'c1', 'c2' ] } ),
 			agentJSON = agent.toJSON();
 
-		ok( _.isArray( agentJSON.customers ) );
-		equal( agentJSON.customers.length, 2, "2 customers in agentJSON; it serializes the `idAttribute`" );
+		assert.ok( _.isArray( agentJSON.customers ) );
+		assert.equal( agentJSON.customers.length, 2, "2 customers in agentJSON; it serializes the `idAttribute`" );
 
 		var c1 = new Customer( { id: 'c1' } );
-		equal( agent.get( 'customers' ).length, 1, '1 customer in agent' );
+		assert.equal( agent.get( 'customers' ).length, 1, '1 customer in agent' );
 
 		agentJSON = agent.toJSON();
-		equal( agentJSON.customers.length, 2, "2 customers in agentJSON; `idAttribute` for 1 missing, other existing" );
+		assert.equal( agentJSON.customers.length, 2, "2 customers in agentJSON; `idAttribute` for 1 missing, other existing" );
 
 		//c1.destroy();
 
 		//agentJSON = agent.toJSON();
-		//equal( agentJSON.customers.length, 1, "1 customer in agentJSON; `idAttribute` for 1 missing, other destroyed" );
+		//assert.equal( agentJSON.customers.length, 1, "1 customer in agentJSON; `idAttribute` for 1 missing, other destroyed" );
 
 		agent.set( 'customers', [ 'c1', 'c3' ] );
 		var c3 = new Customer( { id: 'c3' } );
 
 		agentJSON = agent.toJSON();
-		equal( agentJSON.customers.length, 2, "2 customers in agentJSON; 'c1' already existed, 'c3' created" );
+		assert.equal( agentJSON.customers.length, 2, "2 customers in agentJSON; 'c1' already existed, 'c3' created" );
 
 		agent.get( 'customers' ).remove( c1 );
 
 		agentJSON = agent.toJSON();
-		equal( agentJSON.customers.length, 1, "1 customer in agentJSON; 'c1' removed, 'c3' still in there" );
+		assert.equal( agentJSON.customers.length, 1, "1 customer in agentJSON; 'c1' removed, 'c3' still in there" );
 
 		// Person -> User; `idAttribute` on a HasOne
 		var person = new Person({ id: 'p1', user: 'u1' } ),
 			personJSON = person.toJSON();
 
-		equal( personJSON.user_id, 'u1', "`user_id` gets set in JSON" );
+		assert.equal( personJSON.user_id, 'u1', "`user_id` gets set in JSON" );
 
 		var u1 = new User( { id: 'u1' } );
 		personJSON = person.toJSON();
-		ok( u1.get( 'person' ) === person );
-		equal( personJSON.user_id, 'u1', "`user_id` gets set in JSON" );
+		assert.ok( u1.get( 'person' ) === person );
+		assert.equal( personJSON.user_id, 'u1', "`user_id` gets set in JSON" );
 
 		person.set( 'user', 'u1' );
 		personJSON = person.toJSON();
-		equal( personJSON.user_id, 'u1', "`user_id` gets set in JSON" );
+		assert.equal( personJSON.user_id, 'u1', "`user_id` gets set in JSON" );
 
 		u1.destroy();
 		personJSON = person.toJSON();
-		ok( !u1.get( 'person' ) );
-		equal( personJSON.user_id, 'u1', "`user_id` still gets set in JSON" );
+		assert.ok( !u1.get( 'person' ) );
+		assert.equal( personJSON.user_id, 'u1', "`user_id` still gets set in JSON" );
 	});
 
-	QUnit.test( "`toJSON` should include ids for unregistered models (if `includeInJSON` is `idAttribute`)", function() {
+	QUnit.test( "`toJSON` should include ids for unregistered models (if `includeInJSON` is `idAttribute`)", function( assert ) {
 
 		// Person -> User; `idAttribute` on a HasOne
 		var person = new Person({ id: 'p1', user: 'u1' } ),
 			personJSON = person.toJSON();
 
-		equal( personJSON.user_id, 'u1', "`user_id` gets set in JSON even though no user obj exists" );
+		assert.equal( personJSON.user_id, 'u1', "`user_id` gets set in JSON even though no user obj exists" );
 
 		var u1 = new User( { id: 'u1' } );
 		personJSON = person.toJSON();
-		ok( u1.get( 'person' ) === person );
-		equal( personJSON.user_id, 'u1', "`user_id` gets set in JSON after matching user obj is created" );
+		assert.ok( u1.get( 'person' ) === person );
+		assert.equal( personJSON.user_id, 'u1', "`user_id` gets set in JSON after matching user obj is created" );
 
-		Backbone.Relational.store.unregister(u1);
+		store.unregister(u1);
 
 		personJSON = person.toJSON();
-		equal( personJSON.user_id, 'u1', "`user_id` gets set in JSON after user was unregistered from store" );
+		assert.equal( personJSON.user_id, 'u1', "`user_id` gets set in JSON after user was unregistered from store" );
 	});
 
-	QUnit.test( "`parse` gets called through `findOrCreate`", function() {
+	QUnit.test( "`parse` gets called through `findOrCreate`", function( assert ) {
 		var parseCalled = 0;
 		Zoo.prototype.parse = Animal.prototype.parse = function( resp, options ) {
 			parseCalled++;
@@ -505,14 +520,14 @@ QUnit.module( "Backbone.Relational.Model", { setup: require('./setup/data') } );
 		}, { parse: true } );
 		var animal = zoo.get( 'animals' ).first();
 
-		ok( animal.get( 'livesIn' ) );
-		ok( animal.get( 'livesIn' ) instanceof Zoo );
-		ok( animal.get( 'livesIn' ).get( 'animals' ).get( animal ) === animal );
+		assert.ok( animal.get( 'livesIn' ) );
+		assert.ok( animal.get( 'livesIn' ) instanceof Zoo );
+		assert.ok( animal.get( 'livesIn' ).get( 'animals' ).get( animal ) === animal );
 
 		// `parse` gets called by `findOrCreate` directly when trying to lookup `1`,
 		// and the parsed attributes are passed to `build` (called from `findOrCreate`) with `{ parse: false }`,
 		// rather than having `parse` called again by the Zoo constructor.
-		ok( parseCalled === 1, 'parse called 1 time? ' + parseCalled );
+		assert.ok( parseCalled === 1, 'parse called 1 time? ' + parseCalled );
 
 		parseCalled = 0;
 
@@ -526,24 +541,24 @@ QUnit.module( "Backbone.Relational.Model", { setup: require('./setup/data') } );
 			}
 		}, { parse: true } );
 
-		ok( animal.get( 'livesIn' ) );
-		ok( animal.get( 'livesIn' ) instanceof Zoo );
-		ok( animal.get( 'livesIn' ).get( 'animals' ).get( animal ) === animal );
+		assert.ok( animal.get( 'livesIn' ) );
+		assert.ok( animal.get( 'livesIn' ) instanceof Zoo );
+		assert.ok( animal.get( 'livesIn' ).get( 'animals' ).get( animal ) === animal );
 
-		ok( parseCalled === 0, 'parse called 0 times? ' + parseCalled );
+		assert.ok( parseCalled === 0, 'parse called 0 times? ' + parseCalled );
 
 		// Reset `parse` methods
-		Zoo.prototype.parse = Animal.prototype.parse = Backbone.Relational.Model.prototype.parse;
+		Zoo.prototype.parse = Animal.prototype.parse = RelationalModel.prototype.parse;
 	});
 
-	QUnit.test( "`Collection#parse` with RelationalModel simple case", function() {
-		var Contact = Backbone.Relational.Model.extend({
+	QUnit.test( "`Collection#parse` with RelationalModel simple case", function( assert ) {
+		var Contact = RelationalModel.extend({
 			parse: function( response ) {
 				response.bar = response.foo * 2;
 				return response;
 			}
 		});
-		var Contacts = Backbone.Relational.Collection.extend({
+		var Contacts = RelationalCollection.extend({
 			model: Contact,
 			url: '/contacts',
 			parse: function( response ) {
@@ -560,15 +575,15 @@ QUnit.module( "Backbone.Relational.Model", { setup: require('./setup/data') } );
 			}
 		});
 
-		equal( contacts.length, 2, 'Collection response was fetched properly' );
+		assert.equal( contacts.length, 2, 'Collection response was fetched properly' );
 		var contact = contacts.first();
-		ok( contact , 'Collection has a non-null item' );
-		ok( contact instanceof Contact, '... of the type type' );
-		equal( contact.get('foo'), 1, '... with correct fetched value' );
-		equal( contact.get('bar'), 2, '... with correct parsed value' );
+		assert.ok( contact , 'Collection has a non-null item' );
+		assert.ok( contact instanceof Contact, '... of the type type' );
+		assert.equal( contact.get('foo'), 1, '... with correct fetched value' );
+		assert.equal( contact.get('bar'), 2, '... with correct parsed value' );
 	});
 
-	QUnit.test( "By default, `parse` should only get called on top-level objects; not for nested models and collections", function() {
+	QUnit.test( "By default, `parse` should only get called on top-level objects; not for nested models and collections", function( assert ) {
 		var companyData = {
 			'data': {
 				'id': 'company-1',
@@ -583,15 +598,15 @@ QUnit.module( "Backbone.Relational.Model", { setup: require('./setup/data') } );
 			}
 		};
 
-		var Contact = Backbone.Relational.Model.extend();
-		var Contacts = Backbone.Relational.Collection.extend({
+		var Contact = RelationalModel.extend();
+		var Contacts = RelationalCollection.extend({
 			model: Contact
 		});
 
-		var Company = Backbone.Relational.Model.extend({
+		var Company = RelationalModel.extend({
 			urlRoot: '/company/',
 			relations: [{
-				type: Backbone.Relational.HasMany,
+				type: HasMany,
 				key: 'contacts',
 				relatedModel: Contact,
 				collectionType: Contacts
@@ -608,9 +623,9 @@ QUnit.module( "Backbone.Relational.Model", { setup: require('./setup/data') } );
 			contacts = company.get( 'contacts' ),
 			contact = contacts.first();
 
-		ok( company.id === 'company-1' );
-		ok( contact && contact.id === '1', 'contact exists' );
-		ok( parseCalled === 1, 'parse called 1 time? ' + parseCalled );
+		assert.ok( company.id === 'company-1' );
+		assert.ok( contact && contact.id === '1', 'contact exists' );
+		assert.ok( parseCalled === 1, 'parse called 1 time? ' + parseCalled );
 
 		// simulate what would happen if company.fetch() was called.
 		company.fetch({
@@ -621,65 +636,65 @@ QUnit.module( "Backbone.Relational.Model", { setup: require('./setup/data') } );
 			}
 		});
 
-		ok( parseCalled === 2, 'parse called 2 times? ' + parseCalled );
+		assert.ok( parseCalled === 2, 'parse called 2 times? ' + parseCalled );
 
-		ok( contacts === company.get( 'contacts' ), 'contacts collection is same instance after fetch' );
-		equal( contacts.length, 2, '... with correct length' );
-		ok( contact && contact.id === '1', 'contact exists' );
-		ok( contact === contacts.first(), '... and same model instances' );
+		assert.ok( contacts === company.get( 'contacts' ), 'contacts collection is same instance after fetch' );
+		assert.equal( contacts.length, 2, '... with correct length' );
+		assert.ok( contact && contact.id === '1', 'contact exists' );
+		assert.ok( contact === contacts.first(), '... and same model instances' );
 	});
 
-	QUnit.test( "constructor.findOrCreate", function() {
-		var personColl = Backbone.Relational.store.getCollection( person1 ),
+	QUnit.test( "constructor.findOrCreate", function( assert ) {
+		var personColl = store.getCollection( objects.person1 ),
 			origPersonCollSize = personColl.length;
 
 		// Just find an existing model
-		var person = Person.findOrCreate( person1.id );
+		var person = Person.findOrCreate( objects.person1.id );
 
-		ok( person === person1 );
-		ok( origPersonCollSize === personColl.length, "Existing person was found (none created)" );
+		assert.ok( person === objects.person1 );
+		assert.ok( origPersonCollSize === personColl.length, "Existing person was found (none created)" );
 
 		// Update an existing model
-		person = Person.findOrCreate( { id: person1.id, name: 'dude' } );
+		person = Person.findOrCreate( { id: objects.person1.id, name: 'dude' } );
 
-		equal( person.get( 'name' ), 'dude' );
-		equal( person1.get( 'name' ), 'dude' );
+		assert.equal( person.get( 'name' ), 'dude' );
+		assert.equal( objects.person1.get( 'name' ), 'dude' );
 
-		ok( origPersonCollSize === personColl.length, "Existing person was updated (none created)" );
+		assert.ok( origPersonCollSize === personColl.length, "Existing person was updated (none created)" );
 
 		// Look for a non-existent person; 'options.create' is false
 		person = Person.findOrCreate( { id: 5001 }, { create: false } );
 
-		ok( !person );
-		ok( origPersonCollSize === personColl.length, "No person was found (none created)" );
+		assert.ok( !person );
+		assert.ok( origPersonCollSize === personColl.length, "No person was found (none created)" );
 
 		// Create a new model
 		person = Person.findOrCreate( { id: 5001 } );
 
-		ok( person instanceof Person );
-		ok( origPersonCollSize + 1 === personColl.length, "No person was found (1 created)" );
+		assert.ok( person instanceof Person );
+		assert.ok( origPersonCollSize + 1 === personColl.length, "No person was found (1 created)" );
 
 		// Find when options.merge is false
-		person = Person.findOrCreate( { id: person1.id, name: 'phil' }, { merge: false } );
+		person = Person.findOrCreate( { id: objects.person1.id, name: 'phil' }, { merge: false } );
 
-		equal( person.get( 'name' ), 'dude' );
-		equal( person1.get( 'name' ), 'dude' );
+		assert.equal( person.get( 'name' ), 'dude' );
+		assert.equal( objects.person1.get( 'name' ), 'dude' );
 	});
 
-	QUnit.test( "constructor.find", function() {
-		var personColl = Backbone.Relational.store.getCollection( person1 ),
+	QUnit.test( "constructor.find", function( assert ) {
+		var personColl = store.getCollection( objects.person1 ),
 		origPersonCollSize = personColl.length;
 
 		// Look for a non-existent person
 		var person = Person.find( { id: 5001 } );
-		ok( !person );
+		assert.ok( !person );
 	});
 
-	QUnit.test( "change events in relation can use changedAttributes properly", function() {
+	QUnit.test( "change events in relation can use changedAttributes properly", function( assert ) {
 		var scope = {};
-		Backbone.Relational.store.addModelScope( scope );
+		store.addModelScope( scope );
 
-		scope.PetAnimal = Backbone.Relational.Model.extend({
+		scope.PetAnimal = RelationalModel.extend({
 			subModelTypes: {
 				'cat': 'Cat',
 				'dog': 'Dog'
@@ -688,9 +703,9 @@ QUnit.module( "Backbone.Relational.Model", { setup: require('./setup/data') } );
 		scope.Dog = scope.PetAnimal.extend();
 		scope.Cat = scope.PetAnimal.extend();
 
-		scope.PetOwner = Backbone.Relational.Model.extend({
+		scope.PetOwner = RelationalModel.extend({
 			relations: [{
-				type: Backbone.Relational.HasMany,
+				type: HasMany,
 				key: 'pets',
 				relatedModel: scope.PetAnimal,
 				reverseRelation: {
@@ -701,7 +716,7 @@ QUnit.module( "Backbone.Relational.Model", { setup: require('./setup/data') } );
 
 		var owner = new scope.PetOwner( { id: 'owner-2354' } );
 		var animal = new scope.Dog( { type: 'dog', id: '238902', color: 'blue' } );
-		equal( animal.get('color'), 'blue', 'animal starts out blue' );
+		assert.equal( animal.get('color'), 'blue', 'animal starts out blue' );
 
 		var changes = 0, changedAttrs = null;
 		animal.on('change', function(model, options) {
@@ -710,20 +725,20 @@ QUnit.module( "Backbone.Relational.Model", { setup: require('./setup/data') } );
 		});
 
 		animal.set( { color: 'green' } );
-		equal( changes, 1, 'change event gets called after animal.set' );
-		equal( changedAttrs.color, 'green', '... with correct properties in "changedAttributes"' );
+		assert.equal( changes, 1, 'change event gets called after animal.set' );
+		assert.equal( changedAttrs.color, 'green', '... with correct properties in "changedAttributes"' );
 
 		owner.set(owner.parse({
 			id: 'owner-2354',
 			pets: [ { id: '238902', type: 'dog', color: 'red' } ]
 		}));
 
-		equal( animal.get('color'), 'red', 'color gets updated properly' );
-		equal( changes, 2, 'change event gets called after owner.set' );
-		equal( changedAttrs.color, 'red', '... with correct properties in "changedAttributes"' );
+		assert.equal( animal.get('color'), 'red', 'color gets updated properly' );
+		assert.equal( changes, 2, 'change event gets called after owner.set' );
+		assert.equal( changedAttrs.color, 'red', '... with correct properties in "changedAttributes"' );
 	});
 
-	QUnit.test( 'change events should not fire on new items in Collection#set', function() {
+	QUnit.test( 'change events should not fire on new items in Collection#set', function( assert ) {
 		var modelChangeEvents = 0,
 			collectionChangeEvents = 0;
 
@@ -759,20 +774,20 @@ QUnit.module( "Backbone.Relational.Model", { setup: require('./setup/data') } );
 			livesIn: 'zoo-1'
 		}] );
 
-		equal( collectionChangeEvents, 0, 'no change event should be triggered on the collection' );
+		assert.equal( collectionChangeEvents, 0, 'no change event should be triggered on the collection' );
 
 		modelChangeEvents = collectionChangeEvents = 0;
 
 		coll.at( 0 ).set( 'name', 'Willie' );
 
-		equal( modelChangeEvents, 2, 'change event should be triggered' );
+		assert.equal( modelChangeEvents, 2, 'change event should be triggered' );
 	});
 
-	QUnit.test( "Model's collection children should be in the proper order during fetch w/remove: false", function() {
-		var Child = Backbone.Relational.Model.extend();
-		var Parent = Backbone.Relational.Model.extend( {
+	QUnit.test( "Model's collection children should be in the proper order during fetch w/remove: false", function( assert ) {
+		var Child = RelationalModel.extend();
+		var Parent = RelationalModel.extend( {
 			relations: [ {
-				type: Backbone.Relational.HasMany,
+				type: HasMany,
 				key: 'children',
 				relatedModel: Child
 			} ]
@@ -784,7 +799,7 @@ QUnit.module( "Backbone.Relational.Model", { setup: require('./setup/data') } );
 		// simulate a fetch of the parent with nested children
 		var parent = Parent.findOrCreate( { id: 'the-parent' } );
 		var children = parent.get( 'children' );
-		equal( children.length, 0 );
+		assert.equal( children.length, 0 );
 		parent.set({
 			id: 'the-parent',
 			children: [
@@ -796,15 +811,15 @@ QUnit.module( "Backbone.Relational.Model", { setup: require('./setup/data') } );
 		});
 
 		// check order of parent's children
-		equal( children.length, 2, 'parent is fetched with children' );
-		deepEqual( children.pluck('id'), ['foo1', 'foo2'], 'children are in the right order' );
+		assert.equal( children.length, 2, 'parent is fetched with children' );
+		assert.deepEqual( children.pluck('id'), ['foo1', 'foo2'], 'children are in the right order' );
 	});
 
-QUnit.module( "Backbone.Relational.Model inheritance (`subModelTypes`)", { setup: require('./setup/setup').reset } );
+QUnit.module( "RelationalModel inheritance (`subModelTypes`)", { beforeEach: reset });
 
-	QUnit.test( "Object building based on type, when using explicit collections" , function() {
+	QUnit.test( "Object building based on type, when using explicit collections", function( assert ) {
 		var scope = {};
-		Backbone.Relational.store.addModelScope( scope );
+		store.addModelScope( scope );
 
 		scope.Mammal = Animal.extend({
 			subModelTypes: {
@@ -832,17 +847,17 @@ QUnit.module( "Backbone.Relational.Model inheritance (`subModelTypes`)", { setup
 			{ id: 8, species: 'gorilla', type: 'ape' }
 		]);
 
-		ok( mammals.at( 0 ) instanceof scope.Primate );
-		ok( mammals.at( 1 ) instanceof scope.Carnivore );
-		ok( mammals.at( 2 ) instanceof scope.Human );
-		ok( mammals.at( 3 ) instanceof scope.Primate );
+		assert.ok( mammals.at( 0 ) instanceof scope.Primate );
+		assert.ok( mammals.at( 1 ) instanceof scope.Carnivore );
+		assert.ok( mammals.at( 2 ) instanceof scope.Human );
+		assert.ok( mammals.at( 3 ) instanceof scope.Primate );
 	});
 
-	QUnit.test( "Object building based on type, when used in relations" , function() {
+	QUnit.test( "Object building based on type, when used in relations", function( assert ) {
 		var scope = {};
-		Backbone.Relational.store.addModelScope( scope );
+		store.addModelScope( scope );
 
-		var PetAnimal = scope.PetAnimal = Backbone.Relational.Model.extend({
+		var PetAnimal = scope.PetAnimal = RelationalModel.extend({
 			subModelTypes: {
 				'cat': 'Cat',
 				'dog': 'Dog'
@@ -856,9 +871,9 @@ QUnit.module( "Backbone.Relational.Model inheritance (`subModelTypes`)", { setup
 		var Cat = scope.Cat = PetAnimal.extend();
 		var Poodle = scope.Poodle = Dog.extend();
 
-		var PetPerson = scope.PetPerson = Backbone.Relational.Model.extend({
+		var PetPerson = scope.PetPerson = RelationalModel.extend({
 			relations: [{
-				type: Backbone.Relational.HasMany,
+				type: HasMany,
 				key: 'pets',
 				relatedModel: PetAnimal,
 				reverseRelation: {
@@ -884,9 +899,9 @@ QUnit.module( "Backbone.Relational.Model inheritance (`subModelTypes`)", { setup
 			]
 		});
 
-		ok( petPerson.get( 'pets' ).at( 0 ) instanceof Dog );
-		ok( petPerson.get( 'pets' ).at( 1 ) instanceof Cat );
-		ok( petPerson.get( 'pets' ).at( 2 ) instanceof Poodle );
+		assert.ok( petPerson.get( 'pets' ).at( 0 ) instanceof Dog );
+		assert.ok( petPerson.get( 'pets' ).at( 1 ) instanceof Cat );
+		assert.ok( petPerson.get( 'pets' ).at( 2 ) instanceof Poodle );
 
 		petPerson.get( 'pets' ).add([{
 			type: 'dog',
@@ -896,15 +911,15 @@ QUnit.module( "Backbone.Relational.Model inheritance (`subModelTypes`)", { setup
 			name: 'Mitsy II'
 		}]);
 
-		ok( petPerson.get( 'pets' ).at( 3 ) instanceof Dog );
-		ok( petPerson.get( 'pets' ).at( 4 ) instanceof Poodle );
+		assert.ok( petPerson.get( 'pets' ).at( 3 ) instanceof Dog );
+		assert.ok( petPerson.get( 'pets' ).at( 4 ) instanceof Poodle );
 	});
 
-	QUnit.test( "Object building based on type in a custom field, when used in relations" , function() {
+	QUnit.test( "Object building based on type in a custom field, when used in relations", function( assert ) {
 		var scope = {};
-		Backbone.Relational.store.addModelScope( scope );
+		store.addModelScope( scope );
 
-		var Caveman = scope.Caveman = Backbone.Relational.Model.extend({
+		var Caveman = scope.Caveman = RelationalModel.extend({
 			subModelTypes: {
 				'rubble': 'Rubble',
 				'flintstone': 'Flintstone'
@@ -914,9 +929,9 @@ QUnit.module( "Backbone.Relational.Model inheritance (`subModelTypes`)", { setup
 		var Flintstone = scope.Flintstone = Caveman.extend();
 		var Rubble = scope.Rubble = Caveman.extend();
 
-		var Cartoon = scope.Cartoon = Backbone.Relational.Model.extend({
+		var Cartoon = scope.Cartoon = RelationalModel.extend({
 			relations: [{
-				type: Backbone.Relational.HasMany,
+				type: HasMany,
 				key: 'cavemen',
 				relatedModel: Caveman
 			}]
@@ -931,7 +946,7 @@ QUnit.module( "Backbone.Relational.Model inheritance (`subModelTypes`)", { setup
 			]
 		});
 
-		ok( !(captainCaveman.get( "cavemen" ).at( 0 ) instanceof Rubble) );
+		assert.ok( !(captainCaveman.get( "cavemen" ).at( 0 ) instanceof Rubble) );
 
 		var theFlintstones = new scope.Cartoon({
 			cavemen: [
@@ -947,33 +962,33 @@ QUnit.module( "Backbone.Relational.Model inheritance (`subModelTypes`)", { setup
 			]
 		});
 
-		ok( theFlintstones.get( "cavemen" ).at( 0 ) instanceof Rubble );
-		ok( theFlintstones.get( "cavemen" ).at( 1 ) instanceof Flintstone );
+		assert.ok( theFlintstones.get( "cavemen" ).at( 0 ) instanceof Rubble );
+		assert.ok( theFlintstones.get( "cavemen" ).at( 1 ) instanceof Flintstone );
 
 	});
 
-	QUnit.test( "Automatic sharing of 'superModel' relations" , function() {
+	QUnit.test( "Automatic sharing of 'superModel' relations", function( assert ) {
 		var scope = {};
-		Backbone.Relational.store.addModelScope( scope );
+		store.addModelScope( scope );
 
-		scope.PetPerson = Backbone.Relational.Model.extend({});
-		scope.PetAnimal = Backbone.Relational.Model.extend({
+		scope.PetPerson = RelationalModel.extend({});
+		scope.PetAnimal = RelationalModel.extend({
 			subModelTypes: {
 				'dog': 'Dog'
 			},
 
 			relations: [{
-				type: Backbone.Relational.HasOne,
+				type: HasOne,
 				key:  'owner',
 				relatedModel: scope.PetPerson,
 				reverseRelation: {
-					type: Backbone.Relational.HasMany,
+					type: HasMany,
 					key: 'pets'
 				}
 			}]
 		});
 
-		scope.Flea = Backbone.Relational.Model.extend({});
+		scope.Flea = RelationalModel.extend({});
 
 		scope.Dog = scope.PetAnimal.extend({
 			subModelTypes: {
@@ -981,7 +996,7 @@ QUnit.module( "Backbone.Relational.Model inheritance (`subModelTypes`)", { setup
 			},
 
 			relations: [{
-				type: Backbone.Relational.HasMany,
+				type: HasMany,
 				key:	'fleas',
 				relatedModel: scope.Flea,
 				reverseRelation: {
@@ -1003,8 +1018,8 @@ QUnit.module( "Backbone.Relational.Model inheritance (`subModelTypes`)", { setup
 			pets: [ dog, poodle ]
 		});
 
-		ok( dog.get( 'owner' ) === person, "Dog has a working owner relation." );
-		ok( poodle.get( 'owner' ) === person, "Poodle has a working owner relation." );
+		assert.ok( dog.get( 'owner' ) === person, "Dog has a working owner relation." );
+		assert.ok( poodle.get( 'owner' ) === person, "Poodle has a working owner relation." );
 
 		var flea = new scope.Flea({
 			host: dog
@@ -1014,26 +1029,26 @@ QUnit.module( "Backbone.Relational.Model inheritance (`subModelTypes`)", { setup
 			host: poodle
 		});
 
-		ok( dog.get( 'fleas' ).at( 0 ) === flea, "Dog has a working fleas relation." );
-		ok( poodle.get( 'fleas' ).at( 0 ) === flea2, "Poodle has a working fleas relation." );
+		assert.ok( dog.get( 'fleas' ).at( 0 ) === flea, "Dog has a working fleas relation." );
+		assert.ok( poodle.get( 'fleas' ).at( 0 ) === flea2, "Poodle has a working fleas relation." );
 	});
 
-	QUnit.test( "Initialization and sharing of 'superModel' reverse relations from a 'leaf' child model" , function() {
+	QUnit.test( "Initialization and sharing of 'superModel' reverse relations from a 'leaf' child model", function( assert ) {
 		var scope = {};
-		Backbone.Relational.store.addModelScope( scope );
-		scope.PetAnimal = Backbone.Relational.Model.extend({
+		store.addModelScope( scope );
+		scope.PetAnimal = RelationalModel.extend({
 			subModelTypes: {
 				'dog': 'Dog'
 			}
 		});
 
-		scope.Flea = Backbone.Relational.Model.extend({});
+		scope.Flea = RelationalModel.extend({});
 		scope.Dog = scope.PetAnimal.extend({
 			subModelTypes: {
 				'poodle': 'Poodle'
 			},
 			relations: [{
-				type: Backbone.Relational.HasMany,
+				type: HasMany,
 				key:	'fleas',
 				relatedModel: scope.Flea,
 				reverseRelation: {
@@ -1044,13 +1059,13 @@ QUnit.module( "Backbone.Relational.Model inheritance (`subModelTypes`)", { setup
 		scope.Poodle = scope.Dog.extend();
 
 		// Define the PetPerson after defining all of the Animal models. Include the 'owner' as a reverse-relation.
-		scope.PetPerson = Backbone.Relational.Model.extend({
+		scope.PetPerson = RelationalModel.extend({
 			relations: [{
-				type: Backbone.Relational.HasMany,
+				type: HasMany,
 				key:  'pets',
 				relatedModel: scope.PetAnimal,
 				reverseRelation: {
-					type: Backbone.Relational.HasOne,
+					type: HasOne,
 					key: 'owner'
 				}
 			}]
@@ -1069,8 +1084,8 @@ QUnit.module( "Backbone.Relational.Model inheritance (`subModelTypes`)", { setup
 			pets: [ dog, poodle ]
 		});
 
-		ok( dog.get( 'owner' ) === person, "Dog has a working owner relation." );
-		ok( poodle.get( 'owner' ) === person, "Poodle has a working owner relation." );
+		assert.ok( dog.get( 'owner' ) === person, "Dog has a working owner relation." );
+		assert.ok( poodle.get( 'owner' ) === person, "Poodle has a working owner relation." );
 
 		var flea = new scope.Flea({
 			host: dog
@@ -1080,14 +1095,14 @@ QUnit.module( "Backbone.Relational.Model inheritance (`subModelTypes`)", { setup
 			host: poodle
 		});
 
-		ok( dog.get( 'fleas' ).at( 0 ) === flea, "Dog has a working fleas relation." );
-		ok( poodle.get( 'fleas' ).at( 0 ) === flea2, "Poodle has a working fleas relation." );
+		assert.ok( dog.get( 'fleas' ).at( 0 ) === flea, "Dog has a working fleas relation." );
+		assert.ok( poodle.get( 'fleas' ).at( 0 ) === flea2, "Poodle has a working fleas relation." );
 	});
 
-	QUnit.test( "Initialization and sharing of 'superModel' reverse relations by adding to a polymorphic HasMany" , function() {
+	QUnit.test( "Initialization and sharing of 'superModel' reverse relations by adding to a polymorphic HasMany", function( assert ) {
 		var scope = {};
-		Backbone.Relational.store.addModelScope( scope );
-		scope.PetAnimal = Backbone.Relational.Model.extend({
+		store.addModelScope( scope );
+		scope.PetAnimal = RelationalModel.extend({
 			// The order in which these are defined matters for this regression test.
 			subModelTypes: {
 				'dog': 'Dog',
@@ -1098,13 +1113,13 @@ QUnit.module( "Backbone.Relational.Model inheritance (`subModelTypes`)", { setup
 		// This looks unnecessary but it's for this regression test there has to be multiple subModelTypes.
 		scope.Fish = scope.PetAnimal.extend({});
 
-		scope.Flea = Backbone.Relational.Model.extend({});
+		scope.Flea = RelationalModel.extend({});
 		scope.Dog = scope.PetAnimal.extend({
 			subModelTypes: {
 				'poodle': 'Poodle'
 			},
 			relations: [{
-				type: Backbone.Relational.HasMany,
+				type: HasMany,
 				key:	'fleas',
 				relatedModel: scope.Flea,
 				reverseRelation: {
@@ -1115,13 +1130,13 @@ QUnit.module( "Backbone.Relational.Model inheritance (`subModelTypes`)", { setup
 		scope.Poodle = scope.Dog.extend({});
 
 		// Define the PetPerson after defining all of the Animal models. Include the 'owner' as a reverse-relation.
-		scope.PetPerson = Backbone.Relational.Model.extend({
+		scope.PetPerson = RelationalModel.extend({
 			relations: [{
-				type: Backbone.Relational.HasMany,
+				type: HasMany,
 				key:  'pets',
 				relatedModel: scope.PetAnimal,
 				reverseRelation: {
-					type: Backbone.Relational.HasOne,
+					type: HasOne,
 					key: 'owner'
 				}
 			}]
@@ -1136,23 +1151,23 @@ QUnit.module( "Backbone.Relational.Model inheritance (`subModelTypes`)", { setup
 			}]
 		});
 		var poodle = person.get('pets').first();
-		ok( poodle.get( 'owner' ) === person, "Poodle has a working owner relation." );
+		assert.ok( poodle.get( 'owner' ) === person, "Poodle has a working owner relation." );
 	});
 
-	QUnit.test( "Overriding of supermodel relations", function() {
+	QUnit.test( "Overriding of supermodel relations", function( assert ) {
 		var models = {};
-		Backbone.Relational.store.addModelScope( models );
+		store.addModelScope( models );
 
-		models.URL = Backbone.Relational.Model.extend({});
+		models.URL = RelationalModel.extend({});
 
-		models.File = Backbone.Relational.Model.extend({
+		models.File = RelationalModel.extend({
 			subModelTypes: {
 				'video': 'Video',
 				'publication': 'Publication'
 			},
 
 			relations: [{
-				type: Backbone.Relational.HasOne,
+				type: HasOne,
 				key: 'url',
 				relatedModel: models.URL
 			}]
@@ -1161,17 +1176,17 @@ QUnit.module( "Backbone.Relational.Model inheritance (`subModelTypes`)", { setup
 		models.Video = models.File.extend({});
 
 		// Publication redefines the `url` relation
-		models.Publication = Backbone.Relational.Model.extend({
+		models.Publication = RelationalModel.extend({
 			relations: [{
-				type: Backbone.Relational.HasMany,
+				type: HasMany,
 				key: 'url',
 				relatedModel: models.URL
 			}]
 		});
 
-		models.Project = Backbone.Relational.Model.extend({
+		models.Project = RelationalModel.extend({
 			relations: [{
-				type: Backbone.Relational.HasMany,
+				type: HasMany,
 				key: 'files',
 				relatedModel: models.File,
 				reverseRelation: {
@@ -1180,16 +1195,16 @@ QUnit.module( "Backbone.Relational.Model inheritance (`subModelTypes`)", { setup
 			}]
 		});
 
-		equal( models.File.prototype.relations.length, 2, "2 relations on File" );
-		equal( models.Video.prototype.relations.length, 1, "1 relation on Video" );
-		equal( models.Publication.prototype.relations.length, 1, "1 relation on Publication" );
+		assert.equal( models.File.prototype.relations.length, 2, "2 relations on File" );
+		assert.equal( models.Video.prototype.relations.length, 1, "1 relation on Video" );
+		assert.equal( models.Publication.prototype.relations.length, 1, "1 relation on Publication" );
 
 		// Instantiating the superModel should instantiate the modelHierarchy, and copy relations over to subModels
 		var file = new models.File();
 
-		equal( models.File.prototype.relations.length, 2, "2 relations on File" );
-		equal( models.Video.prototype.relations.length, 2, "2 relations on Video" );
-		equal( models.Publication.prototype.relations.length, 2, "2 relations on Publication" );
+		assert.equal( models.File.prototype.relations.length, 2, "2 relations on File" );
+		assert.equal( models.Video.prototype.relations.length, 2, "2 relations on Video" );
+		assert.equal( models.Publication.prototype.relations.length, 2, "2 relations on Publication" );
 
 		var projectDecription = {
 			name: 'project1',
@@ -1225,26 +1240,26 @@ QUnit.module( "Backbone.Relational.Model inheritance (`subModelTypes`)", { setup
 			file2 = files.at( 1 ),
 			file3 = files.at( 2 );
 
-		equal( models.File.prototype.relations.length, 2, "2 relations on File" );
-		equal( models.Video.prototype.relations.length, 2, "2 relations on Video" );
-		equal( models.Publication.prototype.relations.length, 2, "2 relations on Publication" );
+		assert.equal( models.File.prototype.relations.length, 2, "2 relations on File" );
+		assert.equal( models.Video.prototype.relations.length, 2, "2 relations on Video" );
+		assert.equal( models.Publication.prototype.relations.length, 2, "2 relations on Publication" );
 
-		equal( _.size( file1._relations ), 2 );
-		equal( _.size( file2._relations ), 2 );
-		equal( _.size( file3._relations ), 2 );
+		assert.equal( _.size( file1._relations ), 2 );
+		assert.equal( _.size( file2._relations ), 2 );
+		assert.equal( _.size( file3._relations ), 2 );
 
-		ok( file1.get( 'url' ) instanceof Backbone.Model, '`url` on Video is a model' );
-		ok( file1.getRelation( 'url' ) instanceof Backbone.Relational.HasOne, '`url` relation on Video is HasOne' );
+		assert.ok( file1.get( 'url' ) instanceof BackboneModel, '`url` on Video is a model' );
+		assert.ok( file1.getRelation( 'url' ) instanceof HasOne, '`url` relation on Video is HasOne' );
 
-		ok( file3.get( 'url' ) instanceof Backbone.Relational.Collection, '`url` on Publication is a collection' );
-		ok( file3.getRelation( 'url' ) instanceof Backbone.Relational.HasMany, '`url` relation on Publication is HasMany' );
+		assert.ok( file3.get( 'url' ) instanceof RelationalCollection, '`url` on Publication is a collection' );
+		assert.ok( file3.getRelation( 'url' ) instanceof HasMany, '`url` relation on Publication is HasMany' );
 	});
 
-	QUnit.test( "toJSON includes the type", function() {
+	QUnit.test( "toJSON includes the type", function( assert ) {
 		var scope = {};
-		Backbone.Relational.store.addModelScope( scope );
+		store.addModelScope( scope );
 
-		scope.PetAnimal = Backbone.Relational.Model.extend({
+		scope.PetAnimal = RelationalModel.extend({
 			subModelTypes: {
 				'dog': 'Dog'
 			}
@@ -1258,5 +1273,5 @@ QUnit.module( "Backbone.Relational.Model inheritance (`subModelTypes`)", { setup
 
 		var json = dog.toJSON();
 
-		equal( json.type, 'dog', "The value of 'type' is the pet animal's type." );
+		assert.equal( json.type, 'dog', "The value of 'type' is the pet animal's type." );
 	});

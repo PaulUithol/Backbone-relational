@@ -6,37 +6,53 @@ module.exports = function( config ) {
 			'browserify',
 			'qunit'
 		],
-		plugins: [
-			'karma-browserify',
-			'karma-phantomjs-launcher',
-			'karma-qunit'
-		],
 
-		files: [
-			'test/setup/environment.js',
+    files: [
+			require.resolve( 'babel-polyfill' ),
+      // 'test/setup/environment.js',
 			'test/*.js'
 		],
 
 		preprocessors: {
-			'test/**/*.js': [ 'browserify' ]
+			[ require.resolve( 'babel-polyfill' ) ]: [ 'browserify' ],
+			'test/*.js': [ 'browserify', 'coverage' ],
+			'**/*.js': [ 'electron' ]
 		},
 
-		browserify: {
+    client: {
+      useIframe: false
+    },
+
+    browserify: {
 			debug: true,
 			transform: [
 				[ 'babelify', {
 					presets: [ 'es2015' ],
+					plugins: [
+            [ 'module-resolver', {
+              alias: {
+                'backbone-relational': './src/backbone-relational'
+              }
+            }],
+						[ 'istanbul', {
+							exclude: [ 'node_modules/**', 'test/**' ]
+						}]
+					],
 					sourceMap: true
 				}]
 			]
 		},
 
-		browsers: [
-			'PhantomJS'
-		],
+    reporters: [ 'dots', 'coverage' ],
 
-		singleRun: false,
-		autoWatch: false,
+    coverageReporter: {
+      dir: './coverage',
+      reporters: [
+        { type: 'text-summary' },
+        { type: 'lcovonly', subdir: '.' }
+      ]
+    },
+
 		port: 9877,
 		colors: true
 	});

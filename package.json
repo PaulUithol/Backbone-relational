@@ -16,8 +16,10 @@
     "url": "https://github.com/PaulUithol/Backbone-relational.git"
   },
   "scripts": {
-    "test": "karma start --single-run",
+    "test": "karma start --single-run --browsers Electron",
+    "test-debug": "karma start --single-run",
     "build": "rollup -c",
+    "prepublish": "rollup -c",
     "watch": "karma start --auto-watch & rollup -c --watch && fg"
   },
   "author": "Paul Uithol <https://github.com/PaulUithol>",
@@ -29,22 +31,25 @@
   "license": "MIT",
   "version": "0.10.0",
   "devDependencies": {
-    "babel-plugin-external-helpers": "^6.8.0",
-    "babel-polyfill": "^6.9.1",
-    "babel-preset-es2015": "^6.16.0",
+    "babel-plugin-external-helpers": "^6.22.0",
+    "babel-plugin-istanbul": "^4.1.1",
+    "babel-plugin-module-resolver": "^2.7.0",
+    "babel-polyfill": "^6.23.0",
+    "babel-preset-es2015": "^6.24.0",
     "babelify": "^7.3.0",
     "backbone": "1.2.3",
-    "browserify": "^13.0.0",
+    "browserify": "^14.1.0",
+    "electron": "^1.6.2",
     "jquery": "^2.2.1",
-    "karma": "^1.3.0",
-    "karma-browserify": "^5.0.2",
-    "karma-phantomjs-launcher": "^1.0.2",
+    "karma": "^1.5.0",
+    "karma-browserify": "^5.1.1",
+    "karma-coverage": "^1.1.1",
+    "karma-electron": "^5.1.1",
     "karma-qunit": "^1.2.1",
-    "phantomjs-prebuilt": "^2.1.5",
-    "qunitjs": "^1.14.0",
-    "rollup": "^0.36.3",
-    "rollup-plugin-babel": "^2.6.1",
-    "rollup-watch": "^2.5.0"
+    "qunitjs": "^2.3.0",
+    "rollup": "^0.41.6",
+    "rollup-plugin-babel": "^2.7.1",
+    "rollup-watch": "^3.2.2"
   },
   "dependencies": {}
 }

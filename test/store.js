@@ -1,16 +1,41 @@
-QUnit.module( "Backbone.Relational.Store", { setup: require('./setup/data') } );
+import { reset } from './setup/setup';
+import { store, Model, HasMany, HasOne, Collection, eventQueue } from 'backbone-relational';
+import { Person, Animal, AnimalCollection, Node, House, NodeList, PersonCollection, Zoo, Company, Job, User, Password } from './setup/objects';
+import initObjects from './setup/data';
+import _ from 'underscore';
 
-	QUnit.test( "Initialized", function() {
-		// `initObjects` instantiates models of the following types: `Person`, `Job`, `Company`, `User`, `House` and `Password`.
-		equal( Backbone.Relational.store._collections.length, 6, "Store contains 6 collections" );
+let objects;
+let modelScope;
+
+QUnit.module( "store", { beforeEach() {
+  reset();
+  modelScope = {
+    Person,
+    Animal,
+    Node,
+    House,
+    Zoo,
+    Company,
+    Job,
+    User,
+    Password
+  };
+
+  store.addModelScope( modelScope );
+  objects = initObjects();
+} });
+
+	QUnit.test( "Initialized", function( assert ) {
+    // setup instantiates models of the following types: `Person`, `Job`, `Company`, `User`, `House` and `Password`.
+		assert.equal( store._collections.length, 6, "Store contains 6 collections" );
 	});
 
-	QUnit.test( "getObjectByName", function() {
-		equal( Backbone.Relational.store.getObjectByName( 'Backbone.Relational.Model' ), Backbone.Relational.Model );
+	QUnit.test( "getObjectByName", function( assert ) {
+		assert.equal( store.getObjectByName( 'Person' ), Person );
 	});
 
-	QUnit.test( "Add and remove from store", function() {
-		var coll = Backbone.Relational.store.getCollection( person1 );
+	QUnit.test( "Add and remove from store", function( assert ) {
+		var coll = store.getCollection( objects.person1 );
 		var length = coll.length;
 
 		var person = new Person({
@@ -19,22 +44,22 @@ QUnit.module( "Backbone.Relational.Store", { setup: require('./setup/data') } );
 			resource_uri: 'person-10'
 		});
 
-		ok( coll.length === length + 1, "Collection size increased by 1" );
+		assert.ok( coll.length === length + 1, "Collection size increased by 1" );
 
 		var request = person.destroy();
 		// Trigger the 'success' callback to fire the 'destroy' event
 		request.success();
 
-		ok( coll.length === length, "Collection size decreased by 1" );
+		assert.ok( coll.length === length, "Collection size decreased by 1" );
 	});
 
-	QUnit.test( "addModelScope", function() {
+	QUnit.test( "addModelScope", function( assert ) {
 		var models = {};
-		Backbone.Relational.store.addModelScope( models );
+		store.addModelScope( models );
 
-		models.Book = Backbone.Relational.Model.extend({
+		models.Book = Model.extend({
 			relations: [{
-				type: Backbone.Relational.HasMany,
+				type: HasMany,
 				key: 'pages',
 				relatedModel: 'Page',
 				createModels: false,
@@ -43,21 +68,21 @@ QUnit.module( "Backbone.Relational.Store", { setup: require('./setup/data') } );
 				}
 			}]
 		});
-		models.Page = Backbone.Relational.Model.extend();
+		models.Page = Model.extend();
 
 		var book = new models.Book();
 		var page = new models.Page({ book: book });
 
-		ok( book.relations.length === 1 );
-		ok( book.get( 'pages' ).length === 1 );
+		assert.ok( book.relations.length === 1 );
+		assert.ok( book.get( 'pages' ).length === 1 );
 	});
 
-	QUnit.test( "addModelScope with submodels and namespaces", function() {
+	QUnit.test( "addModelScope with submodels and namespaces", function( assert ) {
 		var ns = {};
 		ns.People = {};
-		Backbone.Relational.store.addModelScope( ns );
+		store.addModelScope( ns );
 
-		ns.People.Person = Backbone.Relational.Model.extend({
+		ns.People.Person = Model.extend({
 			subModelTypes: {
 				'Student': 'People.Student'
 			},
@@ -68,114 +93,107 @@ QUnit.module( "Backbone.Relational.Store", { setup: require('./setup/data') } );
 			iam: function() { return "I am a student"; }
 		});
 
-		ns.People.PersonCollection = Backbone.Relational.Collection.extend({
+		ns.People.PersonCollection = Collection.extend({
 			model: ns.People.Person
 		});
 
 		var people = new ns.People.PersonCollection([{name: "Bob", type: "Student"}]);
 
-		ok( people.at(0).iam() === "I am a student" );
+		assert.ok( people.at(0).iam() === "I am a student" );
 	});
 
-	QUnit.test( "removeModelScope", function() {
+	QUnit.test( "removeModelScope", function( assert ) {
 		var models = {};
-		Backbone.Relational.store.addModelScope( models );
+		store.addModelScope( models );
 
-		models.Page = Backbone.Relational.Model.extend();
+		models.Page = Model.extend();
 
-		ok( Backbone.Relational.store.getObjectByName( 'Page' ) === models.Page );
-		ok( Backbone.Relational.store.getObjectByName( 'Person' ) === window.Person );
+		assert.ok( store.getObjectByName( 'Page' ) === models.Page );
+		assert.ok( store.getObjectByName( 'Person' ) === modelScope.Person );
 
-		Backbone.Relational.store.removeModelScope( models );
+		store.removeModelScope( models );
 
-		ok( !Backbone.Relational.store.getObjectByName( 'Page' ) );
-		ok( Backbone.Relational.store.getObjectByName( 'Person' ) === window.Person );
+		assert.ok( !store.getObjectByName( 'Page' ) );
+		assert.ok( store.getObjectByName( 'Person' ) === modelScope.Person );
 
-		Backbone.Relational.store.removeModelScope( window );
+		store.removeModelScope( modelScope );
 
-		ok( !Backbone.Relational.store.getObjectByName( 'Person' ) );
+		assert.ok( !store.getObjectByName( 'Person' ) );
 	});
 
-	QUnit.test( "unregister", function() {
-		var animalStoreColl = Backbone.Relational.store.getCollection( Animal ),
+	QUnit.test( "unregister", function( assert ) {
+		var animalStoreColl = store.getCollection( Animal ),
 			animals = null,
 			animal = null;
 
 		// Single model
 		animal = new Animal( { id: 'a1' } );
-		ok( Backbone.Relational.store.find( Animal, 'a1' ) === animal );
+		assert.ok( store.find( Animal, 'a1' ) === animal );
 
-		Backbone.Relational.store.unregister( animal );
-		ok( Backbone.Relational.store.find( Animal, 'a1' ) === null );
+		store.unregister( animal );
+		assert.ok( store.find( Animal, 'a1' ) === null );
 
 		animal = new Animal( { id: 'a2' } );
-		ok( Backbone.Relational.store.find( Animal, 'a2' ) === animal );
+		assert.ok( store.find( Animal, 'a2' ) === animal );
 
 		animal.trigger( 'relational:unregister', animal );
-		ok( Backbone.Relational.store.find( Animal, 'a2' ) === null );
+		assert.ok( store.find( Animal, 'a2' ) === null );
 
-		ok( animalStoreColl.size() === 0 );
+		assert.ok( animalStoreColl.size() === 0 );
 
 		// Collection
 		animals = new AnimalCollection( [ { id: 'a3' }, { id: 'a4' } ] );
 		animal = animals.first();
 
-		ok( Backbone.Relational.store.find( Animal, 'a3' ) === animal );
-		ok( animalStoreColl.size() === 2 );
+		assert.ok( store.find( Animal, 'a3' ) === animal );
+		assert.ok( animalStoreColl.size() === 2 );
 
-		Backbone.Relational.store.unregister( animals );
-		ok( Backbone.Relational.store.find( Animal, 'a3' ) === null );
+		store.unregister( animals );
+		assert.ok( store.find( Animal, 'a3' ) === null );
 
-		ok( animalStoreColl.size() === 0 );
+		assert.ok( animalStoreColl.size() === 0 );
 
 		// Store collection
 		animals = new AnimalCollection( [ { id: 'a5' }, { id: 'a6' } ] );
-		ok( animalStoreColl.size() === 2 );
+		assert.ok( animalStoreColl.size() === 2 );
 
-		Backbone.Relational.store.unregister( animalStoreColl );
-		ok( animalStoreColl.size() === 0 );
+		store.unregister( animalStoreColl );
+		assert.ok( animalStoreColl.size() === 0 );
 
 		// Model type
 		animals = new AnimalCollection( [ { id: 'a7' }, { id: 'a8' } ] );
-		ok( animalStoreColl.size() === 2 );
+		assert.ok( animalStoreColl.size() === 2 );
 
-		Backbone.Relational.store.unregister( Animal );
-		ok( animalStoreColl.size() === 0 );
+		store.unregister( Animal );
+		assert.ok( animalStoreColl.size() === 0 );
 	});
 
-	QUnit.test( "`eventQueue` is unblocked again after a duplicate id error", 3, function() {
+	QUnit.test( "`eventQueue` is unblocked again after a duplicate id error", function( assert ) {
 		var node = new Node( { id: 1 } );
 
-		ok( Backbone.Relational.eventQueue.isBlocked() === false );
+		assert.ok( eventQueue.isBlocked() === false );
 
 		try {
 			duplicateNode = new Node( { id: 1 } );
 		}
 		catch( error ) {
-			ok( true, "Duplicate id error thrown" );
+			assert.ok( true, "Duplicate id error thrown" );
 		}
 
-		ok( Backbone.Relational.eventQueue.isBlocked() === false );
+		assert.ok( eventQueue.isBlocked() === false );
 	});
 
-	QUnit.test( "Don't allow setting a duplicate `id`", 4, function() {
+	QUnit.test( "Don't allow setting a duplicate `id`", function( assert ) {
 		var a = new Zoo(); // This object starts with no id.
-		var b = new Zoo( { 'id': 42 } );  // This object starts with an id of 42.
+		var b = new Zoo({ id: 42 });  // This object starts with an id of 42.
 
-		equal( b.id, 42 );
-
-		try {
-			a.set( 'id', 42 );
-		}
-		catch( error ) {
-			ok( true, "Duplicate id error thrown" );
-		}
-
-		ok( !a.id, "a.id=" + a.id );
-		equal( b.id, 42 );
+		assert.equal( b.id, 42 );
+    assert.throws( () => { a.set( 'id', 42 ); });
+		assert.ok( !a.id, "a.id=" + a.id );
+		assert.equal( b.id, 42 );
 	});
 
-	QUnit.test( "Models are created from objects, can then be found, destroyed, cannot be found anymore", function() {
+	QUnit.test( "Models are created from objects, can then be found, destroyed, cannot be found anymore", function( assert ) {
 		var houseId = 'house-10';
 		var personId = 'person-10';
 
@@ -190,52 +208,52 @@ QUnit.module( "Backbone.Relational.Store", { setup: require('./setup/data') } );
 			}]
 		});
 
-		ok( anotherHouse.get('occupants') instanceof Backbone.Relational.Collection, "Occupants is a Collection" );
-		ok( anotherHouse.get('occupants').get( personId ) instanceof Person, "Occupants contains the Person with id='" + personId + "'" );
+		assert.ok( anotherHouse.get('occupants') instanceof Collection, "Occupants is a Collection" );
+		assert.ok( anotherHouse.get('occupants').get( personId ) instanceof Person, "Occupants contains the Person with id='" + personId + "'" );
 
-		var person = Backbone.Relational.store.find( Person, personId );
+		var person = store.find( Person, personId );
 
-		ok( person, "Person with id=" + personId + " is found in the store" );
+		assert.ok( person, "Person with id=" + personId + " is found in the store" );
 
 		var request = person.destroy();
 		// Trigger the 'success' callback to fire the 'destroy' event
 		request.success();
 
-		person = Backbone.Relational.store.find( Person, personId );
+		person = store.find( Person, personId );
 
-		ok( !person, personId + " is not found in the store anymore" );
-		ok( !anotherHouse.get('occupants').get( personId ), "Occupants no longer contains the Person with id='" + personId + "'" );
+		assert.ok( !person, personId + " is not found in the store anymore" );
+		assert.ok( !anotherHouse.get('occupants').get( personId ), "Occupants no longer contains the Person with id='" + personId + "'" );
 
 		request = anotherHouse.destroy();
 		// Trigger the 'success' callback to fire the 'destroy' event
 		request.success();
 
-		var house = Backbone.Relational.store.find( House, houseId );
+		var house = store.find( House, houseId );
 
-		ok( !house, houseId + " is not found in the store anymore" );
+		assert.ok( !house, houseId + " is not found in the store anymore" );
 	});
 
-	QUnit.test( "Model.collection is the first collection a Model is added to by an end-user (not its Backbone.Relational.Store collection!)", function() {
+	QUnit.test( "Model.collection is the first collection a Model is added to by an end-user (not its store collection!)", function( assert ) {
 		var person = new Person( { id: 5, name: 'New guy' } );
 		var personColl = new PersonCollection();
 		personColl.add( person );
-		ok( person.collection === personColl );
+		assert.ok( person.collection === personColl );
 	});
 
-	QUnit.test( "Models don't get added to the store until the get an id", function() {
-		var storeColl = Backbone.Relational.store.getCollection( Node ),
+	QUnit.test( "Models don't get added to the store until the get an id", function( assert ) {
+		var storeColl = store.getCollection( Node ),
 			node1 = new Node( { id: 1 } ),
 			node2 = new Node();
 
-		ok( storeColl.contains( node1 ) );
-		ok( !storeColl.contains( node2 ) );
+		assert.ok( storeColl.contains( node1 ) );
+		assert.ok( !storeColl.contains( node2 ) );
 
 		node2.set( { id: 2 } );
 
-		ok( storeColl.contains( node1 ) );
+		assert.ok( storeColl.contains( node1 ) );
 	});
 
-	QUnit.test( "All models can be found after adding them to a Collection via 'Collection.reset'", function() {
+	QUnit.test( "All models can be found after adding them to a Collection via 'Collection.reset'", function( assert ) {
 		var nodes = [
 			{ id: 1, parent: null },
 			{ id: 2, parent: 1 },
@@ -246,19 +264,19 @@ QUnit.module( "Backbone.Relational.Store", { setup: require('./setup/data') } );
 		var nodeList = new NodeList();
 		nodeList.reset( nodes );
 
-		var storeColl = Backbone.Relational.store.getCollection( Node );
-		equal( storeColl.length, 4, "Every Node is in Backbone.Relational.store" );
-		ok( Backbone.Relational.store.find( Node, 1 ) instanceof Node, "Node 1 can be found" );
-		ok( Backbone.Relational.store.find( Node, 2 ) instanceof Node, "Node 2 can be found" );
-		ok( Backbone.Relational.store.find( Node, 3 ) instanceof Node, "Node 3 can be found" );
-		ok( Backbone.Relational.store.find( Node, 4 ) instanceof Node, "Node 4 can be found" );
+		var storeColl = store.getCollection( Node );
+		assert.equal( storeColl.length, 4, "Every Node is in store" );
+		assert.ok( store.find( Node, 1 ) instanceof Node, "Node 1 can be found" );
+		assert.ok( store.find( Node, 2 ) instanceof Node, "Node 2 can be found" );
+		assert.ok( store.find( Node, 3 ) instanceof Node, "Node 3 can be found" );
+		assert.ok( store.find( Node, 4 ) instanceof Node, "Node 4 can be found" );
 	});
 
-	QUnit.test( "Inheritance creates and uses a separate collection", function() {
+	QUnit.test( "Inheritance creates and uses a separate collection", function( assert ) {
 		var whale = new Animal( { id: 1, species: 'whale' } );
-		ok( Backbone.Relational.store.find( Animal, 1 ) === whale );
+		assert.ok( store.find( Animal, 1 ) === whale );
 
-		var numCollections = Backbone.Relational.store._collections.length;
+		var numCollections = store._collections.length;
 
 		var Mammal = Animal.extend({
 			urlRoot: '/mammal/'
@@ -267,10 +285,10 @@ QUnit.module( "Backbone.Relational.Store", { setup: require('./setup/data') } );
 		var lion = new Mammal( { id: 1, species: 'lion' } );
 		var donkey = new Mammal( { id: 2, species: 'donkey' } );
 
-		equal( Backbone.Relational.store._collections.length, numCollections + 1 );
-		ok( Backbone.Relational.store.find( Animal, 1 ) === whale );
-		ok( Backbone.Relational.store.find( Mammal, 1 ) === lion );
-		ok( Backbone.Relational.store.find( Mammal, 2 ) === donkey );
+		assert.equal( store._collections.length, numCollections + 1 );
+		assert.ok( store.find( Animal, 1 ) === whale );
+		assert.ok( store.find( Mammal, 1 ) === lion );
+		assert.ok( store.find( Mammal, 2 ) === donkey );
 
 		var Primate = Mammal.extend({
 			urlRoot: '/primate/'
@@ -278,11 +296,11 @@ QUnit.module( "Backbone.Relational.Store", { setup: require('./setup/data') } );
 
 		var gorilla = new Primate( { id: 1, species: 'gorilla' } );
 
-		equal( Backbone.Relational.store._collections.length, numCollections + 2 );
-		ok( Backbone.Relational.store.find( Primate, 1 ) === gorilla );
+		assert.equal( store._collections.length, numCollections + 2 );
+		assert.ok( store.find( Primate, 1 ) === gorilla );
 	});
 
-	QUnit.test( "Inheritance with `subModelTypes` uses the same collection as the model's super", function() {
+	QUnit.test( "Inheritance with `subModelTypes` uses the same collection as the model's super", function( assert ) {
 		var Mammal = Animal.extend({
 			subModelTypes: {
 				'primate': 'Primate',
@@ -296,33 +314,33 @@ QUnit.module( "Backbone.Relational.Store", { setup: require('./setup/data') } );
 		var lion = new Carnivore( { id: 1, species: 'lion' } );
 		var wolf = new Carnivore( { id: 2, species: 'wolf' } );
 
-		var numCollections = Backbone.Relational.store._collections.length;
+		var numCollections = store._collections.length;
 
 		var whale = new Mammal( { id: 3, species: 'whale' } );
 
-		equal( Backbone.Relational.store._collections.length, numCollections, "`_collections` should have remained the same" );
+		assert.equal( store._collections.length, numCollections, "`_collections` should have remained the same" );
 
-		ok( Backbone.Relational.store.find( Mammal, 1 ) === lion );
-		ok( Backbone.Relational.store.find( Mammal, 2 ) === wolf );
-		ok( Backbone.Relational.store.find( Mammal, 3 ) === whale );
-		ok( Backbone.Relational.store.find( Carnivore, 1 ) === lion );
-		ok( Backbone.Relational.store.find( Carnivore, 2 ) === wolf );
-		ok( Backbone.Relational.store.find( Carnivore, 3 ) !== whale );
+		assert.ok( store.find( Mammal, 1 ) === lion );
+		assert.ok( store.find( Mammal, 2 ) === wolf );
+		assert.ok( store.find( Mammal, 3 ) === whale );
+		assert.ok( store.find( Carnivore, 1 ) === lion );
+		assert.ok( store.find( Carnivore, 2 ) === wolf );
+		assert.ok( store.find( Carnivore, 3 ) !== whale );
 
 		var gorilla = new Primate( { id: 4, species: 'gorilla' } );
 
-		equal( Backbone.Relational.store._collections.length, numCollections, "`_collections` should have remained the same" );
+		assert.equal( store._collections.length, numCollections, "`_collections` should have remained the same" );
 
-		ok( Backbone.Relational.store.find( Animal, 4 ) !== gorilla );
-		ok( Backbone.Relational.store.find( Mammal, 4 ) === gorilla );
-		ok( Backbone.Relational.store.find( Primate, 4 ) === gorilla );
+		assert.ok( store.find( Animal, 4 ) !== gorilla );
+		assert.ok( store.find( Mammal, 4 ) === gorilla );
+		assert.ok( store.find( Primate, 4 ) === gorilla );
 
 		delete window.Primate;
 		delete window.Carnivore;
 	});
 
-	QUnit.test( "findOrCreate does not modify attributes hash if parse is used, prior to creating new model", function () {
-		var model = Backbone.Relational.Model.extend({
+	QUnit.test( "findOrCreate does not modify attributes hash if parse is used, prior to creating new model", function( assert ) {
+		var model = Model.extend({
 			parse: function( response ) {
 				response.id = response.id + 'something';
 				return response;
@@ -333,5 +351,5 @@ QUnit.module( "Backbone.Relational.Store", { setup: require('./setup/data') } );
 
 		model.findOrCreate( attributes, { parse: true, merge: false, create: false } );
 
-		ok( _.isEqual( attributes, testAttributes ), "attributes hash should not be modified" );
+		assert.ok( _.isEqual( attributes, testAttributes ), "attributes hash should not be modified" );
 	});

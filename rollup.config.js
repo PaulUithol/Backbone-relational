@@ -1,7 +1,7 @@
 'use strict';
 /* eslint-env node */
+import babel from 'rollup-plugin-babel';
 
-const babel = require( 'rollup-plugin-babel' );
 const pkg = require( './package.json' );
 const external = Object.keys( pkg.dependencies );
 const now = new Date();
@@ -16,7 +16,7 @@ const banner = `/**!
  * ${pkg.homepage}
  */\n`;
 
-module.exports = {
+export default {
 	entry: 'src/backbone-relational.js',
 	plugins: [
 		babel({

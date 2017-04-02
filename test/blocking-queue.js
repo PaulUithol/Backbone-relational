@@ -1,31 +1,34 @@
-QUnit.module( "Backbone.Relational.BlockingQueue", { setup: require('./setup/setup').reset } );
+import { reset } from './setup/setup';
+import { BlockingQueue } from 'backbone-relational';
 
-	QUnit.test( "Block", function() {
-		var queue = new Backbone.Relational.BlockingQueue();
+QUnit.module( "Backbone.Relational.BlockingQueue", { beforeEach: reset });
+
+	QUnit.test( "Block", function( assert ) {
+		var queue = new BlockingQueue();
 		var count = 0;
 		var increment = function() { count++; };
 		var decrement = function() { count--; };
 
 		queue.add( increment );
-		ok( count === 1, 'Increment executed right away' );
+		assert.ok( count === 1, 'Increment executed right away' );
 
 		queue.add( decrement );
-		ok( count === 0, 'Decrement executed right away' );
+		assert.ok( count === 0, 'Decrement executed right away' );
 
 		queue.block();
 		queue.add( increment );
 
-		ok( queue.isLocked(), 'Queue is blocked' );
-		equal( count, 0, 'Increment did not execute right away' );
+		assert.ok( queue.isLocked(), 'Queue is blocked' );
+		assert.equal( count, 0, 'Increment did not execute right away' );
 
 		queue.block();
 		queue.block();
 
-		equal( queue._permitsUsed, 3 ,'_permitsUsed should be incremented to 3' );
+		assert.equal( queue._permitsUsed, 3, '_permitsUsed should be incremented to 3' );
 
 		queue.unblock();
 		queue.unblock();
 		queue.unblock();
 
-		equal( count, 1, 'Increment executed' );
+		assert.equal( count, 1, 'Increment executed' );
 	});

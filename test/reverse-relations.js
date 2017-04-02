@@ -1,109 +1,122 @@
-QUnit.module( "Reverse relations", { setup: require('./setup/data') } );
+import { reset } from './setup/setup';
+import { store, Model, HasMany, HasOne, Collection } from 'backbone-relational';
+import { Zoo, Animal, House, Person, Node, User, Company, NodeList } from './setup/objects';
+import initObjects from './setup/data';
 
-	QUnit.test( "Add and remove", function() {
-		equal( ourHouse.get( 'occupants' ).length, 1, "ourHouse has 1 occupant" );
-		equal( person1.get( 'livesIn' ), null, "Person 1 doesn't live anywhere" );
+let objects;
 
-		ourHouse.get( 'occupants' ).add( person1 );
+QUnit.module( "Reverse relations", { beforeEach() {
+  reset();
+  store.addModelScope({
+    Zoo, Animal, House, Person, Node, User, Company
+  });
+  objects = initObjects();
+} });
 
-		equal( ourHouse.get( 'occupants' ).length, 2, "Our House has 2 occupants" );
-		equal( person1.get( 'livesIn' ) && person1.get('livesIn').id, ourHouse.id, "Person 1 lives in ourHouse" );
+	QUnit.test( "Add and remove", function( assert) {
+		assert.equal( objects.ourHouse.get( 'occupants' ).length, 1, "objects.ourHouse has 1 occupant" );
+		assert.equal( objects.person1.get( 'livesIn' ), null, "Person 1 doesn't live anywhere" );
 
-		person1.set( { 'livesIn': theirHouse } );
+		objects.ourHouse.get( 'occupants' ).add( objects.person1 );
 
-		equal( theirHouse.get( 'occupants' ).length, 1, "theirHouse has 1 occupant" );
-		equal( ourHouse.get( 'occupants' ).length, 1, "ourHouse has 1 occupant" );
-		equal( person1.get( 'livesIn' ) && person1.get('livesIn').id, theirHouse.id, "Person 1 lives in theirHouse" );
+		assert.equal( objects.ourHouse.get( 'occupants' ).length, 2, "Our House has 2 occupants" );
+		assert.equal( objects.person1.get( 'livesIn' ) && objects.person1.get('livesIn').id, objects.ourHouse.id, "Person 1 lives in objects.ourHouse" );
+
+		objects.person1.set( { 'livesIn': objects.theirHouse } );
+
+		assert.equal( objects.theirHouse.get( 'occupants' ).length, 1, "objects.theirHouse has 1 occupant" );
+		assert.equal( objects.ourHouse.get( 'occupants' ).length, 1, "objects.ourHouse has 1 occupant" );
+		assert.equal( objects.person1.get( 'livesIn' ) && objects.person1.get('livesIn').id, objects.theirHouse.id, "Person 1 lives in objects.theirHouse" );
 	});
 
-	QUnit.test( "Destroy removes models from reverse relations", function() {
+	QUnit.test( "Destroy removes models from reverse relations", function( assert) {
 		var zoo = new Zoo( { id:1, animals: [ 2, 3, 4 ] } );
 
 		var rhino = new Animal( { id: 2, species: 'rhino' } );
 		var baboon = new Animal( { id: 3, species: 'baboon' } );
 		var hippo = new Animal( { id: 4, species: 'hippo' } );
 
-		ok( zoo.get( 'animals' ).length === 3 );
+		assert.ok( zoo.get( 'animals' ).length === 3 );
 
 		rhino.destroy();
 
-		ok( zoo.get( 'animals' ).length === 2 );
-		ok( zoo.get( 'animals' ).get( baboon ) === baboon );
-		ok( !rhino.get( 'zoo' ) );
+		assert.ok( zoo.get( 'animals' ).length === 2 );
+		assert.ok( zoo.get( 'animals' ).get( baboon ) === baboon );
+		assert.ok( !rhino.get( 'zoo' ) );
 
 		zoo.get( 'animals' ).remove( hippo );
 
-		ok( zoo.get( 'animals' ).length === 1 );
-		ok( !hippo.get( 'zoo' ) );
+		assert.ok( zoo.get( 'animals' ).length === 1 );
+		assert.ok( !hippo.get( 'zoo' ) );
 
 		zoo.destroy();
 
-		ok( zoo.get( 'animals' ).length === 0 );
-		ok( !baboon.get( 'zoo' ) );
+		assert.ok( zoo.get( 'animals' ).length === 0 );
+		assert.ok( !baboon.get( 'zoo' ) );
 	});
 
-	QUnit.test( "HasOne relations to self (tree stucture)", function() {
+	QUnit.test( "HasOne relations to self (tree stucture)", function( assert) {
 		var child1 = new Node({ id: '2', parent: '1', name: 'First child' });
 		var parent = new Node({ id: '1', name: 'Parent' });
 		var child2 = new Node({ id: '3', parent: '1', name: 'Second child' });
 
-		equal( parent.get( 'children' ).length, 2 );
-		ok( parent.get( 'children' ).include( child1 ) );
-		ok( parent.get( 'children' ).include( child2 ) );
+		assert.equal( parent.get( 'children' ).length, 2 );
+		assert.ok( parent.get( 'children' ).include( child1 ) );
+		assert.ok( parent.get( 'children' ).include( child2 ) );
 
-		ok( child1.get( 'parent' ) === parent );
-		equal( child1.get( 'children' ).length, 0 );
+		assert.ok( child1.get( 'parent' ) === parent );
+		assert.equal( child1.get( 'children' ).length, 0 );
 
-		ok( child2.get( 'parent' ) === parent );
-		equal( child2.get( 'children' ).length, 0 );
+		assert.ok( child2.get( 'parent' ) === parent );
+		assert.equal( child2.get( 'children' ).length, 0 );
 	});
 
-	QUnit.test( "Models referencing each other in the same relation", function() {
+	QUnit.test( "Models referencing each other in the same relation", function( assert) {
 		var parent = new Node({ id: 1 });
 		var child = new Node({ id: 2 });
 
 		child.set( 'parent', parent );
 		parent.save( { 'parent': child } );
 
-		ok( parent.get( 'parent' ) === child );
-		ok( child.get( 'parent' ) === parent );
+		assert.ok( parent.get( 'parent' ) === child );
+		assert.ok( child.get( 'parent' ) === parent );
 	});
 
-	QUnit.test( "HasMany relations to self (tree structure)", function() {
+	QUnit.test( "HasMany relations to self (tree structure)", function( assert) {
 		var child1 = new Node({ id: '2', name: 'First child' });
 		var parent = new Node({ id: '1', children: [ '2', '3' ], name: 'Parent' });
 		var child2 = new Node({ id: '3', name: 'Second child' });
 
-		equal( parent.get( 'children' ).length, 2 );
-		ok( parent.get( 'children' ).include( child1 ) );
-		ok( parent.get( 'children' ).include( child2 ) );
+		assert.equal( parent.get( 'children' ).length, 2 );
+		assert.ok( parent.get( 'children' ).include( child1 ) );
+		assert.ok( parent.get( 'children' ).include( child2 ) );
 
-		ok( child1.get( 'parent' ) === parent );
-		equal( child1.get( 'children' ).length, 0 );
+		assert.ok( child1.get( 'parent' ) === parent );
+		assert.equal( child1.get( 'children' ).length, 0 );
 
-		ok( child2.get( 'parent' ) === parent );
-		equal( child2.get( 'children' ).length, 0 );
+		assert.ok( child2.get( 'parent' ) === parent );
+		assert.equal( child2.get( 'children' ).length, 0 );
 	});
 
-	QUnit.test( "HasOne relations to self (cycle, directed graph structure)", function() {
+	QUnit.test( "HasOne relations to self (cycle, directed graph structure)", function( assert) {
 		var node1 = new Node({ id: '1', parent: '3', name: 'First node' });
 		var node2 = new Node({ id: '2', parent: '1', name: 'Second node' });
 		var node3 = new Node({ id: '3', parent: '2', name: 'Third node' });
 
-		ok( node1.get( 'parent' ) === node3 );
-		equal( node1.get( 'children' ).length, 1 );
-		ok( node1.get( 'children' ).at(0) === node2 );
+		assert.ok( node1.get( 'parent' ) === node3 );
+		assert.equal( node1.get( 'children' ).length, 1 );
+		assert.ok( node1.get( 'children' ).at(0) === node2 );
 
-		ok( node2.get( 'parent' ) === node1 );
-		equal( node2.get( 'children' ).length, 1 );
-		ok( node2.get( 'children' ).at(0) === node3 );
+		assert.ok( node2.get( 'parent' ) === node1 );
+		assert.equal( node2.get( 'children' ).length, 1 );
+		assert.ok( node2.get( 'children' ).at(0) === node3 );
 
-		ok( node3.get( 'parent' ) === node2 );
-		equal( node3.get( 'children' ).length, 1 );
-		ok( node3.get( 'children' ).at(0) === node1 );
+		assert.ok( node3.get( 'parent' ) === node2 );
+		assert.equal( node3.get( 'children' ).length, 1 );
+		assert.ok( node3.get( 'children' ).at(0) === node1 );
 	});
 
-	QUnit.test( "New objects (no 'id' yet) have working relations", function() {
+	QUnit.test( "New objects (no 'id' yet) have working relations", function( assert) {
 		var person = new Person({
 			name: 'Remi'
 		});
@@ -111,43 +124,43 @@ QUnit.module( "Reverse relations", { setup: require('./setup/data') } );
 		person.set( { user: { login: '1', email: '1' } } );
 		var user1 = person.get( 'user' );
 
-		ok( user1 instanceof User, "User created on Person" );
-		equal( user1.get('login'), '1', "person.user is the correct User" );
+		assert.ok( user1 instanceof User, "User created on Person" );
+		assert.equal( user1.get('login'), '1', "person.user is the correct User" );
 
 		var user2 = new User({
 			login: '2',
 			email: '2'
 		});
 
-		ok( user2.get( 'person' ) === null, "'user' doesn't belong to a 'person' yet" );
+		assert.ok( user2.get( 'person' ) === null, "'user' doesn't belong to a 'person' yet" );
 
 		person.set( { user: user2 } );
 
-		ok( user1.get( 'person' ) === null );
-		ok( person.get( 'user' ) === user2 );
-		ok( user2.get( 'person' ) === person );
+		assert.ok( user1.get( 'person' ) === null );
+		assert.ok( person.get( 'user' ) === user2 );
+		assert.ok( user2.get( 'person' ) === person );
 
-		person2.set( { user: user2 } );
+		objects.person2.set( { user: user2 } );
 
-		ok( person.get( 'user' ) === null );
-		ok( person2.get( 'user' ) === user2 );
-		ok( user2.get( 'person' ) === person2 );
+		assert.ok( person.get( 'user' ) === null );
+		assert.ok( objects.person2.get( 'user' ) === user2 );
+		assert.ok( user2.get( 'person' ) === objects.person2 );
 	});
 
-	QUnit.test( "'Save' objects (performing 'set' multiple times without and with id)", 4, function() {
-		person3
+	QUnit.test( "'Save' objects (performing 'set' multiple times without and with id)", function( assert) {
+		objects.person3
 			.on( 'add:jobs', function( model, coll ) {
 				// console.log('got here 1');
 				var company = model.get('company');
-				ok( company instanceof Company && company.get('ceo').get('name') === 'Lunar boy' && model.get('person') === person3,
+				assert.ok( company instanceof Company && company.get('ceo').get('name') === 'Lunar boy' && model.get('person') === objects.person3,
 					"add:jobs: Both Person and Company are set on the Job instance once the event gets fired" );
 			})
 			.on( 'remove:jobs', function( model, coll ) {
 				// console.log('got here 2');
-				ok( false, "remove:jobs: 'person3' should not lose his job" );
+				assert.ok( false, "remove:jobs: 'objects.person3' should not lose his job" );
 			});
 
-		// Create Models from an object. Should trigger `add:jobs` on `person3`
+		// Create Models from an object. Should trigger `add:jobs` on `objects.person3`
 		var company = new Company({
 			name: 'Luna Corp.',
 			ceo: {
@@ -160,15 +173,15 @@ QUnit.module( "Reverse relations", { setup: require('./setup/data') } );
 			.on( 'add:employees', function( model, coll ) {
 				// console.log('got here 3');
 				var company = model.get('company');
-				ok( company instanceof Company && company.get('ceo').get('name') === 'Lunar boy' && model.get('person') === person3,
+				assert.ok( company instanceof Company && company.get('ceo').get('name') === 'Lunar boy' && model.get('person') === objects.person3,
 					"add:employees: Both Person and Company are set on the Company instance once the event gets fired" );
 			})
 			.on( 'remove:employees', function( model, coll ) {
 				// console.log('got here 4');
-				ok( true, "'remove:employees: person3' should lose a job once" );
+				assert.ok( true, "'remove:employees: objects.person3' should lose a job once" );
 			});
 
-		// Backbone.save executes "model.set(model.parse(resp), options)". Set a full map over object, but now with ids.
+		// Model.save executes "model.set(model.parse(resp), options)". Set a full map over object, but now with ids.
 		// Should trigger `remove:employees`, `add:employees`, and `add:jobs`
 		company.set({
 			id: 'company-3',
@@ -188,69 +201,69 @@ QUnit.module( "Reverse relations", { setup: require('./setup/data') } );
 		});
 	});
 
-	QUnit.test( "Set the same value a couple of time, by 'id' and object", function() {
-		person1.set( { likesALot: 'person-2' } );
-		person1.set( { likesALot: person2 } );
+	QUnit.test( "Set the same value a couple of time, by 'id' and object", function( assert) {
+		objects.person1.set( { likesALot: 'person-2' } );
+		objects.person1.set( { likesALot: objects.person2 } );
 
-		ok( person1.get('likesALot') === person2 );
-		ok( person2.get('likedALotBy' ) === person1 );
+		assert.ok( objects.person1.get('likesALot') === objects.person2 );
+		assert.ok( objects.person2.get('likedALotBy' ) === objects.person1 );
 
-		person1.set( { likesALot: 'person-2' } );
+		objects.person1.set( { likesALot: 'person-2' } );
 
-		ok( person1.get('likesALot') === person2 );
-		ok( person2.get('likedALotBy' ) === person1 );
+		assert.ok( objects.person1.get('likesALot') === objects.person2 );
+		assert.ok( objects.person2.get('likedALotBy' ) === objects.person1 );
 	});
 
-	QUnit.test( "Numerical keys", function() {
+	QUnit.test( "Numerical keys", function( assert) {
 		var child1 = new Node({ id: 2, name: 'First child' });
 		var parent = new Node({ id: 1, children: [2, 3], name: 'Parent' });
 		var child2 = new Node({ id: 3, name: 'Second child' });
 
-		equal( parent.get('children').length, 2 );
-		ok( parent.get('children').include( child1 ) );
-		ok( parent.get('children').include( child2 ) );
+		assert.equal( parent.get('children').length, 2 );
+		assert.ok( parent.get('children').include( child1 ) );
+		assert.ok( parent.get('children').include( child2 ) );
 
-		ok( child1.get('parent') === parent );
-		equal( child1.get('children').length, 0 );
+		assert.ok( child1.get('parent') === parent );
+		assert.equal( child1.get('children').length, 0 );
 
-		ok( child2.get('parent') === parent );
-		equal( child2.get('children').length, 0 );
+		assert.ok( child2.get('parent') === parent );
+		assert.equal( child2.get('children').length, 0 );
 	});
 
-	QUnit.test( "Relations that use refs to other models (instead of keys)", function() {
+	QUnit.test( "Relations that use refs to other models (instead of keys)", function( assert) {
 		var child1 = new Node({ id: 2, name: 'First child' });
 		var parent = new Node({ id: 1, children: [child1, 3], name: 'Parent' });
 		var child2 = new Node({ id: 3, name: 'Second child' });
 
-		ok( child1.get('parent') === parent );
-		equal( child1.get('children').length, 0 );
+		assert.ok( child1.get('parent') === parent );
+		assert.equal( child1.get('children').length, 0 );
 
-		equal( parent.get('children').length, 2 );
-		ok( parent.get('children').include( child1 ) );
-		ok( parent.get('children').include( child2 ) );
+		assert.equal( parent.get('children').length, 2 );
+		assert.ok( parent.get('children').include( child1 ) );
+		assert.ok( parent.get('children').include( child2 ) );
 
 		var child3 = new Node({ id: 4, parent: parent, name: 'Second child' });
 
-		equal( parent.get('children').length, 3 );
-		ok( parent.get('children').include( child3 ) );
+		assert.equal( parent.get('children').length, 3 );
+		assert.ok( parent.get('children').include( child3 ) );
 
-		ok( child3.get('parent') === parent );
-		equal( child3.get('children').length, 0 );
+		assert.ok( child3.get('parent') === parent );
+		assert.equal( child3.get('children').length, 0 );
 	});
 
-	QUnit.test( "Add an already existing model (reverseRelation shouldn't exist yet) to a relation as a hash", function() {
+	QUnit.test( "Add an already existing model (reverseRelation shouldn't exist yet) to a relation as a hash", function( assert) {
 		// This test caused a race condition to surface:
 		// The 'relation's constructor initializes the 'reverseRelation', which called 'relation.addRelated' in it's 'initialize'.
 		// However, 'relation's 'initialize' has not been executed yet, so it doesn't have a 'related' collection yet.
-		var Properties = Backbone.Relational.Model.extend({});
-		var View = Backbone.Relational.Model.extend({
+		var Properties = Model.extend({});
+		var View = Model.extend({
 			relations: [
 				{
-					type: Backbone.Relational.HasMany,
+					type: HasMany,
 					key: 'properties',
 					relatedModel: Properties,
 					reverseRelation: {
-						type: Backbone.Relational.HasOne,
+						type: HasOne,
 						key: 'view'
 					}
 				}
@@ -263,19 +276,19 @@ QUnit.module( "Reverse relations", { setup: require('./setup/data') } );
 			properties: [ { id: 1, key: 'width', value: '300px', view: 1 } ]
 		});
 
-		ok( props.get( 'view' ) === view );
-		ok( view.get( 'properties' ).include( props ) );
+		assert.ok( props.get( 'view' ) === view );
+		assert.ok( view.get( 'properties' ).include( props ) );
 	});
 
-	QUnit.test( "Reverse relations are found for models that have not been instantiated and use .extend()", function() {
-		var View = Backbone.Relational.Model.extend({ });
-		var Property = Backbone.Relational.Model.extend({
+	QUnit.test( "Reverse relations are found for models that have not been instantiated and use .extend()", function( assert) {
+		var View = Model.extend({ });
+		var Property = Model.extend({
 			relations: [{
-				type: Backbone.Relational.HasOne,
+				type: HasOne,
 				key: 'view',
 				relatedModel: View,
 				reverseRelation: {
-					type: Backbone.Relational.HasMany,
+					type: HasMany,
 					key: 'properties'
 				}
 			}]
@@ -286,22 +299,22 @@ QUnit.module( "Reverse relations", { setup: require('./setup/data') } );
 			properties: [ { id: 1, key: 'width', value: '300px' } ]
 		});
 
-		ok( view.get( 'properties' ) instanceof Backbone.Relational.Collection );
+		assert.ok( view.get( 'properties' ) instanceof Collection );
 	});
 
-	QUnit.test( "Reverse relations found for models that have not been instantiated and run .setup() manually", function() {
+	QUnit.test( "Reverse relations found for models that have not been instantiated and run .setup() manually", function( assert) {
 		// Generated from CoffeeScript code:
-		// 	 class View extends Backbone.Relational.Model
+		// 	 class View extends Model
 		//
 		// 	 View.setup()
 		//
-		// 	 class Property extends Backbone.Relational.Model
+		// 	 class Property extends Model
 		// 	   relations: [
-		// 	     type: Backbone.Relational.HasOne
+		// 	     type: HasOne
 		// 	     key: 'view'
 		// 	     relatedModel: View
 		// 	     reverseRelation:
-		// 	       type: Backbone.Relational.HasMany
+		// 	       type: HasMany
 		// 	       key: 'properties'
 		// 	   ]
 		//
@@ -319,7 +332,7 @@ QUnit.module( "Reverse relations", { setup: require('./setup/data') } );
 			}
 
 			return View;
-		})( Backbone.Relational.Model );
+		})( Model );
 
 		View.setup();
 
@@ -331,17 +344,17 @@ QUnit.module( "Reverse relations", { setup: require('./setup/data') } );
 			}
 
 			Property.prototype.relations = [{
-				type: Backbone.Relational.HasOne,
+				type: HasOne,
 				key: 'view',
 				relatedModel: View,
 				reverseRelation: {
-				type: Backbone.Relational.HasMany,
+				type: HasMany,
 					key: 'properties'
 				}
 			}];
 
 			return Property;
-		})(Backbone.Relational.Model);
+		})(Model);
 
 		Property.setup();
 
@@ -350,19 +363,19 @@ QUnit.module( "Reverse relations", { setup: require('./setup/data') } );
 			properties: [ { id: 1, key: 'width', value: '300px' } ]
 		});
 
-		ok( view.get( 'properties' ) instanceof Backbone.Relational.Collection );
+		assert.ok( view.get( 'properties' ) instanceof Collection );
 	});
 
-	QUnit.test( "ReverseRelations are applied retroactively", function() {
+	QUnit.test( "ReverseRelations are applied retroactively", function( assert) {
 		// Use brand new Model types, so we can be sure we don't have any reverse relations cached from previous tests
-		var NewUser = Backbone.Relational.Model.extend({});
-		var NewPerson = Backbone.Relational.Model.extend({
+		var NewUser = Model.extend({});
+		var NewPerson = Model.extend({
 			relations: [{
-				type: Backbone.Relational.HasOne,
+				type: HasOne,
 				key: 'user',
 				relatedModel: NewUser,
 				reverseRelation: {
-					type: Backbone.Relational.HasOne,
+					type: HasOne,
 					key: 'person'
 				}
 			}]
@@ -372,36 +385,36 @@ QUnit.module( "Reverse relations", { setup: require('./setup/data') } );
 		//var user2 = new NewUser( { id: 'newuser-2', person: 'newperson-1' } );
 		var person = new NewPerson( { id: 'newperson-1', user: user } );
 
-		ok( person.get('user') === user );
-		ok( user.get('person') === person );
+		assert.ok( person.get('user') === user );
+		assert.ok( user.get('person') === person );
 		//console.log( person, user );
 	});
 
-	QUnit.test( "ReverseRelations are applied retroactively (2)", function() {
+	QUnit.test( "ReverseRelations are applied retroactively (2)", function( assert) {
 		var models = {};
-		Backbone.Relational.store.addModelScope( models );
+		store.addModelScope( models );
 
 		// Use brand new Model types, so we can be sure we don't have any reverse relations cached from previous tests
-		models.NewPerson = Backbone.Relational.Model.extend({
+		models.NewPerson = Model.extend({
 			relations: [{
-				type: Backbone.Relational.HasOne,
+				type: HasOne,
 				key: 'user',
 				relatedModel: 'NewUser',
 				reverseRelation: {
-					type: Backbone.Relational.HasOne,
+					type: HasOne,
 					key: 'person'
 				}
 			}]
 		});
-		models.NewUser = Backbone.Relational.Model.extend({});
+		models.NewUser = Model.extend({});
 
 		var user = new models.NewUser( { id: 'newuser-1', person: { id: 'newperson-1' } } );
 
-		equal( user.getRelations().length, 1 );
-		ok( user.get( 'person' ) instanceof models.NewPerson );
+		assert.equal( user.getRelations().length, 1 );
+		assert.ok( user.get( 'person' ) instanceof models.NewPerson );
 	});
 
-	QUnit.test( "Deep reverse relation starting from a collection", function() {
+	QUnit.test( "Deep reverse relation starting from a collection", function( assert) {
 		var nodes = new NodeList([
 			{
 				id: 1,
@@ -420,24 +433,24 @@ QUnit.module( "Reverse relations", { setup: require('./setup/data') } );
 		]);
 
 		var parent = nodes.first();
-		ok( parent, 'first item accessible after resetting collection' );
+		assert.ok( parent, 'first item accessible after resetting collection' );
 
-		ok( parent.collection === nodes, '`parent.collection` is set to `nodes`' );
+		assert.ok( parent.collection === nodes, '`parent.collection` is set to `nodes`' );
 
 		var child = parent.get( 'children' ).first();
-		ok( child, '`child` can be retrieved from `parent`' );
-		ok( child.get( 'parent' ), 'reverse relation from `child` to `parent` works');
+		assert.ok( child, '`child` can be retrieved from `parent`' );
+		assert.ok( child.get( 'parent' ), 'reverse relation from `child` to `parent` works');
 
 		var grandchild = child.get( 'children' ).first();
-		ok( grandchild, '`grandchild` can be retrieved from `child`' );
+		assert.ok( grandchild, '`grandchild` can be retrieved from `child`' );
 
-		ok( grandchild.get( 'parent' ), 'reverse relation from `grandchild` to `child` works');
+		assert.ok( grandchild.get( 'parent' ), 'reverse relation from `grandchild` to `child` works');
 
-		ok( grandchild.get( 'children' ).first() === parent, 'reverse relation from `grandchild` to `parent` works');
-		ok( parent.get( 'parent' ) === grandchild, 'circular reference from `grandchild` to `parent` works' );
+		assert.ok( grandchild.get( 'children' ).first() === parent, 'reverse relation from `grandchild` to `parent` works');
+		assert.ok( parent.get( 'parent' ) === grandchild, 'circular reference from `grandchild` to `parent` works' );
 	});
 
-	QUnit.test( "Deep reverse relation starting from a collection, with existing model", function() {
+	QUnit.test( "Deep reverse relation starting from a collection, with existing model", function( assert) {
 		new Node( { id: 1 } );
 
 		var nodes = new NodeList();
@@ -459,17 +472,17 @@ QUnit.module( "Reverse relations", { setup: require('./setup/data') } );
 		]);
 
 		var parent = nodes.first();
-		ok( parent && parent.id === 1, 'first item accessible after resetting collection' );
+		assert.ok( parent && parent.id === 1, 'first item accessible after resetting collection' );
 
 		var child = parent.get( 'children' ).first();
-		ok( child, '`child` can be retrieved from `parent`' );
-		ok( child.get( 'parent' ), 'reverse relation from `child` to `parent` works');
+		assert.ok( child, '`child` can be retrieved from `parent`' );
+		assert.ok( child.get( 'parent' ), 'reverse relation from `child` to `parent` works');
 
 		var grandchild = child.get( 'children' ).first();
-		ok( grandchild, '`grandchild` can be retrieved from `child`' );
+		assert.ok( grandchild, '`grandchild` can be retrieved from `child`' );
 
-		ok( grandchild.get( 'parent' ), 'reverse relation from `grandchild` to `child` works');
+		assert.ok( grandchild.get( 'parent' ), 'reverse relation from `grandchild` to `child` works');
 
-		ok( grandchild.get( 'children' ).first() === parent, 'reverse relation from `grandchild` to `parent` works');
-		ok( parent.get( 'parent' ) === grandchild, 'circular reference from `grandchild` to `parent` works' );
+		assert.ok( grandchild.get( 'children' ).first() === parent, 'reverse relation from `grandchild` to `parent` works');
+		assert.ok( parent.get( 'parent' ) === grandchild, 'circular reference from `grandchild` to `parent` works' );
 	});

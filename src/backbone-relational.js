@@ -1,6 +1,3 @@
-import Backbone from 'backbone';
-import { Collection as BBCollection, Model as BBModel } from 'backbone';
-import _ from 'underscore';
 import Semaphore from './utils/semaphore';
 import BlockingQueue from './utils/blocking-queue';
 import eventQueue from './event-queue';
@@ -15,24 +12,22 @@ import Store from './utils/store';
 import store from './store';
 import Model from './model';
 
-const module = config;
+export { Collection };
+export { Semaphore };
+export { BlockingQueue };
+export { eventQueue };
 
-module.Collection = Collection;
-module.Semaphore = Semaphore;
-module.BlockingQueue = BlockingQueue;
-module.eventQueue = eventQueue;
-module.relationTypeStore = relationTypeStore;
+export { Store };
+export { store };
 
-module.Store = Store;
-module.store = store;
+export { relationTypeStore };
+export { Relation };
+export { HasOne };
+export { HasMany };
 
-module.Relation = Relation;
-module.HasOne = HasOne;
-module.HasMany = HasMany;
+relationTypeStore.registerType( 'HasOne', HasOne );
+relationTypeStore.registerType( 'HasMany', HasMany );
 
-relationTypeStore.registerType( 'HasOne', module.HasOne );
-relationTypeStore.registerType( 'HasMany', module.HasMany );
+export { Model };
 
-module.Model = Model;
-
-export default module;
+export { config };

@@ -1,3 +1,3 @@
-import {Model} from 'backbone';
+import { Model } from 'backbone';
 
 export default Model.extend;
