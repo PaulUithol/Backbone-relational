@@ -1,6 +1,7 @@
 {
   "name": "backbone-relational",
   "main": "dist/backbone-relational.js",
+  "license": "MIT",
   "dependencies": {
     "underscore": ">=1.7.0",
     "backbone": "1.2.3"
