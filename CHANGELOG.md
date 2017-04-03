@@ -14,6 +14,7 @@ This is a big update (internally). We have refactored our entire codebase to use
 - Change log
 - [#575](https://github.com/PaulUithol/Backbone-relational/issues/575): Add license information to bower.json
 ### Changed
+- [#571](https://github.com/PaulUithol/Backbone-relational/issues/571): Backbone 1.3.3 Support
 - ES2015 Refactor
 - Updated QUnit from 1.x to 2.x
 - Rather than modifying the existing `Backbone.Collection` we extend and use our own `Collection` subclass. This means Backbone and Backbone Relational can work side-by-side!

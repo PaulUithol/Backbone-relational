@@ -2,6 +2,8 @@ import { reset } from './setup/setup';
 import { Collection, Model, HasOne, store } from 'backbone-relational';
 import { Zoo, Animal, AnimalCollection, PersonCollection, User, NodeList } from './setup/objects';
 import _ from 'underscore';
+import { VERSION as BACKBONE_VERSION } from 'backbone'
+import semver from 'semver';
 
 QUnit.module('Collection', {
 	beforeEach() {
@@ -119,8 +121,13 @@ QUnit.module('Collection', {
 		assert.ok(_.isArray(cars.set([e, f])), 'Set (an array of) two models');
 		// Check removing `[]`
 		let result = cars.remove([]);
-		assert.ok(result === false, 'Removing `[]` is a noop (results in \'false\', no models removed)');
-		// assert.ok( result.length === 0, "Removing `[]` is a noop (results in an empty array, no models removed)" );
+
+		//have to also check if the result is an array since in backbone 1.3.1 Backbone.VERSION is incorrectly set to 1.2.3
+		if (semver.satisfies(BACKBONE_VERSION, '^1.3.1') || _.isArray(result)) {
+			assert.ok(result.length === 0, 'Removing `[]` is a noop (results in an empty array, no models removed)');
+		} else {
+			assert.ok(result === false, 'Removing `[]` is a noop (results in \'false\', no models removed)');
+		}
 		assert.ok(cars.length === 2, 'Still 2 cars');
 
 		// Check removing `null`
