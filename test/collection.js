@@ -1,3 +1,5 @@
+var semver = require('semver');
+
 QUnit.module( "Backbone.Relational.Collection", { setup: require('./setup/setup').reset } );
 
 	QUnit.test( "Loading (fetching) multiple times updates the model, and relations's `keyContents`", function() {
@@ -110,8 +112,13 @@ QUnit.module( "Backbone.Relational.Collection", { setup: require('./setup/setup'
 		ok( _.isArray( cars.set( [ e, f ] ) ), "Set (an array of) two models" );
 		// Check removing `[]`
 		var result = cars.remove( [] );
-		ok( result === false, "Removing `[]` is a noop (results in 'false', no models removed)" );
-		// ok( result.length === 0, "Removing `[]` is a noop (results in an empty array, no models removed)" );
+
+		//have to also check if the result is an array since in backbone 1.3.1 Backbone.VERSION is incorrectly set to 1.2.3
+		if (semver.satisfies(Backbone.VERSION, '^1.3.1') || Array.isArray(result)){
+			ok( result.length === 0, "Removing `[]` is a noop (results in an empty array, no models removed)" );
+		} else {
+			ok( result === false, "Removing `[]` is a noop (results in 'false', no models removed)" );
+		}
 		ok( cars.length === 2, "Still 2 cars" );
 
 		// Check removing `null`
