@@ -26,25 +26,18 @@
 <body>
 <div id="sidebar">
 	<a class="toc_title" href="#">
-		Backbone-relational.js <span class="version">(0.10.0)</span>
+		Backbone Relational <span class="version">(0.10.0)</span>
 	</a>
 
 	<ul>
 		<li class="link_out"><a href="https://github.com/PaulUithol/Backbone-relational">GitHub Repository</a></li>
 	</ul>
-
-	<a class="toc_title" href="#introduction">
-		Introduction
-	</a>
-
-	<a class="toc_title" href="#installation">
-		Installation
-	</a>
-
-	<a class="toc_title" href="#RelationalModel">
-		Backbone.RelationalModel
-	</a>
-
+	<a class="toc_title" href="#introduction">Getting Started</a>
+	<ul>
+		<li><a href="#introduction">Introduction</a></li>
+		<li><a href="#installation">Installation</a></li>
+	</ul>
+	<a class="toc_title" href="#RelationalModel">Model</a>
 	<ul>
 		<li>
 			<a href="#RelationalModel-relations">relations</a>
@@ -89,7 +82,7 @@
 	</ul>
 
 	<a class="toc_title" href="#Relation">
-		Backbone.Relation
+		Relation
 	</a>
 
 	<ul>
@@ -98,7 +91,7 @@
 	</ul>
 
 	<a class="toc_title" href="#Store">
-		Backbone.Store
+		Store
 	</a>
 
 	<ul>
@@ -122,10 +115,7 @@
 
 <div class="container">
 	<section>
-		<h1>
-			Backbone-relational.js
-		</h1>
-
+		<h1>Backbone Relational</h1>
 		<p>
 			When developing any medium to large-scale web application, you often get to the point where
 			an action by a user can cause a number of different models to change on the client and the server.
@@ -137,17 +127,17 @@
 			results in multiple requests.
 		</p>
 		<p>
-			Using Backbone-relational, we can configure relationships between our models, and sync the model and all of its related models with a single
-			call to <q><a href="http://backbonejs.org/#Model-save">save</a></q>, <q><a href="#RelationalModel-getAsync">getAsync</a></q> or <q><a href="http://backbonejs.org/#Model-fetch">fetch()</a></q>
+			Using Backbone Relational, we can configure relationships between our models and sync the model and all of its related models with a single
+			call to <q><a href="http://backbonejs.org/#Model-save">save()</a></q>, <q><a href="#RelationalModel-getAsync">getAsync()</a></q> or <q><a href="http://backbonejs.org/#Model-fetch">fetch()</a></q>
 			after setting up a model's <q><a href="#RelationalModel-relations">relations</a></q>.
 		</p>
 		<p>
-			Backbone-relational is hosted on <a href="https://github.com/PaulUithol/Backbone-relational">GitHub</a>,
+			Backbone Relational is hosted on <a href="https://github.com/PaulUithol/Backbone-relational">GitHub</a>,
 			and is available under the <a href="https://github.com/PaulUithol/Backbone-relational/blob/master/LICENSE.txt">MIT license</a>.
 		</p>
 		<p>
 			Thanks to <a href="http://progressiveplanning.com">Progressive Planning</a> for allowing me the time to
-			work on Backbone-relational!
+			work on Backbone Relational!
 		</p>
 	</section>
 
@@ -162,36 +152,35 @@
 		<table>
 			<tr>
 				<td><a class="punch" href="https://raw.githubusercontent.com/PaulUithol/Backbone-relational/a7634e7d9deac64e3da455a3fde13b96ae253612/backbone-relational.js">Latest Release (0.10.0)</a></td>
-				<td class="text"><i>~70kb. Full source, uncompressed, lots of comments.</i></td>
+				<td class="text"><i>~70kb. Full source, uncompressed, with inline comments.</i></td>
 			</tr>
 			<tr>
 				<td><a class="punch" href="https://raw.githubusercontent.com/PaulUithol/Backbone-relational/master/backbone-relational.js">Edge Version</a></td>
+				<td class="text"><i>Unreleased, use at your own risk!</i></td>
 			</tr>
 		</table>
 
 		<p>
-			Backbone-relational depends on <a href="http://backbonejs.org/">Backbone.js</a> <small>(>= 1.2.1)</small>,
-			which itself requires <a href="http://underscorejs.org">Underscore.js</a> <small>(> 1.7.0)</small> and
-			<a href="http://jquery.com">jQuery</a> <small>(> 1.7.0)</small> or
-			<a href="http://zeptojs.com/">Zepto</a>.
+			Backbone Relational depends on <a href="http://backbonejs.org/">Backbone.js</a> <small>(>= 1.3.3)</small>,
+			which itself requires <a href="http://underscorejs.org">Underscore.js</a> <small>(>= 1.8.3)</small> and
+			<a href="http://jquery.com">jQuery</a> or <a href="http://zeptojs.com/">Zepto</a>.
 		</p>
 	</section>
 
 	<section id="introduction">
 		<h2>Introduction</h2>
-
 		<p>
-			Backbone-relational.js provides one-to-one, one-to-many and many-to-one relations
-			between models for Backbone. To use relations, extend <a href="#RelationalModel"><strong>Backbone.RelationalModel</strong></a>
-			(instead of a regular <a href="http://backbonejs.org/#Model">Backbone.Model</a>) and define a
+			Backbone Relational provides one-to-one, one-to-many and many-to-one relations
+			between models for Backbone. To use relations, extend <q><a href="#RelationalModel">BackboneRelational.Model</a></q>
+			(instead of a regular <q><a href="http://backbonejs.org/#Model">Backbone.Model</a></q>) and define a
 			<a href="#RelationalModel-relations"><q>relations</q></a> property, containing an array of option objects.
 			Each relation must define (at least) the <a href="#relations-type"><q>type</q></a>, <a href="#relations-key"><q>key</q></a>,
 			and <a href="#relations-relatedModel"><q>relatedModel</q></a>. Available relation types are
-			<a href="#Relation-HasOne"><q>Backbone.HasOne</q></a> and <a href="#Relation-HasMany"><q>Backbone.HasMany</q></a>.
+			<a href="#Relation-HasOne"><q>BackboneRelational.HasOne</q></a> and <a href="#Relation-HasMany"><q>BackboneRelational.HasMany</q></a>.
 		</p>
 
 		<p>
-			Backbone-relational's main features include:
+			Backbone Relational's main features include:
 		</p>
 
 		<ul>
@@ -215,22 +204,22 @@
 		</ul>
 
 		<p>
-			You can also bind new events to a <strong>Backbone.RelationalModel</strong> for an:
+			You can also bind new events to a <strong>BackboneRelational.Model</strong> for an:
 		</p>
 
 		<ul>
 			<li>
-				<strong>addition</strong> to a HasMany relation with <a href="#RelationalModel-events">add:&lt;key&gt;</a>.
+				<strong>addition</strong> to a HasMany relation with <q><a href="#RelationalModel-events">add:&lt;key&gt;</a></q>.
 			</li>
 			<li>
-				<strong>removal</strong> from a HasMany relation with <a href="#RelationalModel-events">remove:&lt;key&gt;</a>.
+				<strong>removal</strong> from a HasMany relation with <q><a href="#RelationalModel-events">remove:&lt;key&gt;</a></q>.
 			</li>
 			<li>
-				<strong>reset</strong> of a HasMany relation with <a href="#RelationalModel-events">reset:&lt;key&gt;</a>.
+				<strong>reset</strong> of a HasMany relation with <q><a href="#RelationalModel-events">reset:&lt;key&gt;</a></q>.
 			</li>
 			<li>
-				<strong>changes</strong> to the contents of a HasMany or HasOne relations with <a href="#RelationalModel-events">change:
-				&lt;key&gt;</a>.
+				<strong>changes</strong> to the contents of a HasMany or HasOne relations with <q><a href="#RelationalModel-events">change:
+				&lt;key&gt;</a></q>.
 			</li>
 		</ul>
 	</section>
@@ -239,11 +228,12 @@
 		<h2>Installation</h2>
 
 		<p>
-			Backbone-relational depends on <a href="http://backbonejs.org/">Backbone.js</a> (and thus on
-			<a href="http://underscorejs.org">Underscore.js</a>). Include Backbone-relational right after Backbone
+			Backbone Relational depends on <a href="http://backbonejs.org/">Backbone</a> (and thus on
+			<a href="http://underscorejs.org">Underscore</a>). Include Backbone Relational right after Backbone
 			and Underscore:
 		</p>
 
+		<h3>Static Installation</h3>
 <pre class="language-markup"><code class="language-markup"><!--
 -->&lt;script type="text/javascript" src="./js/underscore.js"&gt;&lt;/script&gt;
 <!-- -->&lt;script type="text/javascript" src="./js/backbone.js"&gt;&lt;/script&gt;
@@ -255,23 +245,39 @@
 			CoffeeScript, you may have to make an extra call to <a href="#RelationalModel-setup"><q>setup</q></a> for
 			your models. See the <a href="#RelationalModel-setup"><q>setup</q></a> documentation for details.
 		</p>
+
+		<h3>NPM Installation</h3>
+<pre class="language-markup"><code class="language-markup"><!--
+-->npm install backbone-relational
+</code></pre>
+<p>Use it in your code like so:</p>
+<pre class="language-javascript nomargin"><code class="language-javascript runnable"><!--
+-->// ES2015
+import { Model, Collection, HasOne, HasMany } from 'backbone-relational';
+// Node
+const { Model, Collection, HasOne, HasMany } = require('backbone-relational');
+</code></pre>
+	<h3>Bower Installation</h3>
+<pre class="language-markup"><code class="language-markup"><!--
+-->bower install backbone-relational
+</code></pre>
 	</section>
 
 	<section id="RelationalModel">
 		<h2>
-			Backbone.RelationalModel
+			BackboneRelational.Model
 		</h2>
 
 		<p>
-			When using Backbone-relational, each model defining (or receiving) <q>relations</q> must extend
-			<strong>Backbone.RelationalModel</strong> in order to function. <strong>Backbone.RelationalModel</strong>
+			When using Backbone Relational, each model defining (or receiving) <q>relations</q> must extend
+			<q>BackboneRelational.Model</q> in order to function. <q>BackboneRelational.Model</q>
 			introduces a couple of new methods, events and properties. It's important to know which are properties,
 			which are methods of an	instance, and which operate on the type itself.
 			These three categories are detailed below.
 		</p>
 
 		<p>
-			<strong>Properties</strong> can be defined when extending Backbone.RelationalModel, or a subclass thereof.
+			<strong>Properties</strong> can be defined when extending <q>BackboneRelational.Model</q>, or a subclass thereof.
 		</p>
 
 		<ul class="small">
@@ -313,16 +319,16 @@
 			relations<code>relation[]</code>
 		</h4>
 		<p>
-			A <strong>Backbone.RelationalModel</strong> may contain an array of relation definitions. Each relation supports a number of
+			A <strong>BackboneRelational.Model</strong> may contain an array of relation definitions. Each relation supports a number of
 			options, of which <a href="#relations-key"><q>key</q></a> and <a href="#relations-type"><q>type</q></a> are mandatory.
 			You'll also need to specifiy <a href="#relations-relatedModel"><q>relatedModel</q></a> if you want to reference another model.
 			A relation could look like the following:
 		</p>
 
 <pre class="language-javascript"><code id="example-zoo" class="language-javascript runnable"><!--
--->Zoo = Backbone.RelationalModel.extend({
+-->Zoo = BackboneRelational.Model.extend({
 	relations: [{
-		type: Backbone.HasMany,
+		type: BackboneRelational.HasMany,
 		key: 'animals',
 		relatedModel: 'Animal',
 		collectionType: 'AnimalCollection',
@@ -334,11 +340,11 @@
 	}]
 });
 
-Animal = Backbone.RelationalModel.extend({
+Animal = BackboneRelational.Model.extend({
 	urlRoot: '/animal/'
 });
 
-AnimalCollection = Backbone.Collection.extend({
+AnimalCollection = BackboneRelational.Collection.extend({
 	model: Animal
 });
 
@@ -372,7 +378,7 @@ alert( lion.get( 'livesIn' ).get( 'name' ) + ', ' + artis.get( 'animals' ).lengt
 			</h4>
 			<p>
 				A string that can be resolved to an object on the global scope, or a reference to a
-				<strong>Backbone.RelationalModel</strong>. Also see <a href="#Store-addModelScope"><q>addModelScope</q></a>.
+				<strong>BackboneRelational.Model</strong>. Also see <a href="#Store-addModelScope"><q>addModelScope</q></a>.
 			</p>
 			<p>
 				If omitted, the relation will be self-referential.
@@ -384,29 +390,29 @@ alert( lion.get( 'livesIn' ).get( 'name' ) + ', ' + artis.get( 'animals' ).lengt
 				type<code>relation.type</code>
 			</h4>
 			<p>
-				Required. A string that references a <a href="#Relation"><q>Backbone.Relation</q></a> type by name ("HasOne" or "HasMany"),
+				Required. A string that references a <a href="#Relation"><q>BackboneRelational.Relation</q></a> type by name ("HasOne" or "HasMany"),
 				or a direct reference to a relation type.
 			</p>
 			<p>
 				You can model a one-to-one or a many-to-one relationship by declaring <q>type</q> as the string "HasOne", or by
-				directly referencing <a href="#Relation-HasOne"><q>Backbone.HasOne</q></a>. A HasOne relation contains a single
-				<strong>Backbone.RelationalModel</strong>. The default <q>reverseRelation.type</q> for a "HasOne" relation is
+				directly referencing <a href="#Relation-HasOne"><q>BackboneRelational.HasOne</q></a>. A HasOne relation contains a single
+				<strong>BackboneRelational.Model</strong>. The default <q>reverseRelation.type</q> for a "HasOne" relation is
 				"HasMany". This can be set to "HasOne" instead, to create a one-to-one relation.
 			</p>
 			<p>
 				You can model a one-to-many relationship by declaring <q>type</q> as the string "HasMany", or by directly
-				referencing <a href="#Relation-HasMany"><q>Backbone.HasMany</q></a>. A HasMany relation contains a Backbone.Collection,
-				containing zero or more	<strong>Backbone.RelationalModel</strong>s. The default <q>reverseRelation.type</q>
+				referencing <a href="#Relation-HasMany"><q>BackboneRelational.HasMany</q></a>. A HasMany relation contains a BackboneRelational.Collection,
+				containing zero or more	<strong>BackboneRelational.Model</strong>s. The default <q>reverseRelation.type</q>
 				for a HasMany relation is HasOne; this is the only option here, since many-to-many is not supported directly.
 			</p>
 			<p>
-				It is possible to model a many-to-many relationship using two <a href="#Relation-HasMany"><q>Backbone.HasMany</q></a>
+				It is possible to model a many-to-many relationship using two <a href="#Relation-HasMany"><q>BackboneRelational.HasMany</q></a>
 				relations, with a link model in between:
 			</p>
 		</section>
 
 <pre class="language-javascript"><code class="language-javascript" id="example-job"><!--
--->Person = Backbone.RelationalModel.extend({
+-->Person = BackboneRelational.Model.extend({
 	relations: [{
 		type: 'HasMany',
 		key: 'jobs',
@@ -418,14 +424,14 @@ alert( lion.get( 'livesIn' ).get( 'name' ) + ', ' + artis.get( 'animals' ).lengt
 });
 
 // A link object between 'Person' and 'Company'
-Job = Backbone.RelationalModel.extend({
+Job = BackboneRelational.Model.extend({
 	defaults: {
 		'startDate': null,
 		'endDate': null
 	}
 });
 
-Company = Backbone.RelationalModel.extend({
+Company = BackboneRelational.Model.extend({
 	relations: [{
 		type: 'HasMany',
 		key: 'employees',
@@ -491,16 +497,16 @@ Company = Backbone.RelationalModel.extend({
 		</section>
 
 <pre class="language-javascript"><code class="language-javascript"><!--
--->var Shop = Backbone.RelationalModel.extend({
+-->var Shop = BackboneRelational.Model.extend({
 	relations: [
 		{
-			type: Backbone.HasMany,
+			type: BackboneRelational.HasMany,
 			key: 'customers',
 			relatedModel: 'Customer',
 			autoFetch: true
 		},
 		{
-			type: Backbone.HasOne,
+			type: BackboneRelational.HasOne,
 			key: 'address',
 			relatedModel: 'Address',
 			autoFetch: {
@@ -522,7 +528,7 @@ Company = Backbone.RelationalModel.extend({
 			</h4>
 			<p>
 				A string that can be resolved to an object type on the global scope, or a reference to a
-				<strong>Backbone.Collection</strong> type.
+				<strong>BackboneRelational.Collection</strong> type.
 			</p>
 			<p>
 				Determine the type of collections used for a HasMany relation. If you define a
@@ -538,7 +544,7 @@ Company = Backbone.RelationalModel.extend({
 				A string or a boolean. Default: <q>true</q>.
 			</p>
 			<p>
-				Used to create a back reference from the <strong>Backbone.Collection</strong> used for a HasMany relation to the model on
+				Used to create a back reference from the <strong>BackboneRelational.Collection</strong> used for a HasMany relation to the model on
 				the other side of this relation. By default, the relation's key attribute will be used to create a reference to
 				the RelationalModel instance from the generated collection. If you set <q>collectionKey</q> to a string,
 				it will use that string as the reference to the RelationalModel, rather than the
@@ -552,7 +558,7 @@ Company = Backbone.RelationalModel.extend({
 				collectionOptions<code>relation.collectionOptions</code>
 			</h4>
 			<p>
-				An options hash, or a function that accepts an instance of a <strong>Backbone.RelationalModel</strong> and returns an options
+				An options hash, or a function that accepts an instance of a <strong>BackboneRelational.Model</strong> and returns an options
 				hash.
 			</p>
 			<p>
@@ -634,9 +640,9 @@ Company = Backbone.RelationalModel.extend({
 
 // This `Farm` is confused, like legacy stuff can be. It wants its data back on a completely
 // different key than it supplies it on. We want to use a different one in our app as well.
-var Farm = Backbone.RelationalModel.extend({
+var Farm = BackboneRelational.Model.extend({
 	relations: [{
-		type: Backbone.HasMany,
+		type: BackboneRelational.HasMany,
 		key: 'animals',
 		keySource: 'livestock',
 		keyDestination: 'pets',
@@ -801,7 +807,7 @@ alert( 'chimp is an animal? ' + ( chimp instanceof Animal ) + '\n' +
 
 		<section id="RelationalModel-getIdsToFetch">
 			<h4 class="code">
-				getIdsToFetch<code>relationModel.getIdsToFetch(attr&lt;string|Backbone.Relation&gt;, [refresh&lt;boolean&gt;])</code>
+				getIdsToFetch<code>relationModel.getIdsToFetch(attr&lt;string|BackboneRelational.Relation&gt;, [refresh&lt;boolean&gt;])</code>
 			</h4>
 			<p>
 				Returns: <q>Array</q> A list of the ids that will be fetched when calling <q>getAsync</q>.
@@ -813,7 +819,7 @@ alert( 'chimp is an animal? ' + ( chimp instanceof Animal ) + '\n' +
 				getRelation<code>relationModel.getRelation(attr&lt;string&gt;)</code>
 			</h4>
 			<p>
-				Returns: <q>Backbone.Relation</q> A single initialized relation on the model.
+				Returns: <q>BackboneRelational.Relation</q> A single initialized relation on the model.
 			</p>
 		</section>
 
@@ -822,7 +828,7 @@ alert( 'chimp is an animal? ' + ( chimp instanceof Animal ) + '\n' +
 				getRelations<code>relationModel.getRelations()</code>
 			</h4>
 			<p>
-				Returns: <q>Backbone.Relation[]</q> The set of initialized relations on the model.
+				Returns: <q>BackboneRelational.Relation[]</q> The set of initialized relations on the model.
 			</p>
 		</section>
 
@@ -831,11 +837,11 @@ alert( 'chimp is an animal? ' + ( chimp instanceof Animal ) + '\n' +
 				set<code>set(key&lt;string&gt;, value, [options&lt;object&gt;]) <strong>or</strong> set(attributes&lt;object&gt;, [options&lt;object&gt;])</code>
 			</h4>
 			<p>
-				Returns: <q>Backbone.RelationalModel</q> The model instance.
+				Returns: <q>BackboneRelational.Model</q> The model instance.
 			</p>
 			<p>
 				The <q>set</q> method is overridden so that setting a value on an "relational" attribute will update that relation.
-				This is especially important to keep in mind for <q>HasMany</q> relations (which are backed by a <q>Backbone.Collection</q>).
+				This is especially important to keep in mind for <q>HasMany</q> relations (which are backed by a <q>BackboneRelational.Collection</q>).
 				For these, calling <q>set</q> can be thought of as being equivalent to calling <q>update</q> on the collection itself,
 				including how the options are handled.
 			</p>
@@ -876,17 +882,17 @@ alert( 'chimp is an animal? ' + ( chimp instanceof Animal ) + '\n' +
 				setup<code>relationModel.setup()</code>
 			</h4>
 			<p>
-				Returns: <q>Backbone.RelationalModel.constuctor</q> The type.
+				Returns: <q>BackboneRelational.Model.constuctor</q> The type.
 			</p>
 			<p>
 				Initialize the relations and submodels for the model type. Normally, this happens automatically, but it doesn't if
-				you're using CoffeeScript and using the syntax <q>class MyModel extends Backbone.RelationalModel</q> instead of
-				the JavaScript equivalent of <q>MyModel = Backbone.RelationalModel.extend()</q>.
+				you're using CoffeeScript and using the syntax <q>class MyModel extends BackboneRelational.Model</q> instead of
+				the JavaScript equivalent of <q>MyModel = BackboneRelational.Model.extend()</q>.
 			</p>
 			<p>
 				This has advantages in CoffeeScript, but it also means that <q>Backbone.Model.extend</q> will not get called.
 				Instead, CoffeeScript generates piece of code that would normally achieve the same.	However, <q>extend</q> is also
-				the method that Backbone-relational overrides to set up relations as you're defining your <q>Backbone.RelationalModel</q> subclass.
+				the method that Backbone Relational overrides to set up relations as you're defining your <q>BackboneRelational.Model</q> subclass.
 			</p>
 			<p>
 				In this case, you should call <q>setup</q> manually after defining your subclass CoffeeScript-style. For example:
@@ -897,7 +903,7 @@ alert( 'chimp is an animal? ' + ( chimp instanceof Animal ) + '\n' +
 		</section>
 
 <pre class="language-javascript"><code class="language-javascript"><!--
--->class Animal extends Backbone.RelationalModel
+-->class Animal extends BackboneRelational.Model
     urlRoot: "/animal"
 
 class Mammal extends Animal
@@ -923,7 +929,7 @@ chimp = Mammal.build( { id: 3, species: "chimp", type: "primate" } )
 				build<code>relationalModel.build(attributes&lt;object&gt;, [options&lt;object&gt;])</code>
 			</h4>
 			<p>
-				Returns: <q>Backbone.RelationalModel</q> A model instance.
+				Returns: <q>BackboneRelational.Model</q> A model instance.
 			</p>
 			<p>
 				Create an instance of a model, taking into account what submodels have been defined.
@@ -939,10 +945,10 @@ chimp = Mammal.build( { id: 3, species: "chimp", type: "primate" } )
 				<code>relationalModel.findOrCreate(attributes&lt;string|number|object&gt;, [options&lt;object&gt;])</code>
 			</h4>
 			<p>
-				Returns: <q>Backbone.RelationalModel</q> A model instance.
+				Returns: <q>BackboneRelational.Model</q> A model instance.
 			</p>
 			<p>
-				Search for a model instance in the <a href="#Store">Backbone.Relational.store</a>, and return the model if found.
+				Search for a model instance in the <a href="#Store">BackboneRelational.store</a>, and return the model if found.
 				A new model will be created if no model is found, <q>attributes</q> is an object, and <q>options.create</q> is <q>true</q>.
 			</p>
 			<p>
@@ -968,7 +974,7 @@ chimp = Mammal.build( { id: 3, species: "chimp", type: "primate" } )
 				<code>relationalModel.find(attributes&lt;string|number|object&gt;, [options&lt;object&gt;])</code>
 			</h4>
 			<p>
-				Returns: <q>Backbone.RelationalModel</q> A model instance.
+				Returns: <q>BackboneRelational.Model</q> A model instance.
 			</p>
 			<p>
 				A shortcut for <a href="#RelationalModel-findOrCreate"><q>findOrCreate</q></a> that uses <q>create: false</q>.
@@ -985,12 +991,12 @@ chimp = Mammal.build( { id: 3, species: "chimp", type: "primate" } )
 				<code>relationalModel.findModel(attributes&lt;string|number|object&gt;)</code>
 			</h4>
 			<p>
-				Returns: <q>Backbone.RelationalModel</q> A model instance.
+				Returns: <q>BackboneRelational.Model</q> A model instance.
 			</p>
 			<p>
 				A hook to override the matching when updating (or creating) a model.
 				The default implementation is to look up the model by id in the store:
-				<q>return Backbone.Relational.store.find( this, attributes );</q>
+				<q>return BackboneRelational.store.find( this, attributes );</q>
 			</p>
 			<p>
 				Custom behavior is useful in cases where (a collection of) nested data gets saved to the server.
@@ -1007,19 +1013,19 @@ alert( JSON.stringify( zoo.toJSON(), null, 4 ) );
 </code></pre>
 			<p>
 				Normally, whatever you use as server-side logic will respond by creating two animals, and assigning them
-				an id. The response will be used by Backbone-relational to update existing models.
+				an id. The response will be used by Backbone Relational to update existing models.
 				However, updating a model starts by looking up the local model with the same id; and in this case,
-				Backbone-relational does not know which local models corresponds to which created animal with an id.
+				Backbone Relational does not know which local models corresponds to which created animal with an id.
 				A simple fix in this case would be to add a fallback option for the matching by using the animal's
 				species. Do note you'd want to use a more robust method usually, such as using a new model's <q>cid</q>.
 			</p>
 <pre class="language-javascript"><code class="language-javascript runnable" data-setup="#example-zoo"><!--
 -->Zoo.findModel = function( attributes ) {
 	// Try to find an instance of 'this' model type in the store
-	var model = Backbone.Relational.store.find( this, attributes );
+	var model = BackboneRelational.store.find( this, attributes );
 
 	if ( !model && _.isObject( attributes ) ) {
-		var coll = Backbone.Relational.store.getCollection( this );
+		var coll = BackboneRelational.store.getCollection( this );
 
 		model = coll.find( function( m ) {
 			return m.species === attributes.species;
@@ -1039,35 +1045,35 @@ alert( JSON.stringify( zoo.toJSON(), null, 4 ) );
 				Catalog of Events
 			</h4>
 			<p>
-				Backbone-relational makes a couple of additional events available to you, on top of	the events already found in Backbone.
+				Backbone Relational makes a couple of additional events available to you, on top of	the events already found in Backbone.
 			</p>
 
 			<ul class="small">
 				<li>
 					An <strong>"add"</strong> event is triggered on addition to a HasMany relation. Bind to:<br/>
-					<q>add:&lt;key&gt;</q> &rarr;<code>function(addedModel&lt;Backbone.Model&gt;, related&lt;Backbone.Collection&gt;)</code>
+					<q>add:&lt;key&gt;</q> &rarr;<code>function(addedModel&lt;Backbone.Model&gt;, related&lt;BackboneRelational.Collection&gt;)</code>
 				</li>
 				<li>
 					A <strong>"remove"</strong> event is triggered on removal from a HasMany relation. Bind to:<br/>
-					<q>remove:&lt;key&gt;</q> &rarr;<code>function(removedModel&lt;Backbone.Model&gt;, related&lt;Backbone.Collection&gt;)</code>
+					<q>remove:&lt;key&gt;</q> &rarr;<code>function(removedModel&lt;Backbone.Model&gt;, related&lt;BackboneRelational.Collection&gt;)</code>
 				</li>
 				<li>
 					A <strong>"change"</strong> event is triggered on changes to the contents of both HasOne and HasMany relations. Bind to:<br/>
-					<q>change:&lt;key&gt;</q> &rarr;<code>function(model&lt;Backbone.Model&gt;, related&lt;Backbone.Model|Backbone.Collection&gt;)</code>
+					<q>change:&lt;key&gt;</q> &rarr;<code>function(model&lt;Backbone.Model&gt;, related&lt;Backbone.Model|BackboneRelational.Collection&gt;)</code>
 				</li>
 			</ul>
 		</section>
 	</section>
 
 	<section id="Relation">
-		<h2 >Backbone.Relation</h2>
+		<h2 >BackboneRelational.Relation</h2>
 		<p>
-			Each <a href="#RelationalModel-relations">relation</a> definition on a model is used to create in instance of a <q>Backbone.Relation</q>; either
-			a <q>Backbone.HasOne</q> or a <q>Backbone.HasMany</q>.
+			Each <a href="#RelationalModel-relations">relation</a> definition on a model is used to create in instance of a <q>BackboneRelational.Relation</q>; either
+			a <q>BackboneRelational.HasOne</q> or a <q>BackboneRelational.HasMany</q>.
 		</p>
 
 		<h4 class="code" id="Relation-HasOne">
-			Backbone.HasOne
+			BackboneRelational.HasOne
 		</h4>
 		<p>
 			Defines a <strong>HasOne</strong> relation. When defining a <a href="#relations-reverseRelation">reverseRelation</a>, the default type
@@ -1075,7 +1081,7 @@ alert( JSON.stringify( zoo.toJSON(), null, 4 ) );
 		</p>
 
 		<h4 class="code" id="Relation-HasMany">
-			Backbone.HasMany
+			BackboneRelational.HasMany
 		</h4>
 		<p>
 			Defines a <strong>HasMany</strong> relation. When defining a <a href="#relations-reverseRelation">reverseRelation</a>, the type
@@ -1087,11 +1093,11 @@ alert( JSON.stringify( zoo.toJSON(), null, 4 ) );
 		<h2 >Backbone.Store</h2>
 		<p>
 			<strong>Backbone.Store</strong> is a global model cache. Per application, one instance is created (much like <q>Backbone.History</q>),
-			which is accessible as <q>Backbone.Relational.store</q>.
+			which is accessible as <q>BackboneRelational.store</q>.
 		</p>
 
 		<h4 class="code" id="Store-addModelScope">
-			addModelScope<code>Backbone.Relational.store.addModelScope(scope&lt;object&gt;)</code>
+			addModelScope<code>BackboneRelational.store.addModelScope(scope&lt;object&gt;)</code>
 		</h4>
 		<p>
 			Add a namespace on which models and collections are defined. This is especially useful when working in an
@@ -1100,15 +1106,15 @@ alert( JSON.stringify( zoo.toJSON(), null, 4 ) );
 		</p>
 
 		<h4 class="code" id="Store-removeModelScope">
-			removeModelScope<code>Backbone.Relational.store.removeModelScope()</code>
+			removeModelScope<code>BackboneRelational.store.removeModelScope()</code>
 		</h4>
 		<p>
 			Remove a scope. This allows you to remove a scope you added previously, or to remove the default 'global'
-			scope (<q>window</q> in the browser) scope to prevent Backbone-relational from resolving objects on it.
+			scope (<q>window</q> in the browser) scope to prevent Backbone Relational from resolving objects on it.
 		</p>
 
 		<h4 class="code" id="Store-reset">
-			reset<code>Backbone.Relational.store.reset()</code>
+			reset<code>BackboneRelational.store.reset()</code>
 		</h4>
 		<p>
 			Reset the <q>store</q> to its original state. This will disable relations for all models created up to this point,
@@ -1116,12 +1122,12 @@ alert( JSON.stringify( zoo.toJSON(), null, 4 ) );
 		</p>
 
 		<h4 class="code" id="Store-unregister">
-			unregister<code>Backbone.Relational.store.unregister(type&lt;Backbone.RelationalModel|Backbone.RelationalModel.constructor|Backbone.Collection&gt;)</code>
+			unregister<code>BackboneRelational.store.unregister(type&lt;BackboneRelational.Model|Backbone.Model.constructor|BackboneRelational.Collection&gt;)</code>
 		</h4>
 		<p>
 			Unregister a single model or a collection. Unregistering a model will remove a model from any relations it's involved in.
 			Internally, unregister is called when a model has been destroyed. It can also be called explicitly to on models
-			you don't want Backbone-relational to consider for relations anymore, for example to free up models used as (temporary) search results.
+			you don't want Backbone Relational to consider for relations anymore, for example to free up models used as (temporary) search results.
 		</p>
 	</section>
 
@@ -1151,7 +1157,7 @@ var ourHouse = new House({
 	occupants: ['person-1', 'person-2', 'person-5']
 });
 
-// 'ourHouse.occupants' is turned into a Backbone.Collection of Persons.
+// 'ourHouse.occupants' is turned into a BackboneRelational.Collection of Persons.
 // The first person in 'ourHouse.occupants' will point to 'paul'.
 ourHouse.get('occupants').at(0); // === paul
 
@@ -1206,13 +1212,13 @@ alert( 'theirHouse.occupants=' + theirHouse.get( 'occupants' ).pluck( 'name' ) )
 	<p>This is achieved using the following relations and models:</p>
 
 <pre class="language-javascript"><code class="language-javascript" id="example-person"><!--
--->House = Backbone.RelationalModel.extend({
+-->House = BackboneRelational.Model.extend({
 	// The 'relations' property, on the House's prototype. Initialized separately for each
 	// instance of House. Each relation must define (as a minimum) the 'type', 'key' and
 	// 'relatedModel'. Options include 'includeInJSON', 'createModels' and 'reverseRelation'.
 	relations: [
 		{
-			type: Backbone.HasMany, // Use the type, or the string 'HasOne' or 'HasMany'.
+			type: BackboneRelational.HasMany, // Use the type, or the string 'HasOne' or 'HasMany'.
 			key: 'occupants',
 			relatedModel: 'Person',
 			includeInJSON: Backbone.Model.prototype.idAttribute,
@@ -1224,14 +1230,14 @@ alert( 'theirHouse.occupants=' + theirHouse.get( 'occupants' ).pluck( 'name' ) )
 	]
 });
 
-Person = Backbone.RelationalModel.extend({
+Person = BackboneRelational.Model.extend({
 	relations: [
 		{ // Create a (recursive) one-to-one relationship
-			type: Backbone.HasOne,
+			type: BackboneRelational.HasOne,
 			key: 'user',
 			relatedModel: 'User',
 			reverseRelation: {
-				type: Backbone.HasOne,
+				type: BackboneRelational.HasOne,
 				key: 'person'
 			}
 		}
@@ -1242,7 +1248,7 @@ Person = Backbone.RelationalModel.extend({
 	}
 });
 
-PersonCollection = Backbone.Collection.extend({
+PersonCollection = BackboneRelational.Collection.extend({
 	url: function( models ) {
 		// Logic to create a url for the whole collection, or a set of models.
 		// See the tests, or Backbone-tastypie, for an example.
@@ -1250,7 +1256,7 @@ PersonCollection = Backbone.Collection.extend({
 	}
 });
 
-User = Backbone.RelationalModel.extend();
+User = BackboneRelational.Model.extend();
 </code></pre>
 	</section>
 
@@ -1293,7 +1299,7 @@ User = Backbone.RelationalModel.extend();
 		<ul>
 			<li>
 				<a href="https://github.com/PaulUithol/Backbone-relational/commit/42b158d8ad5697a955a2c1e615824109dfc52234"><q>42b158d</q></a>
-				Add <q>getIdsToFetch</q> to <q>Backbone.RelationalModel</q>.
+				Add <q>getIdsToFetch</q> to <q>BackboneRelational.Model</q>.
 			</li>
 			<li>
 				<a href="https://github.com/PaulUithol/Backbone-relational/commit/b7e71237d1218eec41ce69e1cf56e5eecdc96bef"><q>b7e7123</q></a>
@@ -1301,7 +1307,7 @@ User = Backbone.RelationalModel.extend();
 			</li>
 			<li>
 				<a href="https://github.com/PaulUithol/Backbone-relational/issues/467"><q>#467</q></a>:
-				Improve lazy loading implemenatation. Add <q>getAsync</q> to <q>Backbone.RelationalModel</q>, which always
+				Improve lazy loading implemenatation. Add <q>getAsync</q> to <q>BackboneRelational.Model</q>, which always
 				return a single promise that resolves with the attribute's content, and remove <q>fetchRelated</q>.
 			</li>
 		</ul>
@@ -1324,7 +1330,7 @@ User = Backbone.RelationalModel.extend();
 			</li>
 			<li>
 				<a href="https://github.com/PaulUithol/Backbone-relational/commit/4113c69d3752fcac75f7a1959c77349dd4672afa"><q>4113c69</q></a>
-				`Backbone.Relational.store.unregister` now also accepts a collection or a model type
+				`BackboneRelational.store.unregister` now also accepts a collection or a model type
 			</li>
 			<li>
 				<a href="https://github.com/PaulUithol/Backbone-relational/issues/427"><q>#427</q></a>:
@@ -1551,13 +1557,13 @@ User = Backbone.RelationalModel.extend();
 				<q>update&lt;key&gt;</q> event added
 			</li>
 			<li>
-				Override <q>Backbone.Collection._add</q> and <q>Backbone.Collection._remove</q> so relations update properly.
+				Override <q>BackboneRelational.Collection._add</q> and <q>BackboneRelational.Collection._remove</q> so relations update properly.
 			</li>
 			<li>
 				Queue <q>change</q> and <q>change&lt;key&gt;</q> events, so they won't fire before relations are updated.
 			</li>
 			<li>
-				Added the <q>Backbone.RelationalModel.updateRelations</q> method.
+				Added the <q>BackboneRelational.Model.updateRelations</q> method.
 			</li>
 		</ul>
 
@@ -1569,8 +1575,8 @@ User = Backbone.RelationalModel.extend();
 			</small>
 		</h4>
 		<p>
-			The original version of Backbone-relational! This already contained much of the basics: <q>HasOne</q> and <q>HasMany</q>
-			relations (including <q>reverseRelation</q>), <q>Backbone.RelationalModel</q> and <q>Backbone.Store</q>.
+			The original version of Backbone Relational! This already contained much of the basics: <q>HasOne</q> and <q>HasMany</q>
+			relations (including <q>reverseRelation</q>), <q>BackboneRelational.Model</q> and <q>Backbone.Store</q>.
 		</p>
 	</section>
 
@@ -1578,15 +1584,15 @@ User = Backbone.RelationalModel.extend();
 		<h2 >Under the Hood</h2>
 		<h3>The model Store</h3>
 		<p>
-			Each <strong>Backbone.RelationalModel</strong> registers itself with <strong>Backbone.Relational.Store</strong>
+			Each <strong>BackboneRelational.Model</strong> registers itself with <strong>BackboneRelational.store</strong>
 			upon creation, and is removed from the <q>store</q> when destroyed. When creating or updating an
 			attribute that is a key in a relation, removed related objects are notified of their
 			removal, and new related objects are looked up in the Store.
 		</p>
 		<p>
-			Backbone-relational only allows the existence of one model instance for each model type <q>id</q>.
+			Backbone Relational only allows the existence of one model instance for each model type <q>id</q>.
 			This check is there to enforce there will only be one version of a model with a certain id at any given time
-			(which is also the reason for the existence of Backbone.Relational.Store). This is necessary to enforce
+			(which is also the reason for the existence of BackboneRelational.store). This is necessary to enforce
 			consistency	and integrity of relations.
 		</p>
 		<p>
@@ -1597,7 +1603,7 @@ User = Backbone.RelationalModel.extend();
 			version of the model on the client. By then, you'd be in trouble.
 		</p>
 		<p>
-			Therefore, Backbone-relational simply does not allow this situation to occur. This is much safer than
+			Therefore, Backbone Relational simply does not allow this situation to occur. This is much safer than
 			putting the burden on the developer to always make sure every older version of a model is completely
 			decoupled from every other part of your application.
 			It might be annoying to get an error every now and then, and sometimes inconvenient to have to use the
@@ -1606,7 +1612,7 @@ User = Backbone.RelationalModel.extend();
 		</p>
 		<h3>Event queuing</h3>
 		<p>
-			Most of Backbone's default events are queued by Backbone-relational. This can complicate debugging since
+			Most of Backbone's default events are queued by Backbone Relational. This can complicate debugging since
 			it 'breaks' the call stack, but is a necessary part of the abstraction offered by it.
 		</p>
 		<p>
@@ -1635,7 +1641,7 @@ p.get( 'jobs' ).add( { company: { name: 'Google' }, person: p.id } );
 			To achieve this, Backbone's events are prevented from firing <i>immediately</i> when <q>add</q>
 			is called, but are delayed until the all (nested) relations have reached a stable state again. Events are
 			then fired at the first available opportunity; as soon as the last model updating its relations unblocks
-			the <q>Backbone.Relational.eventQueue</q>.
+			the <q>BackboneRelational.Relational.eventQueue</q>.
 		</p>
 	</section>
 </div>
@@ -1684,7 +1690,7 @@ p.get( 'jobs' ).add( { company: { name: 'Google' }, person: p.id } );
 			// Add a `runnable` button to each runnable piece of code
 			var button = '<div class="run" title="Run"><a class="button orange">&#x25BA;</a></div>';
 			$( button ).insertBefore( code ).bind( 'click', function() {
-				Backbone.Relational.store.reset();
+				BackboneRelational.store.reset();
 				run( code );
 			});
 		});

@@ -9,14 +9,14 @@ This is a big update (internally). We have refactored our entire codebase to use
 ### Added
 - New linter rules (ESLint, editorConfig)
 - New test runner (Karma and TravisCI)
-- New build tasks
-- Code coverage reporting on unit tests
-- Change log
+- Code coverage reporting on unit tests and readme
+- Change log added
 - [#575](https://github.com/PaulUithol/Backbone-relational/issues/575): Add license information to bower.json
+- [#567](https://github.com/PaulUithol/Backbone-relational/issues/567): Updated documentation to reflect new namespace and how to use in ES2015 (via `import` and in Node (via `require()`)
 ### Changed
-- [#571](https://github.com/PaulUithol/Backbone-relational/issues/571): Backbone 1.3.3 Support
+- [#571](https://github.com/PaulUithol/Backbone-relational/issues/571): `Backbone` 1.3.3 Support
 - ES2015 Refactor
-- Updated QUnit from 1.x to 2.x
+- Updated `QUnit` from 1.x to 2.x
 - Rather than modifying the existing `Backbone.Collection` we extend and use our own `Collection` subclass. This means Backbone and Backbone Relational can work side-by-side!
 - No longer modify Backbone's namespace, but instead export our own
     - `Backbone.RelationalModel` -> `BackboneRelational.Model`
@@ -44,7 +44,7 @@ This is a big update (internally). We have refactored our entire codebase to use
 ## [0.8.8] - 2014-04-01
 ### Added
 - `Backbone.Relational.store.unregister` now also accepts a collection or a model type
-- [#215](https://github.com/PaulUithol/Backbone-relational/issues/215) Add direct support for AMD, CommonJS, require, etc.
+- [#215](https://github.com/PaulUithol/Backbone-relational/issues/215): Add direct support for AMD, CommonJS, require, etc.
 ### Fixed
 - [#419](https://github.com/PaulUithol/Backbone-relational/issues/419): Proper return values for single models on collection methods for `Backbone` 1.1.0
 - [#427](https://github.com/PaulUithol/Backbone-relational/issues/427): Fix firing explicit `change` events
@@ -105,7 +105,7 @@ This is a big update (internally). We have refactored our entire codebase to use
 
 ## [0.6.1] - 2012-12-04
 ### Changed
-- [#215](https://github.com/PaulUithol/Backbone-relational/pull/215) Fix export issue with require.js
+- [#215](https://github.com/PaulUithol/Backbone-relational/pull/215): Fix export issue with require.js
 
 ## [0.6.0] - 2012-08-02
 ### Added
