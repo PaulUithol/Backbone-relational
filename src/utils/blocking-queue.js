@@ -6,7 +6,7 @@ import Semaphore from './semaphore';
  * and processes them when unblocked (via 'unblock').
  * Process can also be called manually (via 'process').
  */
-const BlockingQueue = function() {
+function BlockingQueue() {
 	this._queue = [];
 };
 

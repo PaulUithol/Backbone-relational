@@ -4,6 +4,7 @@ import BObject from './utils/object';
 import relationTypeStore from './relation-type-store';
 import store from './store';
 import config from './config';
+import Model from './model';
 
 /**
  * The main Relation class, from which 'HasOne' and 'HasMany' inherit. Internally, 'relational:<key>' events
@@ -60,9 +61,9 @@ export default BObject.extend(Semaphore).extend({
 			this.relatedModel = this.model;
 		}
 
-		// if ( _.isFunction( this.relatedModel ) && !( this.relatedModel.prototype instanceof Backbone.Model ) ) {
-		// 	this.relatedModel = _.result( this, 'relatedModel' );
-		// }
+		if (_.isFunction(this.relatedModel) && !(this.relatedModel.prototype instanceof Model)) {
+			this.relatedModel = _.result(this, 'relatedModel');
+		}
 		if (_.isString(this.relatedModel)) {
 			this.relatedModel = store.getObjectByName(this.relatedModel);
 		}
@@ -118,26 +119,26 @@ export default BObject.extend(Semaphore).extend({
 	 * @return {Boolean} True if pre-conditions are satisfied, false if they're not.
 	 */
 	checkPreconditions() {
-		let i = this.instance,
-			k = this.key,
-			m = this.model,
-			rm = this.relatedModel,
-			warn = config.showWarnings && typeof console !== 'undefined';
+		let i = this.instance;
+		let k = this.key;
+		let m = this.model;
+		let rm = this.relatedModel;
+		let warn = config.showWarnings && typeof console !== 'undefined';
 
 		if (!m || !k || !rm) {
 			warn && console.warn('Relation=%o: missing model, key or relatedModel (%o, %o, %o).', this, m, k, rm);
 			return false;
 		}
 		// Check if the type in 'model' inherits from Backbone.Relational.Model
-		// if ( !( m.prototype instanceof module.Model ) ) {
-		// 	warn && console.warn( 'Relation=%o: model does not inherit from Backbone.Relational.Model (%o).', this, i );
-		// 	return false;
-		// }
+		if (!(m.prototype instanceof Model)) {
+			warn && console.warn('Relation=%o: model does not inherit from Backbone.Relational.Model (%o).', this, i);
+			return false;
+		}
 		// Check if the type in 'relatedModel' inherits from Backbone.Relational.Model
-		// if ( !( rm.prototype instanceof module.Model ) ) {
-		// 	warn && console.warn( 'Relation=%o: relatedModel does not inherit from Backbone.Relational.Model (%o).', this, rm );
-		// 	return false;
-		// }
+		if (!(rm.prototype instanceof Model)) {
+			warn && console.warn('Relation=%o: relatedModel does not inherit from Backbone.Relational.Model (%o).', this, rm);
+			return false;
+		}
 		// Check if this is not a HasMany, and the reverse relation is HasMany as well
 		// TODO: handle this logic elsewhere!
 		if (this instanceof relationTypeStore.find('HasMany') && this.reverseRelation.type === relationTypeStore.find('HasMany')) {
@@ -189,16 +190,15 @@ export default BObject.extend(Semaphore).extend({
 	getReverseRelations(model) {
 		let reverseRelations = [];
 		// Iterate over 'model', 'this.related.models' (if this.related is a Backbone.Relational.Collection), or wrap 'this.related' in an array.
-		let models = !_.isUndefined(model) ? [model] : this.related && (this.related.models || [this.related]),
-			relations = null,
-			relation = null;
+		let models = !_.isUndefined(model) ? [model] : this.related && (this.related.models || [this.related]);
+		let relations = null;
+		let relation = null;
 
 		for (let i = 0; i < (models || []).length; i++) {
 			relations = models[ i ].getRelations() || [];
 
 			for (let j = 0; j < relations.length; j++) {
 				relation = relations[ j ];
-
 
 				if (this._isReverseRelation(relation)) {
 					reverseRelations.push(relation);
@@ -218,12 +218,12 @@ export default BObject.extend(Semaphore).extend({
 
 		if (this instanceof relationTypeStore.find('HasOne')) {
 			this.setRelated(null);
-		}		else if (this instanceof relationTypeStore.find('HasMany')) {
+		} else if (this instanceof relationTypeStore.find('HasMany')) {
 			this.setRelated(this._prepareCollection());
 		}
 
-		_.each(this.getReverseRelations(), function(relation) {
+		_.each(this.getReverseRelations(), (relation) => {
 			relation.removeRelated(this.instance);
-		}, this);
+		});
 	}
 });

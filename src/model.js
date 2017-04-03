@@ -27,32 +27,32 @@ export default BBModel.extend(Semaphore).extend({
 	subModelTypeAttribute: 'type',
 	subModelTypes: null,
 
-	constructor(attributes, options) {
+	constructor(attributes, options = {}) {
+		const { collection } = options;
 		// Nasty hack, for cases like 'model.get( <HasMany key> ).add( item )'.
 		// Defer 'processQueue', so that when 'Relation.createModels' is used we trigger 'HasMany'
 		// collection events only after the model is really fully set up.
 		// Example: event for "p.on( 'add:jobs' )" -> "p.get('jobs').add( { company: c.id, person: p.id } )".
-		if (options && options.collection) {
-			let dit = this,
-				collection = this.collection = options.collection;
-
+		if (collection) {
+			this.collection = collection;
 			// Prevent `collection` from cascading down to nested models; they shouldn't go into this `if` clause.
 			delete options.collection;
 
 			this._deferProcessing = true;
 
-			let processQueue = function(model) {
-				if (model === dit) {
-					dit._deferProcessing = false;
-					dit.processQueue();
-					collection.off('relational:add', processQueue);
-				}
+			const processQueue = (model) => {
+				if (model !== this) { return; }
+
+				this._deferProcessing = false;
+				this.processQueue();
+				collection.off('relational:add', processQueue);
 			};
+
 			collection.on('relational:add', processQueue);
 
 			// So we do process the queue eventually, regardless of whether this model actually gets added to 'options.collection'.
-			_.defer(function() {
-				processQueue(dit);
+			_.defer(() => {
+				processQueue(this);
 			});
 		}
 
@@ -64,8 +64,8 @@ export default BBModel.extend(Semaphore).extend({
 		eventQueue.block();
 
 		try {
-			BBModel.apply(this, arguments);
-		}		finally {
+			BBModel.call(this, attributes, options);
+		} finally {
 			// Try to run the global queue holding external events
 			eventQueue.unblock();
 		}
@@ -76,23 +76,22 @@ export default BBModel.extend(Semaphore).extend({
 	 */
 	trigger(eventName) {
 		if (eventName.length > 5 && eventName.indexOf('change') === 0) {
-			let dit = this,
-				args = arguments;
+			const args = arguments;
 
 			if (!eventQueue.isLocked()) {
 				// If we're not in a more complicated nested scenario, fire the change event right away
-				BBModel.prototype.trigger.apply(dit, args);
-			}			else {
-				eventQueue.add(function() {
+				BBModel.prototype.trigger.apply(this, args);
+			} else {
+				eventQueue.add(() => {
 					// Determine if the `change` event is still valid, now that all relations are populated
 					let changed = true;
 					if (eventName === 'change') {
 						// `hasChanged` may have gotten reset by nested calls to `set`.
-						changed = dit.hasChanged() || dit._attributeChangeFired;
-						dit._attributeChangeFired = false;
-					}					else {
-						let attr = eventName.slice(7),
-							rel = dit.getRelation(attr);
+						changed = this.hasChanged() || this._attributeChangeFired;
+						this._attributeChangeFired = false;
+					} else {
+						let attr = eventName.slice(7);
+						let rel = this.getRelation(attr);
 
 						if (rel) {
 							// If `attr` is a relation, `change:attr` get triggered from `Relation.onChange`.
@@ -104,24 +103,24 @@ export default BBModel.extend(Semaphore).extend({
 							// If this event was triggered by a relation, set the right value in `this.changed`
 							// (a Collection or Model instead of raw data).
 							if (changed) {
-								dit.changed[ attr ] = args[ 2 ];
+								this.changed[ attr ] = args[ 2 ];
 							} else if (!rel.changed) {
 								// Otherwise, this event is from `Model.set`. If the relation doesn't report a change,
-								// remove attr from `dit.changed` so `hasChanged` doesn't take it into account.
-								delete dit.changed[ attr ];
+								// remove attr from `this.changed` so `hasChanged` doesn't take it into account.
+								delete this.changed[ attr ];
 							}
-						}						else if (changed) {
-							dit._attributeChangeFired = true;
+						} else if (changed) {
+							this._attributeChangeFired = true;
 						}
 					}
 
-					changed && BBModel.prototype.trigger.apply(dit, args);
+					changed && BBModel.prototype.trigger.apply(this, args);
 				});
 			}
-		}		else if (eventName === 'destroy') {
+		} else if (eventName === 'destroy') {
 			BBModel.prototype.trigger.apply(this, arguments);
 			store.unregister(this);
-		}		else {
+		} else {
 			BBModel.prototype.trigger.apply(this, arguments);
 		}
 
@@ -153,11 +152,11 @@ export default BBModel.extend(Semaphore).extend({
 	 */
 	updateRelations(changedAttrs, options) {
 		if (this._isInitialized && !this.isLocked()) {
-			_.each(this._relations, function(rel) {
+			_.each(this._relations, (rel) => {
 				if (!changedAttrs || (rel.keySource in changedAttrs || rel.key in changedAttrs)) {
 					// Fetch data in `rel.keySource` if data got set in there, or `rel.key` otherwise
-					let value = this.attributes[ rel.keySource ] || this.attributes[ rel.key ],
-						attr = changedAttrs && (changedAttrs[ rel.keySource ] || changedAttrs[ rel.key ]);
+					let value = this.attributes[ rel.keySource ] || this.attributes[ rel.key ];
+					let attr = changedAttrs && (changedAttrs[ rel.keySource ] || changedAttrs[ rel.key ]);
 
 					// Update a relation if its value differs from this model's attributes, or it's been explicitly nullified.
 					// Which can also happen before the originally intended related model has been found (`val` is null).
@@ -170,7 +169,7 @@ export default BBModel.extend(Semaphore).extend({
 				if (rel.keySource !== rel.key) {
 					delete this.attributes[ rel.keySource ];
 				}
-			}, this);
+			});
 		}
 	},
 
@@ -207,7 +206,6 @@ export default BBModel.extend(Semaphore).extend({
 		return _.values(this._relations);
 	},
 
-
 	/**
 	 * Get a list of ids that will be fetched on a call to `getAsync`.
 	 * @param {string|Backbone.Relation} attr The relation key to fetch models for.
@@ -215,8 +213,8 @@ export default BBModel.extend(Semaphore).extend({
 	 * @return {Array} An array of ids that need to be fetched.
 	 */
 	getIdsToFetch(attr, refresh) {
-		let rel = attr instanceof Relation ? attr : this.getRelation(attr),
-			ids = rel ? (rel.keyIds && rel.keyIds.slice(0)) || ((rel.keyId || rel.keyId === 0) ? [rel.keyId] : []) : [];
+		let rel = attr instanceof Relation ? attr : this.getRelation(attr);
+		let ids = rel ? (rel.keyIds && rel.keyIds.slice(0)) || ((rel.keyId || rel.keyId === 0) ? [rel.keyId] : []) : [];
 
 		// On `refresh`, add the ids for current models in the relation to `idsToFetch`
 		if (refresh) {
@@ -244,31 +242,30 @@ export default BBModel.extend(Semaphore).extend({
 		// Set default `options` for fetch
 		options = _.extend({ add: true, remove: false, refresh: false }, options);
 
-		let dit = this,
-			requests = [],
-			rel = this.getRelation(attr),
-			idsToFetch = rel && this.getIdsToFetch(rel, options.refresh),
-			coll = rel.related instanceof Collection ? rel.related : rel.relatedCollection;
+		let requests = [];
+		let rel = this.getRelation(attr);
+		let idsToFetch = rel && this.getIdsToFetch(rel, options.refresh);
+		let coll = rel.related instanceof Collection ? rel.related : rel.relatedCollection;
 
 		if (idsToFetch && idsToFetch.length) {
-			let models = [],
-				createdModels = [],
-				setUrl,
-				createModels = function() {
-					// Find (or create) a model for each one that is to be fetched
-					models = _.map(idsToFetch, function(id) {
-						let model = rel.relatedModel.findModel(id);
+			let models = [];
+			let createdModels = [];
+			let setUrl;
+			function createModels() {
+				// Find (or create) a model for each one that is to be fetched
+				models = _.map(idsToFetch, (id) => {
+					let model = rel.relatedModel.findModel(id);
 
-						if (!model) {
-							let attrs = {};
-							attrs[ rel.relatedModel.prototype.idAttribute ] = id;
-							model = rel.relatedModel.findOrCreate(attrs, options);
-							createdModels.push(model);
-						}
+					if (!model) {
+						let attrs = {};
+						attrs[ rel.relatedModel.prototype.idAttribute ] = id;
+						model = rel.relatedModel.findOrCreate(attrs, options);
+						createdModels.push(model);
+					}
 
-						return model;
-					}, this);
-				};
+					return model;
+				});
+			};
 
 			// Try if the 'collection' can provide a url to fetch a set of models in one request.
 			// This assumes that when 'Collection.url' is a function, it can handle building of set urls.
@@ -305,7 +302,7 @@ export default BBModel.extend(Semaphore).extend({
 				);
 
 				requests = [coll.fetch(opts)];
-			}			else {
+			} else {
 				// Make a request per model to fetch
 				if (!models.length) {
 					createModels();
@@ -328,35 +325,33 @@ export default BBModel.extend(Semaphore).extend({
 			}
 		}
 
-		return this.deferArray(requests).then(
-			function() {
-				return BBModel.prototype.get.call(dit, attr);
-			}
-		);
+		return this.deferArray(requests).then(() => {
+			return BBModel.prototype.get.call(this, attr);
+		});
 	},
 
 	deferArray(deferArray) {
-		return $.when.apply(null, deferArray);
+		return $.when(...deferArray);
 	},
 
 	set(key, value, options) {
 		eventQueue.block();
 
 		// Duplicate backbone's behavior to allow separate key/value parameters, instead of a single 'attributes' object
-		let attributes,
-			result;
+		let attributes;
+		let result;
 
 		if (_.isObject(key) || key == null) {
 			attributes = key;
 			options = value;
-		}		else {
+		} else {
 			attributes = {};
 			attributes[ key ] = value;
 		}
 
 		try {
-			let id = this.id,
-				newId = attributes && this.idAttribute in attributes && attributes[ this.idAttribute ];
+			let id = this.id;
+			let newId = attributes && this.idAttribute in attributes && attributes[ this.idAttribute ];
 
 			// Check if we're not setting a duplicate id before actually calling `set`.
 			store.checkId(this, newId);
@@ -381,7 +376,7 @@ export default BBModel.extend(Semaphore).extend({
 			if (attributes) {
 				this.updateRelations(attributes, options);
 			}
-		}		finally {
+		} finally {
 			// Try to run the global queue holding external events
 			eventQueue.unblock();
 		}
@@ -419,18 +414,18 @@ export default BBModel.extend(Semaphore).extend({
 		}
 
 		_.each(this._relations, function(rel) {
-			let related = json[ rel.key ],
-				includeInJSON = rel.options.includeInJSON,
-				value = null;
+			let related = json[ rel.key ];
+			let includeInJSON = rel.options.includeInJSON;
+			let value = null;
 
 			if (includeInJSON === true) {
 				if (related && _.isFunction(related.toJSON)) {
 					value = related.toJSON(options);
 				}
-			}			else if (_.isString(includeInJSON)) {
+			} else if (_.isString(includeInJSON)) {
 				if (related instanceof Collection) {
 					value = related.pluck(includeInJSON);
-				}				else if (related instanceof BBModel) {
+				} else if (related instanceof BBModel) {
 					value = related.get(includeInJSON);
 				}
 
@@ -438,7 +433,7 @@ export default BBModel.extend(Semaphore).extend({
 				if (includeInJSON === rel.relatedModel.prototype.idAttribute) {
 					if (rel instanceof relationTypeStore.find('HasMany')) {
 						value = value.concat(rel.keyIds);
-					}					else if (rel instanceof relationTypeStore.find('HasOne')) {
+					} else if (rel instanceof relationTypeStore.find('HasOne')) {
 						value = value || rel.keyId;
 
 						if (!value && !_.isObject(rel.keyContents)) {
@@ -446,7 +441,7 @@ export default BBModel.extend(Semaphore).extend({
 						}
 					}
 				}
-			}			else if (_.isArray(includeInJSON)) {
+			} else if (_.isArray(includeInJSON)) {
 				if (related instanceof Collection) {
 					value = [];
 					related.each(function(model) {
@@ -456,13 +451,13 @@ export default BBModel.extend(Semaphore).extend({
 						});
 						value.push(curJson);
 					});
-				}				else if (related instanceof BBModel) {
+				} else if (related instanceof BBModel) {
 					value = {};
 					_.each(includeInJSON, function(key) {
 						value[ key ] = related.get(key);
 					});
 				}
-			}			else {
+			} else {
 				delete json[ rel.key ];
 			}
 
@@ -485,61 +480,60 @@ export default BBModel.extend(Semaphore).extend({
 		this.release();
 		return json;
 	}
-},
-	{
+}, {
 	/**
 	 *
 	 * @param superModel
 	 * @returns {Backbone.Relational.Model.constructor}
 	 */
-		setup(superModel) {
+	setup(superModel) {
 		// We don't want to share a relations array with a parent, as this will cause problems with reverse
 		// relations. Since `relations` may also be a property or function, only use slice if we have an array.
-			this.prototype.relations = (this.prototype.relations || []).slice(0);
+		this.prototype.relations = (this.prototype.relations || []).slice(0);
 
-			this._subModels = {};
-			this._superModel = null;
+		this._subModels = {};
+		this._superModel = null;
 
 		// If this model has 'subModelTypes' itself, remember them in the store
-			if (this.prototype.hasOwnProperty('subModelTypes')) {
-				store.addSubModels(this.prototype.subModelTypes, this);
-			} else {
-				// The 'subModelTypes' property should not be inherited, so reset it.
-				this.prototype.subModelTypes = null;
-			}
+		if (this.prototype.hasOwnProperty('subModelTypes')) {
+			store.addSubModels(this.prototype.subModelTypes, this);
+		} else {
+			// The 'subModelTypes' property should not be inherited, so reset it.
+			this.prototype.subModelTypes = null;
+		}
 
 		// Initialize all reverseRelations that belong to this new model.
-			_.each(this.prototype.relations || [], function(rel) {
-				if (!rel.model) {
-					rel.model = this;
+		_.each(this.prototype.relations || [], (rel) => {
+			if (!rel.model) {
+				rel.model = this;
+			}
+
+			if (rel.reverseRelation && rel.model === this) {
+				let preInitialize = true;
+				if (_.isString(rel.relatedModel)) {
+				/**
+				 * The related model might not be defined for two reasons
+				 *  1. it is related to itself
+				 *  2. it never gets defined, e.g. a typo
+				 *  3. the model hasn't been defined yet, but will be later
+				 * In neither of these cases do we need to pre-initialize reverse relations.
+				 * However, for 3. (which is, to us, indistinguishable from 2.), we do need to attempt
+				 * setting up this relation again later, in case the related model is defined later.
+				 */
+					let relatedModel = store.getObjectByName(rel.relatedModel);
+					preInitialize = relatedModel && (relatedModel.prototype instanceof this);
 				}
 
-				if (rel.reverseRelation && rel.model === this) {
-					let preInitialize = true;
-					if (_.isString(rel.relatedModel)) {
-					/**
-					 * The related model might not be defined for two reasons
-					 *  1. it is related to itself
-					 *  2. it never gets defined, e.g. a typo
-					 *  3. the model hasn't been defined yet, but will be later
-					 * In neither of these cases do we need to pre-initialize reverse relations.
-					 * However, for 3. (which is, to us, indistinguishable from 2.), we do need to attempt
-					 * setting up this relation again later, in case the related model is defined later.
-					 */
-						let relatedModel = store.getObjectByName(rel.relatedModel);
-						preInitialize = relatedModel && (relatedModel.prototype instanceof this);
-					}
-
-					if (preInitialize) {
-						store.initializeRelation(null, rel);
-					}				else if (_.isString(rel.relatedModel)) {
-						store.addOrphanRelation(rel);
-					}
+				if (preInitialize) {
+					store.initializeRelation(null, rel);
+				} else if (_.isString(rel.relatedModel)) {
+					store.addOrphanRelation(rel);
 				}
-			}, this);
+			}
+		});
 
-			return this;
-		},
+		return this;
+	},
 
 	/**
 	 * Create a 'Backbone.Model' instance based on 'attributes'.
@@ -547,15 +541,15 @@ export default BBModel.extend(Semaphore).extend({
 	 * @param {Object} [options]
 	 * @return {Backbone.Model}
 	 */
-		build(attributes, options) {
+	build(attributes, options) {
 		// 'build' is a possible entrypoint; it's possible no model hierarchy has been determined yet.
-			this.initializeModelHierarchy();
+		this.initializeModelHierarchy();
 
 		// Determine what type of (sub)model should be built if applicable.
-			let Model = this._findSubModelType(this, attributes) || this;
+		let Model = this._findSubModelType(this, attributes) || this;
 
-			return new Model(attributes, options);
-		},
+		return new Model(attributes, options);
+	},
 
 	/**
 	 * Determines what type of (sub)model should be built if applicable.
@@ -566,75 +560,72 @@ export default BBModel.extend(Semaphore).extend({
 	 * @param {Object} attributes
 	 * @return {Backbone.Model}
 	 */
-		_findSubModelType(type, attributes) {
-			if (type._subModels && type.prototype.subModelTypeAttribute in attributes) {
-				let subModelTypeAttribute = attributes[ type.prototype.subModelTypeAttribute ];
-				let subModelType = type._subModels[ subModelTypeAttribute ];
-				if (subModelType) {
-					return subModelType;
-				}			else {
+	_findSubModelType(type, attributes) {
+		if (type._subModels && type.prototype.subModelTypeAttribute in attributes) {
+			let subModelTypeAttribute = attributes[ type.prototype.subModelTypeAttribute ];
+			let subModelType = type._subModels[ subModelTypeAttribute ];
+			if (subModelType) {
+				return subModelType;
+			} else {
 				// Recurse into subModelTypes to find a match
-					for (subModelTypeAttribute in type._subModels) {
-						subModelType = this._findSubModelType(type._subModels[ subModelTypeAttribute ], attributes);
-						if (subModelType) {
-							return subModelType;
-						}
+				for (subModelTypeAttribute in type._subModels) {
+					subModelType = this._findSubModelType(type._subModels[ subModelTypeAttribute ], attributes);
+					if (subModelType) {
+						return subModelType;
 					}
 				}
 			}
-			return null;
-		},
+		}
+		return null;
+	},
 
-	/**
-	 *
-	 */
-		initializeModelHierarchy() {
+	initializeModelHierarchy() {
 		// Inherit any relations that have been defined in the parent model.
-			this.inheritRelations();
+		this.inheritRelations();
 
 		// If we came here through 'build' for a model that has 'subModelTypes' then try to initialize the ones that
 		// haven't been resolved yet.
-			if (this.prototype.subModelTypes) {
-				let resolvedSubModels = _.keys(this._subModels);
-				let unresolvedSubModels = _.omit(this.prototype.subModelTypes, resolvedSubModels);
-				_.each(unresolvedSubModels, function(subModelTypeName) {
-					let subModelType = store.getObjectByName(subModelTypeName);
-					subModelType && subModelType.initializeModelHierarchy();
-				});
-			}
-		},
+		if (this.prototype.subModelTypes) {
+			let resolvedSubModels = _.keys(this._subModels);
+			let unresolvedSubModels = _.omit(this.prototype.subModelTypes, resolvedSubModels);
+			_.each(unresolvedSubModels, function(subModelTypeName) {
+				let subModelType = store.getObjectByName(subModelTypeName);
+				subModelType && subModelType.initializeModelHierarchy();
+			});
+		}
+	},
 
-		inheritRelations() {
+	inheritRelations() {
 		// Bail out if we've been here before.
-			if (!_.isUndefined(this._superModel) && !_.isNull(this._superModel)) {
-				return;
-			}
+		if (!_.isUndefined(this._superModel) && !_.isNull(this._superModel)) {
+			return;
+		}
 		// Try to initialize the _superModel.
-			store.setupSuperModel(this);
+		store.setupSuperModel(this);
 
 		// If a superModel has been found, copy relations from the _superModel if they haven't been inherited automatically
 		// (due to a redefinition of 'relations').
-			if (this._superModel) {
-			// The _superModel needs a chance to initialize its own inherited relations before we attempt to inherit relations
-			// from the _superModel. You don't want to call 'initializeModelHierarchy' because that could cause sub-models of
-			// this class to inherit their relations before this class has had chance to inherit it's relations.
-				this._superModel.inheritRelations();
-				if (this._superModel.prototype.relations) {
-				// Find relations that exist on the '_superModel', but not yet on this model.
-					let inheritedRelations = _.filter(this._superModel.prototype.relations || [], function(superRel) {
-						return !_.any(this.prototype.relations || [], function(rel) {
-							return superRel.relatedModel === rel.relatedModel && superRel.key === rel.key;
-						}, this);
+		if (this._superModel) {
+		// The _superModel needs a chance to initialize its own inherited relations before we attempt to inherit relations
+		// from the _superModel. You don't want to call 'initializeModelHierarchy' because that could cause sub-models of
+		// this class to inherit their relations before this class has had chance to inherit it's relations.
+			this._superModel.inheritRelations();
+			if (this._superModel.prototype.relations) {
+			// Find relations that exist on the '_superModel', but not yet on this model.
+				let inheritedRelations = _.filter(this._superModel.prototype.relations || [], function(superRel) {
+					return !_.any(this.prototype.relations || [], function(rel) {
+						return superRel.relatedModel === rel.relatedModel && superRel.key === rel.key;
 					}, this);
+				}, this);
 
-					this.prototype.relations = inheritedRelations.concat(this.prototype.relations);
-				}
-			} else {
-				// Otherwise, make sure we don't get here again for this type by making '_superModel' false so we fail the
-				// isUndefined/isNull check next time.
-				this._superModel = false;
+				this.prototype.relations = inheritedRelations.concat(this.prototype.relations);
 			}
-		},
+		} else {
+			// Otherwise, make sure we don't get here again for this type by making '_superModel' false so we fail the
+			// isUndefined/isNull check next time.
+			this._superModel = false;
+		}
+	},
 
 	/**
 	 * Find an instance of `this` type in 'Backbone.store'.
@@ -648,31 +639,31 @@ export default BBModel.extend(Semaphore).extend({
 	 * @param {Boolean} [options.parse=false]
 	 * @return {Backbone.Relational.Model}
 	 */
-		findOrCreate(attributes, options) {
-			options || (options = {});
-			let parsedAttributes = (_.isObject(attributes) && options.parse && this.prototype.parse) ?
-			this.prototype.parse(_.clone(attributes), options) : attributes;
+	findOrCreate(attributes, options) {
+		options || (options = {});
+		let parsedAttributes = (_.isObject(attributes) && options.parse && this.prototype.parse) ?
+		this.prototype.parse(_.clone(attributes), options) : attributes;
 
 		// If specified, use a custom `find` function to match up existing models to the given attributes.
 		// Otherwise, try to find an instance of 'this' model type in the store
-			let model = this.findModel(parsedAttributes);
+		let model = this.findModel(parsedAttributes);
 
 		// If we found an instance, update it with the data in 'item' (unless 'options.merge' is false).
 		// If not, create an instance (unless 'options.create' is false).
-			if (_.isObject(attributes)) {
-				if (model && options.merge !== false) {
-				// Make sure `options.collection` and `options.url` doesn't cascade to nested models
-					delete options.collection;
-					delete options.url;
+		if (_.isObject(attributes)) {
+			if (model && options.merge !== false) {
+			// Make sure `options.collection` and `options.url` doesn't cascade to nested models
+				delete options.collection;
+				delete options.url;
 
-					model.set(parsedAttributes, options);
-				}			else if (!model && options.create !== false) {
-					model = this.build(parsedAttributes, _.defaults({ parse: false }, options));
-				}
+				model.set(parsedAttributes, options);
+			} else if (!model && options.create !== false) {
+				model = this.build(parsedAttributes, _.defaults({ parse: false }, options));
 			}
+		}
 
-			return model;
-		},
+		return model;
+	},
 
 	/**
 	 * Find an instance of `this` type in 'Backbone.store'.
@@ -684,11 +675,11 @@ export default BBModel.extend(Semaphore).extend({
 	 * @param {Boolean} [options.parse=false]
 	 * @return {Backbone.Relational.Model}
 	 */
-		find(attributes, options) {
-			options || (options = {});
-			options.create = false;
-			return this.findOrCreate(attributes, options);
-		},
+	find(attributes, options) {
+		options || (options = {});
+		options.create = false;
+		return this.findOrCreate(attributes, options);
+	},
 
 	/**
 	 * A hook to override the matching when updating (or creating) a model.
@@ -696,15 +687,14 @@ export default BBModel.extend(Semaphore).extend({
 	 * @param {Object} attributes
 	 * @returns {Backbone.Relational.Model}
 	 */
-		findModel(attributes) {
-			return store.find(this, attributes);
-		},
-		// Override .extend() to automatically call .setup()
-		extend(protoProps, classProps) {
-			let child = BBModel.extend.apply(this, arguments);
+	findModel(attributes) {
+		return store.find(this, attributes);
+	},
 
-			child.setup(this);
-
-			return child;
-		}
-	});
+	// Override .extend() to automatically call .setup()
+	extend(protoProps, classProps) {
+		let child = BBModel.extend.apply(this, arguments);
+		child.setup(this);
+		return child;
+	}
+});

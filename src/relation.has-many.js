@@ -61,7 +61,7 @@ export default Relation.extend({
 				if (config.showWarnings && typeof console !== 'undefined') {
 					console.warn('Relation=%o; collectionKey=%s already exists on collection=%o', this, key, this.options.collectionKey);
 				}
-			}			else if (key) {
+			} else if (key) {
 				collection[ key ] = this.instance;
 			}
 		}
@@ -92,23 +92,23 @@ export default Relation.extend({
 		} else {
 			let toAdd = [];
 
-			_.each(this.keyContents, function(attributes) {
+			_.each(this.keyContents, (attributes) => {
 				let model = null;
 
 				if (attributes instanceof this.relatedModel) {
 					model = attributes;
-				}				else {
+				} else {
 					// If `merge` is true, update models here, instead of during update.
 					model = (_.isObject(attributes) && options.parse && this.relatedModel.prototype.parse) ?
 						this.relatedModel.prototype.parse(_.clone(attributes), options) : attributes;
 				}
 
 				model && toAdd.push(model);
-			}, this);
+			});
 
 			if (this.related instanceof Collection) {
 				related = this.related;
-			}			else {
+			} else {
 				related = this._prepareCollection();
 			}
 
@@ -135,12 +135,12 @@ export default Relation.extend({
 			// Handle cases the an API/user supplies just an Object/id instead of an Array
 			this.keyContents = _.isArray(keyContents) ? keyContents : [keyContents];
 
-			_.each(this.keyContents, function(item) {
+			_.each(this.keyContents, (item) => {
 				let itemId = store.resolveIdForItem(this.relatedModel, item);
 				if (itemId || itemId === 0) {
 					this.keyIds.push(itemId);
 				}
-			}, this);
+			});
 		}
 	},
 
@@ -157,12 +157,11 @@ export default Relation.extend({
 		this.setRelated(related);
 
 		if (!options.silent) {
-			let dit = this;
-			eventQueue.add(function() {
+			eventQueue.add(() => {
 				// The `changed` flag can be set in `handleAddition` or `handleRemoval`
-				if (dit.changed) {
-					dit.instance.trigger('change:' + dit.key, dit.instance, dit.related, options, true);
-					dit.changed = false;
+				if (this.changed) {
+					this.instance.trigger('change:' + this.key, this.instance, this.related, options, true);
+					this.changed = false;
 				}
 			});
 		}
@@ -177,14 +176,13 @@ export default Relation.extend({
 		options = options ? _.clone(options) : {};
 		this.changed = true;
 
-		_.each(this.getReverseRelations(model), function(relation) {
+		_.each(this.getReverseRelations(model), (relation) => {
 			relation.addRelated(this.instance, options);
-		}, this);
+		});
 
 		// Only trigger 'add' once the newly added model is initialized (so, has its relations set up)
-		let dit = this;
-		!options.silent && eventQueue.add(function() {
-			dit.instance.trigger('add:' + dit.key, model, dit.related, options);
+		!options.silent && eventQueue.add(() => {
+			this.instance.trigger('add:' + this.key, model, this.related, options);
 		});
 	},
 
@@ -201,17 +199,15 @@ export default Relation.extend({
 			relation.removeRelated(this.instance, null, options);
 		}, this);
 
-		let dit = this;
-		!options.silent && eventQueue.add(function() {
-			dit.instance.trigger('remove:' + dit.key, model, dit.related, options);
+		!options.silent && eventQueue.add(() => {
+			this.instance.trigger('remove:' + this.key, model, this.related, options);
 		});
 	},
 
 	handleReset(coll, options) {
-		let dit = this;
 		options = options ? _.clone(options) : {};
-		!options.silent && eventQueue.add(function() {
-			dit.instance.trigger('reset:' + dit.key, dit.related, options);
+		!options.silent && eventQueue.add(() => {
+			this.instance.trigger('reset:' + this.key, this.related, options);
 		});
 	},
 
@@ -227,10 +223,9 @@ export default Relation.extend({
 	addRelated(model, options) {
 		// Allow 'model' to set up its relations before proceeding.
 		// (which can result in a call to 'addRelated' from a relation of 'model')
-		let dit = this;
-		model.queue(function() {
-			if (dit.related && !dit.related.get(model)) {
-				dit.related.add(model, _.defaults({ parse: false }, options));
+		model.queue(() => {
+			if (this.related && !this.related.get(model)) {
+				this.related.add(model, _.defaults({ parse: false }, options));
 			}
 		});
 	},

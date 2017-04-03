@@ -5,7 +5,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
-This is a big update. We have refactored our entire codebase to use ES2015 compliant code. With this release we also change what we export.
+This is a big update (internally). We have refactored our entire codebase to use ES2015 compliant code. With this release we also change what we export.
 ### Added
 - New linter rules (ESLint, editorConfig)
 - New test runner (Karma and TravisCI)
@@ -13,12 +13,10 @@ This is a big update. We have refactored our entire codebase to use ES2015 compl
 - Code coverage reporting on unit tests
 - Change log
 - [#575](https://github.com/PaulUithol/Backbone-relational/issues/575): Add license information to bower.json
-### Removed
-- `relatedModel` can no longer be defined as a function when defining `Relational.Model` relations
 ### Changed
-- ES6 Refactor
+- ES2015 Refactor
 - Updated QUnit from 1.x to 2.x
-- Rather than modifying the existing `Backbone.Collection` we extend and use our own. This means Backbone and Backbone Relational can work side-by-side!
+- Rather than modifying the existing `Backbone.Collection` we extend and use our own `Collection` subclass. This means Backbone and Backbone Relational can work side-by-side!
 - No longer modify Backbone's namespace, but instead export our own
     - `Backbone.RelationalModel` -> `BackboneRelational.Model`
     - `Backbone.Collection` -> `BackboneRelational.Collection`

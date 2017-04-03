@@ -1,4 +1,5 @@
 import { Collection as BBCollection, Model as BBModel } from 'backbone';
+import Model from './model';
 import _ from 'underscore';
 import eventQueue from './event-queue';
 
@@ -49,10 +50,10 @@ export default BBCollection.extend({
 			models = this.parse(models, options);
 		}
 
-		let singular = !_.isArray(models),
-			newModels = [],
-			toAdd = [],
-			model = null;
+		let singular = !_.isArray(models);
+		let newModels = [];
+		let toAdd = [];
+		let model = null;
 
 		models = singular ? (models ? [models] : []) : _.clone(models);
 
@@ -97,13 +98,12 @@ export default BBCollection.extend({
 	 */
 	trigger(eventName) {
 		// Short-circuit if this Collection doesn't hold RelationalModels
-		// if ( !( this.model.prototype instanceof module.Model ) ) {
-		// 	return trigger.apply( this, arguments );
-		// }
+		if (!(this.model.prototype instanceof Model)) {
+			return BBCollection.prototype.trigger.apply(this, arguments);
+		}
 
 		if (eventName === 'add' || eventName === 'remove' || eventName === 'reset' || eventName === 'sort') {
-			let dit = this,
-				args = arguments;
+			let args = arguments;
 
 			if (_.isObject(args[ 3 ])) {
 				args = _.toArray(args);
@@ -112,10 +112,10 @@ export default BBCollection.extend({
 				args[ 3 ] = _.clone(args[ 3 ]);
 			}
 
-			eventQueue.add(function() {
-				BBCollection.prototype.trigger.apply(dit, args);
+			eventQueue.add(() => {
+				BBCollection.prototype.trigger.apply(this, args);
 			});
-		}		else {
+		} else {
 			BBCollection.prototype.trigger.apply(this, arguments);
 		}
 
@@ -127,9 +127,9 @@ export default BBCollection.extend({
 	sort(options) {
 		let result = BBCollection.prototype.sort.call(this, options);
 
-		// if ( this.model.prototype instanceof module.Model ) {
-		this.trigger('relational:reset', this, options);
-		// }
+		if (this.model.prototype instanceof Model) {
+			this.trigger('relational:reset', this, options);
+		}
 
 		return result;
 	},
@@ -140,9 +140,9 @@ export default BBCollection.extend({
 		options = _.extend({ merge: true }, options);
 		let result = BBCollection.prototype.reset.call(this, models, options);
 
-		// if ( this.model.prototype instanceof module.Model ) {
-		this.trigger('relational:reset', this, options);
-		// }
+		if (this.model.prototype instanceof Model) {
+			this.trigger('relational:reset', this, options);
+		}
 
 		return result;
 	},
@@ -158,16 +158,16 @@ export default BBCollection.extend({
 		let toRemove = [];
 
 		//console.debug('calling remove on coll=%o; models=%o, options=%o', this, models, options );
-		_.each(models, function(model) {
+		_.each(models, (model) => {
 			model = this.get(model) || (model && this.get(model.cid));
 			model && toRemove.push(model);
-		}, this);
+		});
 
 		let result = BBCollection.prototype._removeModels.call(this, toRemove, options);
 
-		_.each(toRemove, function(model) {
+		_.each(toRemove, (model) => {
 			this.trigger('relational:remove', model, this, options);
-		}, this);
+		});
 
 		return result;
 	}

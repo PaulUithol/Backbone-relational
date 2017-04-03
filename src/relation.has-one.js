@@ -15,9 +15,9 @@ export default Relation.extend({
 		this.setRelated(related);
 
 		// Notify new 'related' object of the new relation.
-		_.each(this.getReverseRelations(), function(relation) {
+		_.each(this.getReverseRelations(), (relation) => {
 			relation.addRelated(this.instance, opts);
-		}, this);
+		});
 	},
 
 	/**
@@ -32,7 +32,7 @@ export default Relation.extend({
 
 		if (this.keyContents instanceof this.relatedModel) {
 			related = this.keyContents;
-		}		else if (this.keyContents || this.keyContents === 0) { // since 0 can be a valid `id` as well
+		} else if (this.keyContents || this.keyContents === 0) { // since 0 can be a valid `id` as well
 			let opts = _.defaults({ create: this.options.createModels }, options);
 			related = this.relatedModel.findOrCreate(this.keyContents, opts);
 		}
@@ -69,8 +69,8 @@ export default Relation.extend({
 		// 'options.__related' is set by 'addRelated'/'removeRelated'. If it is set, the change
 		// is the result of a call from a relation. If it's not, the change is the result of
 		// a 'set' call on this.instance.
-		let changed = _.isUndefined(options.__related),
-			oldRelated = changed ? this.related : options.__related;
+		let changed = _.isUndefined(options.__related);
+		let oldRelated = changed ? this.related : options.__related;
 
 		if (changed) {
 			this.setKeyContents(attr);
@@ -80,25 +80,24 @@ export default Relation.extend({
 
 		// Notify old 'related' object of the terminated relation
 		if (oldRelated && this.related !== oldRelated) {
-			_.each(this.getReverseRelations(oldRelated), function(relation) {
+			_.each(this.getReverseRelations(oldRelated), (relation) => {
 				relation.removeRelated(this.instance, null, options);
-			}, this);
+			});
 		}
 
 		// Notify new 'related' object of the new relation. Note we do re-apply even if this.related is oldRelated;
 		// that can be necessary for bi-directional relations if 'this.instance' was created after 'this.related'.
 		// In that case, 'this.instance' will already know 'this.related', but the reverse might not exist yet.
-		_.each(this.getReverseRelations(), function(relation) {
+		_.each(this.getReverseRelations(), (relation) => {
 			relation.addRelated(this.instance, options);
-		}, this);
+		});
 
 		// Fire the 'change:<key>' event if 'related' was updated
 		if (!options.silent && this.related !== oldRelated) {
-			let dit = this;
 			this.changed = true;
-			eventQueue.add(function() {
-				dit.instance.trigger('change:' + dit.key, dit.instance, dit.related, options, true);
-				dit.changed = false;
+			eventQueue.add(() => {
+				this.instance.trigger('change:' + this.key, this.instance, this.related, options, true);
+				this.changed = false;
 			});
 		}
 		this.release();
@@ -117,12 +116,11 @@ export default Relation.extend({
 	addRelated(model, options) {
 		// Allow 'model' to set up its relations before proceeding.
 		// (which can result in a call to 'addRelated' from a relation of 'model')
-		let dit = this;
-		model.queue(function() {
-			if (model !== dit.related) {
-				let oldRelated = dit.related || null;
-				dit.setRelated(model);
-				dit.onChange(dit.instance, model, _.defaults({ __related: oldRelated }, options));
+		model.queue(() => {
+			if (model !== this.related) {
+				let oldRelated = this.related || null;
+				this.setRelated(model);
+				this.onChange(this.instance, model, _.defaults({ __related: oldRelated }, options));
 			}
 		});
 	},
