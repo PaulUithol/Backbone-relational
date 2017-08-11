@@ -234,7 +234,7 @@
 		setupSuperModel: function( modelType ) {
 			_.find( this._subModels, function( subModelDef ) {
 				return _.filter( subModelDef.subModels || [], function( subModelTypeName, typeValue ) {
-					var subModelType = this.getObjectByName( subModelTypeName );
+					var subModelType = !_.isString( subModelTypeName ) ? subModelTypeName : this.getObjectByName( subModelTypeName );
 
 					if ( modelType === subModelType ) {
 						// Set 'modelType' as a child of the found superModel
