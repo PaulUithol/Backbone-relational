@@ -48,7 +48,7 @@ export default BBModel.extend(Semaphore).extend({
 				collection.off('relational:add', processQueue);
 			};
 
-			collection.on('relational:add', processQueue);
+			this.listenTo(collection, 'relational:add', processQueue);
 
 			// So we do process the queue eventually, regardless of whether this model actually gets added to 'options.collection'.
 			_.defer(() => {
@@ -73,14 +73,16 @@ export default BBModel.extend(Semaphore).extend({
 
 	/**
 	 * Override 'trigger' to queue 'change' and 'change:*' events
+	 * @param {String} eventName name of event
+	 * @returns {this} this
 	 */
 	trigger(eventName) {
-		if (eventName.length > 5 && eventName.indexOf('change') === 0) {
-			const args = arguments;
+		const args = _.toArray(arguments);
 
+		if (eventName.length > 5 && eventName.indexOf('change') === 0) {
 			if (!eventQueue.isLocked()) {
 				// If we're not in a more complicated nested scenario, fire the change event right away
-				BBModel.prototype.trigger.apply(this, args);
+				BBModel.prototype.trigger.call(this, ...args);
 			} else {
 				eventQueue.add(() => {
 					// Determine if the `change` event is still valid, now that all relations are populated
@@ -114,14 +116,14 @@ export default BBModel.extend(Semaphore).extend({
 						}
 					}
 
-					changed && BBModel.prototype.trigger.apply(this, args);
+					changed && BBModel.prototype.trigger.call(this, ...args);
 				});
 			}
 		} else if (eventName === 'destroy') {
-			BBModel.prototype.trigger.apply(this, arguments);
+			BBModel.prototype.trigger.call(this, ...args);
 			store.unregister(this);
 		} else {
-			BBModel.prototype.trigger.apply(this, arguments);
+			BBModel.prototype.trigger.call(this, ...args);
 		}
 
 		return this;
@@ -130,6 +132,8 @@ export default BBModel.extend(Semaphore).extend({
 	/**
 	 * Initialize Relations present in this.relations; determine the type (HasOne/HasMany), then creates a new instance.
 	 * Invoked in the first call so 'set' (which is made from the Backbone.Model constructor).
+	 *
+	 * @param {Object} options Options to pass to relation
 	 */
 	initializeRelations(options) {
 		this.acquire(); // Setting up relations often also involve calls to 'set', and we only want to enter this function once
@@ -147,10 +151,11 @@ export default BBModel.extend(Semaphore).extend({
 	/**
 	 * When new values are set, notify this model's relations (also if options.silent is set).
 	 * (called from `set`; Relation.setRelated locks this model before calling 'set' on it to prevent loops)
-	 * @param {Object} [changedAttrs]
-	 * @param {Object} [options]
+	 *
+	 * @param {Object} [changedAttrs] Object representing changed attributes
+	 * @param {Object} [options] Options object passed along with relational:change event
 	 */
-	updateRelations(changedAttrs, options) {
+	updateRelations(changedAttrs, options = {}) {
 		if (this._isInitialized && !this.isLocked()) {
 			_.each(this._relations, (rel) => {
 				if (!changedAttrs || (rel.keySource in changedAttrs || rel.key in changedAttrs)) {
@@ -161,7 +166,7 @@ export default BBModel.extend(Semaphore).extend({
 					// Update a relation if its value differs from this model's attributes, or it's been explicitly nullified.
 					// Which can also happen before the originally intended related model has been found (`val` is null).
 					if (rel.related !== value || (value === null && attr === null)) {
-						this.trigger('relational:change:' + rel.key, this, value, options || {});
+						this.trigger('relational:change:' + rel.key, this, value, options);
 					}
 				}
 
@@ -175,6 +180,7 @@ export default BBModel.extend(Semaphore).extend({
 
 	/**
 	 * Either add to the queue (if we're not initialized yet), or execute right away.
+	 * @param {Function} [func] Function to defer execution
 	 */
 	queue(func) {
 		this._queue.add(func);
@@ -200,7 +206,7 @@ export default BBModel.extend(Semaphore).extend({
 
 	/**
 	 * Get all of the created relations.
-	 * @return {Backbone.Relation[]}
+	 * @return {Backbone.Relation[]} Array of relationships
 	 */
 	getRelations() {
 		return _.values(this._relations);
@@ -209,10 +215,10 @@ export default BBModel.extend(Semaphore).extend({
 	/**
 	 * Get a list of ids that will be fetched on a call to `getAsync`.
 	 * @param {string|Backbone.Relation} attr The relation key to fetch models for.
-	 * @param [refresh=false] Add ids for models that are already in the relation, refreshing them?
+	 * @param {Boolean} [refresh=false] Add ids for models that are already in the relation, refreshing them?
 	 * @return {Array} An array of ids that need to be fetched.
 	 */
-	getIdsToFetch(attr, refresh) {
+	getIdsToFetch(attr, refresh = false) {
 		let rel = attr instanceof Relation ? attr : this.getRelation(attr);
 		let ids = rel ? (rel.keyIds && rel.keyIds.slice(0)) || ((rel.keyId || rel.keyId === 0) ? [rel.keyId] : []) : [];
 
@@ -287,19 +293,18 @@ export default BBModel.extend(Semaphore).extend({
 
 			if (setUrl) {
 				// Do a single request to fetch all models
-				let opts = _.defaults(
-					{
-						error() {
-							_.each(createdModels, function(model) {
-								model.trigger('destroy', model, model.collection, options);
-							});
+				let opts = _.defaults({
+					url: setUrl,
+					error(...args) {
+						_.each(createdModels, function(model) {
+							model.trigger('destroy', model, model.collection, options);
+						});
 
-							options.error && options.error.apply(models, arguments);
-						},
-						url: setUrl
-					},
-					options
-				);
+						if (options.error) {
+							options.error.call(this, ...args)
+						}
+					}
+				}, options);
 
 				requests = [coll.fetch(opts)];
 			} else {
@@ -309,17 +314,18 @@ export default BBModel.extend(Semaphore).extend({
 				}
 
 				requests = _.map(models, function(model) {
-					let opts = _.defaults(
-						{
-							error() {
-								if (_.contains(createdModels, model)) {
-									model.trigger('destroy', model, model.collection, options);
-								}
-								options.error && options.error.apply(models, arguments);
+					let opts = _.defaults({
+						error(...args) {
+							if (_.contains(createdModels, model)) {
+								model.trigger('destroy', model, model.collection, options);
 							}
-						},
-						options
-					);
+
+							if (options.error) {
+								options.error.call(this, ...args);
+							}
+						}
+					}, options);
+
 					return model.fetch(opts);
 				}, this);
 			}
@@ -335,6 +341,8 @@ export default BBModel.extend(Semaphore).extend({
 	},
 
 	set(key, value, options) {
+		const args = _.toArray(arguments);
+
 		eventQueue.block();
 
 		// Duplicate backbone's behavior to allow separate key/value parameters, instead of a single 'attributes' object
@@ -356,7 +364,7 @@ export default BBModel.extend(Semaphore).extend({
 			// Check if we're not setting a duplicate id before actually calling `set`.
 			store.checkId(this, newId);
 
-			result = BBModel.prototype.set.apply(this, arguments);
+			result = BBModel.prototype.set.call(this, ...args);
 
 			// Ideal place to set up relations, if this is the first time we're here for this model
 			if (!this._isInitialized && !this.isLocked()) {
@@ -399,6 +407,7 @@ export default BBModel.extend(Semaphore).extend({
 
 	/**
 	 * Convert relations to JSON, omits them when required
+	 * @param {Object} [options] Options
 	 */
 	toJSON(options) {
 		// If this Model has already been fully serialized in this branch once, return to avoid loops
@@ -537,8 +546,8 @@ export default BBModel.extend(Semaphore).extend({
 
 	/**
 	 * Create a 'Backbone.Model' instance based on 'attributes'.
-	 * @param {Object} attributes
-	 * @param {Object} [options]
+	 * @param {Object} [attributes] Attributes to set
+	 * @param {Object} [options] Options
 	 * @return {Backbone.Model}
 	 */
 	build(attributes, options) {
@@ -693,7 +702,7 @@ export default BBModel.extend(Semaphore).extend({
 
 	// Override .extend() to automatically call .setup()
 	extend(protoProps, classProps) {
-		let child = BBModel.extend.apply(this, arguments);
+		let child = BBModel.extend.call(this, protoProps, classProps);
 		child.setup(this);
 		return child;
 	}

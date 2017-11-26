@@ -600,7 +600,7 @@ var Model$1 = backbone.Model.extend(Semaphore).extend({
 				collection.off('relational:add', processQueue);
 			};
 
-			collection.on('relational:add', processQueue);
+			this.listenTo(collection, 'relational:add', processQueue);
 
 			_.defer(function () {
 				processQueue(_this);
@@ -623,13 +623,17 @@ var Model$1 = backbone.Model.extend(Semaphore).extend({
 	trigger: function trigger(eventName) {
 		var _this2 = this;
 
-		if (eventName.length > 5 && eventName.indexOf('change') === 0) {
-			var args = arguments;
+		var args = _.toArray(arguments);
 
+		if (eventName.length > 5 && eventName.indexOf('change') === 0) {
 			if (!eventQueue.isLocked()) {
-				backbone.Model.prototype.trigger.apply(this, args);
+				var _BBModel$prototype$tr;
+
+				(_BBModel$prototype$tr = backbone.Model.prototype.trigger).call.apply(_BBModel$prototype$tr, [this].concat(toConsumableArray(args)));
 			} else {
 				eventQueue.add(function () {
+					var _BBModel$prototype$tr2;
+
 					var changed = true;
 					if (eventName === 'change') {
 						changed = _this2.hasChanged() || _this2._attributeChangeFired;
@@ -651,14 +655,18 @@ var Model$1 = backbone.Model.extend(Semaphore).extend({
 						}
 					}
 
-					changed && backbone.Model.prototype.trigger.apply(_this2, args);
+					changed && (_BBModel$prototype$tr2 = backbone.Model.prototype.trigger).call.apply(_BBModel$prototype$tr2, [_this2].concat(toConsumableArray(args)));
 				});
 			}
 		} else if (eventName === 'destroy') {
-			backbone.Model.prototype.trigger.apply(this, arguments);
+			var _BBModel$prototype$tr3;
+
+			(_BBModel$prototype$tr3 = backbone.Model.prototype.trigger).call.apply(_BBModel$prototype$tr3, [this].concat(toConsumableArray(args)));
 			store.unregister(this);
 		} else {
-			backbone.Model.prototype.trigger.apply(this, arguments);
+			var _BBModel$prototype$tr4;
+
+			(_BBModel$prototype$tr4 = backbone.Model.prototype.trigger).call.apply(_BBModel$prototype$tr4, [this].concat(toConsumableArray(args)));
 		}
 
 		return this;
@@ -675,8 +683,10 @@ var Model$1 = backbone.Model.extend(Semaphore).extend({
 		this.release();
 		this.processQueue();
 	},
-	updateRelations: function updateRelations(changedAttrs, options) {
+	updateRelations: function updateRelations(changedAttrs) {
 		var _this3 = this;
+
+		var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
 
 		if (this._isInitialized && !this.isLocked()) {
 			_.each(this._relations, function (rel) {
@@ -685,7 +695,7 @@ var Model$1 = backbone.Model.extend(Semaphore).extend({
 					var attr = changedAttrs && (changedAttrs[rel.keySource] || changedAttrs[rel.key]);
 
 					if (rel.related !== value || value === null && attr === null) {
-						_this3.trigger('relational:change:' + rel.key, _this3, value, options || {});
+						_this3.trigger('relational:change:' + rel.key, _this3, value, options);
 					}
 				}
 
@@ -709,7 +719,9 @@ var Model$1 = backbone.Model.extend(Semaphore).extend({
 	getRelations: function getRelations() {
 		return _.values(this._relations);
 	},
-	getIdsToFetch: function getIdsToFetch(attr, refresh) {
+	getIdsToFetch: function getIdsToFetch(attr) {
+		var refresh = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
+
 		var rel = attr instanceof Relation ? attr : this.getRelation(attr);
 		var ids = rel ? rel.keyIds && rel.keyIds.slice(0) || (rel.keyId || rel.keyId === 0 ? [rel.keyId] : []) : [];
 
@@ -771,15 +783,22 @@ var Model$1 = backbone.Model.extend(Semaphore).extend({
 
 			if (setUrl) {
 				var opts = _.defaults({
+					url: setUrl,
 					error: function error() {
 						_.each(createdModels, function (model) {
 							model.trigger('destroy', model, model.collection, options);
 						});
 
-						options.error && options.error.apply(models, arguments);
-					},
+						if (options.error) {
+							var _options$error;
 
-					url: setUrl
+							for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
+								args[_key] = arguments[_key];
+							}
+
+							(_options$error = options.error).call.apply(_options$error, [this].concat(args));
+						}
+					}
 				}, options);
 
 				requests = [coll.fetch(opts)];
@@ -794,9 +813,19 @@ var Model$1 = backbone.Model.extend(Semaphore).extend({
 							if (_.contains(createdModels, model)) {
 								model.trigger('destroy', model, model.collection, options);
 							}
-							options.error && options.error.apply(models, arguments);
+
+							if (options.error) {
+								var _options$error2;
+
+								for (var _len2 = arguments.length, args = Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
+									args[_key2] = arguments[_key2];
+								}
+
+								(_options$error2 = options.error).call.apply(_options$error2, [this].concat(args));
+							}
 						}
 					}, options);
+
 					return model.fetch(opts);
 				}, this);
 			}
@@ -810,6 +839,8 @@ var Model$1 = backbone.Model.extend(Semaphore).extend({
 		return $.when.apply($, toConsumableArray(_deferArray));
 	},
 	set: function set$$1(key, value, options) {
+		var args = _.toArray(arguments);
+
 		eventQueue.block();
 
 		var attributes = void 0;
@@ -824,12 +855,14 @@ var Model$1 = backbone.Model.extend(Semaphore).extend({
 		}
 
 		try {
+			var _BBModel$prototype$se;
+
 			var id = this.id;
 			var newId = attributes && this.idAttribute in attributes && attributes[this.idAttribute];
 
 			store.checkId(this, newId);
 
-			result = backbone.Model.prototype.set.apply(this, arguments);
+			result = (_BBModel$prototype$se = backbone.Model.prototype.set).call.apply(_BBModel$prototype$se, [this].concat(toConsumableArray(args)));
 
 			if (!this._isInitialized && !this.isLocked()) {
 				this.constructor.initializeModelHierarchy();
@@ -1062,7 +1095,7 @@ var Model$1 = backbone.Model.extend(Semaphore).extend({
 		return store.find(this, attributes);
 	},
 	extend: function extend(protoProps, classProps) {
-		var child = backbone.Model.extend.apply(this, arguments);
+		var child = backbone.Model.extend.call(this, protoProps, classProps);
 		child.setup(this);
 		return child;
 	}
@@ -1084,7 +1117,8 @@ var Collection$1 = backbone.Collection.extend({
 			if (typeof this.model.findOrCreate !== 'undefined') {
 				model = this.model.findOrCreate(attrs, options);
 			} else {
-				model = new this.model(attrs, options);
+				var TargetModel = this.model;
+				model = new TargetModel(attrs, options);
 			}
 
 			if (model && model.validationError) {
@@ -1095,7 +1129,10 @@ var Collection$1 = backbone.Collection.extend({
 
 		return model;
 	},
-	set: function set(models, options) {
+	set: function set$$1(models, options) {
+		if (!this.model.prototype instanceof Model$1) {
+			return backbone.Collection.prototype.set.call(this, models, options);
+		}
 
 		if (options && options.parse) {
 			models = this.parse(models, options);
@@ -1141,24 +1178,28 @@ var Collection$1 = backbone.Collection.extend({
 	trigger: function trigger(eventName) {
 		var _this = this;
 
+		var args = _.toArray(arguments);
+
 		if (!(this.model.prototype instanceof Model$1)) {
-			return backbone.Collection.prototype.trigger.apply(this, arguments);
+			var _BBCollection$prototy;
+
+			return (_BBCollection$prototy = backbone.Collection.prototype.trigger).call.apply(_BBCollection$prototy, [this].concat(toConsumableArray(args)));
 		}
 
 		if (eventName === 'add' || eventName === 'remove' || eventName === 'reset' || eventName === 'sort') {
-			var args = arguments;
-
 			if (_.isObject(args[3])) {
-				args = _.toArray(args);
-
 				args[3] = _.clone(args[3]);
 			}
 
 			eventQueue.add(function () {
-				backbone.Collection.prototype.trigger.apply(_this, args);
+				var _BBCollection$prototy2;
+
+				(_BBCollection$prototy2 = backbone.Collection.prototype.trigger).call.apply(_BBCollection$prototy2, [_this].concat(toConsumableArray(args)));
 			});
 		} else {
-			backbone.Collection.prototype.trigger.apply(this, arguments);
+			var _BBCollection$prototy3;
+
+			(_BBCollection$prototy3 = backbone.Collection.prototype.trigger).call.apply(_BBCollection$prototy3, [this].concat(toConsumableArray(args)));
 		}
 
 		return this;

@@ -25,7 +25,8 @@ export default BBCollection.extend({
 			if (typeof this.model.findOrCreate !== 'undefined') {
 				model = this.model.findOrCreate(attrs, options);
 			} else {
-				model = new this.model(attrs, options);
+				const TargetModel = this.model;
+				model = new TargetModel(attrs, options);
 			}
 
 			if (model && model.validationError) {
@@ -42,9 +43,9 @@ export default BBCollection.extend({
 	 */
 	set(models, options) {
 		// Short-circuit if this Collection doesn't hold RelationalModels
-		// if ( !( this.model.prototype instanceof module.Model ) ) {
-		// 	return set.call( this, models, options );
-		// }
+		if (!this.model.prototype instanceof Model) {
+			return BBCollection.prototype.set.call(this, models, options);
+		}
 
 		if (options && options.parse) {
 			models = this.parse(models, options);
@@ -95,28 +96,28 @@ export default BBCollection.extend({
 	/**
 	 * Override 'module.Collection.trigger' so 'add', 'remove' and 'reset' events are queued until relations
 	 * are ready.
+	 * @param {String} [eventName] Name of of event
 	 */
 	trigger(eventName) {
+		const args = _.toArray(arguments);
+
 		// Short-circuit if this Collection doesn't hold RelationalModels
 		if (!(this.model.prototype instanceof Model)) {
-			return BBCollection.prototype.trigger.apply(this, arguments);
+			return BBCollection.prototype.trigger.call(this, ...args);
 		}
 
 		if (eventName === 'add' || eventName === 'remove' || eventName === 'reset' || eventName === 'sort') {
-			let args = arguments;
-
 			if (_.isObject(args[ 3 ])) {
-				args = _.toArray(args);
 				// the fourth argument is the option object.
 				// we need to clone it, as it could be modified while we wait on the eventQueue to be unblocked
 				args[ 3 ] = _.clone(args[ 3 ]);
 			}
 
 			eventQueue.add(() => {
-				BBCollection.prototype.trigger.apply(this, args);
+				BBCollection.prototype.trigger.call(this, ...args);
 			});
 		} else {
-			BBCollection.prototype.trigger.apply(this, arguments);
+			BBCollection.prototype.trigger.call(this, ...args);
 		}
 
 		return this;
