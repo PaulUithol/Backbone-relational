@@ -1,81 +1,82 @@
-var _ = window._ = require('underscore');
-var $ = window.$ = require('jquery');
-var Backbone = window.Backbone = require('backbone');
-Backbone.Relational = require('../../backbone-relational');
+import {
+	Model as RelationalModel,
+	Collection as RelationalCollection,
+	HasMany, HasOne
+} from 'backbone-relational';
+
+import { Model as BackboneModel } from 'backbone';
 
 /**
- * 'Zoo'
+ * Zoo/Animal/Food/Visitor
  */
 
-exports.Zoo = window.Zoo = Backbone.Relational.Model.extend({
+export const Food = RelationalModel.extend({
+	urlRoot: '/food/'
+});
+
+export const Animal = RelationalModel.extend({
+	urlRoot: '/animal/',
+
+	relations: [
+		{ // A simple HasOne without reverse relation
+			type: HasOne,
+			key: 'favoriteFood',
+			relatedModel: Food
+		}
+	],
+
+	// For validation testing. Wikipedia says elephants are reported up to 12.000 kg. Any more, we must've weighted wrong ;).
+	validate(attrs) {
+		if (attrs.species === 'elephant' && attrs.weight && attrs.weight > 12000) {
+			return 'Too heavy.';
+		}
+	},
+
+	toString() {
+		return 'Animal (' + this.id + ')';
+	}
+});
+
+export const AnimalCollection = RelationalCollection.extend({
+	model: Animal
+});
+
+export const Zoo = RelationalModel.extend({
 	urlRoot: '/zoo/',
 
 	relations: [
 		{
-			type: Backbone.Relational.HasMany,
+			type: HasMany,
 			key: 'animals',
-			relatedModel: 'Animal',
-			includeInJSON: [ 'id', 'species' ],
-			collectionType: 'AnimalCollection',
+			relatedModel: Animal,
+			includeInJSON: ['id', 'species'],
+			collectionType: AnimalCollection,
 			reverseRelation: {
 				key: 'livesIn',
-				includeInJSON: [ 'id', 'name' ]
+				includeInJSON: ['id', 'name']
 			}
 		},
 		{ // A simple HasMany without reverse relation
-			type: Backbone.Relational.HasMany,
+			type: HasMany,
 			key: 'visitors',
 			relatedModel: 'Visitor'
 		}
 	],
 
-	toString: function() {
+	toString() {
 		return 'Zoo (' + this.id + ')';
 	}
 });
 
-
-exports.Animal = window.Animal = Backbone.Relational.Model.extend({
-	urlRoot: '/animal/',
-
-	relations: [
-		{ // A simple HasOne without reverse relation
-			type: Backbone.Relational.HasOne,
-			key: 'favoriteFood',
-			relatedModel: 'Food'
-		}
-	],
-
-	// For validation testing. Wikipedia says elephants are reported up to 12.000 kg. Any more, we must've weighted wrong ;).
-	validate: function( attrs ) {
-		if ( attrs.species === 'elephant' && attrs.weight && attrs.weight > 12000 ) {
-			return "Too heavy.";
-		}
-	},
-
-	toString: function() {
-		return 'Animal (' + this.id + ')';
-	}
-});
-
-exports.AnimalCollection = window.AnimalCollection = Backbone.Relational.Collection.extend({
-	model: Animal
-});
-
-exports.Food = window.Food = Backbone.Relational.Model.extend({
-	urlRoot: '/food/'
-});
-
-exports.Visitor = window.Visitor = Backbone.Relational.Model.extend();
-
+export const Visitor = RelationalModel.extend();
 
 /**
  * House/Person/Job/Company
  */
 
-exports.House = window.House = Backbone.Relational.Model.extend({
+export const House = RelationalModel.extend({
 	relations: [{
-		type: Backbone.Relational.HasMany,
+		type: HasMany,
 		key: 'occupants',
 		relatedModel: 'Person',
 		reverseRelation: {
@@ -84,39 +85,39 @@ exports.House = window.House = Backbone.Relational.Model.extend({
 		}
 	}],
 
-	toString: function() {
+	toString() {
 		return 'House (' + this.id + ')';
 	}
 });
 
-exports.User = window.User = Backbone.Relational.Model.extend({
+export const User = RelationalModel.extend({
 	urlRoot: '/user/',
 
-	toString: function() {
+	toString() {
 		return 'User (' + this.id + ')';
 	}
 });
 
-exports.Person = window.Person = Backbone.Relational.Model.extend({
+export const Person = RelationalModel.extend({
 	relations: [
 		{
 			// Create a cozy, recursive, one-to-one relationship
-			type: Backbone.Relational.HasOne,
+			type: HasOne,
 			key: 'likesALot',
 			relatedModel: 'Person',
 			reverseRelation: {
-				type: Backbone.Relational.HasOne,
+				type: HasOne,
 				key: 'likedALotBy'
 			}
 		},
 		{
-			type: Backbone.Relational.HasOne,
+			type: HasOne,
 			key: 'user',
 			keyDestination: 'user_id',
 			relatedModel: 'User',
-			includeInJSON: Backbone.Model.prototype.idAttribute,
+			includeInJSON: BackboneModel.prototype.idAttribute,
 			reverseRelation: {
-				type: Backbone.Relational.HasOne,
+				type: HasOne,
 				includeInJSON: 'name',
 				key: 'person'
 			}
@@ -131,48 +132,49 @@ exports.Person = window.Person = Backbone.Relational.Model.extend({
 		}
 	],
 
-	toString: function() {
+	toString() {
 		return 'Person (' + this.id + ')';
 	}
 });
 
-exports.PersonCollection = window.PersonCollection = Backbone.Relational.Collection.extend({
+export const PersonCollection = RelationalCollection.extend({
 	model: Person
 });
 
-exports.Password = window.Password = Backbone.Relational.Model.extend({
+export const Password = RelationalModel.extend({
 	relations: [{
-		type: Backbone.Relational.HasOne,
+		type: HasOne,
 		key: 'user',
 		relatedModel: 'User',
 		reverseRelation: {
-			type: Backbone.Relational.HasOne,
+			type: HasOne,
 			key: 'password'
 		}
 	}],
 
-	toString: function() {
+	toString() {
 		return 'Password (' + this.id + ')';
 	}
 });
 
 // A link table between 'Person' and 'Company', to achieve many-to-many relations
-exports.Job = window.Job = Backbone.Relational.Model.extend({
+export const Job = RelationalModel.extend({
 	defaults: {
 		'startDate': null,
 		'endDate': null
 	},
 
-	toString: function() {
+	toString() {
 		return 'Job (' + this.id + ')';
 	}
 });
 
-exports.Company = window.Company = Backbone.Relational.Model.extend({
-	relations: [{
+export const Company = RelationalModel.extend({
+	relations: [
+		{
 			type: 'HasMany',
 			key: 'employees',
-			relatedModel: 'Job',
+			relatedModel: Job,
 			reverseRelation: {
 				key: 'company'
 			}
@@ -180,124 +182,123 @@ exports.Company = window.Company = Backbone.Relational.Model.extend({
 		{
 			type: 'HasOne',
 			key: 'ceo',
-			relatedModel: 'Person',
+			relatedModel: Person,
 			reverseRelation: {
 				key: 'runs'
 			}
 		}
 	],
 
-	toString: function() {
+	toString() {
 		return 'Company (' + this.id + ')';
 	}
 });
 
-
 /**
  * Node/NodeList
  */
-exports.Node = window.Node = Backbone.Relational.Model.extend({
+
+export const Node = RelationalModel.extend({
 	urlRoot: '/node/',
 
 	relations: [{
-			type: Backbone.Relational.HasOne,
-			key: 'parent',
-			reverseRelation: {
-				key: 'children'
-			}
+		type: HasOne,
+		key: 'parent',
+		reverseRelation: {
+			key: 'children'
 		}
+	}
 	],
 
-	toString: function() {
+	toString() {
 		return 'Node (' + this.id + ')';
 	}
 });
 
-exports.NodeList = window.NodeList = Backbone.Relational.Collection.extend({
+export const NodeList = RelationalCollection.extend({
 	model: Node
 });
-
 
 /**
  * Customer/Address/Shop/Agent
  */
 
-exports.Customer = window.Customer = Backbone.Relational.Model.extend({
+export const Customer = RelationalModel.extend({
 	urlRoot: '/customer/',
 
-	toString: function() {
+	toString() {
 		return 'Customer (' + this.id + ')';
 	}
 });
 
-exports.CustomerCollection = window.CustomerCollection = Backbone.Relational.Collection.extend({
+export const CustomerCollection = RelationalCollection.extend({
 	model: Customer,
 
-	initialize: function( models, options ) {
+	initialize(models, options) {
 		options || (options = {});
 		this.url = options.url;
 	}
 });
 
-exports.Address = window.Address = Backbone.Relational.Model.extend({
+export const Address = RelationalModel.extend({
 	urlRoot: '/address/',
 
-	toString: function() {
+	toString() {
 		return 'Address (' + this.id + ')';
 	}
 });
 
-exports.Shop = window.Shop = Backbone.Relational.Model.extend({
+export const Shop = RelationalModel.extend({
 	relations: [
 		{
-			type: Backbone.Relational.HasMany,
+			type: HasMany,
 			key: 'customers',
-			collectionType: 'CustomerCollection',
-			collectionOptions: function( instance ) {
+			collectionType: CustomerCollection,
+			collectionOptions(instance) {
 				return { 'url': 'shop/' + instance.id + '/customers/' };
 			},
 			relatedModel: 'Customer',
 			autoFetch: true
 		},
 		{
-			type: Backbone.Relational.HasOne,
+			type: HasOne,
 			key: 'address',
 			relatedModel: 'Address',
 			autoFetch: {
-				success: function( model, response ) {
+				success(model, response) {
 					response.successOK = true;
 				},
-				error: function( model, response ) {
+				error(model, response) {
 					response.errorOK = true;
 				}
 			}
 		}
 	],
 
-	toString: function() {
+	toString() {
 		return 'Shop (' + this.id + ')';
 	}
 });
 
-exports.Agent = window.Agent = Backbone.Relational.Model.extend({
+export const Agent = RelationalModel.extend({
 	urlRoot: '/agent/',
 
 	relations: [
 		{
-			type: Backbone.Relational.HasMany,
+			type: HasMany,
 			key: 'customers',
-			relatedModel: 'Customer',
-			includeInJSON: Backbone.Relational.Model.prototype.idAttribute
+			relatedModel: Customer,
+			includeInJSON: RelationalModel.prototype.idAttribute
 		},
 		{
-			type: Backbone.Relational.HasOne,
+			type: HasOne,
 			key: 'address',
-			relatedModel: 'Address',
+			relatedModel: Address,
 			autoFetch: false
 		}
 	],
 
-	toString: function() {
+	toString() {
 		return 'Agent (' + this.id + ')';
 	}
 });

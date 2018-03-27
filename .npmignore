@@ -1,2 +1,6 @@
 test
 node_modules
+src
+static
+cname
+gulp

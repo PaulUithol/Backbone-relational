@@ -1,33 +1,59 @@
-module.exports = function(config) {
+/* eslint-env node */
+
+module.exports = function( config ) {
 	config.set({
 		frameworks: [
 			'browserify',
 			'qunit'
 		],
-		plugins: [
-			'karma-browserify',
-			'karma-phantomjs-launcher',
-			'karma-chrome-launcher',
-			'karma-qunit'
-		],
 
-		files: [
-			'test/setup/environment.js',
+    files: [
+			require.resolve( 'babel-polyfill' ),
+      // 'test/setup/environment.js',
 			'test/*.js'
 		],
 
 		preprocessors: {
-			'test/**/*.js': [ 'browserify' ]
+			[ require.resolve( 'babel-polyfill' ) ]: [ 'browserify' ],
+			'test/*.js': [ 'browserify', 'coverage' ],
+			'**/*.js': [ 'electron' ]
 		},
 
-		browserify: {
-			debug: true
+    client: {
+      useIframe: false
+    },
+
+    browserify: {
+			debug: true,
+			transform: [
+				[ 'babelify', {
+					presets: [ 'es2015' ],
+					plugins: [
+            [ 'module-resolver', {
+              alias: {
+                'backbone-relational': './src/backbone-relational'
+              }
+            }],
+						[ 'istanbul', {
+							exclude: [ 'node_modules/**', 'test/**' ]
+						}]
+					],
+					sourceMap: true
+				}]
+			]
 		},
 
-		autoWatch: false,
+    reporters: [ 'dots', 'coverage' ],
+
+    coverageReporter: {
+      dir: './coverage',
+      reporters: [
+        { type: 'text-summary' },
+        { type: 'lcovonly', subdir: '.' }
+      ]
+    },
+
 		port: 9877,
-		colors: true,
-		singleRun: true,
-		logLevel: config.LOG_INFO
+		colors: true
 	});
-}
+};

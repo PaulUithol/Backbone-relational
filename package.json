@@ -1,11 +1,13 @@
 {
   "name": "backbone-relational",
-  "main": "backbone-relational.js",
+  "main": "dist/backbone-relational.js",
   "description": "Get and set relations (one-to-one, one-to-many, many-to-one) for Backbone models",
   "homepage": "http://backbonerelational.org",
   "keywords": [
     "backbone",
     "relation",
+    "many-to-one",
+    "one-to-many",
     "nested",
     "model"
   ],
@@ -14,28 +16,42 @@
     "url": "https://github.com/PaulUithol/Backbone-relational.git"
   },
   "scripts": {
-    "test": "karma start --single-run --browsers PhantomJS"
+    "test": "karma start --single-run --browsers Electron",
+    "test-debug": "karma start --single-run",
+    "build": "rollup -c",
+    "prepublish": "rollup -c",
+    "watch": "karma start --auto-watch & rollup -c --watch && fg"
   },
   "author": "Paul Uithol <https://github.com/PaulUithol>",
   "contributors": "Listed at <https://github.com/PaulUithol/Backbone-relational/contributors>",
   "peerDependencies": {
-    "backbone": "^1.2.3"
+    "backbone": "^1.3.3",
+    "underscore": "^1.8.3"
   },
   "license": "MIT",
   "version": "0.10.0",
   "devDependencies": {
-    "backbone": "^1.3.3",
-    "browserify": "^13.0.0",
+    "babel-plugin-external-helpers": "^6.22.0",
+    "babel-plugin-istanbul": "^4.1.1",
+    "babel-plugin-module-resolver": "^2.7.0",
+    "babel-polyfill": "^6.23.0",
+    "babel-preset-es2015": "^6.24.0",
+    "babelify": "^7.3.0",
+    "backbone": "1.3.3",
+    "browserify": "^14.1.0",
+    "electron": "^1.6.2",
     "jquery": "^2.2.1",
-    "karma": "^0.13.22",
-    "karma-browserify": "^5.0.2",
-    "karma-chrome-launcher": "^0.2.2",
-    "karma-phantomjs-launcher": "^1.0.0",
-    "karma-qunit": "^0.1.9",
-    "phantomjs-prebuilt": "^2.1.5",
-    "qunitjs": "^1.22.0",
-    "semver": "^5.1.0",
-    "underscore": ">=1.7.0",
-    "watchify": "^3.7.0"
-  }
+    "karma": "^1.5.0",
+    "karma-browserify": "^5.1.1",
+    "karma-coverage": "^1.1.1",
+    "karma-electron": "^5.1.1",
+    "karma-qunit": "^1.2.1",
+    "qunitjs": "^2.3.0",
+    "rollup": "^0.41.6",
+    "rollup-plugin-babel": "^2.7.1",
+    "rollup-watch": "^3.2.2",
+    "semver": "^5.3.0",
+    "underscore": "^1.8.3"
+  },
+  "dependencies": {}
 }
