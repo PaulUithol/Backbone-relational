@@ -6,6 +6,7 @@ before_install:
   - npm install -g karma-cli
 script:
   - npm test
+  - $(npm bin)/karma start --single-run --browsers PhantomJS --lodash
 sudo: false
 cache:
   directories:
