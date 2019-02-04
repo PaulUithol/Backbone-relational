@@ -1,7 +1,7 @@
 import { store, eventQueue, config } from 'backbone-relational';
 import Backbone, { Model as BackboneModel } from 'backbone';
 import $ from 'jquery';
-import _ from 'underscore';
+import _ from '../../src/utils/underscore-compat';
 
 config.showWarnings = false;
 

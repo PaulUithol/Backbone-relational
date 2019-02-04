@@ -1,6 +1,6 @@
 import { reset } from './setup/setup';
 import { Model, Collection, Store, HasMany, HasOne, store } from 'backbone-relational';
-import _ from 'underscore';
+import _ from '../src/utils/underscore-compat';
 
 QUnit.module('Performance', { beforeEach: reset }, () => {
 	QUnit.test('Creation and destruction', function(assert) {

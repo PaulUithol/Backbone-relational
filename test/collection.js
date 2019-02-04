@@ -1,7 +1,7 @@
 import { reset } from './setup/setup';
 import { Collection, Model, HasOne, store } from 'backbone-relational';
 import { Zoo, Animal, AnimalCollection, PersonCollection, User, NodeList } from './setup/objects';
-import _ from 'underscore';
+import _ from '../src/utils/underscore-compat';
 import { VERSION as BACKBONE_VERSION } from 'backbone'
 import semver from 'semver';
 

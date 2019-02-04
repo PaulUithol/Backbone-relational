@@ -1,5 +1,5 @@
 import { Model as BBModel } from 'backbone';
-import _ from 'underscore';
+import _ from './utils/underscore-compat';
 import Semaphore from './utils/semaphore';
 import store from './store';
 import eventQueue from './event-queue';
@@ -139,9 +139,9 @@ export default BBModel.extend(Semaphore).extend({
 		this.acquire(); // Setting up relations often also involve calls to 'set', and we only want to enter this function once
 		this._relations = {};
 
-		_.each(this.relations || [], function(rel) {
+		_.each(this.relations || [], _.bind(function(rel) {
 			store.initializeRelation(this, rel, options);
-		}, this);
+		}, this));
 
 		this._isInitialized = true;
 		this.release();
@@ -313,7 +313,7 @@ export default BBModel.extend(Semaphore).extend({
 					createModels();
 				}
 
-				requests = _.map(models, function(model) {
+				requests = _.map(models, _.bind(function(model) {
 					let opts = _.defaults({
 						error(...args) {
 							if (_.contains(createdModels, model)) {
@@ -327,7 +327,7 @@ export default BBModel.extend(Semaphore).extend({
 					}, options);
 
 					return model.fetch(opts);
-				}, this);
+				}, this));
 			}
 		}
 
@@ -621,11 +621,11 @@ export default BBModel.extend(Semaphore).extend({
 			this._superModel.inheritRelations();
 			if (this._superModel.prototype.relations) {
 			// Find relations that exist on the '_superModel', but not yet on this model.
-				let inheritedRelations = _.filter(this._superModel.prototype.relations || [], function(superRel) {
-					return !_.any(this.prototype.relations || [], function(rel) {
+				let inheritedRelations = _.filter(this._superModel.prototype.relations || [], _.bind(function(superRel) {
+					return !_.any(this.prototype.relations || [], _.bind(function(rel) {
 						return superRel.relatedModel === rel.relatedModel && superRel.key === rel.key;
-					}, this);
-				}, this);
+					}, this));
+				}, this));
 
 				this.prototype.relations = inheritedRelations.concat(this.prototype.relations);
 			}

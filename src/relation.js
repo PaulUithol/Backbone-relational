@@ -1,4 +1,4 @@
-import _ from 'underscore';
+import _ from './utils/underscore-compat';
 import Semaphore from './utils/semaphore';
 import BObject from './utils/object';
 import relationTypeStore from './relation-type-store';
@@ -147,9 +147,9 @@ export default BObject.extend(Semaphore).extend({
 		}
 		// Check if we're not attempting to create a relationship on a `key` that's already used.
 		if (i && _.keys(i._relations).length) {
-			let existing = _.find(i._relations, function(rel) {
+			let existing = _.find(i._relations, _.bind(function(rel) {
 				return rel.key === k;
-			}, this);
+			}, this));
 
 			if (existing) {
 				warn && console.warn('Cannot create relation=%o on %o for model=%o: already taken by relation=%o.',

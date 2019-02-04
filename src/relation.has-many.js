@@ -1,4 +1,4 @@
-import _ from 'underscore';
+import _ from './utils/underscore-compat';
 import Relation from './relation';
 import store from './store';
 import eventQueue from './event-queue';
@@ -195,9 +195,9 @@ export default Relation.extend({
 		options = options ? _.clone(options) : {};
 		this.changed = true;
 
-		_.each(this.getReverseRelations(model), function(relation) {
+		_.each(this.getReverseRelations(model), _.bind(function(relation) {
 			relation.removeRelated(this.instance, null, options);
-		}, this);
+		}, this));
 
 		!options.silent && eventQueue.add(() => {
 			this.instance.trigger('remove:' + this.key, model, this.related, options);

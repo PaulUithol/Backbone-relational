@@ -2,7 +2,7 @@ import { reset } from './setup/setup';
 import { store, Model, HasMany, HasOne, Collection } from 'backbone-relational';
 import { Person, Agent, Company, Zoo, AnimalCollection, Shop, Customer, Animal, House, User, Node, Job, Address } from './setup/objects';
 import initObjects from './setup/data';
-import _ from 'underscore';
+import _ from '../src/utils/underscore-compat';
 
 let objects;
 

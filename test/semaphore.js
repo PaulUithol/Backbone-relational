@@ -1,6 +1,6 @@
 import { reset } from './setup/setup';
 import { Semaphore } from 'backbone-relational';
-import _ from 'underscore';
+import _ from '../src/utils/underscore-compat';
 
 QUnit.module('Backbone.Relational.Semaphore ', { beforeEach: reset }, () => {
 	QUnit.test('Unbounded', function(assert) {

@@ -1,4 +1,4 @@
-import _ from 'underscore';
+import _ from './underscore-compat';
 import { Model as BBModel } from 'backbone';
 import BObject from './object';
 import relationTypeStore from '../relation-type-store';
@@ -171,13 +171,13 @@ export default BObject.extend({
 		let { type: RelationType } = relation;
 
 		let coll = this.getCollection(relation.model, false);
-		coll && coll.each(function(model) {
+		coll && coll.each(_.bind(function(model) {
 			if (!(model instanceof relation.model)) {
 				return;
 			}
 
 			let relationType = new RelationType(model, relation);
-		}, this);
+		}, this));
 	},
 
 	/**
@@ -216,7 +216,7 @@ export default BObject.extend({
 		let parts = name.split('.');
 		let type = null;
 
-		_.find(this._modelScopes, function(scope) {
+		_.find(this._modelScopes, _.bind(function(scope) {
 			type = _.reduce(parts || [], function(memo, val) {
 				return memo ? memo[ val ] : undefined;
 			}, scope);
@@ -224,7 +224,7 @@ export default BObject.extend({
 			if (type && type !== scope) {
 				return true;
 			}
-		}, this);
+		}, this));
 
 		return type;
 	},
