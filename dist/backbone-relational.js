@@ -1,7 +1,7 @@
 /**!
  * Backbone Relational v0.10.0 (backbone-relational)
  * ----------------------------------
- * (c) 2011-2017 Paul Uithol and contributors (https://github.com/PaulUithol/Backbone-relational/graphs/contributors)
+ * (c) 2011-2019 Paul Uithol and contributors (https://github.com/PaulUithol/Backbone-relational/graphs/contributors)
  * Distributed under MIT license
  *
  * http://backbonerelational.org

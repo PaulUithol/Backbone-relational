@@ -1,6 +1,10 @@
 /* eslint-env node */
 
 module.exports = function( config ) {
+	var aliasOptions = {
+    'backbone-relational': './src/backbone-relational'
+  };
+	if (config.lodash) aliasOptions.underscore = 'lodash';
 	config.set({
 		frameworks: [
 			'browserify',
@@ -30,9 +34,7 @@ module.exports = function( config ) {
 					presets: [ 'es2015' ],
 					plugins: [
             [ 'module-resolver', {
-              alias: {
-                'backbone-relational': './src/backbone-relational'
-              }
+              alias: aliasOptions
             }],
 						[ 'istanbul', {
 							exclude: [ 'node_modules/**', 'test/**' ]

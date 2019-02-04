@@ -46,6 +46,7 @@
     "karma-coverage": "^1.1.1",
     "karma-electron": "^5.1.1",
     "karma-qunit": "^1.2.1",
+    "lodash": "^4.17.11",
     "qunitjs": "^2.3.0",
     "rollup": "^0.41.6",
     "rollup-plugin-babel": "^2.7.1",
