@@ -3,10 +3,10 @@ node_js:
   - "4"
 before_install:
   - npm install -g npm
-  - npm install -g karma-cli
+  - npm install -g karma-cli@1
 script:
   - npm test
-  - $(npm bin)/karma start --single-run --browsers PhantomJS --lodash
+  - karma start --single-run --browsers PhantomJS --lodash
 sudo: false
 cache:
   directories:
