@@ -1,11 +1,12 @@
 language: node_js
 node_js:
-  - "4"
+  - "8"
 before_install:
   - npm install -g npm
-  - npm install -g karma-cli
+  - npm install -g karma-cli@1
 script:
   - npm test
+  - karma start --single-run --browsers PhantomJS --lodash
 sudo: false
 cache:
   directories:

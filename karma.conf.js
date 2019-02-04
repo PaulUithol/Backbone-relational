@@ -1,4 +1,14 @@
 module.exports = function(config) {
+	var browserifyOptions = {
+		debug: true
+	};
+	if (config.lodash) browserifyOptions.transform = [
+		['aliasify', {
+			aliases: {
+				underscore: 'lodash',
+			},
+		}],
+	];
 	config.set({
 		frameworks: [
 			'browserify',
@@ -20,9 +30,7 @@ module.exports = function(config) {
 			'test/**/*.js': [ 'browserify' ]
 		},
 
-		browserify: {
-			debug: true
-		},
+		browserify: browserifyOptions,
 
 		autoWatch: false,
 		port: 9877,

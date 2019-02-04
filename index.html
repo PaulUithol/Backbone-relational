@@ -171,7 +171,7 @@
 
 		<p>
 			Backbone-relational depends on <a href="http://backbonejs.org/">Backbone.js</a> <small>(>= 1.2.1)</small>,
-			which itself requires <a href="http://underscorejs.org">Underscore.js</a> <small>(> 1.7.0)</small> and
+			which itself requires <a href="http://underscorejs.org">Underscore.js</a> <small>(> 1.7.0)</small> or <a href="https://lodash.com">Lodash</a> <small>(>= 3)</small> and
 			<a href="http://jquery.com">jQuery</a> <small>(> 1.7.0)</small> or
 			<a href="http://zeptojs.com/">Zepto</a>.
 		</p>
@@ -254,6 +254,10 @@
 			Note for <strong>CoffeeScript</strong> users: due to the way the <q>extends</q> keyword is implemented in
 			CoffeeScript, you may have to make an extra call to <a href="#RelationalModel-setup"><q>setup</q></a> for
 			your models. See the <a href="#RelationalModel-setup"><q>setup</q></a> documentation for details.
+		</p>
+
+		<p class="notice">
+			Note for <strong>Lodash</strong> users: you can use Lodash (version 3 or greater) instead of Underscore.
 		</p>
 	</section>
 
