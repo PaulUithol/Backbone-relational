@@ -20,12 +20,15 @@ Before you submit your Pull Request ensure the following things are true for you
     - How to setup [ESLint](http://eslint.org/docs/user-guide/integrations)
 2. Your changes are branched off of `master`
 3. You have added a test case for your changes or updated an existing test case
-4. All test cases are passing
+4. All test cases are passing, both with Underscore and Lodash
 
 # Running Unit Tests
 You can run tests using PhantomJS (headless) or a web browser (Chrome)
 - To run headless tests:
     1. Run `npm test`
+- To run headless tests using Lodash instead of Underscore
+    1. Run `npm test -- --lodash`
 - To run tests in a browser:
     1. Run `karma start --single-run`
-    2. Open Chrome and connect to the url it outputs
+        - _To test using Lodash add the `--lodash` flag_
+    2. Open your browser and visit the url output by Karma

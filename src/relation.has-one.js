@@ -1,4 +1,4 @@
-import _ from 'underscore';
+import _ from './utils/underscore-compat';
 import Relation from './relation';
 import store from './store';
 import eventQueue from './event-queue';

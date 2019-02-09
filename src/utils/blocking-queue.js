@@ -1,4 +1,4 @@
-import _ from 'underscore';
+import _ from './underscore-compat';
 import Semaphore from './semaphore';
 
 /**

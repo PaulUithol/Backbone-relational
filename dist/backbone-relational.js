@@ -1,7 +1,7 @@
 /**!
  * Backbone Relational v0.10.0 (backbone-relational)
  * ----------------------------------
- * (c) 2011-2017 Paul Uithol and contributors (https://github.com/PaulUithol/Backbone-relational/graphs/contributors)
+ * (c) 2011-2019 Paul Uithol and contributors (https://github.com/PaulUithol/Backbone-relational/graphs/contributors)
  * Distributed under MIT license
  *
  * http://backbonerelational.org
@@ -44,6 +44,13 @@ var Semaphore = {
 		this._permitsAvailable = amount;
 	}
 };
+
+if (!_.any) {
+  _.any = _.some;
+  _.all = _.every;
+  _.contains = _.includes;
+  _.pluck = _.map;
+}
 
 function BlockingQueue() {
 	this._queue = [];
@@ -224,13 +231,13 @@ var Store = ExtendableObject.extend({
 
 
 		var coll = this.getCollection(relation.model, false);
-		coll && coll.each(function (model) {
+		coll && coll.each(_.bind(function (model) {
 			if (!(model instanceof relation.model)) {
 				return;
 			}
 
 			var relationType = new RelationType(model, relation);
-		}, this);
+		}, this));
 	},
 	getCollection: function getCollection(type, create) {
 		if (type instanceof backbone.Model) {
@@ -256,7 +263,7 @@ var Store = ExtendableObject.extend({
 		var parts = name.split('.');
 		var type = null;
 
-		_.find(this._modelScopes, function (scope) {
+		_.find(this._modelScopes, _.bind(function (scope) {
 			type = _.reduce(parts || [], function (memo, val) {
 				return memo ? memo[val] : undefined;
 			}, scope);
@@ -264,7 +271,7 @@ var Store = ExtendableObject.extend({
 			if (type && type !== scope) {
 				return true;
 			}
-		}, this);
+		}, this));
 
 		return type;
 	},
@@ -499,9 +506,9 @@ var Relation = ExtendableObject.extend(Semaphore).extend({
 		}
 
 		if (i && _.keys(i._relations).length) {
-			var existing = _.find(i._relations, function (rel) {
+			var existing = _.find(i._relations, _.bind(function (rel) {
 				return rel.key === k;
-			}, this);
+			}, this));
 
 			if (existing) {
 				warn && console.warn('Cannot create relation=%o on %o for model=%o: already taken by relation=%o.', this, k, i, existing);
@@ -675,9 +682,9 @@ var Model$1 = backbone.Model.extend(Semaphore).extend({
 		this.acquire();
 		this._relations = {};
 
-		_.each(this.relations || [], function (rel) {
+		_.each(this.relations || [], _.bind(function (rel) {
 			store.initializeRelation(this, rel, options);
-		}, this);
+		}, this));
 
 		this._isInitialized = true;
 		this.release();
@@ -807,7 +814,7 @@ var Model$1 = backbone.Model.extend(Semaphore).extend({
 					createModels();
 				}
 
-				requests = _.map(models, function (model) {
+				requests = _.map(models, _.bind(function (model) {
 					var opts = _.defaults({
 						error: function error() {
 							if (_.contains(createdModels, model)) {
@@ -827,7 +834,7 @@ var Model$1 = backbone.Model.extend(Semaphore).extend({
 					}, options);
 
 					return model.fetch(opts);
-				}, this);
+				}, this));
 			}
 		}
 
@@ -1055,11 +1062,11 @@ var Model$1 = backbone.Model.extend(Semaphore).extend({
 		if (this._superModel) {
 			this._superModel.inheritRelations();
 			if (this._superModel.prototype.relations) {
-				var inheritedRelations = _.filter(this._superModel.prototype.relations || [], function (superRel) {
-					return !_.any(this.prototype.relations || [], function (rel) {
+				var inheritedRelations = _.filter(this._superModel.prototype.relations || [], _.bind(function (superRel) {
+					return !_.any(this.prototype.relations || [], _.bind(function (rel) {
 						return superRel.relatedModel === rel.relatedModel && superRel.key === rel.key;
-					}, this);
-				}, this);
+					}, this));
+				}, this));
 
 				this.prototype.relations = inheritedRelations.concat(this.prototype.relations);
 			}
@@ -1499,9 +1506,9 @@ var HasMany = Relation.extend({
 		options = options ? _.clone(options) : {};
 		this.changed = true;
 
-		_.each(this.getReverseRelations(model), function (relation) {
+		_.each(this.getReverseRelations(model), _.bind(function (relation) {
 			relation.removeRelated(this.instance, null, options);
-		}, this);
+		}, this));
 
 		!options.silent && eventQueue.add(function () {
 			_this5.instance.trigger('remove:' + _this5.key, model, _this5.related, options);

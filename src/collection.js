@@ -1,6 +1,6 @@
 import { Collection as BBCollection, Model as BBModel } from 'backbone';
 import Model from './model';
-import _ from 'underscore';
+import _ from './utils/underscore-compat';
 import eventQueue from './event-queue';
 
 export default BBCollection.extend({

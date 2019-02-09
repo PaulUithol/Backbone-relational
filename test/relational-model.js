@@ -3,7 +3,7 @@ import { store, Model as RelationalModel, HasMany, HasOne, Collection as Relatio
 import { Model as BackboneModel } from 'backbone';
 import { Person, User, Animal, Zoo, Agent, Shop, AnimalCollection, Customer, Job, Address, Node, NodeList } from './setup/objects';
 import initObjects from './setup/data';
-import _ from 'underscore';
+import _ from '../src/utils/underscore-compat';
 
 let objects;
 
