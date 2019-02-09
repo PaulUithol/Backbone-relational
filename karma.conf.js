@@ -3,8 +3,12 @@
 module.exports = function( config ) {
 	var aliasOptions = {
     'backbone-relational': './src/backbone-relational'
-  };
-	if (config.lodash) aliasOptions.underscore = 'lodash';
+	};
+
+	if (config.lodash) {
+		aliasOptions.underscore = 'lodash';
+	}
+
 	config.set({
 		frameworks: [
 			'browserify',

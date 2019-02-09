@@ -26,8 +26,9 @@ Before you submit your Pull Request ensure the following things are true for you
 You can run tests using PhantomJS (headless) or a web browser (Chrome)
 - To run headless tests:
     1. Run `npm test`
+- To run headless tests using Lodash instead of Underscore
+    1. Run `npm test -- --lodash`
 - To run tests in a browser:
     1. Run `karma start --single-run`
-    2. Open Chrome and connect to the url it outputs
-
-You can test with Lodash instead of Underscore by passing the `--lodash` option to `karma start` or `yarn test`.
+        - _To test using Lodash add the `--lodash` flag_
+    2. Open your browser and visit the url output by Karma
