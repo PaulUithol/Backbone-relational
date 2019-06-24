@@ -1585,15 +1585,62 @@
 
 			return new this.constructor( attributes );
 		},
+		
+        /**
+         *  Returns the data-structure of the relational model.
+         *  Calling toJSON with options full=true redirects the call
+         *  to this method.
+         *  Useful for template rendering
+         */
+        recursiveAttributes: function(options) {
+            options = options || {};
+            var that = this;
 
-		/**
-		 * Convert relations to JSON, omits them when required
-		 */
-		toJSON: function( options ) {
-			// If this Model has already been fully serialized in this branch once, return to avoid loops
-			if ( this.isLocked() ) {
-				return this.id;
-			}
+            if ( this.isLocked() ) {
+                return this.id;
+            }
+
+            this.acquire();
+            var json = Backbone.Model.prototype.toJSON.call( this, options );
+
+            if ( this.constructor._superModel && !( this.constructor._subModelTypeAttribute in json ) ) {
+                json[ this.constructor._subModelTypeAttribute ] = this.constructor._subModelTypeValue;
+            }
+
+            _.each( this._relations || [], function( rel ) {
+                var value = json[ rel.key ];
+
+                if ( value && _.isFunction( value.recursiveAttributes ) ) {
+                    json[ rel.key ] = value.recursiveAttributes( options );
+                } else if ( value instanceof Backbone.Collection ){
+                    json[ rel.key ] = value.map(function(model){ return that.recursiveAttributes.call(model, options); });
+                } else {
+                    json[ rel.key ] = null;
+                }
+            });
+
+            this.release();
+            return json;
+
+        },
+        
+        /**
+         * Convert relations to JSON, omits them when required
+         *
+         * IMPORTANT NOTE: the use of option `full=true` is very bad for performance. Do not use this in a loops!!
+         *
+         */
+        toJSON: function( options ) {
+            options = options || {};
+
+            if ( options.full ) {
+                return this.recursiveAttributes(options);
+            }
+
+            // If this Model has already been fully serialized in this branch once, return to avoid loops
+            if ( this.isLocked() ) {
+                return this.id;
+            }
 
 			this.acquire();
 			var json = Backbone.Model.prototype.toJSON.call( this, options );
