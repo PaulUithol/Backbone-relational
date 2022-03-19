@@ -39,5 +39,8 @@
     "semver": "^5.1.0",
     "underscore": ">=1.7.0",
     "watchify": "^3.7.0"
+  },
+  "overrides": {
+    "colors@>1.4.0": "1.4.0"
   }
 }
